@@ -3,7 +3,7 @@ import { store } from '../store.js';
 import { formatSyncTime } from '../utils.js';
 
 const TITLES = {
-  '/boats':     'Dubai Marina',
+  '/boats':     'MarinaControl',
   '/dashboard': 'Dashboard',
   '/berths':    'Berths',
   '/fleet':     'Fleet',
@@ -12,7 +12,7 @@ const TITLES = {
 
 export function renderTopBar(route) {
   const titleEl = document.getElementById('topbarTitle');
-  if (titleEl) titleEl.textContent = TITLES[route] || 'Dubai Marina';
+  if (titleEl) titleEl.textContent = TITLES[route] || 'MarinaControl';
 
   const syncEl = document.getElementById('topbarSync');
   if (!syncEl) return;

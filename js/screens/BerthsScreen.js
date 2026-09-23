@@ -7,6 +7,9 @@ import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { showBerthToolbarMenu } from '../components/BerthToolbarMenu.js';
 import { createBerth, deleteAllBerths, importBerthsFromRows } from '../db.js';
+import { showBerthMenu } from '../components/BerthMenuSheet.js';
+import { updateBerthStatus, updateBerth, deleteBerth } from '../db.js';
+import { confirmSheet } from '../ui/confirm.js';
 
 let unsubscribe = null;
 let searchQuery = '';
@@ -168,12 +171,12 @@ function renderBerthGrid() {
 
     el.addEventListener('click', (e) => {
       if (e.target.closest('button')) return;
-      toast(`Berth ${berth.berthNumber} — menu coming soon`);
+         openBerthMenu(berth);
     });
 
     el.querySelector('.berth-card-kebab')?.addEventListener('click', (e) => {
       e.stopPropagation();
-      toast(`Berth ${berth.berthNumber} — menu coming soon`);
+      openBerthMenu(berth);
     });
   });
 }
@@ -440,4 +443,203 @@ async function onDeleteAll() {
     console.error('[delete all] failed', err);
     toast('Failed to delete berths', { kind: 'error' });
   }
+}
+
+/* ============================================================
+   BERTH MENU
+   ============================================================ */
+function openBerthMenu(berth) {
+  showBerthMenu(berth, {
+    onSetAvailable:   onSetStatus('AVAILABLE'),
+    onSetOccupied:    onSetStatus('OCCUPIED'),
+    onSetMaintenance: onSetStatus('MAINTENANCE'),
+    onBookBerth:      () => toast('Booking coming soon'),
+    onViewBooking:    () => toast('View booking coming soon'),
+    onAssignBoat:     () => toast('Assign boat coming soon'),
+    onReleaseBoat:    () => toast('Release boat coming soon'),
+    onViewBerth:      onViewBerth,
+    onEditBerth:      onEditBerth,
+    onDeleteBerth:    onDeleteBerth
+  });
+}
+
+function onSetStatus(newStatus) {
+  return async (berth) => {
+    try {
+      const userId = store.userProfile?.userId || 0;
+      await updateBerthStatus(store.activeClientId, berth.id, newStatus, userId);
+      toast(`Berth ${berth.berthNumber} set to ${newStatus.toLowerCase()}`, { kind: 'success' });
+    } catch (err) {
+      console.error('[berth status]', err);
+      toast('Failed to update status', { kind: 'error' });
+    }
+  };
+}
+
+function onViewBerth(berth) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sheet-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet assign-sheet';
+
+  const status = (berth.status || 'AVAILABLE').toUpperCase();
+  const boat = berth.assignedBoatName || 'None';
+
+  sheet.innerHTML = `
+    <div class="assign-handle"></div>
+    <div class="assign-title">Berth ${escapeHtml(berth.berthNumber || '')}</div>
+    <div class="assign-divider"></div>
+
+    <div class="bkr-detail-body">
+      <div class="bkr-detail-row"><span>Dock</span><b>${escapeHtml(berth.dockName || '—')}</b></div>
+      <div class="bkr-detail-row"><span>Number</span><b>${escapeHtml(berth.berthNumber || '—')}</b></div>
+      <div class="bkr-detail-row"><span>Length</span><b>${berth.length} m</b></div>
+      <div class="bkr-detail-row"><span>Width</span><b>${berth.width} m</b></div>
+      <div class="bkr-detail-row"><span>Depth</span><b>${berth.depth} m</b></div>
+      <div class="bkr-detail-row"><span>Electric</span><b>${berth.hasElectric ? 'Yes' : 'No'}</b></div>
+      <div class="bkr-detail-row"><span>Water</span><b>${berth.hasWater ? 'Yes' : 'No'}</b></div>
+      <div class="bkr-detail-row"><span>Status</span><b>${escapeHtml(status)}</b></div>
+      <div class="bkr-detail-row"><span>Boat</span><b>${escapeHtml(boat)}</b></div>
+    </div>
+
+    <div class="assign-divider"></div>
+    <button class="assign-cancel" id="berthDetailClose">Close</button>
+  `;
+
+  document.getElementById('modalRoot').append(backdrop, sheet);
+  requestAnimationFrame(() => {
+    backdrop.classList.add('is-open');
+    sheet.classList.add('is-open');
+  });
+
+  const close = () => {
+    backdrop.classList.remove('is-open');
+    sheet.classList.remove('is-open');
+    setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
+  };
+
+  backdrop.addEventListener('click', close);
+  sheet.querySelector('#berthDetailClose').addEventListener('click', close);
+}
+
+function onEditBerth(berth) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sheet-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" style="text-align:center;">Edit Berth</div>
+
+    <form id="editBerthForm" class="add-form" novalidate>
+      <div class="add-scroll">
+        <input class="add-input" id="eb-dockName"    type="text"   placeholder="Dock Name *"    value="${escapeAttr(berth.dockName || '')}">
+        <input class="add-input" id="eb-berthNumber" type="text"   placeholder="Berth Number *" value="${escapeAttr(berth.berthNumber || '')}">
+        <input class="add-input" id="eb-length"      type="number" step="0.1" placeholder="Length (m)" value="${berth.length > 0 ? berth.length : ''}">
+        <input class="add-input" id="eb-width"       type="number" step="0.1" placeholder="Width (m)"  value="${berth.width  > 0 ? berth.width  : ''}">
+        <input class="add-input" id="eb-depth"       type="number" step="0.1" placeholder="Depth (m)"  value="${berth.depth  > 0 ? berth.depth  : ''}">
+
+        <label class="add-checkbox" style="margin-top:16px;">
+          <input type="checkbox" id="eb-electric" ${berth.hasElectric ? 'checked' : ''}>
+          <span>Has electricity</span>
+        </label>
+
+        <label class="add-checkbox">
+          <input type="checkbox" id="eb-water" ${berth.hasWater ? 'checked' : ''}>
+          <span>Has water</span>
+        </label>
+
+        <div class="add-section-title" style="margin-top:16px;">Status</div>
+        <select class="add-input add-select" id="eb-status">
+          <option value="AVAILABLE"   ${status === 'AVAILABLE'   ? 'selected' : ''}>AVAILABLE</option>
+          <option value="OCCUPIED"    ${status === 'OCCUPIED'    ? 'selected' : ''}>OCCUPIED</option>
+          <option value="MAINTENANCE" ${status === 'MAINTENANCE' ? 'selected' : ''}>MAINTENANCE</option>
+        </select>
+      </div>
+
+      <button type="submit" class="add-save" id="eb-save">Update Berth</button>
+    </form>
+  `;
+
+  document.getElementById('modalRoot').append(backdrop, sheet);
+  requestAnimationFrame(() => {
+    backdrop.classList.add('is-open');
+    sheet.classList.add('is-open');
+  });
+
+  const close = () => {
+    backdrop.classList.remove('is-open');
+    sheet.classList.remove('is-open');
+    setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
+  };
+
+  backdrop.addEventListener('click', close);
+
+  const form = sheet.querySelector('#editBerthForm');
+  const save = sheet.querySelector('#eb-save');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    save.disabled = true;
+    save.textContent = 'Updating…';
+
+    try {
+      const fields = {
+        dockName:     sheet.querySelector('#eb-dockName').value.trim(),
+        berthNumber:  sheet.querySelector('#eb-berthNumber').value.trim(),
+        length:       parseFloat(sheet.querySelector('#eb-length').value) || 0,
+        width:        parseFloat(sheet.querySelector('#eb-width').value)  || 0,
+        depth:        parseFloat(sheet.querySelector('#eb-depth').value)  || 0,
+        hasElectric:  sheet.querySelector('#eb-electric').checked,
+        hasWater:     sheet.querySelector('#eb-water').checked,
+        status:       sheet.querySelector('#eb-status').value
+      };
+
+      if (!fields.dockName || !fields.berthNumber) {
+        throw new Error('Dock name and berth number are required.');
+      }
+
+      const userId = store.userProfile?.userId || 0;
+      await updateBerth(berth.id, userId, fields);
+      close();
+      toast(`Berth ${fields.berthNumber} updated`, { kind: 'success' });
+
+    } catch (err) {
+      console.error('[berth edit]', err);
+      save.disabled = false;
+      save.textContent = 'Update Berth';
+      let errEl = sheet.querySelector('.add-error');
+      if (!errEl) {
+        errEl = document.createElement('div');
+        errEl.className = 'add-error';
+        form.insertBefore(errEl, save);
+      }
+      errEl.textContent = err.message || 'Failed to update berth.';
+    }
+  });
+}
+
+async function onDeleteBerth(berth) {
+  const ok = await confirmSheet({
+    title:   'Delete berth',
+    message: `Delete berth ${berth.berthNumber}? This cannot be undone.`,
+    confirmText: 'Delete',
+    cancelText:  'Cancel'
+  });
+  if (!ok) return;
+
+  try {
+    await deleteBerth(berth.id);
+    toast(`Berth ${berth.berthNumber} deleted`, { kind: 'success' });
+  } catch (err) {
+    console.error('[berth delete]', err);
+    toast('Failed to delete berth', { kind: 'error' });
+  }
+}
+
+function escapeAttr(s) {
+  return String(s ?? '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }

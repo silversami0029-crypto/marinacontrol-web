@@ -64,10 +64,12 @@ export function mountLoginScreen() {
           Join Existing Marina
         </button>
 
-        <p class="login-terms">
-          By continuing, you agree to the<br>
-          Terms of Use and Privacy Policy
-        </p>
+       <p class="login-terms">
+  By continuing, you agree to the<br>
+  <a href="#" onclick="return false;">Terms of Use</a>
+  and
+  <a href="#" onclick="return false;">Privacy Policy</a>
+</p>
       </div>
     </div>
   `;

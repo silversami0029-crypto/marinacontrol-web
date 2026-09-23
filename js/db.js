@@ -431,3 +431,47 @@ export function listenForBookingRequests(clientId, callback) {
     }
   );
 }
+
+/* ============================================================
+   BERTH WRITE OPERATIONS
+   ============================================================ */
+
+export async function updateBerthStatus(clientId, berthId, newStatus, userId) {
+  const data = {
+    status: newStatus,
+    lastModified: Date.now(),
+    lastModifiedBy: String(userId ?? ''),
+    syncedAt: 0
+  };
+
+  // Clear boat assignment if moving away from OCCUPIED (matches Android)
+  if (newStatus !== 'OCCUPIED') {
+    data.boatId = null;
+    data.assignedBoatName = null;
+  }
+
+  await updateDoc(doc(db, 'berths', String(berthId)), data);
+  console.log('[db] Berth', berthId, 'status →', newStatus);
+}
+
+export async function updateBerth(berthId, userId, fields) {
+  await updateDoc(doc(db, 'berths', String(berthId)), {
+    dockName:     fields.dockName,
+    berthNumber:  fields.berthNumber,
+    length:       Number(fields.length) || 0,
+    width:        Number(fields.width)  || 0,
+    depth:        Number(fields.depth)  || 0,
+    hasElectric:  !!fields.hasElectric,
+    hasWater:     !!fields.hasWater,
+    status:       (fields.status || 'AVAILABLE').toUpperCase(),
+    lastModified: Date.now(),
+    lastModifiedBy: String(userId ?? ''),
+    syncedAt: 0
+  });
+  console.log('[db] Berth', berthId, 'updated');
+}
+
+export async function deleteBerth(berthId) {
+  await deleteDoc(doc(db, 'berths', String(berthId)));
+  console.log('[db] Deleted berth', berthId);
+}
