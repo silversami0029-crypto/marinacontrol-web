@@ -1,0 +1,99 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#151A20">
+  <title>Dubai Marina</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/screens.css">
+</head>
+<body>
+
+  <header id="topbar" class="topbar">
+    <button class="topbar-menu" id="btnTopMenu" aria-label="Menu">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6"  x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
+    <div class="topbar-brand">
+      <div class="topbar-logo" id="topbarLogo"></div>
+      <div class="topbar-brand-text">
+        <div class="topbar-title" id="topbarTitle">Dubai Marina</div>
+        <div class="topbar-subtitle">
+          <span class="status-dot"></span>
+          <span id="topbarSync">Online Â· Synced just now</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="topbar-bell" id="btnBell" aria-label="Notifications">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+           stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+           stroke-linejoin="round">
+        <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+      </svg>
+    </button>
+  </header>
+
+  <main id="screen" class="screen"></main>
+
+  <nav id="bottomnav" class="bottomnav">
+    <button class="nav-item is-active" data-route="/boats">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+           stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+           stroke-linejoin="round">
+        <path d="M3 17h18M5 17V9l7-5 7 5v8M9 17v-5h6v5"/>
+      </svg>
+      <span>Boat</span>
+    </button>
+    <button class="nav-item" data-route="/dashboard">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+           stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+           stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-item" data-route="/berths">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+           stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+           stroke-linejoin="round">
+        <path d="M3 8h18M3 12h18M3 16h18M5 8v12M19 8v12"/>
+      </svg>
+      <span>Berths</span>
+    </button>
+    <button class="nav-item" data-route="/fleet">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+           stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+           stroke-linejoin="round">
+        <path d="M4 7h16l-1.5 9h-13z"/><circle cx="8" cy="19" r="1.3"/>
+        <circle cx="16" cy="19" r="1.3"/>
+      </svg>
+      <span>Fleet</span>
+    </button>
+    <button class="nav-item" data-route="/account">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+           stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+           stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21a8 8 0 0 1 16 0"/>
+      </svg>
+      <span>Account</span>
+    </button>
+  </nav>
+
+  <div id="modalRoot"></div>
+
+  <script type="module" src="js/router.js"></script>
+</body>
+</html>

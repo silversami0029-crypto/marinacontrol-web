@@ -1,0 +1,8 @@
+{
+  "name": "dubai-marina-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes serve -l 3000 ."
+  }
+}
