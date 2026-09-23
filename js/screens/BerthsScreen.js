@@ -10,6 +10,7 @@ import { createBerth, deleteAllBerths, importBerthsFromRows } from '../db.js';
 import { showBerthMenu } from '../components/BerthMenuSheet.js';
 import { updateBerthStatus, updateBerth, deleteBerth } from '../db.js';
 import { confirmSheet } from '../ui/confirm.js';
+import { showBerthHelp } from '../components/BerthHelpDialog.js';
 
 let unsubscribe = null;
 let searchQuery = '';
@@ -73,8 +74,7 @@ export function mountBerthsScreen() {
   `;
 
   // Wire header buttons
-  document.getElementById('berthHelp').addEventListener('click', () => {
-    toast('Berth help coming soon');
+   document.getElementById('berthHelp').addEventListener('click', showBerthHelp);
   });
 
 document.getElementById('berthMenuBtn').addEventListener('click', openToolbarMenu);
