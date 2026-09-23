@@ -8,9 +8,10 @@ import { toast } from '../ui/toast.js';
 import { showBerthToolbarMenu } from '../components/BerthToolbarMenu.js';
 import { createBerth, deleteAllBerths, importBerthsFromRows } from '../db.js';
 import { showBerthMenu } from '../components/BerthMenuSheet.js';
-import { updateBerthStatus, updateBerth, deleteBerth } from '../db.js';
 import { confirmSheet } from '../ui/confirm.js';
 import { showBerthHelp } from '../components/BerthHelpDialog.js';
+import { showAssignBoatSheet } from '../components/AssignBoatSheet.js';
+import { updateBerthStatus, updateBerth, deleteBerth, assignBoatToBerth, releaseBoatFromBerth } from '../db.js';
 
 let unsubscribe = null;
 let searchQuery = '';
@@ -454,8 +455,8 @@ function openBerthMenu(berth) {
     onSetMaintenance: onSetStatus('MAINTENANCE'),
     onBookBerth:      () => toast('Booking coming soon'),
     onViewBooking:    () => toast('View booking coming soon'),
-    onAssignBoat:     () => toast('Assign boat coming soon'),
-    onReleaseBoat:    () => toast('Release boat coming soon'),
+    onAssignBoat:     onAssignBoat,
+    onReleaseBoat:    onReleaseBoat,
     onViewBerth:      onViewBerth,
     onEditBerth:      onEditBerth,
     onDeleteBerth:    onDeleteBerth
@@ -641,4 +642,55 @@ async function onDeleteBerth(berth) {
 
 function escapeAttr(s) {
   return String(s ?? '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+
+/* ============================================================
+   ASSIGN / RELEASE BOAT
+   ============================================================ */
+function onAssignBoat(berth) {
+  // Get all boats, filter out ones already assigned to any berth
+  const allBoats = store.boatsFull || [];
+  const assignedBoatIds = new Set(
+    (store.berthsFull || [])
+      .filter(b => b.boatId != null)
+      .map(b => Number(b.boatId))
+  );
+
+  const unassigned = allBoats.filter(b => !assignedBoatIds.has(b.id));
+
+  showAssignBoatSheet({
+    berth,
+    boats: unassigned,
+    onAssign: async (boat) => {
+      try {
+        const userId = store.userProfile?.userId || 0;
+        await assignBoatToBerth(berth.id, boat, userId);
+        toast(`${boat.name} assigned to berth ${berth.berthNumber}`, { kind: 'success' });
+      } catch (err) {
+        console.error('[assign boat]', err);
+        toast('Failed to assign boat', { kind: 'error' });
+      }
+    }
+  });
+}
+
+async function onReleaseBoat(berth) {
+  const boatName = berth.assignedBoatName || 'boat';
+  const ok = await confirmSheet({
+    title:   'Release boat',
+    message: `Release ${boatName} from berth ${berth.berthNumber}?`,
+    confirmText: 'Release',
+    cancelText:  'Cancel'
+  });
+  if (!ok) return;
+
+  try {
+    const userId = store.userProfile?.userId || 0;
+    await releaseBoatFromBerth(berth.id, userId);
+    toast(`${boatName} released from berth ${berth.berthNumber}`, { kind: 'success' });
+  } catch (err) {
+    console.error('[release boat]', err);
+    toast('Failed to release boat', { kind: 'error' });
+  }
 }

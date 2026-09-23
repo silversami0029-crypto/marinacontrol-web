@@ -475,3 +475,36 @@ export async function deleteBerth(berthId) {
   await deleteDoc(doc(db, 'berths', String(berthId)));
   console.log('[db] Deleted berth', berthId);
 }
+
+/* ============================================================
+   ASSIGN BOAT TO BERTH
+   Mirrors BoatFragment.saveAssignmentWithDates()
+   ============================================================ */
+export async function assignBoatToBerth(berthId, boat, userId) {
+  await updateDoc(doc(db, 'berths', String(berthId)), {
+    boatId:           Number(boat.id),
+    assignedBoatName: boat.name || '',
+    status:           'OCCUPIED',
+    assignedDate:     Date.now(),
+    actualEndDate:    null,
+    lastModified:     Date.now(),
+    lastModifiedBy:   String(userId ?? ''),
+    syncedAt:         0
+  });
+  console.log('[db] Boat', boat.id, 'assigned to berth', berthId);
+}
+
+export async function releaseBoatFromBerth(berthId, userId) {
+  await updateDoc(doc(db, 'berths', String(berthId)), {
+    boatId:           null,
+    assignedBoatName: null,
+    status:           'AVAILABLE',
+    assignedDate:     null,
+    expectedEndDate:  null,
+    actualEndDate:    Date.now(),
+    lastModified:     Date.now(),
+    lastModifiedBy:   String(userId ?? ''),
+    syncedAt:         0
+  });
+  console.log('[db] Boat released from berth', berthId);
+}
