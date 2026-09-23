@@ -648,31 +648,52 @@ function escapeAttr(s) {
 /* ============================================================
    ASSIGN / RELEASE BOAT
    ============================================================ */
-function onAssignBoat(berth) {
-  // Get all boats, filter out ones already assigned to any berth
-  const allBoats = store.boatsFull || [];
-  const assignedBoatIds = new Set(
-    (store.berthsFull || [])
-      .filter(b => b.boatId != null)
-      .map(b => Number(b.boatId))
-  );
+async function onAssignBoat(berth) {
+  // Fetch boats live from Firestore (don't rely on store cache)
+  const { getDocs, query, collection, where } = await import('../firebase.js');
+  const { db } = await import('../firebase.js');
 
-  const unassigned = allBoats.filter(b => !assignedBoatIds.has(b.id));
+  try {
+    const boatsSnap = await getDocs(
+      query(collection(db, 'boats'), where('clientId', '==', store.activeClientId))
+    );
 
-  showAssignBoatSheet({
-    berth,
-    boats: unassigned,
-    onAssign: async (boat) => {
-      try {
-        const userId = store.userProfile?.userId || 0;
-        await assignBoatToBerth(berth.id, boat, userId);
-        toast(`${boat.name} assigned to berth ${berth.berthNumber}`, { kind: 'success' });
-      } catch (err) {
-        console.error('[assign boat]', err);
-        toast('Failed to assign boat', { kind: 'error' });
+    const allBoats = boatsSnap.docs.map(d => {
+      const data = d.data();
+      return {
+        id:   Number(data.id ?? d.id),
+        name: data.name || ''
+      };
+    });
+
+    // Filter out boats already assigned to any berth
+    const assignedBoatIds = new Set(
+      (store.berthsFull || [])
+        .filter(b => b.boatId != null)
+        .map(b => Number(b.boatId))
+    );
+
+    const unassigned = allBoats.filter(b => !assignedBoatIds.has(b.id));
+
+    showAssignBoatSheet({
+      berth,
+      boats: unassigned,
+      onAssign: async (boat) => {
+        try {
+          const userId = store.userProfile?.userId || 0;
+          await assignBoatToBerth(berth.id, boat, userId);
+          toast(`${boat.name} assigned to berth ${berth.berthNumber}`, { kind: 'success' });
+        } catch (err) {
+          console.error('[assign boat]', err);
+          toast('Failed to assign boat', { kind: 'error' });
+        }
       }
-    }
-  });
+    });
+
+  } catch (err) {
+    console.error('[assign boat] fetch failed', err);
+    toast('Failed to load boats', { kind: 'error' });
+  }
 }
 
 async function onReleaseBoat(berth) {
