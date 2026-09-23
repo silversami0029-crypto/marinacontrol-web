@@ -72,6 +72,12 @@ const ICONS = {
       <path d="M4 20h4l10-10-4-4L4 16v4z"/>
       <line x1="14" y1="6" x2="18" y2="10"/>
     </svg>`,
+  utilities: `
+    <svg class="sheet-icon" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
+    </svg>`,
   delete: `
     <svg class="sheet-icon" viewBox="0 0 24 24" fill="none"
          stroke="#E5484D" stroke-width="1.8"
@@ -213,6 +219,14 @@ export function showBerthMenu(berth, handlers = {}) {
     title: 'View berth',
     subtitle: 'View berth details and utilities',
     onClick: () => { close(); handlers.onViewBerth?.(berth); }
+  }));
+
+  sheet.appendChild(item({
+    id: 'btnUtilities',
+    icon: ICONS.utilities,
+    title: 'Utilities',
+    subtitle: 'Electricity, water readings and tariffs',
+    onClick: () => { close(); handlers.onUtilities?.(berth); }
   }));
 
   sheet.appendChild(item({
