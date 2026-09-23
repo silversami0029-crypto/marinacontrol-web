@@ -5,6 +5,7 @@ import {
   doc, getDoc, getDocs, writeBatch, deleteDoc, setDoc, updateDoc
 } from './firebase.js';
 import { Boat } from './models/Boat.js';
+import { BerthBookingRequest } from './models/BerthBookingRequest.js';
 
 /* ---------- READ ---------- */
 export function listenForBoats(clientId, callback) {
@@ -233,6 +234,199 @@ export function listenForBerths(clientId, callback) {
     },
     (err) => {
       console.error('listenForBerths error', err);
+      callback([], err);
+    }
+  );
+}
+
+/* ============================================================
+   BERTHS — write ops
+   ============================================================ */
+
+export async function nextBerthId(clientId) {
+  const q = query(collection(db, 'berths'), where('clientId', '==', clientId));
+  const snap = await getDocs(q);
+  let max = 0;
+  snap.forEach((d) => {
+    const n = Number(d.data().id ?? 0);
+    if (n > max) max = n;
+  });
+  return max + 1;
+}
+
+export async function createBerth(clientId, userId, fields) {
+  const newId = await nextBerthId(clientId);
+
+  const data = {
+    id:              newId,
+    clientId:        clientId,
+    dockName:        fields.dockName,
+    berthNumber:     fields.berthNumber,
+    length:          Number(fields.length) || 0,
+    width:           Number(fields.width)  || 0,
+    depth:           Number(fields.depth)  || 0,
+    maxAirDraft:     0,
+    hasElectric:     !!fields.hasElectric,
+    hasWater:        !!fields.hasWater,
+    status:          (fields.status || 'AVAILABLE').toUpperCase(),
+    boatId:          null,
+    assignedBoatName: null,
+    assignedDate:    null,
+    expectedEndDate: null,
+    actualEndDate:   null,
+    lockedBy:        0,
+    lockedAt:        0,
+    photoPath:       null,
+    voiceNotePath:   null,
+    lastModified:    Date.now(),
+    lastModifiedBy:  String(userId ?? ''),
+    syncedAt:        Date.now()
+  };
+
+  await setDoc(doc(db, 'berths', String(newId)), data);
+  return newId;
+}
+
+export async function deleteAllBerths(clientId) {
+  const q = query(collection(db, 'berths'), where('clientId', '==', clientId));
+  const snap = await getDocs(q);
+  if (snap.empty) return 0;
+
+  // Firestore batches cap at 500 — chunk if needed
+  const refs = snap.docs.map(d => d.ref);
+  for (let i = 0; i < refs.length; i += 500) {
+    const batch = writeBatch(db);
+    refs.slice(i, i + 500).forEach(ref => batch.delete(ref));
+    await batch.commit();
+  }
+  return refs.length;
+}
+
+export async function importBerthsFromRows(clientId, userId, rows, onProgress) {
+  let success = 0;
+  let skipped = 0;
+  const errors = [];
+
+  // Load existing dock+berth combos for duplicate detection
+  const q = query(collection(db, 'berths'), where('clientId', '==', clientId));
+  const snap = await getDocs(q);
+
+  const existing = new Set();
+  let maxId = 0;
+  snap.forEach((d) => {
+    const data = d.data();
+    const key = `${(data.dockName || '').toLowerCase()}|${(data.berthNumber || '').toLowerCase()}`;
+    existing.add(key);
+    const n = Number(data.id ?? 0);
+    if (n > maxId) maxId = n;
+  });
+
+  let nextId = maxId + 1;
+  const now = Date.now();
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+
+    try {
+      const dockName    = String(row.dockName    || '').trim();
+      const berthNumber = String(row.berthNumber || '').trim();
+
+      if (!dockName)    { errors.push(`Row ${i + 2}: missing dock name`);    continue; }
+      if (!berthNumber) { errors.push(`Row ${i + 2}: missing berth number`); continue; }
+
+      const key = `${dockName.toLowerCase()}|${berthNumber.toLowerCase()}`;
+      if (existing.has(key)) {
+        skipped++;
+        if (onProgress) onProgress(success, skipped, rows.length);
+        continue;
+      }
+
+      const length = parseFloat(row.length) || 0;
+      const width  = parseFloat(row.width)  || 0;
+      const depth  = parseFloat(row.depth)  || 0;
+
+      const hasElectric = parseBool(row.hasElectric);
+      const hasWater    = parseBool(row.hasWater);
+
+      const status = String(row.status || 'AVAILABLE').trim().toUpperCase();
+      const validStatus = ['AVAILABLE','OCCUPIED','MAINTENANCE'].includes(status)
+        ? status : 'AVAILABLE';
+
+      await setDoc(doc(db, 'berths', String(nextId)), {
+        id:               nextId,
+        clientId:         clientId,
+        dockName:         dockName,
+        berthNumber:      berthNumber,
+        length:           length,
+        width:            width,
+        depth:            depth,
+        maxAirDraft:      0,
+        hasElectric:      hasElectric,
+        hasWater:         hasWater,
+        status:           validStatus,
+        boatId:           null,
+        assignedBoatName: null,
+        assignedDate:     null,
+        expectedEndDate:  null,
+        actualEndDate:    null,
+        lockedBy:         0,
+        lockedAt:         0,
+        photoPath:        null,
+        voiceNotePath:    null,
+        lastModified:     now,
+        lastModifiedBy:   String(userId ?? ''),
+        syncedAt:         now
+      });
+
+      existing.add(key);
+      nextId++;
+      success++;
+
+      if (onProgress) onProgress(success, skipped, rows.length);
+
+    } catch (err) {
+      console.error('[berth import] row failed', i, err);
+      errors.push(`Row ${i + 2}: ${err.message || 'unknown error'}`);
+    }
+  }
+
+  return { success, skipped, failed: errors.length, errors };
+}
+
+function parseBool(raw) {
+  const s = String(raw || '').trim().toLowerCase();
+  return s === 'true' || s === 'yes' || s === '1';
+}
+
+/* ============================================================
+   BERTH BOOKING REQUESTS
+   ============================================================ */
+export function listenForBookingRequests(clientId, callback) {
+  if (!clientId || clientId <= 0) {
+    callback([], null);
+    return () => {};
+  }
+
+  const q = query(
+    collection(db, 'berth_booking_requests'),
+    where('clientId', '==', clientId)
+  );
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const requests = snap.docs.map((d) => {
+        const data = d.data();
+        return new BerthBookingRequest({
+          ...data,
+          id: Number(data.id ?? d.id),
+          _docId: d.id
+        });
+      });
+      callback(requests, null);
+    },
+    (err) => {
+      console.error('listenForBookingRequests error', err);
       callback([], err);
     }
   );

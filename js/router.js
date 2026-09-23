@@ -9,16 +9,18 @@ import { mountDashboardScreen } from './screens/DashboardScreen.js';
 import { mountAccountScreen } from './screens/AccountScreen.js';
 import { mountBerthsScreen } from './screens/BerthsScreen.js';
 import { listenForCustomers } from './db.js';
+import { mountBookingRequestsScreen } from './screens/BookingRequestsScreen.js';
 
 const PROTECTED = ['/boats', '/dashboard', '/berths', '/fleet', '/account'];
 
 const routes = {
-  '/login':     mountLoginScreen,
-  '/boats':     mountBoatsScreen,
-  '/dashboard': mountDashboardScreen,
-  '/berths':    mountBerthsScreen,
-  '/fleet':     () => renderStub('Fleet'),
-   '/account':   mountAccountScreen,
+  '/login':            mountLoginScreen,
+  '/boats':            mountBoatsScreen,
+  '/dashboard':        mountDashboardScreen,
+  '/berths':           mountBerthsScreen,
+  '/booking-requests': mountBookingRequestsScreen,
+  '/fleet':            () => renderStub('Fleet'),
+  '/account':          mountAccountScreen,
 };
 
 function renderStub(name) {

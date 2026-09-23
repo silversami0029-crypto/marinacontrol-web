@@ -5,6 +5,8 @@ import { renderBerthCard } from '../components/BerthCard.js';
 import { listenForBerths } from '../db.js';
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
+import { showBerthToolbarMenu } from '../components/BerthToolbarMenu.js';
+import { createBerth, deleteAllBerths, importBerthsFromRows } from '../db.js';
 
 let unsubscribe = null;
 let searchQuery = '';
@@ -72,9 +74,7 @@ export function mountBerthsScreen() {
     toast('Berth help coming soon');
   });
 
-  document.getElementById('berthMenuBtn').addEventListener('click', () => {
-    toast('Berth menu coming soon');
-  });
+document.getElementById('berthMenuBtn').addEventListener('click', openToolbarMenu);
 
   setupSearch();
 
@@ -203,4 +203,241 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
+}
+
+/* ============================================================
+   TOOLBAR MENU
+   ============================================================ */
+function openToolbarMenu() {
+  showBerthToolbarMenu({
+    onDockWalk:        () => toast('Dock Walk is available in the Android app'),
+    onBookingRequests: () => { location.hash = '#/booking-requests'; },
+    onImportCsv:       onImportCsv,
+    onExportCsv:       onExportCsv,
+    onRestoreDefaults: onRestoreDefaults,
+    onDeleteAll:       onDeleteAll
+  });
+}
+
+/* ---------- Import CSV ---------- */
+function onImportCsv() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.csv,.txt,text/csv';
+  input.style.display = 'none';
+
+  input.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    input.remove();
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const rows = parseBerthCsv(text);
+      if (!rows.length) {
+        toast('No valid rows found', { kind: 'error' });
+        return;
+      }
+      await runBerthImport(rows);
+    } catch (err) {
+      console.error('[berth csv] failed', err);
+      toast('Failed to read file', { kind: 'error' });
+    }
+  });
+
+  document.body.appendChild(input);
+  input.click();
+}
+
+function parseBerthCsv(text) {
+  const lines = text.split(/\r?\n/);
+  const rows = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line || !line.trim()) continue;
+
+    const parts = splitCsvLine(line);
+    if (parts.length < 8) continue;
+
+    rows.push({
+      dockName:    parts[0]?.trim() ?? '',
+      berthNumber: parts[1]?.trim() ?? '',
+      length:      parts[2]?.trim() ?? '',
+      width:       parts[3]?.trim() ?? '',
+      depth:       parts[4]?.trim() ?? '',
+      hasElectric: parts[5]?.trim() ?? '',
+      hasWater:    parts[6]?.trim() ?? '',
+      status:      parts[7]?.trim() ?? ''
+    });
+  }
+  return rows;
+}
+
+function splitCsvLine(line) {
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (c === ',' && !inQuotes) {
+      result.push(cur); cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+async function runBerthImport(rows) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'confirm-backdrop is-open';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'confirm-sheet is-open';
+  sheet.innerHTML = `
+    <div class="confirm-handle"></div>
+    <div class="confirm-title">Importing berths…</div>
+    <div class="confirm-message" id="berthImportProgress">Starting…</div>
+    <div class="import-bar-wrap"><div class="import-bar" id="berthImportBar"></div></div>
+  `;
+  document.getElementById('modalRoot').append(backdrop, sheet);
+
+  const progressEl = sheet.querySelector('#berthImportProgress');
+  const barEl      = sheet.querySelector('#berthImportBar');
+
+  try {
+    const userId = store.userProfile?.userId || 0;
+    const result = await importBerthsFromRows(
+      store.activeClientId, userId, rows,
+      (done, skipped, total) => {
+        const processed = done + skipped;
+        const pct = Math.round((processed / total) * 100);
+        progressEl.textContent = `${processed} of ${total} · ${done} added, ${skipped} skipped`;
+        barEl.style.width = pct + '%';
+      }
+    );
+
+    progressEl.textContent = 'Done';
+    barEl.style.width = '100%';
+    await new Promise(r => setTimeout(r, 300));
+    backdrop.remove();
+    sheet.remove();
+
+    toast(`Imported ${result.success} · skipped ${result.skipped} · failed ${result.failed}`,
+          { kind: result.success > 0 ? 'success' : 'info' });
+  } catch (err) {
+    console.error('[berth import] failed', err);
+    backdrop.remove();
+    sheet.remove();
+    toast('Import failed', { kind: 'error' });
+  }
+}
+
+/* ---------- Export CSV ---------- */
+function onExportCsv() {
+  const berths = store.berthsFull || [];
+  if (!berths.length) {
+    toast('No berths to export', { kind: 'error' });
+    return;
+  }
+
+  const header = 'Dock Name,Berth Number,Length (m),Width (m),Depth (m),Has Electric,Has Water,Status';
+  const lines = [...berths]
+    .sort((a,b) => {
+      const dc = (a.dockName || '').localeCompare(b.dockName || '');
+      if (dc !== 0) return dc;
+      return (a.berthNumber || '').localeCompare(b.berthNumber || '', undefined, { numeric: true });
+    })
+    .map(b => [
+      escapeCsv(b.dockName),
+      escapeCsv(b.berthNumber),
+      b.length,
+      b.width,
+      b.depth,
+      b.hasElectric,
+      b.hasWater,
+      b.status
+    ].join(','));
+
+  const csv = [header, ...lines].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'_');
+  a.download = `berths_export_${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  toast(`Exported ${berths.length} berths`, { kind: 'success' });
+}
+
+function escapeCsv(s) {
+  const str = String(s ?? '');
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
+}
+
+/* ---------- Restore Defaults ---------- */
+async function onRestoreDefaults() {
+  const { confirmSheet } = await import('../ui/confirm.js');
+  const ok = await confirmSheet({
+    title: 'Reset to Default',
+    message: 'Delete all berths and create 10 default berths (A1-A10)?',
+    confirmText: 'Reset',
+    cancelText: 'Cancel'
+  });
+  if (!ok) return;
+
+  try {
+    const userId = store.userProfile?.userId || 0;
+    await deleteAllBerths(store.activeClientId);
+
+    for (let i = 1; i <= 10; i++) {
+      await createBerth(store.activeClientId, userId, {
+        dockName:     'Main Dock',
+        berthNumber:  'A' + i,
+        length:       12,
+        width:        4,
+        depth:        3,
+        hasElectric:  true,
+        hasWater:     true,
+        status:       'AVAILABLE'
+      });
+    }
+    toast('Reset complete — 10 berths created', { kind: 'success' });
+  } catch (err) {
+    console.error('[restore defaults] failed', err);
+    toast('Reset failed', { kind: 'error' });
+  }
+}
+
+/* ---------- Delete All ---------- */
+async function onDeleteAll() {
+  const { confirmSheet } = await import('../ui/confirm.js');
+  const ok = await confirmSheet({
+    title: 'Delete All Berths',
+    message: 'Delete ALL berths? This cannot be undone. All berths and their assignments will be removed.',
+    confirmText: 'Delete',
+    cancelText: 'Cancel'
+  });
+  if (!ok) return;
+
+  try {
+    const count = await deleteAllBerths(store.activeClientId);
+    toast(`Deleted ${count} berths`, { kind: 'success' });
+  } catch (err) {
+    console.error('[delete all] failed', err);
+    toast('Failed to delete berths', { kind: 'error' });
+  }
 }
