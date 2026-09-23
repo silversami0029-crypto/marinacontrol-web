@@ -223,15 +223,20 @@ body {
   position: relative; width: 100%; margin-bottom: 16px;
 }
 .login-field input {
-  width: 100%; padding: 14px 16px;
-  background: transparent;
-  border: 1px solid #3A424C;
+  width: 100%;
+  padding: 14px 16px;
+  background: #1C222A;              /* dark_slate — same as Android */
+  border: 1px solid #2B323B;        /* dark_divider */
   border-radius: 8px;
   color: var(--color-text-primary);
-  font-size: 15px; outline: none;
-  transition: border-color .15s;
+  font-size: 15px;
+  outline: none;
+  transition: border-color .15s, background .15s;
 }
-.login-field input:focus { border-color: #F1F3F5; }
+.login-field input:focus {
+  border-color: #2E9BFF;
+  background: #202730;
+}
 .login-field input::placeholder { color: var(--color-text-secondary); }
 .login-field input:disabled { opacity: .5; }
 .login-pw-toggle {
@@ -249,7 +254,9 @@ body {
   margin: -8px 0 24px;
 }
 .login-forgot button {
-  font-size: 12px; color: var(--color-text-primary);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
 .login-forgot button:hover { text-decoration: underline; }
 .login-error {
