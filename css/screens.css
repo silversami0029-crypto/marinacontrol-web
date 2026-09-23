@@ -417,8 +417,8 @@ body {
 }
 .confirm-btn--cancel {
   background: var(--color-bg);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-divider);
+  color: var(--color-water-blue);
+  border: 1px solid var(--color-water-blue);
 }
 .confirm-btn--cancel:hover { background: #1a2028; }
 .confirm-btn--confirm {
@@ -946,8 +946,8 @@ body {
   margin: 16px 20px 0; height: 48px;
   border-radius: 14px;
   background: var(--color-bg);
-  border: 1px solid var(--color-divider);
-  color: var(--color-text-primary);
+  border: 1px solid var(--color-water-blue);
+  color: var(--color-water-blue);
   font-size: 15px; font-weight: 500;
   cursor: pointer; transition: background .15s;
 }
