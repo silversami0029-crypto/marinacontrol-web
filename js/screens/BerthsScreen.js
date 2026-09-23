@@ -74,10 +74,9 @@ export function mountBerthsScreen() {
   `;
 
   // Wire header buttons
-   document.getElementById('berthHelp').addEventListener('click', showBerthHelp);
-  });
-
-document.getElementById('berthMenuBtn').addEventListener('click', openToolbarMenu);
+  // Wire header buttons
+  document.getElementById('berthHelp').addEventListener('click', showBerthHelp);
+  document.getElementById('berthMenuBtn').addEventListener('click', openToolbarMenu);
 
   setupSearch();
 
