@@ -1673,3 +1673,241 @@ body {
   color: var(--color-text-secondary);
   font-size: 14px;
 }
+/* ============================================================
+   UTILITIES SHEET
+   ============================================================ */
+.util-body {
+  padding: 8px 20px 12px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.util-block {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+.util-block:last-child { border-bottom: none; }
+
+.util-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.util-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-top: 6px;
+}
+
+.util-unit {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-left: 6px;
+}
+
+.util-meta {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.util-notes {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--color-bg);
+  border-radius: 8px;
+  line-height: 1.4;
+}
+
+.util-empty {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  margin-top: 6px;
+}
+
+.util-actions {
+  padding: 12px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.util-btn {
+  height: 48px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.util-btn--primary {
+  background: var(--color-water-blue);
+  color: #FFFFFF;
+  border: none;
+}
+.util-btn--primary:hover { opacity: .92; }
+
+/* ============================================================
+   VIEW BERTH — UTILITIES SECTION
+   ============================================================ */
+.view-util-section {
+  padding: 8px 20px 12px;
+}
+.view-util-heading {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 10px;
+}
+.view-util-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.view-util-block {
+  padding: 0;
+}
+.view-util-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+.view-util-line {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+.view-util-empty {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Buttons row */
+.view-berth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px 20px 8px;
+}
+.view-berth-btn {
+  height: 44px;
+  border-radius: 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-water-blue);
+  color: var(--color-water-blue);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s;
+}
+.view-berth-btn:hover { background: rgba(33,150,243,.08); }
+
+.view-berth-generate {
+  display: block;
+  width: calc(100% - 40px);
+  margin: 4px 20px 8px;
+  padding: 10px 0;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  cursor: pointer;
+  font-family: inherit;
+}
+.view-berth-generate:hover { color: var(--color-water-blue); }
+
+/* Add Reading dialog bottom buttons */
+.util-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 16px;
+}
+.util-cancel-btn,
+.util-save-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--color-water-blue);
+}
+.util-cancel-btn:hover,
+.util-save-btn:hover { background: rgba(33,150,243,.10); }
+.util-save-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Berth Details sheet — wider */
+.berth-details-sheet {
+  padding: 12px 20px 20px;
+}
+
+.berth-details-sheet .bkr-detail-body {
+  padding: 6px 0 12px;
+}
+
+.berth-details-sheet .view-util-section {
+  padding: 8px 0 12px;
+}
+
+.berth-details-sheet .view-berth-actions {
+  padding: 12px 0 8px;
+}
+
+.berth-details-sheet .view-berth-generate {
+  width: 100%;
+  margin: 4px 0 8px;
+}
+
+.berth-details-sheet .assign-cancel {
+  width: 100%;
+  margin: 12px 0 0;
+}
+
+/* Force Berth Details sheet to be wide */
+.sheet.berth-details-sheet,
+.sheet.berth-details-sheet * {
+  box-sizing: border-box;
+}
+
+.sheet.berth-details-sheet {
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  width: 100% !important;
+  max-width: var(--phone-w) !important;
+}
+
+.sheet.berth-details-sheet .bkr-detail-body,
+.sheet.berth-details-sheet .view-util-section,
+.sheet.berth-details-sheet .view-berth-actions,
+.sheet.berth-details-sheet .assign-title,
+.sheet.berth-details-sheet .assign-divider {
+  width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.sheet.berth-details-sheet .assign-cancel {
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}

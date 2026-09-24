@@ -698,3 +698,111 @@ export async function getMarinaStats(clientId) {
     occupancyRate
   };
 }
+
+/* ============================================================
+   UTILITY READINGS
+   ============================================================ */
+
+export function listenForUtilityReadings(clientId, berthId, callback) {
+  if (!clientId || !berthId) { callback([], null); return () => {}; }
+
+  const q = query(
+    collection(db, 'utility_readings'),
+    where('clientId', '==', clientId),
+    where('berthId', '==', berthId)
+  );
+
+  return onSnapshot(q, (snap) => {
+    const readings = snap.docs.map(d => {
+      const data = d.data();
+      return {
+        _docId:      d.id,
+        id:          Number(data.id ?? d.id),
+        clientId:    Number(data.clientId ?? clientId),
+        berthId:     Number(data.berthId ?? berthId),
+        utilityType: data.utilityType || '',
+        readingMode: data.readingMode || 'CUMULATIVE',
+        readingType: data.readingType || '',
+        value:       Number(data.value ?? 0),
+        unit:        data.unit || '',
+        notes:       data.notes || '',
+        recordedAt:  Number(data.recordedAt ?? 0),
+        source:      data.source || 'MANUAL'
+      };
+    });
+    callback(readings, null);
+  }, (err) => {
+    console.error('listenForUtilityReadings error', err);
+    callback([], err);
+  });
+}
+
+export async function nextUtilityReadingId(clientId) {
+  const q = query(collection(db, 'utility_readings'), where('clientId', '==', clientId));
+  const snap = await getDocs(q);
+  let max = 0;
+  snap.forEach(d => {
+    const n = Number(d.data().id ?? 0);
+    if (n > max) max = n;
+  });
+  return max + 1;
+}
+
+export async function createUtilityReading(clientId, userId, fields) {
+  const newId = await nextUtilityReadingId(clientId);
+
+  const data = {
+    id:            newId,
+    clientId:      clientId,
+    berthId:       Number(fields.berthId),
+    assetId:       null,
+    utilityType:   fields.utilityType,     // ELECTRICITY | WATER
+    readingType:   fields.readingType,     // ENERGY | WATER_VOLUME
+    readingMode:   fields.readingMode,     // CUMULATIVE | INTERVAL | INSTANTANEOUS
+    value:         Number(fields.value),
+    unit:          fields.unit,            // kWh | L
+    notes:         fields.notes || '',
+    source:        'MANUAL',
+    recordedAt:    Date.now(),
+    lastModified:  Date.now(),
+    lastModifiedBy: String(userId ?? '')
+  };
+
+  await setDoc(doc(db, 'utility_readings', String(newId)), data);
+  console.log('[db] Utility reading created', newId);
+  return newId;
+}
+
+/* ============================================================
+   UTILITY TARIFFS
+   ============================================================ */
+
+/**
+ * Get the active tariff for a given utility type at a given moment.
+ * Returns { pricingMode, pricePerUnit, unit, effectiveFrom } or null.
+ */
+export async function getActiveTariff(clientId, utilityType) {
+  const q = query(
+    collection(db, 'utility_tariffs'),
+    where('clientId', '==', clientId),
+    where('utilityType', '==', utilityType),
+    where('active', '==', true)
+  );
+
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+
+  // If multiple active, prefer the most recent by effectiveFrom
+  const sorted = snap.docs
+    .map(d => d.data())
+    .sort((a, b) => (b.effectiveFrom || 0) - (a.effectiveFrom || 0));
+
+  const t = sorted[0];
+
+  return {
+    pricingMode:  t.pricingMode || 'METERED',
+    pricePerUnit: Number(t.pricePerUnit ?? 0),
+    unit:         t.unit || '',
+    effectiveFrom: Number(t.effectiveFrom ?? 0)
+  };
+}

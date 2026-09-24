@@ -2,19 +2,26 @@
 // Berths grid — mirrors fragment_berths.xml
 
 import { renderBerthCard } from '../components/BerthCard.js';
-import { listenForBerths } from '../db.js';
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { showBerthToolbarMenu } from '../components/BerthToolbarMenu.js';
-import { createBerth, deleteAllBerths, importBerthsFromRows } from '../db.js';
 import { showBerthMenu } from '../components/BerthMenuSheet.js';
 import { confirmSheet } from '../ui/confirm.js';
 import { showBerthHelp } from '../components/BerthHelpDialog.js';
 import { showAssignBoatSheet } from '../components/AssignBoatSheet.js';
-import { updateBerthStatus, updateBerth, deleteBerth, assignBoatToBerth, releaseBoatFromBerth } from '../db.js';
+import { showAddReadingDialog } from '../components/UtilitiesSheet.js';
+import {
+  listenForBerths,
+  createBerth, deleteAllBerths, importBerthsFromRows,
+  updateBerthStatus, updateBerth, deleteBerth,
+  assignBoatToBerth, releaseBoatFromBerth,
+  listenForUtilityReadings, createUtilityReading,
+  getActiveTariff
+} from '../db.js';
 
 let unsubscribe = null;
 let searchQuery = '';
+let viewUtilUnsub = null;
 
 export function mountBerthsScreen() {
   if (!store.activeClientId) {
@@ -74,8 +81,6 @@ export function mountBerthsScreen() {
     </div>
   `;
 
-  // Wire header buttons
-  // Wire header buttons
   document.getElementById('berthHelp').addEventListener('click', showBerthHelp);
   document.getElementById('berthMenuBtn').addEventListener('click', openToolbarMenu);
 
@@ -156,7 +161,6 @@ function renderBerthGrid() {
     return;
   }
 
-  // Sort: by dock name, then berth number
   const sorted = [...berths].sort((a, b) => {
     const dc = (a.dockName || '').localeCompare(b.dockName || '');
     if (dc !== 0) return dc;
@@ -171,7 +175,7 @@ function renderBerthGrid() {
 
     el.addEventListener('click', (e) => {
       if (e.target.closest('button')) return;
-         openBerthMenu(berth);
+      openBerthMenu(berth);
     });
 
     el.querySelector('.berth-card-kebab')?.addEventListener('click', (e) => {
@@ -190,8 +194,8 @@ function updateSummary() {
   const occupied = berths.filter(b => b.status === 'OCCUPIED').length;
   const maintenance = berths.filter(b => b.status === 'MAINTENANCE').length;
   const available = berths.filter(b => b.status === 'AVAILABLE').length;
-  const booked = 0;        // no booking system yet
-  const alerts = 0;        // no asset faults yet
+  const booked = 0;
+  const alerts = 0;
 
   const pct = total > 0 ? Math.round((occupied * 100) / total) : 0;
 
@@ -393,7 +397,6 @@ function escapeCsv(s) {
 
 /* ---------- Restore Defaults ---------- */
 async function onRestoreDefaults() {
-  const { confirmSheet } = await import('../ui/confirm.js');
   const ok = await confirmSheet({
     title: 'Reset to Default',
     message: 'Delete all berths and create 10 default berths (A1-A10)?',
@@ -427,7 +430,6 @@ async function onRestoreDefaults() {
 
 /* ---------- Delete All ---------- */
 async function onDeleteAll() {
-  const { confirmSheet } = await import('../ui/confirm.js');
   const ok = await confirmSheet({
     title: 'Delete All Berths',
     message: 'Delete ALL berths? This cannot be undone. All berths and their assignments will be removed.',
@@ -458,6 +460,7 @@ function openBerthMenu(berth) {
     onAssignBoat:     onAssignBoat,
     onReleaseBoat:    onReleaseBoat,
     onViewBerth:      onViewBerth,
+    onUtilities:      onViewBerth,
     onEditBerth:      onEditBerth,
     onDeleteBerth:    onDeleteBerth
   });
@@ -476,26 +479,29 @@ function onSetStatus(newStatus) {
   };
 }
 
+/* ============================================================
+   VIEW BERTH + UTILITIES
+   ============================================================ */
 function onViewBerth(berth) {
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
 
   const sheet = document.createElement('div');
-  sheet.className = 'sheet assign-sheet';
+  sheet.className = 'sheet berth-details-sheet';
 
   const status = (berth.status || 'AVAILABLE').toUpperCase();
   const boat = berth.assignedBoatName || 'None';
+  const utilsId = 'viewUtil_' + berth.id;
 
   sheet.innerHTML = `
     <div class="assign-handle"></div>
-    <div class="assign-title">Berth ${escapeHtml(berth.berthNumber || '')}</div>
+    <div class="assign-title">Berth Details</div>
     <div class="assign-divider"></div>
 
     <div class="bkr-detail-body">
       <div class="bkr-detail-row"><span>Dock</span><b>${escapeHtml(berth.dockName || '—')}</b></div>
-      <div class="bkr-detail-row"><span>Number</span><b>${escapeHtml(berth.berthNumber || '—')}</b></div>
-      <div class="bkr-detail-row"><span>Length</span><b>${berth.length} m</b></div>
-      <div class="bkr-detail-row"><span>Width</span><b>${berth.width} m</b></div>
+      <div class="bkr-detail-row"><span>Berth</span><b>${escapeHtml(berth.berthNumber || '—')}</b></div>
+      <div class="bkr-detail-row"><span>Size</span><b>${berth.length}m x ${berth.width}m</b></div>
       <div class="bkr-detail-row"><span>Depth</span><b>${berth.depth} m</b></div>
       <div class="bkr-detail-row"><span>Electric</span><b>${berth.hasElectric ? 'Yes' : 'No'}</b></div>
       <div class="bkr-detail-row"><span>Water</span><b>${berth.hasWater ? 'Yes' : 'No'}</b></div>
@@ -504,7 +510,18 @@ function onViewBerth(berth) {
     </div>
 
     <div class="assign-divider"></div>
-    <button class="assign-cancel" id="berthDetailClose">Close</button>
+    <div class="view-util-section">
+      <div class="view-util-heading">Utilities</div>
+      <div id="${utilsId}" class="view-util-body">Loading…</div>
+    </div>
+
+    <div class="assign-divider"></div>
+    <div class="view-berth-actions">
+      <button class="view-berth-btn" id="viewAddReading">+ Reading</button>
+      <button class="view-berth-btn" id="viewTariffs">£ Tariffs</button>
+    </div>
+    <button class="view-berth-generate" id="viewGenerate">Generate Invoice ›</button>
+    <button class="assign-cancel" id="berthDetailClose">CLOSE</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -517,18 +534,124 @@ function onViewBerth(berth) {
     backdrop.classList.remove('is-open');
     sheet.classList.remove('is-open');
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
+    if (viewUtilUnsub) { try { viewUtilUnsub(); } catch (e) {} viewUtilUnsub = null; }
   };
 
   backdrop.addEventListener('click', close);
   sheet.querySelector('#berthDetailClose').addEventListener('click', close);
+
+  sheet.querySelector('#viewAddReading').addEventListener('click', () => {
+    openAddReadingFromView(berth);
+  });
+
+  sheet.querySelector('#viewTariffs').addEventListener('click', () => {
+    close();
+    openTariffsSheet(berth);
+  });
+
+  sheet.querySelector('#viewGenerate').addEventListener('click', () => {
+    toast('Invoice generation coming soon');
+  });
+
+  renderViewUtilities(berth, utilsId);
 }
 
+async function renderViewUtilities(berth, containerId) {
+  if (viewUtilUnsub) { try { viewUtilUnsub(); } catch (e) {} viewUtilUnsub = null; }
+
+  let elecTariff = null;
+  let waterTariff = null;
+
+  try {
+    elecTariff = await getActiveTariff(store.activeClientId, 'ELECTRICITY');
+    waterTariff = await getActiveTariff(store.activeClientId, 'WATER');
+  } catch (err) {
+    console.warn('[utilities] tariffs unavailable', err);
+  }
+
+  viewUtilUnsub = listenForUtilityReadings(
+    store.activeClientId,
+    berth.id,
+    (readings, err) => {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      if (err) {
+        container.innerHTML = `<div class="view-util-empty">Failed to load</div>`;
+        return;
+      }
+
+      const elec = latestTwoFor(readings, 'ELECTRICITY');
+      const water = latestTwoFor(readings, 'WATER');
+
+      container.innerHTML = `
+        ${renderViewUtilBlock('Electricity', elec, elecTariff, 'kWh')}
+        ${renderViewUtilBlock('Water', water, waterTariff, 'L')}
+      `;
+    }
+  );
+}
+
+function latestTwoFor(readings, type) {
+  const filtered = (readings || [])
+    .filter(r => r.utilityType === type)
+    .sort((a, b) => (b.recordedAt || 0) - (a.recordedAt || 0));
+  return {
+    latest: filtered[0] || null,
+    previous: filtered[1] || null
+  };
+}
+
+function renderViewUtilBlock(label, { latest, previous }, tariff, unit) {
+  if (!latest) {
+    return `
+      <div class="view-util-block">
+        <div class="view-util-label">${label}</div>
+        <div class="view-util-empty">No usage data available</div>
+      </div>
+    `;
+  }
+
+  const consumption = previous ? (latest.value - previous.value) : null;
+  const pricingMode = tariff?.pricingMode || 'METERED';
+  const price = tariff?.pricePerUnit || 0;
+  const isIncluded = pricingMode === 'INCLUDED';
+  const charge = (consumption != null && !isIncluded) ? consumption * price : 0;
+
+  const tariffLine = isIncluded
+    ? 'Tariff: Included'
+    : (tariff ? `Tariff: £${price.toFixed(4)}/${unit}` : 'Tariff: Not set');
+
+  return `
+    <div class="view-util-block">
+      <div class="view-util-label">${label}</div>
+      <div class="view-util-line">Latest: ${latest.value} ${unit}</div>
+      ${consumption != null ? `<div class="view-util-line">Since last reading: ${consumption.toFixed(2)} ${unit}</div>` : ''}
+      <div class="view-util-line">${tariffLine}</div>
+      ${consumption != null && !isIncluded ? `<div class="view-util-line">Charge: £${charge.toFixed(2)}</div>` : ''}
+    </div>
+  `;
+}
+
+function openAddReadingFromView(berth) {
+  showAddReadingDialog(berth, async (fields) => {
+    const userId = store.userProfile?.userId || 0;
+    await createUtilityReading(store.activeClientId, userId, fields);
+    toast('Reading saved', { kind: 'success' });
+  });
+}
+
+/* ============================================================
+   EDIT BERTH
+   ============================================================ */
 function onEditBerth(berth) {
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
 
   const sheet = document.createElement('div');
   sheet.className = 'sheet';
+
+  const status = (berth.status || 'AVAILABLE').toUpperCase();
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
@@ -644,12 +767,10 @@ function escapeAttr(s) {
   return String(s ?? '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-
 /* ============================================================
    ASSIGN / RELEASE BOAT
    ============================================================ */
 async function onAssignBoat(berth) {
-  // Fetch boats live from Firestore (don't rely on store cache)
   const { getDocs, query, collection, where } = await import('../firebase.js');
   const { db } = await import('../firebase.js');
 
@@ -666,7 +787,6 @@ async function onAssignBoat(berth) {
       };
     });
 
-    // Filter out boats already assigned to any berth
     const assignedBoatIds = new Set(
       (store.berthsFull || [])
         .filter(b => b.boatId != null)
@@ -714,4 +834,145 @@ async function onReleaseBoat(berth) {
     console.error('[release boat]', err);
     toast('Failed to release boat', { kind: 'error' });
   }
+}
+
+/* ============================================================
+   TARIFFS
+   ============================================================ */
+async function openTariffsSheet(berth) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sheet-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+
+  const now = Date.now();
+  let elecTariff = null;
+  let waterTariff = null;
+
+  try {
+    elecTariff = await getActiveTariff(store.activeClientId, 'ELECTRICITY');
+    waterTariff = await getActiveTariff(store.activeClientId, 'WATER');
+  } catch (err) {
+    console.warn('[tariffs] load failed', err);
+  }
+
+  const elecPrice = elecTariff?.pricePerUnit || 0;
+  const waterIncluded = waterTariff?.pricingMode === 'INCLUDED';
+  const waterPrice = waterTariff?.pricePerUnit || 0;
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" style="text-align:center;">Utility Tariffs</div>
+
+    <form id="tariffsForm" class="add-form" novalidate>
+      <div class="add-scroll">
+
+        <div class="add-section-title">Electricity</div>
+        <input class="add-input" id="tf-elecPrice" type="number" step="0.01"
+               placeholder="Price per kWh" value="${elecPrice > 0 ? elecPrice : ''}">
+        <input class="add-input" id="tf-elecDate" type="date" value="${today}">
+        <div class="add-section-sub">Effective from</div>
+
+        <div class="add-section-title" style="margin-top:20px;">Water</div>
+        <select class="add-input add-select" id="tf-waterMode">
+          <option value="METERED"  ${!waterIncluded ? 'selected' : ''}>Metered</option>
+          <option value="INCLUDED" ${waterIncluded  ? 'selected' : ''}>Included</option>
+        </select>
+        <input class="add-input" id="tf-waterPrice" type="number" step="0.0001"
+               placeholder="Price per L" value="${waterPrice > 0 ? waterPrice : ''}"
+               ${waterIncluded ? 'disabled' : ''}>
+        <input class="add-input" id="tf-waterDate" type="date" value="${today}">
+        <div class="add-section-sub">Effective from</div>
+
+      </div>
+
+      <button type="submit" class="add-save" id="tf-save">Save Tariffs</button>
+    </form>
+  `;
+
+  document.getElementById('modalRoot').append(backdrop, sheet);
+  requestAnimationFrame(() => {
+    backdrop.classList.add('is-open');
+    sheet.classList.add('is-open');
+  });
+
+  const close = () => {
+    backdrop.classList.remove('is-open');
+    sheet.classList.remove('is-open');
+    setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
+  };
+
+  backdrop.addEventListener('click', close);
+
+  const modeEl = sheet.querySelector('#tf-waterMode');
+  const waterPriceEl = sheet.querySelector('#tf-waterPrice');
+
+  modeEl.addEventListener('change', () => {
+    const included = modeEl.value === 'INCLUDED';
+    waterPriceEl.disabled = included;
+    if (included) waterPriceEl.value = '0.00';
+  });
+
+  const form = sheet.querySelector('#tariffsForm');
+  const save = sheet.querySelector('#tf-save');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    save.disabled = true;
+    save.textContent = 'Saving…';
+
+    try {
+      const elecVal = parseFloat(sheet.querySelector('#tf-elecPrice').value);
+      if (isNaN(elecVal)) throw new Error('Enter electricity price');
+
+      const waterMode = modeEl.value;
+      let waterVal = 0;
+      if (waterMode === 'METERED') {
+        waterVal = parseFloat(waterPriceEl.value);
+        if (isNaN(waterVal)) throw new Error('Enter water price');
+      }
+
+      const elecDate = new Date(sheet.querySelector('#tf-elecDate').value).getTime() || Date.now();
+      const waterDate = new Date(sheet.querySelector('#tf-waterDate').value).getTime() || Date.now();
+
+      const userId = store.userProfile?.userId || 0;
+
+      await saveTariff(store.activeClientId, userId, {
+        utilityType: 'ELECTRICITY',
+        unit: 'kWh',
+        pricingMode: 'METERED',
+        pricePerUnit: elecVal,
+        effectiveFrom: elecDate
+      });
+
+      await saveTariff(store.activeClientId, userId, {
+        utilityType: 'WATER',
+        unit: 'L',
+        pricingMode: waterMode,
+        pricePerUnit: waterVal,
+        effectiveFrom: waterDate
+      });
+
+      // Bust the tariff cache so View Berth reloads fresh
+      if (store._tariffCache) delete store._tariffCache;
+
+      close();
+      toast('Tariffs saved', { kind: 'success' });
+
+    } catch (err) {
+      console.error('[tariffs] save failed', err);
+      save.disabled = false;
+      save.textContent = 'Save Tariffs';
+      let errEl = sheet.querySelector('.add-error');
+      if (!errEl) {
+        errEl = document.createElement('div');
+        errEl.className = 'add-error';
+        form.insertBefore(errEl, save);
+      }
+      errEl.textContent = err.message || 'Failed to save tariffs.';
+    }
+  });
 }
