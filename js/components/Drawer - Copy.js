@@ -72,11 +72,11 @@ const SECTIONS = [
     title: 'QUICK ACTIONS',
     icon: ICONS.quick,
     items: [
-      { id: 'assign-berth',   label: 'Assign Berth',    route: '#/berths' },
-      { id: 'ai-mechanic',    label: 'AI Mechanic',     toast: 'AI Mechanic is coming to the web app' },
-      { id: 'create-invoice', label: 'Create Invoice',  toast: 'Create Invoice is coming to the web app' },
-      { id: 'add-task',       label: 'Add Task',        toast: 'Add Task is coming to the web app' },
-      { id: 'log-inspection', label: 'Log Inspection',  toast: 'Log Inspection is coming to the web app' }
+      { label: 'Assign Berth',    route: '#/berths' },
+      { label: 'AI Mechanic',     toast: 'AI Mechanic is coming to the web app' },
+      { label: 'Create Invoice',  toast: 'Create Invoice is coming to the web app' },
+      { label: 'Add Task',        toast: 'Add Task is coming to the web app' },
+      { label: 'Log Inspection',  toast: 'Log Inspection is coming to the web app' }
     ]
   },
   {
@@ -84,10 +84,10 @@ const SECTIONS = [
     title: 'OPERATIONS',
     icon: ICONS.operations,
     items: [
-      { id: 'fleet-overview',   label: 'Fleet Overview',     route: '#/fleet' },
-      { id: 'berth-management', label: 'Berth Management',   route: '#/berths' },
-      { id: 'maintenance',      label: 'Maintenance',        toast: 'Maintenance is coming to the web app' },
-      { id: 'safety',           label: 'Safety Inspections', toast: 'Safety Inspections is coming to the web app' }
+      { label: 'Fleet Overview',       route: '#/fleet' },
+      { label: 'Berth Management',     route: '#/berths' },
+      { label: 'Maintenance',          toast: 'Maintenance is coming to the web app' },
+      { label: 'Safety Inspections',   toast: 'Safety Inspections is coming to the web app' }
     ]
   },
   {
@@ -95,9 +95,9 @@ const SECTIONS = [
     title: 'FINANCE',
     icon: ICONS.finance,
     items: [
-      { id: 'invoices',     label: 'Invoices & Payments',  toast: 'Invoices & Payments is coming to the web app' },
-      { id: 'revenue',      label: 'Revenue Summary',      toast: 'Revenue Summary is coming to the web app' },
-      { id: 'outstanding',  label: 'Outstanding Payments', toast: 'Outstanding Payments is coming to the web app' }
+      { label: 'Invoices & Payments',    toast: 'Invoices & Payments is coming to the web app' },
+      { label: 'Revenue Summary',        toast: 'Revenue Summary is coming to the web app' },
+      { label: 'Outstanding Payments',   toast: 'Outstanding Payments is coming to the web app' }
     ]
   },
   {
@@ -105,9 +105,9 @@ const SECTIONS = [
     title: 'CUSTOMERS',
     icon: ICONS.customers,
     items: [
-      { id: 'add-customer',    label: 'Add Customer',       toast: 'Add Customer is coming to the web app' },
-      { id: 'customer-dir',    label: 'Customer Directory', toast: 'Customer Directory is coming to the web app' },
-      { id: 'live-360',        label: 'Live 360',           toast: 'Live 360 is coming to the web app' }
+      { label: 'Add Customer',         toast: 'Add Customer is coming to the web app' },
+      { label: 'Customer Directory',   toast: 'Customer Directory is coming to the web app' },
+      { label: 'Live 360',             toast: 'Live 360 is coming to the web app' }
     ]
   },
   {
@@ -115,10 +115,10 @@ const SECTIONS = [
     title: 'STAFF',
     icon: ICONS.staff,
     items: [
-      { id: 'user-mgmt',        label: 'User Management',     toast: 'User Management is coming to the web app' },
-      { id: 'crew-mgmt',        label: 'Crew Management',     toast: 'Crew Management is coming to the web app' },
-      { id: 'permissions',      label: 'Permissions & Roles', toast: 'Permissions & Roles is coming to the web app' },
-      { id: 'shift-schedule',   label: 'Shift Schedule',      toast: 'Shift Schedule is coming to the web app' }
+      { label: 'User Management',        toast: 'User Management is coming to the web app' },
+      { label: 'Crew Management',        toast: 'Crew Management is coming to the web app' },
+      { label: 'Permissions & Roles',    toast: 'Permissions & Roles is coming to the web app' },
+      { label: 'Shift Schedule',         toast: 'Shift Schedule is coming to the web app' }
     ]
   },
   {
@@ -126,9 +126,9 @@ const SECTIONS = [
     title: 'REPORTS',
     icon: ICONS.reports,
     items: [
-      { id: 'daily-report', label: 'Daily Report',      toast: 'Daily Report is coming to the web app' },
-      { id: 'occupancy',    label: 'Occupancy Trends',  toast: 'Occupancy Trends is coming to the web app' },
-      { id: 'export-data',  label: 'Export Data',       toast: 'Export Data is coming to the web app' }
+      { label: 'Daily Report',        toast: 'Daily Report is coming to the web app' },
+      { label: 'Occupancy Trends',    toast: 'Occupancy Trends is coming to the web app' },
+      { label: 'Export Data',         toast: 'Export Data is coming to the web app' }
     ]
   },
   {
@@ -136,73 +136,52 @@ const SECTIONS = [
     title: 'SETTINGS & SUPPORT',
     icon: ICONS.settings,
     items: [
-      { id: 'account',      label: 'Account',              route: '#/account' },
-      { id: 'subscription', label: 'Manage Subscription',  toast: 'Manage Subscription is coming to the web app' },
-      { id: 'billing',      label: 'Billing History',      toast: 'Billing History is coming to the web app' },
-      { id: 'notifications',label: 'Notifications',        toast: 'Notifications is coming to the web app' },
-      { id: 'help',         label: 'Help Center',          toast: 'Help Center is coming to the web app' },
-      { id: 'emergency',    label: 'Emergency Contacts',   toast: 'Emergency Contacts is coming to the web app' },
-      { id: 'about',        label: 'About',                toast: 'About is coming to the web app' }
+      { label: 'Account',                  route: '#/account' },
+      { label: 'Manage Subscription',      toast: 'Manage Subscription is coming to the web app' },
+      { label: 'Billing History',          toast: 'Billing History is coming to the web app' },
+      { label: 'Notifications',            toast: 'Notifications is coming to the web app' },
+      { label: 'Help Center',              toast: 'Help Center is coming to the web app' },
+      { label: 'Emergency Contacts',       toast: 'Emergency Contacts is coming to the web app' },
+      { label: 'About',                    toast: 'About is coming to the web app' }
     ]
   }
 ];
 
 let drawerOpen = false;
-let lastSelectedId = null;
 
 export function initDrawer() {
   const backdrop = document.getElementById('drawerBackdrop');
   const drawer   = document.getElementById('appDrawer');
   if (!drawer || !backdrop) return;
 
+  // Render sections
   const scroll = drawer.querySelector('.drawer-scroll');
   scroll.innerHTML = SECTIONS.map(renderSection).join('') + renderUserRow();
 
-  drawer.querySelectorAll('.drawer-item').forEach(el => {
-    el.addEventListener('click', () => {
-      const route    = el.dataset.route;
-      const toastMsg = el.dataset.toast;
-      const itemId   = el.dataset.itemId;
-
-      lastSelectedId = itemId;
-      closeDrawer();                    // ← close first
-
-      if (route) {
-        location.hash = route;
-      } else if (toastMsg) {
-        toast(toastMsg);
-      }
-    });
-  });
-
-  // Section collapse toggles
+  // Wire section collapse toggles
   drawer.querySelectorAll('.drawer-section-header').forEach(header => {
     header.addEventListener('click', () => {
       header.closest('.drawer-section').classList.toggle('is-collapsed');
     });
   });
 
-  // Item clicks
+  // Wire item clicks
   drawer.querySelectorAll('.drawer-item').forEach(el => {
     el.addEventListener('click', () => {
       const route    = el.dataset.route;
       const toastMsg = el.dataset.toast;
-      const itemId   = el.dataset.itemId;
 
-      // Remember selection
-      lastSelectedId = itemId;
-      applySelection();
+      closeDrawer();
 
-      // Navigate or toast — but keep drawer open
       if (route) {
         location.hash = route;
       } else if (toastMsg) {
-        toast(toastMsg);
+        setTimeout(() => toast(toastMsg), 250);
       }
     });
   });
 
-  // User row
+  // Wire user row
   drawer.querySelector('.drawer-user')?.addEventListener('click', () => {
     closeDrawer();
     location.hash = '#/account';
@@ -214,14 +193,12 @@ export function initDrawer() {
     if (e.key === 'Escape' && drawerOpen) closeDrawer();
   });
 
+  // Hamburger
   const btn = document.getElementById('btnTopMenu');
   if (btn && btn.dataset.drawerWired !== '1') {
     btn.dataset.drawerWired = '1';
     btn.addEventListener('click', toggleDrawer);
   }
-
-  // Sync highlight on route changes
-  window.addEventListener('hashchange', applySelection);
 }
 
 function renderSection(section) {
@@ -236,7 +213,6 @@ function renderSection(section) {
       <div class="drawer-section-items">
         ${section.items.map(item => `
           <button class="drawer-item"
-                  data-item-id="${item.id}"
                   ${item.route ? `data-route="${item.route}"` : ''}
                   ${item.toast ? `data-toast="${escapeAttr(item.toast)}"` : ''}>
             <span class="drawer-item-bullet">•</span>
@@ -277,49 +253,8 @@ function computeInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-/**
- * Update the pill highlight on the currently selected item.
- * Priority: last tapped item → falls back to matching the current route.
- */
-export function applySelection() {
-  const drawer = document.getElementById('appDrawer');
-  if (!drawer) return;
-
-  // Clear all highlights
-  drawer.querySelectorAll('.drawer-item').forEach(el => {
-    el.classList.remove('is-active');
-  });
-
-  let target = null;
-
-  // 1. Last tapped item
-  if (lastSelectedId) {
-    target = drawer.querySelector(`.drawer-item[data-item-id="${lastSelectedId}"]`);
-  }
-
-  // 2. Fallback — match current route
-  if (!target) {
-    const hash  = (location.hash || '').replace(/^#/, '');
-    const route = '/' + hash.split('?')[0].replace(/^\//, '');
-    target = drawer.querySelector(`.drawer-item[data-route="#${route}"]`);
-  }
-
-  if (!target) return;
-
-  target.classList.add('is-active');
-
-  // Auto-expand its section
-  const section = target.closest('.drawer-section');
-  if (section) section.classList.remove('is-collapsed');
-}
-
 export function toggleDrawer() {
-  if (drawerOpen) {
-    closeDrawer();
-  } else {
-    applySelection();
-    openDrawer();
-  }
+  drawerOpen ? closeDrawer() : openDrawer();
 }
 
 function openDrawer() {
