@@ -12,8 +12,9 @@ import { listenForCustomers } from './db.js';
 import { mountBookingRequestsScreen } from './screens/BookingRequestsScreen.js';
 import { initDrawer } from './components/Drawer.js';
 import { mountBoatDashboardScreen } from './screens/BoatDashboardScreen.js';
+import { mountUserManagementScreen } from './screens/UserManagementScreen.js';
 
-const PROTECTED = ['/boats', '/dashboard', '/berths', '/fleet', '/account'];
+const PROTECTED = ['/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management'];
 
 const routes = {
   '/login':            mountLoginScreen,
@@ -22,8 +23,10 @@ const routes = {
   '/boat-dashboard':   mountBoatDashboardScreen,
   '/berths':           mountBerthsScreen,
   '/booking-requests': mountBookingRequestsScreen,
+  '/user-management':  mountUserManagementScreen,
   '/fleet':            () => renderStub('Fleet'),
   '/account':          mountAccountScreen,
+ 
 };
 
 function renderStub(name) {

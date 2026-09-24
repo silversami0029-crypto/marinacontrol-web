@@ -806,3 +806,32 @@ export async function getActiveTariff(clientId, utilityType) {
     effectiveFrom: Number(t.effectiveFrom ?? 0)
   };
 }
+/* ============================================================
+   USERS
+   ============================================================ */
+export function listenForUsers(clientId, callback) {
+  if (!clientId || clientId <= 0) { callback([], null); return () => {}; }
+
+  const q = query(
+    collection(db, 'users'),
+    where('clientId', '==', clientId)
+  );
+
+  return onSnapshot(q, (snap) => {
+    const users = snap.docs.map(d => {
+      const data = d.data();
+      return {
+        _docId:        d.id,
+        id:            Number(data.userId ?? data.id ?? d.id),
+        name:          data.name  || '',
+        email:         data.email || '',
+        role:          data.role  || 'staff',
+        clientId:      Number(data.clientId ?? clientId)
+      };
+    });
+    callback(users, null);
+  }, (err) => {
+    console.error('listenForUsers error', err);
+    callback([], err);
+  });
+}

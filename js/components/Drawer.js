@@ -115,7 +115,7 @@ const SECTIONS = [
     title: 'STAFF',
     icon: ICONS.staff,
     items: [
-      { id: 'user-mgmt',        label: 'User Management',     toast: 'User Management is coming to the web app' },
+        { id: 'user-mgmt',        label: 'User Management',     route: '#/user-management' },
       { id: 'crew-mgmt',        label: 'Crew Management',     toast: 'Crew Management is coming to the web app' },
       { id: 'permissions',      label: 'Permissions & Roles', toast: 'Permissions & Roles is coming to the web app' },
       { id: 'shift-schedule',   label: 'Shift Schedule',      toast: 'Shift Schedule is coming to the web app' }
