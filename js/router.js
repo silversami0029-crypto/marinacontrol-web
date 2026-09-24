@@ -10,6 +10,7 @@ import { mountAccountScreen } from './screens/AccountScreen.js';
 import { mountBerthsScreen } from './screens/BerthsScreen.js';
 import { listenForCustomers } from './db.js';
 import { mountBookingRequestsScreen } from './screens/BookingRequestsScreen.js';
+import { initDrawer } from './components/Drawer.js';
 
 const PROTECTED = ['/boats', '/dashboard', '/berths', '/fleet', '/account'];
 
@@ -112,7 +113,15 @@ watchAuth(async (firebaseUser) => {
 });
 
 window.addEventListener('hashchange', navigate);
+
 window.addEventListener('DOMContentLoaded', () => {
   wireBottomNav();
+  initDrawer();
   if (!location.hash) location.hash = '#/login';
 });
+
+// Fallback if module loads after DOMContentLoaded
+if (document.readyState !== 'loading') {
+  wireBottomNav();
+  initDrawer();
+}
