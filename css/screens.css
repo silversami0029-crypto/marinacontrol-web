@@ -1441,3 +1441,235 @@ body {
   color: #FF4444;
 }
 
+/* ============================================================
+   PORTFOLIO DASHBOARD
+   ============================================================ */
+.pf-wrap {
+  padding: 16px 16px 28px;
+}
+
+.pf-heading {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  letter-spacing: .3px;
+}
+
+.pf-context {
+  margin-top: 6px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.pf-divider {
+  height: 1px;
+  background: var(--color-divider);
+  margin: 16px 0 18px;
+}
+
+/* Filters */
+.pf-filters {
+  display: flex;
+  gap: 10px;
+}
+
+.pf-filter-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pf-filter-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.pf-filter-btn {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: 12px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background .15s;
+}
+.pf-filter-btn:hover { background: #1e242c; }
+.pf-filter-btn span:first-child {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pf-caret {
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  margin-left: 6px;
+}
+
+/* Cards */
+.pf-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.pf-card:hover { background: #1e242c; }
+
+.pf-card--big { margin-top: 16px; }
+
+.pf-card-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.pf-card-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-top: 6px;
+}
+
+.pf-card-value-sm {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-top: 6px;
+}
+
+.pf-card-sub {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-water-blue);
+  margin-top: 2px;
+}
+
+#pfTasksSub { color: #F5A524; }
+
+/* Progress bar */
+.pf-progress-track {
+  margin-top: 12px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-divider);
+  overflow: hidden;
+}
+.pf-progress-fill {
+  height: 100%;
+  background: var(--color-water-blue);
+  border-radius: 4px;
+  transition: width .25s ease;
+}
+
+/* 2-up row */
+.pf-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Comparison */
+.pf-comparison-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+.pf-comparison-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.pf-comparison-hint {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.pf-comparison-cols {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.pf-col-marina { flex: 1; }
+.pf-col-occ    { width: 82px; text-align: right; }
+.pf-col-issues { width: 58px; text-align: right; }
+
+.pf-comparison-list {
+  border-top: 1px solid var(--color-divider);
+}
+
+.pf-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 54px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  transition: background .15s;
+}
+.pf-row:hover  { background: rgba(255,255,255,.03); }
+.pf-row:active { background: rgba(255,255,255,.06); }
+
+.pf-row-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pf-row-occ {
+  width: 82px;
+  text-align: right;
+  color: var(--color-text-primary);
+}
+
+.pf-row-issues {
+  width: 58px;
+  text-align: right;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+.pf-row-issues.has-issues { color: #F5A524; }
+
+.pf-row-divider {
+  height: 1px;
+  background: var(--color-divider);
+}
+
+.pf-empty {
+  padding: 28px 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}

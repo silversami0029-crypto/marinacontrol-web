@@ -355,7 +355,7 @@ function openMenu(boat) {
 }
 
 function onOpenDashboard(boat) {
-  location.hash = `#/dashboard?boatId=${boat.id}`;
+   location.hash = `#/boat-dashboard?boatId=${boat.id}`;
 }
 
 async function onSetActive(boat) {

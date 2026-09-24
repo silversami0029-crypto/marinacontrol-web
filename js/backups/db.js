@@ -519,182 +519,85 @@ export async function releaseBoatFromBerth(berthId, userId) {
  * 2. Fetch corresponding clients docs
  * Returns an array of { id, name, countryCode, role, isActive }
  */
-export async function getMyMarinas(firebaseUid, userId = 0) {
-  const uid = String(firebaseUid || '').trim();
+export async function getMyMarinas(userId) {
+  if (!userId || userId <= 0) return [];
 
-  if (!uid) {
-    return [];
-  }
-
-  /*
-   * Load the authenticated identity first.
-   * This always gives us the user's authorised base marina.
-   */
-  const identityReference = doc(
-    db,
-    'firebase_identities',
-    uid
+  // Step 1: memberships
+  const memQ = query(
+    collection(db, 'user_marina_memberships'),
+    where('userId', '==', userId),
+    where('isActive', '==', 1)
   );
+  const memSnap = await getDocs(memQ);
+  if (memSnap.empty) return [];
 
-  const identitySnapshot = await getDoc(identityReference);
+  const memberships = memSnap.docs.map(d => {
+    const data = d.data();
+    return {
+      clientId: Number(data.clientId ?? 0),
+      role:     data.role || 'staff'
+    };
+  }).filter(m => m.clientId > 0);
 
-  if (!identitySnapshot.exists()) {
-    console.error(
-      '[portfolio] Firebase identity document not found'
-    );
+  if (!memberships.length) return [];
 
-    return [];
-  }
+  // Step 2: fetch each client doc (parallel)
+  const clientIds = memberships.map(m => m.clientId);
 
-  const identity = identitySnapshot.data();
+  const clientsQ = query(
+    collection(db, 'clients'),
+    where('id', 'in', clientIds.slice(0, 10))   // Firestore "in" limit = 10
+  );
+  const clientsSnap = await getDocs(clientsQ);
 
-  if (Number(identity.isActive) !== 1) {
-    console.error(
-      '[portfolio] Firebase identity is inactive'
-    );
+  const clientMap = new Map();
+  clientsSnap.docs.forEach(d => {
+    const data = d.data();
+    clientMap.set(Number(data.id), {
+      id:          Number(data.id),
+      name:        data.name || `Marina ${data.id}`,
+      countryCode: (data.countryCode || '').toUpperCase() || null,
+      slug:        data.slug || '',
+      isActive:    Number(data.isActive ?? 0)
+    });
+  });
 
-    return [];
-  }
-
-  const memberships = new Map();
-
-  const baseClientId =
-    Number(identity.baseClientId || 0);
-
-  if (baseClientId > 0) {
-    memberships.set(baseClientId, {
-      clientId: baseClientId,
-      role: identity.baseRole || 'staff'
+  // Step 3: merge memberships + client data
+  const marinas = [];
+  for (const m of memberships) {
+    const client = clientMap.get(m.clientId);
+    if (!client) continue;
+    marinas.push({
+      ...client,
+      role: m.role
     });
   }
 
-  /*
-   * Add any additional portfolio memberships.
-   * If this query is unavailable, the base marina still loads.
-   */
-  try {
-    const membershipQuery = query(
-      collection(db, 'user_marina_memberships'),
-      where('firebaseUid', '==', uid),
-      where('isActive', '==', 1)
-    );
-
-    const membershipSnapshot =
-      await getDocs(membershipQuery);
-
-    membershipSnapshot.docs.forEach(
-      (membershipDocument) => {
-        const data = membershipDocument.data();
-        const clientId = Number(data.clientId || 0);
-
-        if (clientId > 0) {
-          memberships.set(clientId, {
-            clientId,
-            role: data.role || 'staff'
-          });
-        }
-      }
-    );
-  } catch (error) {
-    console.warn(
-      '[portfolio] Additional memberships unavailable; using base marina',
-      error
-    );
-  }
-
-  if (!memberships.size) {
-    return [];
-  }
-
-  const marinas = [];
-
-  /*
-   * Load each authorised marina separately.
-   * One unavailable marina will no longer break the whole Dashboard.
-   */
-  for (const membership of memberships.values()) {
-    try {
-      const clientQuery = query(
-        collection(db, 'clients'),
-        where('id', '==', membership.clientId)
-      );
-
-      const clientSnapshot = await getDocs(clientQuery);
-
-      if (clientSnapshot.empty) {
-        console.warn(
-          `[portfolio] Client ${membership.clientId} not found`
-        );
-
-        continue;
-      }
-
-      const client = clientSnapshot.docs[0].data();
-
-      marinas.push({
-        id: membership.clientId,
-        name:
-          client.name ||
-          `Marina ${membership.clientId}`,
-        countryCode:
-          String(client.countryCode || '')
-            .toUpperCase() || null,
-        slug: client.slug || '',
-        isActive: Number(client.isActive ?? 1),
-        role: membership.role
-      });
-    } catch (error) {
-      console.error(
-        `[portfolio] Client ${membership.clientId} could not be loaded`,
-        error
-      );
-    }
-  }
-
-  marinas.sort((a, b) =>
-    a.name.localeCompare(b.name)
-  );
-
+  // Sort by name
+  marinas.sort((a, b) => a.name.localeCompare(b.name));
   return marinas;
 }
 
+/**
+ * Compute per-marina stats used by the Portfolio Dashboard.
+ * For a given clientId: berths occupied / total / available, bookings
+ */
 export async function getMarinaStats(clientId) {
-  const berthsQuery = query(
-    collection(db, 'berths'),
-    where('clientId', '==', Number(clientId))
-  );
+  const berthsQ = query(collection(db, 'berths'), where('clientId', '==', clientId));
+  const berthsSnap = await getDocs(berthsQ);
 
-  const berthsSnapshot = await getDocs(berthsQuery);
-
-  let total = 0;
-  let occupied = 0;
-  let available = 0;
-  let maintenance = 0;
-
-  berthsSnapshot.forEach((berthDocument) => {
-    const berth = berthDocument.data();
-    const status = String(berth.status || '').toUpperCase();
-
+  let total = 0, occupied = 0, available = 0, maintenance = 0;
+  const berths = [];
+  berthsSnap.forEach(d => {
+    const b = d.data();
     total++;
-
-    if (status === 'OCCUPIED') {
-      occupied++;
-    } else if (status === 'AVAILABLE') {
-      available++;
-    } else if (status === 'MAINTENANCE') {
-      maintenance++;
-    }
+    if (b.status === 'OCCUPIED') occupied++;
+    else if (b.status === 'MAINTENANCE') maintenance++;
+    else if (b.status === 'AVAILABLE') available++;
+    berths.push(b);
   });
 
-  const occupancyRate = total > 0
-    ? Math.round((occupied / total) * 100)
-    : 0;
+  const occupancyRate = total > 0 ? Math.round((occupied / total) * 100) : 0;
 
-  return {
-    total,
-    occupied,
-    available,
-    maintenance,
-    occupancyRate
-  };
+  return { total, occupied, available, maintenance, occupancyRate };
 }

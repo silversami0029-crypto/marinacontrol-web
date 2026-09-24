@@ -223,15 +223,20 @@ body {
   position: relative; width: 100%; margin-bottom: 16px;
 }
 .login-field input {
-  width: 100%; padding: 14px 16px;
-  background: transparent;
-  border: 1px solid #3A424C;
+  width: 100%;
+  padding: 14px 16px;
+  background: #1C222A;              /* dark_slate — same as Android */
+  border: 1px solid #2B323B;        /* dark_divider */
   border-radius: 8px;
   color: var(--color-text-primary);
-  font-size: 15px; outline: none;
-  transition: border-color .15s;
+  font-size: 15px;
+  outline: none;
+  transition: border-color .15s, background .15s;
 }
-.login-field input:focus { border-color: #F1F3F5; }
+.login-field input:focus {
+  border-color: #2E9BFF;
+  background: #202730;
+}
 .login-field input::placeholder { color: var(--color-text-secondary); }
 .login-field input:disabled { opacity: .5; }
 .login-pw-toggle {
@@ -249,7 +254,9 @@ body {
   margin: -8px 0 24px;
 }
 .login-forgot button {
-  font-size: 12px; color: var(--color-text-primary);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
 .login-forgot button:hover { text-decoration: underline; }
 .login-error {
@@ -264,16 +271,19 @@ body {
   color: #3DD68C; background: rgba(61,214,140,.10);
 }
 .login-submit {
-  width: 100%; height: 56px; border-radius: 8px;
-  background: transparent;
-  border: 1px solid var(--color-text-primary);
-  color: var(--color-text-primary);
-  font-size: 16px; font-weight: 500;
-  transition: background .15s;
+   width: 100%;
+  height: 56px;
+  border-radius: 10px;
+  background: #2E9BFF;
+  border: none;
+  color: #1C222A;
+  font-size: 16px;
+  font-weight: 700;
+  transition: opacity .15s, transform .1s;
 }
-.login-submit:hover  { background: rgba(241,243,245,.06); }
-.login-submit:active { background: rgba(241,243,245,.10); }
-.login-submit:disabled { opacity: .6; cursor: not-allowed; }
+.login-submit:hover  { opacity: .92; }
+.login-submit:active { transform: scale(.98); }
+.login-submit:disabled { opacity: .55; cursor: not-allowed; }
 .login-spinner {
   height: 56px; display: flex;
   align-items: center; justify-content: center;
@@ -301,10 +311,21 @@ body {
 }
 .login-secondary:hover { background: rgba(241,243,245,.06); }
 .login-terms {
-  font-size: 11px;
-  color: var(--color-text-primary);
-  opacity: .6; text-align: center;
-  line-height: 1.5; margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  opacity: .9;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 300px;
+}
+.login-terms a {
+  color: #2E9BFF;
+  text-decoration: none;
+  font-weight: 500;
+}
+.login-terms a:hover {
+  text-decoration: underline;
 }
 .boats-loading {
   padding: 64px 0;
@@ -396,8 +417,8 @@ body {
 }
 .confirm-btn--cancel {
   background: var(--color-bg);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-divider);
+  color: var(--color-water-blue);
+  border: 1px solid var(--color-water-blue);
 }
 .confirm-btn--cancel:hover { background: #1a2028; }
 .confirm-btn--confirm {
@@ -925,8 +946,8 @@ body {
   margin: 16px 20px 0; height: 48px;
   border-radius: 14px;
   background: var(--color-bg);
-  border: 1px solid var(--color-divider);
-  color: var(--color-text-primary);
+  border: 1px solid var(--color-water-blue);
+  color: var(--color-water-blue);
   font-size: 15px; font-weight: 500;
   cursor: pointer; transition: background .15s;
 }
@@ -1411,3 +1432,12 @@ body {
   padding: 8px 0 24px;
   line-height: 1.5;
 }
+
+/* Berth menu — danger row */
+.sheet-item--danger .sheet-item-icon,
+.sheet-item--danger .sheet-item-title,
+.sheet-item--danger .sheet-item-subtitle,
+.sheet-item--danger .sheet-chevron {
+  color: #FF4444;
+}
+

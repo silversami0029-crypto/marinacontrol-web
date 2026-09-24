@@ -11,6 +11,7 @@ import { mountBerthsScreen } from './screens/BerthsScreen.js';
 import { listenForCustomers } from './db.js';
 import { mountBookingRequestsScreen } from './screens/BookingRequestsScreen.js';
 import { initDrawer } from './components/Drawer.js';
+import { mountBoatDashboardScreen } from './screens/BoatDashboardScreen.js';
 
 const PROTECTED = ['/boats', '/dashboard', '/berths', '/fleet', '/account'];
 
@@ -18,6 +19,7 @@ const routes = {
   '/login':            mountLoginScreen,
   '/boats':            mountBoatsScreen,
   '/dashboard':        mountDashboardScreen,
+  '/boat-dashboard':   mountBoatDashboardScreen,
   '/berths':           mountBerthsScreen,
   '/booking-requests': mountBookingRequestsScreen,
   '/fleet':            () => renderStub('Fleet'),

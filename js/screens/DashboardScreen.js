@@ -1,215 +1,450 @@
 // js/screens/DashboardScreen.js
-// Boat Dashboard — mirrors fragment_boat_dashboard.xml + BoatDashboardFragment
-// Phase 1: header + boat health card + 8-tile grid (stubs for counts)
+// Portfolio Dashboard — mirrors PortfolioDashboardFragment.java
 
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
+import { getMyMarinas, getMarinaStats } from '../db.js';
 
-/* ---------- Icons (Material Symbols style, inline SVG) ---------- */
-const ICONS = {
-  back: `
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none"
-         stroke="currentColor" stroke-width="2"
-         stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="15 18 9 12 15 6"/>
-    </svg>`,
+let allMarinas = [];
+let selectedCountry = null;
+let selectedMarinaId = -1;
 
-  info: `
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-         stroke="currentColor" stroke-width="1.8"
-         stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="9"/>
-      <line x1="12" y1="11" x2="12" y2="16"/>
-      <circle cx="12" cy="7.5" r="0.8" fill="currentColor"/>
-    </svg>`,
-
-  safety: `
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none"
-         stroke="currentColor" stroke-width="1.6"
-         stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="9"/>
-      <circle cx="12" cy="12" r="4"/>
-      <line x1="3" y1="12" x2="8" y2="12"/>
-      <line x1="16" y1="12" x2="21" y2="12"/>
-      <line x1="12" y1="3" x2="12" y2="8"/>
-      <line x1="12" y1="16" x2="12" y2="21"/>
-    </svg>`,
-
-  equipment: `
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none"
-         stroke="currentColor" stroke-width="1.6"
-         stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M12 1v4M12 19v4M4.2 4.2l2.9 2.9M16.9 16.9l2.9 2.9M1 12h4M19 12h4M4.2 19.8l2.9-2.9M16.9 7.1l2.9-2.9"/>
-    </svg>`,
-
-  maintenance: `
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none"
-         stroke="currentColor" stroke-width="1.6"
-         stroke-linecap="round" stroke-linejoin="round">
-      <path d="M14.7 6.3a4 4 0 0 0 5.3 5.3l-9 9a2 2 0 0 1-2.8-2.8l9-9z"/>
-      <path d="M14.7 6.3 17 4l3 3-2.3 2.3"/>
-    </svg>`,
-
-  inventory: `
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none"
-         stroke="currentColor" stroke-width="1.6"
-         stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-      <path d="M3 8l2-4h14l2 4"/>
-      <line x1="12" y1="12" x2="12" y2="16"/>
-    </svg>`,
-
-  checklists: `
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none"
-         stroke="currentColor" stroke-width="1.6"
-         stroke-linecap="round" stroke-linejoin="round">
-      <rect x="5" y="3" width="14" height="18" rx="2"/>
-      <polyline points="9 8 11 10 15 6"/>
-      <line x1="9" y1="14" x2="15" y2="14"/>
-      <line x1="9" y1="18" x2="15" y2="18"/>
-    </svg>`,
-
-  tasks: `
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none"
-         stroke="currentColor" stroke-width="1.6"
-         stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="3 7 6 10 12 4"/>
-      <polyline points="3 15 6 18 12 12"/>
-      <line x1="15" y1="7" x2="21" y2="7"/>
-      <line x1="15" y1="17" x2="21" y2="17"/>
-    </svg>`,
-
-  documents: `
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none"
-         stroke="currentColor" stroke-width="1.6"
-         stroke-linecap="round" stroke-linejoin="round">
-      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-      <polyline points="14 3 14 9 20 9"/>
-      <line x1="8" y1="14" x2="16" y2="14"/>
-      <line x1="8" y1="18" x2="13" y2="18"/>
-    </svg>`,
-
-  crew: `
-    <svg viewBox="0 0 24 24" width="30" height="30" fill="none"
-         stroke="currentColor" stroke-width="1.6"
-         stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="9" cy="8" r="3.5"/>
-      <path d="M3 21a6 6 0 0 1 12 0"/>
-      <circle cx="17" cy="10" r="2.5"/>
-      <path d="M14 19.5a4 4 0 0 1 7 1.5"/>
-    </svg>`
-};
-
-/* ---------- Tile definitions (matches Android createDashboardItems) ---------- */
-const TILES = [
-  { type: 'safety',      label: 'Safety',      icon: ICONS.safety },
-  { type: 'equipment',   label: 'Equipment',   icon: ICONS.equipment },
-  { type: 'maintenance', label: 'Maintenance', icon: ICONS.maintenance },
-  { type: 'inventory',   label: 'Inventory',   icon: ICONS.inventory },
-  { type: 'checklists',  label: 'Checklists',  icon: ICONS.checklists },
-  { type: 'tasks',       label: 'Tasks',       icon: ICONS.tasks },
-  { type: 'documents',   label: 'Documents',   icon: ICONS.documents },
-  { type: 'crew',        label: 'Crew',        icon: ICONS.crew }
-];
-
-export function mountDashboardScreen() {
+export async function mountDashboardScreen() {
   const screen = document.getElementById('screen');
-  const boatId = getBoatIdFromHash();
-  const boat   = store.boatsFull.find(b => b.id === boatId);
-
-  if (!boat) {
-    screen.innerHTML = `
-      <div class="boats-empty">
-        <h2>Boat not found</h2>
-        <p>Returning to boats list…</p>
-      </div>
-    `;
-    setTimeout(() => { location.hash = '#/boats'; }, 800);
-    return;
-  }
-
-  // Update topbar title
-  const titleEl = document.getElementById('topbarTitle');
-  if (titleEl) titleEl.textContent = boat.name;
 
   screen.innerHTML = `
-    <div class="dash-wrap">
+    <div class="pf-wrap">
+      <div class="pf-heading">PORTFOLIO OVERVIEW</div>
+      <div class="pf-context" id="pfContext">Loading…</div>
+      <div class="pf-divider"></div>
 
-      <!-- Header bar -->
-      <div class="dash-header">
-        <button class="dash-back" id="dashBack" aria-label="Back">
-          ${ICONS.back}
-        </button>
-        <div class="dash-title">${escapeHtml(boat.name)}</div>
-        <button class="dash-info" id="dashInfo" aria-label="Help">
-          ${ICONS.info}
-        </button>
+      <div class="pf-filters">
+        <div class="pf-filter-col">
+          <div class="pf-filter-label">Country</div>
+          <button class="pf-filter-btn" id="pfCountryBtn">
+            <span id="pfCountryText">All countries</span>
+            <span class="pf-caret">⌄</span>
+          </button>
+        </div>
+
+        <div class="pf-filter-col">
+          <div class="pf-filter-label">Marina</div>
+          <button class="pf-filter-btn" id="pfMarinaBtn">
+            <span id="pfMarinaText">All marinas</span>
+            <span class="pf-caret">⌄</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Boat Health card -->
-      <div class="dash-health" id="dashHealth">
-        <div class="dash-health-title">Boat Health</div>
-        <div class="dash-health-body">
-          <div class="dash-health-good">
-            <span class="dash-check">✅</span>
-            <span class="dash-health-label">All Good</span>
+      <div class="pf-card pf-card--big">
+        <div class="pf-card-label">Berths occupied</div>
+        <div class="pf-card-value" id="pfBerthsValue">0 / 0</div>
+        <div class="pf-card-sub" id="pfBerthsSub">
+          0% portfolio occupancy
+        </div>
+
+        <div class="pf-progress-track">
+          <div
+            class="pf-progress-fill"
+            id="pfProgress"
+            style="width: 0%">
           </div>
         </div>
       </div>
 
-      <!-- Tile grid -->
-      <div class="dash-grid" id="dashGrid"></div>
+      <div class="pf-row-2">
+        <div class="pf-card" id="pfTasksCard">
+          <div class="pf-card-label">Open tasks</div>
+          <div class="pf-card-value-sm" id="pfTasksValue">0</div>
+          <div class="pf-card-sub" id="pfTasksSub">0 overdue</div>
+        </div>
+
+        <div class="pf-card" id="pfDockCard">
+          <div class="pf-card-label">Dock Walk</div>
+          <div class="pf-card-value-sm" id="pfDockValue">0</div>
+          <div class="pf-card-sub">issues found</div>
+        </div>
+      </div>
+
+      <div class="pf-comparison-head">
+        <div class="pf-comparison-title">Marina comparison</div>
+        <div class="pf-comparison-hint">Highest attention first</div>
+      </div>
+
+      <div class="pf-comparison-cols">
+        <div class="pf-col-marina">Marina</div>
+        <div class="pf-col-occ">Occupancy</div>
+        <div class="pf-col-issues">Issues</div>
+      </div>
+
+      <div class="pf-comparison-list" id="pfComparisonList">
+        <div class="boats-loading">
+          <div class="spinner-ring"></div>
+        </div>
+      </div>
+
+      <div class="pf-empty" id="pfEmpty" hidden>
+        No marinas available for this scope.
+      </div>
     </div>
   `;
 
-  // Wire back button
-  screen.querySelector('#dashBack').addEventListener('click', () => {
-    location.hash = '#/boats';
-  });
+  document
+    .getElementById('pfCountryBtn')
+    .addEventListener('click', showCountryMenu);
 
-  // Wire info (stub)
-  screen.querySelector('#dashInfo').addEventListener('click', () => {
-    toast('Dashboard help coming soon');
-  });
+  document
+    .getElementById('pfMarinaBtn')
+    .addEventListener('click', showMarinaMenu);
 
-  // Health card tap (stub)
-  screen.querySelector('#dashHealth').addEventListener('click', () => {
-    toast('Health details coming soon');
-  });
+  document
+    .getElementById('pfTasksCard')
+    .addEventListener('click', () => {
+      toast('Maintenance is coming to the web app');
+    });
 
-  // Render tiles
-  const grid = screen.querySelector('#dashGrid');
-  grid.innerHTML = TILES.map(t => `
-    <button class="dash-tile" data-type="${t.type}">
-      <div class="dash-tile-icon">${t.icon}</div>
-      <div class="dash-tile-text">
-        <div class="dash-tile-title">${t.label}</div>
+  document
+    .getElementById('pfDockCard')
+    .addEventListener('click', () => {
+      toast('Dock Walk is available in the Android app');
+    });
+
+  await loadData();
+}
+
+async function loadData() {
+  const firebaseUid =
+    store.authUser?.uid ||
+    store.userProfile?.firebaseUid ||
+    '';
+
+  const userId = store.userProfile?.userId || 0;
+
+  try {
+    allMarinas = await getMyMarinas(firebaseUid, userId);
+
+    renderContext();
+
+    await Promise.all([
+      renderComparison(),
+      renderPortfolioStats()
+    ]);
+  } catch (err) {
+    console.error('[dashboard] load failed', err);
+
+    document.getElementById('pfComparisonList').innerHTML = `
+      <div class="pf-empty">
+        Couldn't load portfolio data.
       </div>
-    </button>
-  `).join('');
+    `;
+  }
+}
 
-  // Wire tile taps (stubs)
-  grid.querySelectorAll('.dash-tile').forEach(el => {
-    el.addEventListener('click', () => {
-      const type = el.dataset.type;
-      const label = TILES.find(t => t.type === type)?.label || type;
-      toast(`${label} coming soon`);
+/* ============================================================
+   FILTERS
+   ============================================================ */
+
+function showCountryMenu() {
+  const codes = new Set();
+
+  allMarinas.forEach((marina) => {
+    codes.add(marina.countryCode || 'UNASSIGNED');
+  });
+
+  const options = [
+    'All countries',
+    ...Array.from(codes).sort()
+  ];
+
+  const list = options.map((label, index) => ({
+    label,
+    value: index === 0 ? null : label
+  }));
+
+  showMenu(list, (value) => {
+    selectedCountry = value;
+    selectedMarinaId = -1;
+
+    document.getElementById('pfCountryText').textContent =
+      value || 'All countries';
+
+    document.getElementById('pfMarinaText').textContent =
+      'All marinas';
+
+    renderContext();
+    renderComparison();
+    renderPortfolioStats();
+  });
+}
+
+function showMarinaMenu() {
+  const scoped = allMarinas.filter((marina) => {
+    return (
+      !selectedCountry ||
+      (marina.countryCode || 'UNASSIGNED') === selectedCountry
+    );
+  });
+
+  const options = [
+    {
+      label: 'All marinas',
+      value: -1
+    },
+    ...scoped.map((marina) => ({
+      label: marina.name,
+      value: marina.id
+    }))
+  ];
+
+  showMenu(options, (value) => {
+    selectedMarinaId = value;
+
+    const found = allMarinas.find(
+      (marina) => marina.id === value
+    );
+
+    document.getElementById('pfMarinaText').textContent =
+      found ? found.name : 'All marinas';
+
+    renderContext();
+    renderComparison();
+    renderPortfolioStats();
+  });
+}
+
+function showMenu(items, onPick) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sheet-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet assign-sheet';
+
+  sheet.innerHTML = `
+    <div class="assign-handle"></div>
+    <div class="assign-divider"></div>
+
+    <div class="assign-list" id="pfMenuList">
+      ${items.map((item, index) => `
+        <button
+          class="assign-row"
+          data-index="${index}">
+          <span class="assign-name">
+            ${escapeHtml(item.label)}
+          </span>
+        </button>
+      `).join('')}
+    </div>
+
+    <div class="assign-divider"></div>
+
+    <button class="assign-cancel" id="pfMenuCancel">
+      Cancel
+    </button>
+  `;
+
+  document
+    .getElementById('modalRoot')
+    .append(backdrop, sheet);
+
+  requestAnimationFrame(() => {
+    backdrop.classList.add('is-open');
+    sheet.classList.add('is-open');
+  });
+
+  const close = () => {
+    backdrop.classList.remove('is-open');
+    sheet.classList.remove('is-open');
+
+    setTimeout(() => {
+      backdrop.remove();
+      sheet.remove();
+    }, 220);
+  };
+
+  backdrop.addEventListener('click', close);
+
+  sheet
+    .querySelector('#pfMenuCancel')
+    .addEventListener('click', close);
+
+  sheet.querySelectorAll('.assign-row').forEach((row) => {
+    row.addEventListener('click', () => {
+      const index = Number(row.dataset.index);
+      const item = items[index];
+
+      close();
+      onPick(item.value);
     });
   });
 }
 
-/* ---------- Helpers ---------- */
-function getBoatIdFromHash() {
-  const hash = location.hash || '';
-  const qIndex = hash.indexOf('?');
-  if (qIndex === -1) return 0;
-  const params = new URLSearchParams(hash.substring(qIndex + 1));
-  return Number(params.get('boatId') || 0);
+/* ============================================================
+   RENDER
+   ============================================================ */
+
+function getVisibleMarinas() {
+  return allMarinas.filter((marina) => {
+    if (
+      selectedCountry &&
+      (marina.countryCode || 'UNASSIGNED') !== selectedCountry
+    ) {
+      return false;
+    }
+
+    if (
+      selectedMarinaId !== -1 &&
+      marina.id !== selectedMarinaId
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 }
 
-function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
+function renderContext() {
+  const visible = getVisibleMarinas();
+  const element = document.getElementById('pfContext');
+
+  if (selectedMarinaId !== -1 && visible.length === 1) {
+    element.textContent =
+      `${visible[0].name} • Individual marina`;
+
+    return;
+  }
+
+  const scope = selectedCountry || 'All countries';
+
+  element.textContent =
+    `${scope} • ${visible.length} ` +
+    `${visible.length === 1 ? 'marina' : 'marinas'}`;
+}
+
+async function renderPortfolioStats() {
+  const visible = getVisibleMarinas();
+
+  if (!visible.length) {
+    document.getElementById('pfBerthsValue').textContent =
+      '0 / 0';
+
+    document.getElementById('pfBerthsSub').textContent =
+      '0% portfolio occupancy';
+
+    document.getElementById('pfProgress').style.width =
+      '0%';
+
+    return;
+  }
+
+  let totalBerths = 0;
+  let occupiedBerths = 0;
+
+  for (const marina of visible) {
+    const stats = await getMarinaStats(marina.id);
+
+    totalBerths += stats.total;
+    occupiedBerths += stats.occupied;
+  }
+
+  const rate = totalBerths > 0
+    ? Math.round((occupiedBerths * 100) / totalBerths)
+    : 0;
+
+  document.getElementById('pfBerthsValue').textContent =
+    `${occupiedBerths} / ${totalBerths}`;
+
+  document.getElementById('pfBerthsSub').textContent =
+    `${rate}% portfolio occupancy`;
+
+  document.getElementById('pfProgress').style.width =
+    `${rate}%`;
+}
+
+async function renderComparison() {
+  const visible = getVisibleMarinas();
+  const listElement =
+    document.getElementById('pfComparisonList');
+
+  const emptyElement =
+    document.getElementById('pfEmpty');
+
+  if (!visible.length) {
+    listElement.innerHTML = '';
+    emptyElement.hidden = false;
+    return;
+  }
+
+  emptyElement.hidden = true;
+
+  const rows = await Promise.all(
+    visible.map(async (marina) => {
+      const stats = await getMarinaStats(marina.id);
+
+      return {
+        marina,
+        stats,
+        issues: 0
+      };
+    })
+  );
+
+  rows.sort((a, b) => {
+    if (b.issues !== a.issues) {
+      return b.issues - a.issues;
+    }
+
+    return a.marina.name.localeCompare(b.marina.name);
+  });
+
+  listElement.innerHTML = rows.map((row) => `
+    <button
+      class="pf-row"
+      data-marina-id="${row.marina.id}">
+
+      <span class="pf-row-name">
+        ${escapeHtml(row.marina.name)}
+      </span>
+
+      <span class="pf-row-occ">
+        ${row.stats.occupancyRate}%
+      </span>
+
+      <span class="pf-row-issues ${
+        row.issues > 0 ? 'has-issues' : ''
+      }">
+        ${row.issues}
+      </span>
+    </button>
+
+    <div class="pf-row-divider"></div>
+  `).join('');
+
+  listElement
+    .querySelectorAll('.pf-row')
+    .forEach((row) => {
+      row.addEventListener('click', () => {
+        const id = Number(row.dataset.marinaId);
+
+        const marina = visible.find(
+          (item) => item.id === id
+        );
+
+        if (marina) {
+          toast(`${marina.name} — dashboard coming soon`);
+        }
+      });
+    });
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(
+    /[&<>"']/g,
+    (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[character])
+  );
 }
