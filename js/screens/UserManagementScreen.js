@@ -739,31 +739,18 @@ function showRoleSheet(user) {
 
       if (newRole === user.role) return;
 
-      try {
-        const callable = httpsCallable(
-          functions,
-          'updateMarinaUserRole'
-        );
-
+         try {
+        const callable = httpsCallable(functions, 'updateMarinaUserRole');
         await callable({
           clientId: Number(store.activeClientId),
-          userId: Number(user.id),
-          role: newRole
+          userId:   Number(user.id),
+          role:     newRole
         });
-
-        toast(
-          `Role updated to ${newRole}`,
-          { kind: 'success' }
-        );
-
+        toast(`Role updated to ${newRole}`, { kind: 'success' });
         await loadUsers();
-      } catch (error) {
-        console.error('[role] update failed', error);
-
-        toast(
-          'Failed to update role',
-          { kind: 'error' }
-        );
+      } catch (err) {
+        console.error('[role] update failed', err);
+        toast('Failed to update role', { kind: 'error' });
       }
     });
   });
