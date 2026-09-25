@@ -835,3 +835,98 @@ export function listenForUsers(clientId, callback) {
     callback([], err);
   });
 }
+
+/* ============================================================
+   CUSTOMER BULK IMPORT
+   ============================================================ */
+export async function importCustomersFromRows(clientId, userId, rows, onProgress) {
+  const {
+    collection, query, where, getDocs, doc, setDoc, serverTimestamp
+  } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+  const { db } = await import('./firebase.js');
+
+  const cid = Number(clientId);
+
+  // 1. Load existing customers for duplicate detection
+  const existingSnap = await getDocs(
+    query(collection(db, 'customers'), where('clientId', '==', cid))
+  );
+
+  const existingNames = new Set();
+  const existingEmails = new Set();
+  let maxId = 0;
+
+  existingSnap.forEach(d => {
+    const data = d.data();
+    const n = (data.name  || '').trim().toLowerCase();
+    const e = (data.email || '').trim().toLowerCase();
+    if (n) existingNames.add(n);
+    if (e) existingEmails.add(e);
+    const v = Number(data.id || 0);
+    if (v > maxId) maxId = v;
+  });
+
+  let nextId = maxId + 1;
+  let success = 0;
+  let skipped = 0;
+  const errors = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const lineNo = i + 2; // +1 header +1 zero-index
+
+    try {
+      const name  = (row.name  || '').trim();
+      const email = (row.email || '').trim();
+      const phone = (row.phone || '').trim();
+      const notes = (row.notes || '').trim();
+
+      if (!name) {
+        errors.push(`Line ${lineNo}: name is required`);
+        skipped++;
+        continue;
+      }
+
+      // Duplicate check — name OR email
+      const lowerName  = name.toLowerCase();
+      const lowerEmail = email.toLowerCase();
+
+      if (existingNames.has(lowerName) ||
+          (lowerEmail && existingEmails.has(lowerEmail))) {
+        skipped++;
+        onProgress(success, skipped, rows.length);
+        continue;
+      }
+
+      const now = Date.now();
+      const docRef = doc(db, 'customers', String(nextId));
+
+      await setDoc(docRef, {
+        id: nextId,
+        clientId: cid,
+        name,
+        email,
+        phone,
+        notes,
+        isPreferred: false,
+        createdDate: now,
+        lastModified: now,
+        lastModifiedBy: String(userId || 0),
+        syncTime: serverTimestamp(),
+        syncedAt: 0
+      });
+
+      existingNames.add(lowerName);
+      if (lowerEmail) existingEmails.add(lowerEmail);
+      nextId++;
+      success++;
+    } catch (err) {
+      console.error('[import customers] row failed', err);
+      errors.push(`Line ${lineNo}: ${err.message || 'write failed'}`);
+    }
+
+    onProgress(success, skipped, rows.length);
+  }
+
+  return { success, skipped, failed: errors.length, errors };
+}
