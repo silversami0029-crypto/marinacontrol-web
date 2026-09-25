@@ -2053,3 +2053,141 @@ body {
   z-index: 25;
   box-shadow: 0 6px 16px rgba(33,150,243,.35);
 }
+
+/* ============================================================
+   RESPONSIVE PINNED DRAWER
+   ============================================================ */
+:root {
+  --drawer-w: 280px;
+  --desktop-gap: 24px;
+  --desktop-app-left: calc(var(--drawer-w) + var(--desktop-gap));
+}
+
+@media (min-width: 1024px) {
+
+  /* Fixed 440px application frame */
+  body:not(.drawer-page-hidden) {
+    width: var(--phone-w) !important;
+    min-width: var(--phone-w) !important;
+    max-width: var(--phone-w) !important;
+    margin-left: var(--desktop-app-left) !important;
+    margin-right: 0 !important;
+  }
+
+  /* Pinned left drawer */
+  body:not(.drawer-page-hidden) .drawer {
+    display: block !important;
+    visibility: visible !important;
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    width: var(--drawer-w) !important;
+    max-width: var(--drawer-w) !important;
+    transform: none !important;
+    transition: none !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body:not(.drawer-page-hidden) .drawer-backdrop {
+    display: none !important;
+  }
+
+  body:not(.drawer-page-hidden) .topbar-menu {
+    display: none !important;
+  }
+
+  /* Top bar stays inside the 440px frame */
+  body:not(.drawer-page-hidden) .topbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: var(--desktop-app-left) !important;
+    right: auto !important;
+    width: var(--phone-w) !important;
+    min-width: var(--phone-w) !important;
+    max-width: var(--phone-w) !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Bottom navigation stays inside the 440px frame */
+  body:not(.drawer-page-hidden) .bottomnav {
+    display: grid !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: var(--desktop-app-left) !important;
+    right: auto !important;
+    width: var(--phone-w) !important;
+    min-width: var(--phone-w) !important;
+    max-width: var(--phone-w) !important;
+    transform: none !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Add button */
+  body:not(.drawer-page-hidden) .fab,
+  body:not(.drawer-page-hidden) .um-fab {
+    left: calc(
+      var(--desktop-app-left) + var(--phone-w) - 16px
+    ) !important;
+    right: auto !important;
+    transform: translateX(-100%) !important;
+    bottom: calc(var(--bottomnav-h) + 16px) !important;
+    z-index: 35 !important;
+  }
+
+  /* Bulk delete button */
+  body:not(.drawer-page-hidden) .bulk-btn {
+    left: calc(var(--desktop-app-left) + 16px) !important;
+    right: auto !important;
+    bottom: calc(var(--bottomnav-h) + 16px) !important;
+    z-index: 35 !important;
+  }
+
+  body:not(.drawer-page-hidden) .bulk-bar {
+    left: calc(var(--desktop-app-left) + 66px) !important;
+    right: auto !important;
+    bottom: calc(var(--bottomnav-h) + 16px) !important;
+    z-index: 35 !important;
+  }
+
+  /* Bottom sheets */
+  body:not(.drawer-page-hidden) .sheet,
+  body:not(.drawer-page-hidden) .confirm-sheet {
+    left: calc(
+      var(--desktop-app-left) + (var(--phone-w) / 2)
+    ) !important;
+    right: auto !important;
+    width: var(--phone-w) !important;
+    max-width: var(--phone-w) !important;
+  }
+
+  /* Login page */
+  body.drawer-page-hidden {
+    width: var(--phone-w) !important;
+    max-width: var(--phone-w) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  body.drawer-page-hidden .drawer,
+  body.drawer-page-hidden .drawer-backdrop {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1023px) {
+  body {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .topbar,
+  .bottomnav {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+}

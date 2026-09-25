@@ -147,7 +147,7 @@ const SECTIONS = [
   }
 ];
 
-let drawerOpen = false;
+let drawerOpen = true;
 
 export function initDrawer() {
   const backdrop = document.getElementById('drawerBackdrop');
@@ -165,25 +165,22 @@ export function initDrawer() {
     });
   });
 
-  // Wire item clicks
+  // Wire item clicks — navigate/toast without closing
   drawer.querySelectorAll('.drawer-item').forEach(el => {
     el.addEventListener('click', () => {
       const route    = el.dataset.route;
       const toastMsg = el.dataset.toast;
 
-      closeDrawer();
-
       if (route) {
         location.hash = route;
       } else if (toastMsg) {
-        setTimeout(() => toast(toastMsg), 250);
+        toast(toastMsg);
       }
     });
   });
 
-  // Wire user row
+  // Wire user row — navigate without closing
   drawer.querySelector('.drawer-user')?.addEventListener('click', () => {
-    closeDrawer();
     location.hash = '#/account';
   });
 
@@ -193,12 +190,15 @@ export function initDrawer() {
     if (e.key === 'Escape' && drawerOpen) closeDrawer();
   });
 
-  // Hamburger
+  // Hamburger (only functional on narrow screens)
   const btn = document.getElementById('btnTopMenu');
   if (btn && btn.dataset.drawerWired !== '1') {
     btn.dataset.drawerWired = '1';
     btn.addEventListener('click', toggleDrawer);
   }
+
+  // Open immediately on load
+  openDrawer();
 }
 
 function renderSection(section) {
@@ -264,6 +264,7 @@ function openDrawer() {
 }
 
 function closeDrawer() {
+  if (window.innerWidth >= 900) return;
   drawerOpen = false;
   document.getElementById('drawerBackdrop')?.classList.remove('is-open');
   document.getElementById('appDrawer')?.classList.remove('is-open');
