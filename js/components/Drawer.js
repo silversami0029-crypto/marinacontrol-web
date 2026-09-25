@@ -60,9 +60,8 @@ const SECTIONS = [
     title: 'CUSTOMERS',
     icon: ICONS.customers,
     items: [
-      { id: 'add-customer', label: 'Add Customer', toast: 'Add Customer is coming to the web app' },
- { label: 'Customer Directory',   route: '#/customer-directory' },
-      { label: '360° Client View',     route: '#/customer-directory' }
+      { id: 'customer-dir', label: 'Customer Directory', route: '#/customer-directory' },
+      { id: 'live-360',     label: '360° Client View',   route: '#/customer-directory' }
     ]
   },
   {
