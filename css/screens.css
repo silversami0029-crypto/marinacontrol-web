@@ -3112,3 +3112,41 @@ body {
 .dash-tile.is-attention .dash-tile-count {
   color: #F5A524;
 }
+
+/* ============================================================
+   MOBILE FIX — FABs must sit INSIDE the viewport on phones
+   ============================================================ */
+@media (max-width: 1023px) {
+
+  /* Right FAB — attach to the right edge of the screen */
+  .cd-fab,
+  .um-fab,
+  .cm-fab {
+    left: auto !important;
+    right: 16px !important;
+    transform: none !important;
+    bottom: calc(var(--bottomnav-h) + 16px) !important;
+  }
+
+  /* Left bulk-delete button — attach to the left edge of the screen */
+  .bulk-btn {
+    left: 16px !important;
+    right: auto !important;
+    bottom: calc(var(--bottomnav-h) + 16px) !important;
+  }
+
+  /* Bulk-bar sits to the right of the trash button */
+  .bulk-bar {
+    left: 66px !important;
+    right: auto !important;
+    bottom: calc(var(--bottomnav-h) + 16px) !important;
+  }
+
+  /* .fab (Boats FAB with "+ Boat" text) — same treatment */
+  .fab {
+    left: auto !important;
+    right: 16px !important;
+    transform: none !important;
+    bottom: calc(var(--bottomnav-h) + 16px) !important;
+  }
+}
