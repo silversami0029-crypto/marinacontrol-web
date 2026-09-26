@@ -139,11 +139,11 @@ export function initDrawer() {
         closeDrawer();
       }
 
-      // Special case: 360° Client View has a pre-flight check
+     /* // Special case: 360° Client View has a pre-flight check
       if (item.dataset.itemId === 'live-360') {
         openClient360FromDrawer();
         return;
-      }
+      }*/
 
       if (route) {
         location.hash = route;
