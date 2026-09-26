@@ -364,7 +364,8 @@ async function onSetActive(boat) {
     await setActiveBoat(store.activeClientId, boat.id);
     toast(`${boat.name} is now active`, { kind: 'success' });
   } catch (err) {
-    toast('Failed to set active', { kind: 'error' });
+    console.error('[boats] set active failed', err);
+    toast(err.message || 'Failed to set active', { kind: 'error', duration: 5000 });
   }
 }
 

@@ -46,19 +46,30 @@ export function listenForCustomers(clientId, callback) {
 
 /* ---------- WRITE: set active ---------- */
 export async function setActiveBoat(clientId, selectedBoatId) {
-  const q = query(collection(db, 'boats'), where('clientId', '==', clientId));
+  const cid = Number(clientId);
+  const selectedId = Number(selectedBoatId);
+
+  if (!cid || !selectedId) throw new Error('Invalid client or boat ID');
+
+  const q = query(collection(db, 'boats'), where('clientId', '==', cid));
   const snap = await getDocs(q);
+  const selectedExists = snap.docs.some(d => Number(d.data().id ?? d.id) === selectedId);
+
+  if (!selectedExists) throw new Error('Selected boat not found');
+
   const batch = writeBatch(db);
   const now = Date.now();
-  snap.docs.forEach((d) => {
-    const data = d.data();
-    const firestoreBoatId = Number(data.id ?? d.id);
+
+  snap.docs.forEach(d => {
+    const boatId = Number(d.data().id ?? d.id);
     batch.update(d.ref, {
-      isActive: firestoreBoatId === selectedBoatId,
+      isActive: boatId === selectedId,
       lastModified: now,
+      lastModifiedBy: 'WEB',
       syncedAt: 0
     });
   });
+
   await batch.commit();
 }
 
@@ -922,6 +933,107 @@ export async function importCustomersFromRows(clientId, userId, rows, onProgress
       success++;
     } catch (err) {
       console.error('[import customers] row failed', err);
+      errors.push(`Line ${lineNo}: ${err.message || 'write failed'}`);
+    }
+
+    onProgress(success, skipped, rows.length);
+  }
+
+  return { success, skipped, failed: errors.length, errors };
+}
+
+/* ============================================================
+   CREW BULK IMPORT
+   ============================================================ */
+export async function importCrewFromRows(clientId, userId, rows, onProgress) {
+  const {
+    collection, query, where, getDocs, doc, setDoc, serverTimestamp
+  } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+  const { db } = await import('./firebase.js');
+
+  const cid = Number(clientId);
+
+  // Load existing crew for duplicate detection
+  const existingSnap = await getDocs(
+    query(collection(db, 'crew'), where('clientId', '==', cid))
+  );
+
+  const existingKeys = new Set(); // "name|email" lowercase
+  let maxId = 0;
+
+  existingSnap.forEach(d => {
+    const data = d.data();
+    const n = (data.name  || '').trim().toLowerCase();
+    const e = (data.email || '').trim().toLowerCase();
+    if (n && e) existingKeys.add(`${n}|${e}`);
+    const v = Number(data.id || 0);
+    if (v > maxId) maxId = v;
+  });
+
+  // Find active boat to associate
+  let boatId = 0;
+  try {
+    const boatsSnap = await getDocs(
+      query(
+        collection(db, 'boats'),
+        where('clientId', '==', cid),
+        where('isActive', '==', true)
+      )
+    );
+    if (!boatsSnap.empty) {
+      boatId = Number(boatsSnap.docs[0].data().id || 0);
+    }
+  } catch { /* ignore */ }
+
+  let nextId = maxId + 1;
+  let success = 0;
+  let skipped = 0;
+  const errors = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const lineNo = i + 2;
+
+    try {
+      const name  = (row.name  || '').trim();
+      const email = (row.email || '').trim();
+      const role  = (row.role  || '').trim();
+      const notes = (row.notes || '').trim();
+
+      if (!name)  { errors.push(`Line ${lineNo}: name is required`); skipped++; continue; }
+      if (!email) { errors.push(`Line ${lineNo}: email is required`); skipped++; continue; }
+
+      const key = `${name.toLowerCase()}|${email.toLowerCase()}`;
+      if (existingKeys.has(key)) {
+        skipped++;
+        onProgress(success, skipped, rows.length);
+        continue;
+      }
+
+      const now = Date.now();
+      const docRef = doc(db, 'crew', String(nextId));
+
+      await setDoc(docRef, {
+        id: nextId,
+        clientId: cid,
+        boatId,
+        name,
+        email,
+        role,
+        notes,
+        status: 'OFF DUTY',
+        createdAt: now,
+        lastModified: now,
+        lastModifiedBy: String(userId || 0),
+        syncTime: serverTimestamp(),
+        syncedAt: 0
+      });
+
+      existingKeys.add(key);
+      nextId++;
+      success++;
+    } catch (err) {
+      console.error('[import crew] row failed', err);
       errors.push(`Line ${lineNo}: ${err.message || 'write failed'}`);
     }
 

@@ -41,7 +41,7 @@ const SECTIONS = [
     items: [
       { id: 'fleet-overview', label: 'Fleet Overview', route: '#/fleet' },
       { id: 'berth-management', label: 'Berth Management', route: '#/berths' },
-      { id: 'maintenance', label: 'Maintenance', toast: 'Maintenance is coming to the web app' },
+   { id: 'maintenance', label: 'Maintenance', route: '#/maintenance' },
       { id: 'safety', label: 'Safety Inspections', toast: 'Safety Inspections is coming to the web app' }
     ]
   },
@@ -70,7 +70,7 @@ const SECTIONS = [
     icon: ICONS.staff,
     items: [
       { id: 'user-mgmt', label: 'User Management', route: '#/user-management' },
-      { id: 'crew-mgmt', label: 'Crew Management', toast: 'Crew Management is coming to the web app' },
+     { id: 'crew-mgmt', label: 'Crew Management', route: '#/crew' },
       { id: 'permissions', label: 'Permissions & Roles', toast: 'Permissions & Roles is coming to the web app' },
       { id: 'shift-schedule', label: 'Shift Schedule', toast: 'Shift Schedule is coming to the web app' }
     ]
