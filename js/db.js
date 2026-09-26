@@ -1042,3 +1042,117 @@ export async function importCrewFromRows(clientId, userId, rows, onProgress) {
 
   return { success, skipped, failed: errors.length, errors };
 }
+
+/* ============================================================
+   DOCUMENT BULK IMPORT
+   ============================================================ */
+export async function importDocumentsFromRows(clientId, userId, boatId, rows, onProgress) {
+  const {
+    collection, query, where, getDocs, doc, setDoc, serverTimestamp
+  } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+  const { db } = await import('./firebase.js');
+
+  const cid = Number(clientId);
+
+  const existingSnap = await getDocs(
+    query(collection(db, 'documents'), where('clientId', '==', cid))
+  );
+
+  const existingKeys = new Set();   // name|type lowercase
+  let maxId = 0;
+
+  existingSnap.forEach(d => {
+    const data = d.data();
+    const n = (data.name || '').trim().toLowerCase();
+    const t = (data.type || '').trim().toLowerCase();
+    if (n) existingKeys.add(`${n}|${t}`);
+    const v = Number(data.id || 0);
+    if (v > maxId) maxId = v;
+  });
+
+  let nextId = maxId + 1;
+  let success = 0;
+  let skipped = 0;
+  const errors = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const lineNo = i + 2;
+
+    try {
+      const name        = (row.name   || '').trim();
+      const type        = (row.type   || '').trim();
+      const expiryRaw   = (row.expiry || '').trim();
+      const notes       = (row.notes  || '').trim();
+      const filePath    = (row.file   || '').trim();
+
+      if (!name) { errors.push(`Line ${lineNo}: name is required`); skipped++; continue; }
+      if (!type) { errors.push(`Line ${lineNo}: type is required`); skipped++; continue; }
+
+      const key = `${name.toLowerCase()}|${type.toLowerCase()}`;
+      if (existingKeys.has(key)) {
+        skipped++;
+        onProgress(success, skipped, rows.length);
+        continue;
+      }
+
+      let expiryMs = null;
+      if (expiryRaw) {
+        const parsed = parseDocumentDate(expiryRaw);
+        if (parsed === null) {
+          errors.push(`Line ${lineNo}: invalid date "${expiryRaw}". Use YYYY-MM-DD`);
+          skipped++;
+          onProgress(success, skipped, rows.length);
+          continue;
+        }
+        expiryMs = parsed;
+      }
+
+      const now = Date.now();
+      const cloudId = (crypto.randomUUID ? crypto.randomUUID() : `d-${now}-${nextId}`);
+
+      await setDoc(doc(db, 'documents', cloudId), {
+        id: nextId,
+        clientId: cid,
+        boatId: Number(boatId),
+        name,
+        type,
+        notes,
+        expiryDate: expiryMs,
+        filePath,
+        fileName: '',
+        assignedTo: '',
+        lastModified: now,
+        lastModifiedBy: String(userId || 0),
+        syncTime: serverTimestamp(),
+        syncedAt: 0
+      });
+
+      existingKeys.add(key);
+      nextId++;
+      success++;
+    } catch (err) {
+      console.error('[import documents] row failed', err);
+      errors.push(`Line ${lineNo}: ${err.message || 'write failed'}`);
+    }
+
+    onProgress(success, skipped, rows.length);
+  }
+
+  return { success, skipped, failed: errors.length, errors };
+}
+
+function parseDocumentDate(s) {
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) {
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+  // dd/mm/yyyy fallback
+  const m2 = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m2) {
+    const d = new Date(Number(m2[3]), Number(m2[2]) - 1, Number(m2[1]));
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+  return null;
+}

@@ -210,6 +210,7 @@ export function mountBoatDashboardScreen() {
 
       if (type === 'maintenance') { location.hash = '#/maintenance'; return; }
       if (type === 'crew')        { location.hash = '#/crew';        return; }
+if (type === 'documents')   { location.hash = '#/documents';   return; }
       toast(`${label} coming soon`);
     });
   });
