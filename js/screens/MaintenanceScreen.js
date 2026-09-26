@@ -100,7 +100,16 @@ export function mountMaintenanceScreen() {
   });
 
   document.getElementById('mtSearchInput').addEventListener('input', renderList);
-
+  
+document.getElementById('mtFabAdd').addEventListener('click', async () => {
+    try {
+      const m = await import('./AddMaintenanceSheet.js');
+      await m.showAddMaintenanceSheet({});
+    } catch (err) {
+      console.error('[maintenance fab] failed', err);
+      toast('Could not open Add Maintenance');
+    }
+  });
   resolveBoatAndSubscribe(urlBoatId);
 }
 
