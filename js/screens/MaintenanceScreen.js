@@ -13,14 +13,14 @@ let currentBoatId = 0;
 let currentBoatName = '';
 let currentItems = [];
 let isSearchOpen = false;
+let attentionFilter = false;
 
 export function mountMaintenanceScreen() {
   const screen = document.getElementById('screen');
 
-  const params = new URLSearchParams(
-    (location.hash.split('?')[1] || '')
-  );
+  const params = new URLSearchParams(location.hash.split('?')[1] || '');
   const urlBoatId = Number(params.get('boatId') || 0);
+  attentionFilter = (params.get('filter') || '').toLowerCase() === 'attention';
 
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
   currentItems = [];
@@ -63,7 +63,7 @@ export function mountMaintenanceScreen() {
       <button type="button" class="search-cancel" id="mtSearchCancel">Cancel</button>
     </div>
 
-      <div class="mt-list" id="mtList">
+    <div class="mt-list" id="mtList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
@@ -100,8 +100,8 @@ export function mountMaintenanceScreen() {
   });
 
   document.getElementById('mtSearchInput').addEventListener('input', renderList);
-  
-document.getElementById('mtFabAdd').addEventListener('click', async () => {
+
+  document.getElementById('mtFabAdd').addEventListener('click', async () => {
     try {
       const m = await import('./AddMaintenanceSheet.js');
       await m.showAddMaintenanceSheet({});
@@ -110,6 +110,7 @@ document.getElementById('mtFabAdd').addEventListener('click', async () => {
       toast('Could not open Add Maintenance');
     }
   });
+
   resolveBoatAndSubscribe(urlBoatId);
 }
 
@@ -167,37 +168,32 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   }
 
   currentBoatId = boatId;
-  document.getElementById('mtPill').textContent = currentBoatName
-    ? `Maintenance · ${currentBoatName}`
-    : 'Maintenance';
+
+  const pillText = attentionFilter
+    ? `Attention · ${currentBoatName || 'Maintenance'}`
+    : (currentBoatName ? `Maintenance · ${currentBoatName}` : 'Maintenance');
+
+  document.getElementById('mtPill').textContent = pillText;
 
   subscribeToMaintenance(clientId, boatId);
 }
 
-
-
 function subscribeToMaintenance(clientId, boatId) {
   const q = query(
     collection(db, 'maintenance'),
-    where('clientId', '==', Number(clientId)),
-    where('boatId', '==', Number(boatId))
+    where('clientId', '==', Number(clientId))
   );
 
   unsubscribe = onSnapshot(q, (snap) => {
     currentItems = snap.docs
       .map(d => {
         const data = d.data();
-
         return {
           id: data.id != null ? Number(data.id) : Number(d.id),
           _docId: d.id,
           clientId: Number(data.clientId || 0),
-          boatId: data.boatId != null
-            ? Number(data.boatId)
-            : null,
-          berthId: data.berthId != null
-            ? Number(data.berthId)
-            : null,
+          boatId: data.boatId != null ? Number(data.boatId) : null,
+          berthId: data.berthId != null ? Number(data.berthId) : null,
           type: data.type || '',
           date: data.date || '',
           status: data.status || 'ACTIVE',
@@ -217,18 +213,28 @@ function subscribeToMaintenance(clientId, boatId) {
           lastModified: Number(data.lastModified || 0)
         };
       })
-      .filter(item =>
-        Number(item.boatId) === Number(boatId) &&
-        !(Number(item.berthId) > 0)
-      );
+      .filter(item => {
+        const belongsToBoat = item.boatId && Number(item.boatId) === Number(boatId);
+        if (!belongsToBoat) return false;
+
+        if (!attentionFilter) return true;
+
+        if (item.completed || item.status === 'COMPLETED') return false;
+        if (item.status === 'ESCALATED') return true;
+
+        if (!item.date) return false;
+        const due = new Date(item.date + 'T00:00:00').getTime();
+        if (isNaN(due)) return false;
+
+        const now = Date.now();
+        return due < now || (due - now) <= 7 * 24 * 60 * 60 * 1000;
+      });
 
     renderList();
   }, (err) => {
     console.error('[maintenance] listen failed', err);
-
     const listEl = document.getElementById('mtList');
     if (!listEl) return;
-
     listEl.innerHTML = `
       <div class="boats-empty">
         <h2>Couldn't load maintenance</h2>
@@ -262,9 +268,15 @@ function renderList() {
 
   if (!items.length) {
     const q = (document.getElementById('mtSearchInput')?.value || '').trim();
-    listEl.innerHTML = q
-      ? `<div class="boats-empty"><h2>No matches</h2><p>No maintenance matches "${escapeHtml(q)}"</p></div>`
-      : `<div class="boats-empty"><h2>No maintenance</h2><p>Tap + to add a task.</p></div>`;
+    let emptyHTML;
+    if (q) {
+      emptyHTML = `<div class="boats-empty"><h2>No matches</h2><p>No maintenance matches "${escapeHtml(q)}"</p></div>`;
+    } else if (attentionFilter) {
+      emptyHTML = `<div class="boats-empty"><h2>All clear</h2><p>No items need attention.</p></div>`;
+    } else {
+      emptyHTML = `<div class="boats-empty"><h2>No maintenance</h2><p>Tap + to add a task.</p></div>`;
+    }
+    listEl.innerHTML = emptyHTML;
     return;
   }
 
@@ -325,7 +337,7 @@ function renderList() {
     });
   });
 
-   listEl.querySelectorAll('[data-maint-menu]').forEach(btn => {
+  listEl.querySelectorAll('[data-maint-menu]').forEach(btn => {
     const id = Number(btn.dataset.maintMenu);
     const item = sorted.find(m => m.id === id);
     if (!item) return;
@@ -338,7 +350,7 @@ function renderList() {
 }
 
 /* ============================================================
-   ROW STATE (color, icon, date label)
+   ROW STATE
    ============================================================ */
 function getRowState(m) {
   const now = Date.now();

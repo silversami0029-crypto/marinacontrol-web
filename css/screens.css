@@ -3087,3 +3087,28 @@ body {
   max-height: calc(100dvh - var(--topbar-h) - var(--bottomnav-h) - 90px);
   padding-bottom: 24px;
 }
+
+/* Boat Dashboard — tile count */
+.dash-tile-count {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.dash-tile.is-critical {
+  background: rgba(255,68,68,.10);
+  border-color: rgba(255,68,68,.35);
+}
+.dash-tile.is-critical .dash-tile-title,
+.dash-tile.is-critical .dash-tile-count {
+  color: #FF4444;
+}
+.dash-tile.is-attention {
+  background: rgba(245,165,36,.10);
+  border-color: rgba(245,165,36,.35);
+}
+.dash-tile.is-attention .dash-tile-title,
+.dash-tile.is-attention .dash-tile-count {
+  color: #F5A524;
+}
