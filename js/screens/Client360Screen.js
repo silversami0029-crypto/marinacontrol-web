@@ -10,9 +10,48 @@ import { showClient360Help } from './Client360Help.js';
 import { db } from '../firebase.js';
 
 let currentCustomer = null;
+let currentSearchQuery = '';
 let currentBoats = [];
 let currentBerth = null;
 let currentMaintenance = [];
+
+const HEADER_HTML = `
+  <div class="c360-header" id="c360Header">
+    <div class="c360-header-row">
+      <button class="c360-icon-btn" id="c360Back" aria-label="Back">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+             stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <div class="c360-pill">360° Client View</div>
+      <button class="c360-icon-btn" id="c360Help" aria-label="Help">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+             stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <line x1="12" y1="11" x2="12" y2="16"/>
+          <circle cx="12" cy="7.5" r="0.8" fill="currentColor"/>
+        </svg>
+      </button>
+      <div class="c360-header-spacer"></div>
+      <button class="c360-icon-btn" id="c360SearchToggle" aria-label="Search">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+             stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/>
+          <line x1="16.5" y1="16.5" x2="21" y2="21"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="boats-search-bar" id="c360SearchBar" hidden>
+    <input id="c360SearchInput" type="text" placeholder="Search activity..." autocomplete="off">
+    <button type="button" class="search-cancel" id="c360SearchCancel">Cancel</button>
+  </div>
+`;
 
 export async function mountClient360Screen() {
   const screen = document.getElementById('screen');
@@ -20,173 +59,137 @@ export async function mountClient360Screen() {
   const params = new URLSearchParams(location.hash.split('?')[1] || '');
   let customerId = Number(params.get('customerId') || 0);
 
+  currentSearchQuery = '';
+
   const clientId = Number(store.activeClientId);
   if (!clientId) {
     screen.innerHTML = `<div class="boats-empty"><h2>No client assigned</h2></div>`;
     return;
   }
 
-  // No customerId → resolve from active boat
+  /* ------------------------------------------------------------
+     No customerId in URL → resolve from active boat
+     ------------------------------------------------------------ */
   if (!customerId) {
-    screen.innerHTML = `
-      <div class="c360-header">
-        <div class="c360-header-row">
-          <button class="c360-icon-btn" id="c360Back">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-                 stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-          </button>
-          <div class="c360-pill">360° Client View</div>
-          <div class="c360-header-spacer"></div>
-        </div>
-      </div>
+    screen.innerHTML = HEADER_HTML + `
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     `;
+    wireHeader({ onSearch: null, onBack: () => { location.hash = '#/customer-directory'; } });
 
-    document.getElementById('c360Back').addEventListener('click', () => {
-      location.hash = '#/customer-directory';
-    });
-
+    let activeBoat = null;
     try {
-      let activeBoat = null;
-
       if (store.activeBoatId) {
-        const snap = await getDocs(
-          query(
-            collection(db, 'boats'),
-            where('clientId', '==', clientId),
-            where('id', '==', Number(store.activeBoatId))
-          )
-        );
+        const snap = await getDocs(query(
+          collection(db, 'boats'),
+          where('clientId', '==', clientId),
+          where('id', '==', Number(store.activeBoatId))
+        ));
         if (!snap.empty) activeBoat = snap.docs[0].data();
       }
 
       if (!activeBoat) {
-        const snap = await getDocs(
-          query(
-            collection(db, 'boats'),
-            where('clientId', '==', clientId),
-            where('isActive', '==', true)
-          )
-        );
+        const snap = await getDocs(query(
+          collection(db, 'boats'),
+          where('clientId', '==', clientId),
+          where('isActive', '==', true)
+        ));
         if (!snap.empty) activeBoat = snap.docs[0].data();
       }
 
       if (!activeBoat) {
-        screen.innerHTML = `
-          <div class="boats-empty">
-            <h2>No active boat</h2>
-            <p>Set a boat as active to view its customer.</p>
-          </div>
-        `;
-        return;
-      }
-
-      customerId = Number(activeBoat.customerId || 0);
-
-         if (!customerId) {
-        // Need the full boat doc for the assign sheet (id + name + customerId)
-        const fullBoatSnap = await getDocs(
-          query(
-            collection(db, 'boats'),
-            where('clientId', '==', clientId),
-            where('id', '==', Number(activeBoat.id || 0))
-          )
-        );
-        const fullBoat = fullBoatSnap.empty
-          ? { ...activeBoat, id: Number(activeBoat.id || 0), name: activeBoat.name || '' }
-          : { _docId: fullBoatSnap.docs[0].id, ...fullBoatSnap.docs[0].data() };
-
         screen.innerHTML = `
           <div class="c360-empty">
             <div class="c360-empty-inner">
-              <h2>No customer linked</h2>
-              <p>The active boat has no customer assigned.</p>
-              <button type="button" class="c360-empty-btn" id="c360AssignCustomer">
-                Assign Customer
+              <h2>No active boat</h2>
+              <p>Set a boat as active to view its customer.</p>
+              <button type="button" class="c360-empty-btn" id="c360OpenBoats">
+                Open Boats
               </button>
             </div>
           </div>
         `;
-
-        document.getElementById('c360AssignCustomer').addEventListener('click', async () => {
-          // Load customers for this client
-          const custSnap = await getDocs(
-            query(
-              collection(db, 'customers'),
-              where('clientId', '==', clientId)
-            )
-          );
-          const customers = custSnap.docs
-            .map(d => ({ _docId: d.id, ...d.data(), id: Number(d.data().id || 0) }))
-            .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-          showAssignCustomerSheet({
-            boat: fullBoat,
-            customers,
-            onAssign: async (pickedCustomerId) => {
-              try {
-                const userId = store.userProfile?.userId || 0;
-                await assignCustomerToBoat(String(fullBoat.id), pickedCustomerId, userId);
-
-                toast('Customer assigned', { kind: 'success' });
-
-                // Reload the 360 with the new customer
-                location.hash = `#/client-360?customerId=${pickedCustomerId}`;
-                // Force re-mount since we're already on that path
-                setTimeout(() => mountClient360Screen(), 50);
-              } catch (err) {
-                console.error('[360 assign] failed', err);
-                toast('Failed to assign customer', { kind: 'error' });
-              }
-            }
-          });
+        document.getElementById('c360OpenBoats').addEventListener('click', () => {
+          location.hash = '#/boats';
         });
         return;
       }
+
+      customerId = Number(activeBoat.customerId || 0);
     } catch (err) {
       console.error('[360] active boat lookup failed', err);
       screen.innerHTML = `<div class="boats-empty"><h2>Couldn't resolve active boat</h2></div>`;
       return;
     }
+
+    /* Active boat has no customer → assign flow */
+    if (!customerId) {
+      const fullBoatSnap = await getDocs(query(
+        collection(db, 'boats'),
+        where('clientId', '==', clientId),
+        where('id', '==', Number(activeBoat.id || 0))
+      ));
+      const fullBoat = fullBoatSnap.empty
+        ? { ...activeBoat, id: Number(activeBoat.id || 0), name: activeBoat.name || '' }
+        : { _docId: fullBoatSnap.docs[0].id, ...fullBoatSnap.docs[0].data() };
+
+      screen.innerHTML = `
+        <div class="c360-empty">
+          <div class="c360-empty-inner">
+            <h2>No customer linked</h2>
+            <p>The active boat has no customer assigned.</p>
+            <button type="button" class="c360-empty-btn" id="c360AssignCustomer">
+              Assign Customer
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('c360AssignCustomer').addEventListener('click', async () => {
+        const custSnap = await getDocs(query(
+          collection(db, 'customers'),
+          where('clientId', '==', clientId)
+        ));
+        const customers = custSnap.docs
+          .map(d => ({ _docId: d.id, ...d.data(), id: Number(d.data().id || 0) }))
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+        showAssignCustomerSheet({
+          boat: fullBoat,
+          customers,
+          onAssign: async (pickedCustomerId) => {
+            try {
+              const userId = store.userProfile?.userId || 0;
+              await assignCustomerToBoat(String(fullBoat.id), pickedCustomerId, userId);
+              toast('Customer assigned', { kind: 'success' });
+              location.hash = `#/client-360?customerId=${pickedCustomerId}`;
+              setTimeout(() => mountClient360Screen(), 50);
+            } catch (err) {
+              console.error('[360 assign] failed', err);
+              toast('Failed to assign customer', { kind: 'error' });
+            }
+          }
+        });
+      });
+      return;
+    }
   }
 
-  screen.innerHTML = `
-    <div class="c360-header">
-      <div class="c360-header-row">
-        <button class="c360-icon-btn" id="c360Back">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-               stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-        </button>
-        <div class="c360-pill">360° Client View</div>
-        <button class="c360-icon-btn" id="c360Help" aria-label="Help">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
-               stroke="currentColor" stroke-width="1.8"
-               stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"/>
-            <line x1="12" y1="11" x2="12" y2="16"/>
-            <circle cx="12" cy="7.5" r="0.8" fill="currentColor"/>
-          </svg>
-        </button>
-        <div class="c360-header-spacer"></div>
-      </div>
-    </div>
-
+  /* ------------------------------------------------------------
+     Full render with customerId
+     ------------------------------------------------------------ */
+  screen.innerHTML = HEADER_HTML + `
     <div class="c360-body" id="c360Body">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
   `;
 
-  document.getElementById('c360Back').addEventListener('click', () => {
-    location.hash = '#/customer-directory';
+  wireHeader({
+    onSearch: (query) => {
+      currentSearchQuery = query;
+      render();
+    },
+    onBack: () => { location.hash = '#/customer-directory'; }
   });
-
-  document.getElementById('c360Help').addEventListener('click', showClient360Help);
 
   try {
     await loadAll(clientId, customerId);
@@ -199,6 +202,40 @@ export async function mountClient360Screen() {
         <p>${escapeHtml(err.message || 'Unknown error')}</p>
       </div>
     `;
+  }
+}
+
+/* ============================================================
+   WIRE HEADER (shared for both branches)
+   ============================================================ */
+function wireHeader({ onSearch, onBack }) {
+  document.getElementById('c360Back').addEventListener('click', onBack);
+
+  document.getElementById('c360Help').addEventListener('click', showClient360Help);
+
+  const searchToggle = document.getElementById('c360SearchToggle');
+  const searchBar = document.getElementById('c360SearchBar');
+  const searchInput = document.getElementById('c360SearchInput');
+  const searchCancel = document.getElementById('c360SearchCancel');
+  const header = document.getElementById('c360Header');
+
+  if (searchToggle && searchBar && searchInput && searchCancel && header) {
+    searchToggle.addEventListener('click', () => {
+      header.hidden = true;
+      searchBar.hidden = false;
+      searchInput.focus();
+    });
+
+    searchCancel.addEventListener('click', () => {
+      searchBar.hidden = true;
+      header.hidden = false;
+      searchInput.value = '';
+      if (onSearch) onSearch('');
+    });
+
+    searchInput.addEventListener('input', (e) => {
+      if (onSearch) onSearch(e.target.value.trim().toLowerCase());
+    });
   }
 }
 
@@ -287,6 +324,15 @@ function render() {
   if (!body) return;
 
   const c = currentCustomer;
+  if (!c) {
+    body.innerHTML = `
+      <div class="boats-empty">
+        <h2>Customer not found</h2>
+      </div>
+    `;
+    return;
+  }
+
   const alerts = buildAlerts();
 
   body.innerHTML = `
@@ -492,19 +538,31 @@ function renderFinancialCard() {
 }
 
 /* ============================================================
-   ACTIVITY
+   ACTIVITY (with search filter)
    ============================================================ */
 function renderActivityCard() {
-  if (!currentMaintenance.length) {
+  const q = currentSearchQuery;
+  const filtered = q
+    ? currentMaintenance.filter(m =>
+        (m.type || '').toLowerCase().includes(q) ||
+        (m.notes || '').toLowerCase().includes(q) ||
+        (m.status || '').toLowerCase().includes(q) ||
+        (m.assignedTo || '').toLowerCase().includes(q) ||
+        (m.boatName || '').toLowerCase().includes(q)
+      )
+    : currentMaintenance;
+
+  if (!filtered.length) {
+    const msg = q ? `No activity matches "${q}"` : 'No maintenance recorded';
     return `
       <div class="c360-card">
         <div class="c360-card-title">📋 Recent Activity</div>
-        <div class="c360-line c360-line-dim">No maintenance recorded</div>
+        <div class="c360-line c360-line-dim">${escapeHtml(msg)}</div>
       </div>
     `;
   }
 
-  const sorted = [...currentMaintenance]
+  const sorted = [...filtered]
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
     .slice(0, 6);
 

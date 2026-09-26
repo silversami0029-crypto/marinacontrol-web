@@ -3073,3 +3073,17 @@ body {
 .c360-empty-btn:hover {
   background: rgba(33,150,243,.10);
 }
+
+/* 360 header stays fixed while body scrolls */
+.c360-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* 360 body becomes the scroll container */
+.c360-body {
+  overflow-y: auto;
+  max-height: calc(100dvh - var(--topbar-h) - var(--bottomnav-h) - 90px);
+  padding-bottom: 24px;
+}
