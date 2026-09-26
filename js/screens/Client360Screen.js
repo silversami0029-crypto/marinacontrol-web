@@ -6,6 +6,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { showAssignCustomerSheet } from '../components/AssignCustomerSheet.js';
 import { assignCustomerToBoat } from '../db.js';
+import { showClient360Help } from './Client360Help.js';
 import { db } from '../firebase.js';
 
 let currentCustomer = null;
@@ -185,9 +186,7 @@ export async function mountClient360Screen() {
     location.hash = '#/customer-directory';
   });
 
-  document.getElementById('c360Help').addEventListener('click', () => {
-    toast('360° Client View help coming soon');
-  });
+  document.getElementById('c360Help').addEventListener('click', showClient360Help);
 
   try {
     await loadAll(clientId, customerId);
