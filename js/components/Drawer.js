@@ -2,6 +2,10 @@
 
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
+import {
+  collection, query, where, getDocs
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { db } from '../firebase.js';
 
 const ICONS = {
   quick: `<svg class="drawer-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
@@ -61,7 +65,7 @@ const SECTIONS = [
     icon: ICONS.customers,
     items: [
       { id: 'customer-dir', label: 'Customer Directory', route: '#/customer-directory' },
-      { id: 'live-360',     label: '360° Client View',   route: '#/customer-directory' }
+      { id: 'live-360',     label: '360° Client View',  route: '#/client-360' }
     ]
   },
   {
@@ -133,6 +137,12 @@ export function initDrawer() {
 
       if (!isDesktopDrawer()) {
         closeDrawer();
+      }
+
+      // Special case: 360° Client View has a pre-flight check
+      if (item.dataset.itemId === 'live-360') {
+        openClient360FromDrawer();
+        return;
       }
 
       if (route) {
@@ -409,4 +419,72 @@ function escapeAttr(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;');
+}
+
+/* ============================================================
+   Open 360° Client View — only if the active boat has a customer
+   ============================================================ */
+async function openClient360FromDrawer() {
+  const clientId = Number(store.activeClientId);
+  if (!clientId) {
+    toast('No client assigned', { kind: 'error' });
+    return;
+  }
+
+  try {
+    let activeBoat = null;
+
+    if (store.activeBoatId) {
+      const snap = await getDocs(
+        query(
+          collection(db, 'boats'),
+          where('clientId', '==', clientId),
+          where('id', '==', Number(store.activeBoatId))
+        )
+      );
+      if (!snap.empty) activeBoat = snap.docs[0].data();
+    }
+
+    if (!activeBoat) {
+      const snap = await getDocs(
+        query(
+          collection(db, 'boats'),
+          where('clientId', '==', clientId),
+          where('isActive', '==', true)
+        )
+      );
+      if (!snap.empty) activeBoat = snap.docs[0].data();
+    }
+
+    if (!activeBoat) {
+      toast('No active boat. Set a boat as active first.', { kind: 'error', duration: 3000 });
+      return;
+    }
+
+    const customerId = Number(activeBoat.customerId || 0);
+    if (!customerId) {
+      toast('No customer is assigned to this boat. Assign a customer first.', { kind: 'error', duration: 3000 });
+      return;
+    }
+
+    // Confirm the customer doc actually exists
+    const custSnap = await getDocs(
+      query(
+        collection(db, 'customers'),
+        where('clientId', '==', clientId),
+        where('id', '==', customerId)
+      )
+    );
+
+    if (custSnap.empty) {
+      toast('Assigned customer no longer exists. Reassign a customer first.', { kind: 'error', duration: 3000 });
+      return;
+    }
+
+    // All good — navigate
+    location.hash = `#/client-360?customerId=${customerId}`;
+  } catch (err) {
+    console.error('[drawer 360] check failed', err);
+    toast('Could not open 360° Client View', { kind: 'error' });
+  }
 }
