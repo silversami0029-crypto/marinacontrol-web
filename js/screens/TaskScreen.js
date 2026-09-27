@@ -3,10 +3,12 @@ import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { showTaskMenu } from './TaskMenuSheet.js';
 import { showTaskDetail } from './TaskDetailSheet.js';
+import { showTaskHelp } from './TaskHelp.js';
 import {
   collection, query, where, onSnapshot, getDocs
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
+
 
 let unsubscribe = null;
 let currentBoatId = 0;
@@ -96,8 +98,8 @@ export function mountTaskScreen() {
     location.hash = '#/boat-dashboard?boatId=' + currentBoatId;
   });
 
-  document.getElementById('tkHelp').addEventListener('click', () => {
-    toast('Tasks help coming soon');
+    document.getElementById('tkHelp').addEventListener('click', () => {
+    showTaskHelp();
   });
 
   document.getElementById('tkSearchToggle').addEventListener('click', () => {

@@ -3842,3 +3842,102 @@ body {
   margin-left: 4px;
   opacity: .8;
 }
+
+/* ============================================================
+   HELP SHEETS
+   ============================================================ */
+.help-wrap {
+  padding: 4px 4px 16px;
+}
+.help-title-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: var(--color-bg);
+  border-radius: 18px;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.help-pill-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+.help-intro {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  margin: 0 0 20px;
+}
+.help-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.help-step-num {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent, #2f6bff);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.help-step-text {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-text-primary);
+  padding-top: 3px;
+}
+.help-footer {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-divider);
+}
+.help-footer a {
+  color: var(--color-accent, #2f6bff);
+  text-decoration: none;
+}
+.help-close-btn {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--color-accent, #2f6bff);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+}
+.help-close-btn:active {
+  opacity: .85;
+}
+
+.help-gotit-btn {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.help-gotit-btn:active {
+  background: rgba(255,255,255,.06);
+}
