@@ -21,6 +21,7 @@ import { mountDocumentScreen } from './screens/DocumentScreen.js';
 import { mountSafetyScreen } from './screens/SafetyScreen.js';
 import { mountEquipmentScreen } from './screens/EquipmentScreen.js';
 import { mountInventoryScreen } from './screens/InventoryScreen.js';
+import { mountTaskScreen } from './screens/TaskScreen.js';
 
 const PROTECTED = ['/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/client-360'];
 
@@ -37,6 +38,7 @@ const routes = {
   '/client-360': mountClient360Screen,
  '/crew': mountCrewManagementScreen,
   '/documents': mountDocumentScreen,
+  '/tasks': mountTaskScreen,
   '/inventory': mountInventoryScreen,
   '/equipment': mountEquipmentScreen,
   '/safety': mountSafetyScreen,

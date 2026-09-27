@@ -3743,3 +3743,102 @@ body {
   color: #fff;
   border-color: transparent;
 }
+
+/* ============================================================
+   TASKS
+   ============================================================ */
+.tk-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  margin: 0 4px 6px;
+  gap: 0;
+  cursor: pointer;
+  background: var(--color-surface);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--color-divider);
+}
+.tk-row:active { background: rgba(255,255,255,.02); }
+.tk-row.is-complete { opacity: .6; }
+.tk-row.is-complete .tk-title { text-decoration: line-through; }
+
+.tk-priority-strip {
+  flex: 0 0 5px;
+  width: 5px;
+}
+
+.tk-info {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tk-badge {
+  align-self: flex-start;
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.tk-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 4px;
+}
+
+.tk-boat {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tk-due {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.tk-row .eq-kebab {
+  align-self: center;
+  margin-right: 4px;
+}
+
+.tk-count {
+  display: inline-block;
+  margin-left: 4px;
+  font-weight: 700;
+  opacity: .85;
+}
+.tk-count:empty { display: none; }
+
+
+/* Tasks filter chips — tighter than dash-filter */
+#tkFilters {
+  padding: 4px 12px 8px;
+  gap: 6px;
+}
+#tkFilters .dash-filter {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+}
+#tkFilters .dash-filter .tk-count {
+  font-size: 11px;
+  margin-left: 4px;
+  opacity: .8;
+}

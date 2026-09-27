@@ -117,6 +117,7 @@ const COUNT_SOURCES = {
   safety:      { collection: 'safety_items', filterActive: true },
   equipment:   { collection: 'equipment' },
   inventory:   { collection: 'inventory' },
+  tasks:       { collection: 'tasks', filterDeleted: true },
   checklists:  { collection: 'checklist' },
   tasks:       { collection: 'tasks' }
 };
@@ -241,6 +242,8 @@ export function mountBoatDashboardScreen() {
       if (type === 'safety')      { location.hash = '#/safety';      return; }
       if (type === 'equipment')   { location.hash = '#/equipment';   return; }
       if (type === 'inventory')   { location.hash = '#/inventory';   return; }
+      if (type === 'tasks')   { location.hash = '#/tasks';   return; }
+
       toast(`${label} coming soon`);
     });
   });
@@ -426,6 +429,35 @@ async function computeStatuses(boatId, clientId) {
   } catch (err) {
     console.warn('[dashboard] equipment status failed', err);
   }
+
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'tasks'),
+      where('clientId', '==', clientId),
+      where('boatId', '==', Number(boatId))
+    ));
+    const now = Date.now();
+    const soon = 3 * 24 * 60 * 60 * 1000;   // 3-day window for attention
+    let overdue = 0, dueSoon = 0;
+    snap.forEach(d => {
+      const x = d.data();
+      if (x.status === 'COMPLETED' || x.status === 'DELETED') return;
+      const prio = String(x.priority || 'MEDIUM').toUpperCase();
+      if (prio === 'OVERDUE' || prio === 'CRITICAL') { overdue++; return; }
+      if (!x.dueDate) return;
+      const due = new Date(x.dueDate + 'T00:00:00').getTime();
+      if (isNaN(due)) return;
+      if (due < now) overdue++;
+      else if (due - now <= soon) dueSoon++;
+    });
+    if (overdue > 0) perTile.tasks = 'critical';
+    else if (dueSoon > 0) perTile.tasks = 'attention';
+    criticalCount  += overdue;
+    attentionCount += dueSoon;
+  } catch (err) {
+    console.warn('[dashboard] tasks status failed', err);
+  }
+
 
   return {
     perTile,

@@ -18,6 +18,7 @@ let currentSafety = [];
 let currentDocuments = [];
 let currentEquipment = [];
 let currentInventory = [];
+let currentTasks = [];
 
 const HEADER_HTML = `
   <div class="c360-header" id="c360Header">
@@ -388,6 +389,33 @@ async function loadAll(clientId, customerId) {
     });
   }
 
+  currentTasks = [];
+  for (const boat of currentBoats) {
+    const taskSnap = await getDocs(
+      query(
+        collection(db, 'tasks'),
+        where('clientId', '==', clientId),
+        where('boatId', '==', boat.id)
+      )
+    );
+    taskSnap.forEach(d => {
+      const data = d.data();
+      if (data.status === 'DELETED') return;
+      currentTasks.push({
+        _docId: d.id,
+        boatId: boat.id,
+        boatName: boat.name || '',
+        id: Number(data.id || 0),
+        title: data.title || '',
+        priority: (data.priority || 'MEDIUM').toUpperCase(),
+        status: (data.status || 'OPEN').toUpperCase(),
+        category: data.category || '',
+        dueDate: data.dueDate || '',
+        assignedTo: data.assignedTo || ''
+      });
+    });
+  }
+
   currentMaintenance = [];
   for (const boat of currentBoats) {
     const maintSnap = await getDocs(
@@ -447,6 +475,7 @@ function render() {
     ${renderDocumentsCard()}
     ${renderInventoryCard()}
     ${renderQuickActions()}
+    ${renderTasksCard()}
   `;
 
   body.querySelectorAll('[data-action]').forEach(el => {
@@ -561,6 +590,32 @@ function buildAlerts() {
         text: `${e.name} low stock (${qtyLabel})`,
         boat: e.boatName
       });
+    }
+  }
+
+  // --- Tasks (overdue / critical) ---
+  for (const t of currentTasks) {
+    if (t.status !== 'OPEN') continue;
+    const prio = String(t.priority || '').toUpperCase();
+    if (prio === 'OVERDUE' || prio === 'CRITICAL') {
+      alerts.push({
+        kind: 'critical',
+        text: `${t.title} — ${prio === 'OVERDUE' ? 'overdue' : 'critical priority'}`,
+        boat: t.boatName
+      });
+      continue;
+    }
+    if (!t.dueDate) continue;
+    const due = new Date(t.dueDate + 'T00:00:00').getTime();
+    if (isNaN(due)) continue;
+    const now = Date.now();
+    const soon = 3 * 24 * 60 * 60 * 1000;
+    if (due < now) {
+      const days = Math.floor((now - due) / (24 * 60 * 60 * 1000));
+      alerts.push({ kind: 'critical', text: `${t.title} overdue by ${days} ${days === 1 ? 'day' : 'days'}`, boat: t.boatName });
+    } else if (due - now <= soon) {
+      const days = Math.floor((due - now) / (24 * 60 * 60 * 1000));
+      alerts.push({ kind: 'warning', text: `${t.title} due in ${days} ${days === 1 ? 'day' : 'days'}`, boat: t.boatName });
     }
   }
 
@@ -1053,6 +1108,61 @@ function renderEquipmentCard() {
     </div>
   `;
 }
+const TASK_PRIORITY_COLORS = {
+  OVERDUE:  '#EF4444',
+  CRITICAL: '#DC2626',
+  MEDIUM:   '#F59E0B',
+  LOW:      '#10B981'
+};
+
+function taskPriorityClass(priority) {
+  const p = String(priority || '').toUpperCase();
+  if (p === 'OVERDUE' || p === 'CRITICAL') return 'err';
+  if (p === 'MEDIUM') return 'warn';
+  return 'ok';
+}
+
+function renderTasksCard() {
+  const open = currentTasks.filter(t => t.status === 'OPEN');
+  if (!open.length) {
+    return `
+      <div class="c360-card c360-card-disabled" data-coming-next="No open tasks">
+        <div class="c360-card-title">✅ Tasks</div>
+        <div class="c360-line c360-line-dim">No open tasks</div>
+      </div>
+    `;
+  }
+
+  const now = Date.now();
+  const ranked = [...open].sort((a, b) => {
+    const order = { OVERDUE: 0, CRITICAL: 1, MEDIUM: 2, LOW: 3 };
+    const ra = order[String(a.priority || '').toUpperCase()] ?? 4;
+    const rb = order[String(b.priority || '').toUpperCase()] ?? 4;
+    if (ra !== rb) return ra - rb;
+    return (a.dueDate || '9999').localeCompare(b.dueDate || '9999');
+  });
+
+  return `
+    <div class="c360-card">
+      <div class="c360-card-title">✅ Tasks <span style="color:var(--color-text-secondary);font-weight:400;font-size:13px;">(${open.length} open)</span></div>
+      ${ranked.slice(0, 5).map(t => {
+        const cls = taskPriorityClass(t.priority);
+        const due = t.dueDate ? formatShortDate(t.dueDate) : '';
+        return `
+          <div class="c360-activity-row">
+            <div class="c360-activity-dot c360-dot-${cls}"></div>
+            <div class="c360-activity-info">
+              <div class="c360-activity-title">${escapeHtml(t.title)}</div>
+              <div class="c360-activity-meta">${escapeHtml(t.priority)}${t.category ? ' · ' + escapeHtml(t.category) : ''}${t.boatName ? ' · ' + escapeHtml(t.boatName) : ''}${due ? ' · Due ' + escapeHtml(due) : ''}</div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+      ${ranked.length > 5 ? `<div class="c360-alert-more">+${ranked.length - 5} more</div>` : ''}
+    </div>
+  `;
+}
+
 
 // Android InventoryAdapter parity: qty<=0 OUT_OF_STOCK, qty<=1 CRITICAL,
 // qty<=3 LOW_STOCK, else IN_STOCK
