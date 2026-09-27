@@ -17,6 +17,7 @@ let currentMaintenance = [];
 let currentSafety = [];
 let currentDocuments = [];
 let currentEquipment = [];
+let currentInventory = [];
 
 const HEADER_HTML = `
   <div class="c360-header" id="c360Header">
@@ -362,6 +363,31 @@ async function loadAll(clientId, customerId) {
     });
   }
 
+  currentInventory = [];
+  for (const boat of currentBoats) {
+    const invSnap = await getDocs(
+      query(
+        collection(db, 'inventory'),
+        where('clientId', '==', clientId),
+        where('boatId', '==', boat.id)
+      )
+    );
+    invSnap.forEach(d => {
+      const data = d.data();
+      currentInventory.push({
+        _docId: d.id,
+        boatId: boat.id,
+        boatName: boat.name || '',
+        id: Number(data.id || 0),
+        name: data.name || '',
+        category: data.category || '',
+        quantity: Number(data.quantity || 0),
+        reorderLevel: Number(data.reorderLevel || 0),
+        unit: data.unit || ''
+      });
+    });
+  }
+
   currentMaintenance = [];
   for (const boat of currentBoats) {
     const maintSnap = await getDocs(
@@ -419,26 +445,28 @@ function render() {
     ${renderEquipmentCard()}
     ${renderSafetyCard()}
     ${renderDocumentsCard()}
-    ${renderComingNextCard('Inventory', 'Inventory coming next')}
+    ${renderInventoryCard()}
     ${renderQuickActions()}
   `;
-
-  body.querySelectorAll('[data-coming-next]').forEach(el => {
-    el.addEventListener('click', () => {
-      toast(el.dataset.comingNext);
-    });
-  });
 
   body.querySelectorAll('[data-action]').forEach(el => {
     el.addEventListener('click', () => {
       const action = el.dataset.action;
+
       if (action === 'maintenance') {
         location.hash = '#/maintenance';
-      } else {
-        toast(`${el.dataset.label || action} coming next`);
+        return;
       }
+
+     if (action === 'berth') {
+        location.hash = '#/berths';
+        return;
+      }
+
+      toast(`${el.dataset.label || action} coming next`);
     });
   });
+
 }
 
 /* ============================================================
@@ -504,6 +532,34 @@ function buildAlerts() {
         kind: 'warning',
         text: `${d.name} expires in ${days} ${days === 1 ? 'day' : 'days'}`,
         boat: d.boatName
+      });
+    }
+  }
+
+  // --- Inventory (low stock, critical, out of stock) ---
+  for (const e of currentInventory) {
+    const st = computeInvStatus(e.quantity);
+    if (st.key === 'IN_STOCK') continue;
+
+    const qtyLabel = `Qty ${e.quantity}${e.unit ? ' ' + e.unit : ''}`;
+
+    if (st.key === 'OUT_OF_STOCK') {
+      alerts.push({
+        kind: 'critical',
+        text: `${e.name} out of stock (${qtyLabel})`,
+        boat: e.boatName
+      });
+    } else if (st.key === 'CRITICAL') {
+      alerts.push({
+        kind: 'critical',
+        text: `${e.name} critically low (${qtyLabel})`,
+        boat: e.boatName
+      });
+    } else if (st.key === 'LOW_STOCK') {
+      alerts.push({
+        kind: 'warning',
+        text: `${e.name} low stock (${qtyLabel})`,
+        boat: e.boatName
       });
     }
   }
@@ -994,6 +1050,56 @@ function renderEquipmentCard() {
         `;
       }).join('')}
       ${currentEquipment.length > 5 ? `<div class="c360-alert-more">+${currentEquipment.length - 5} more</div>` : ''}
+    </div>
+  `;
+}
+
+// Android InventoryAdapter parity: qty<=0 OUT_OF_STOCK, qty<=1 CRITICAL,
+// qty<=3 LOW_STOCK, else IN_STOCK
+function computeInvStatus(quantity) {
+  const q = Number(quantity || 0);
+  if (q <= 0) return { key: 'OUT_OF_STOCK', cls: 'err', label: 'Out of Stock' };
+  if (q <= 1) return { key: 'CRITICAL',     cls: 'err', label: 'Critical' };
+  if (q <= 3) return { key: 'LOW_STOCK',    cls: 'warn', label: 'Low Stock' };
+  return { key: 'IN_STOCK', cls: 'ok', label: 'In Stock' };
+}
+
+function renderInventoryCard() {
+  if (!currentInventory || !currentInventory.length) {
+    return `
+      <div class="c360-card c360-card-disabled" data-coming-next="No inventory">
+        <div class="c360-card-title">📦 Inventory</div>
+        <div class="c360-line c360-line-dim">No inventory recorded</div>
+      </div>
+    `;
+  }
+
+  // Show the most urgent items first (out of stock, then critical, then low),
+  // then anything else, capped at 5 like the Equipment card.
+  const ranked = [...currentInventory].sort((a, b) => {
+    const order = { OUT_OF_STOCK: 0, CRITICAL: 1, LOW_STOCK: 2, IN_STOCK: 3 };
+    const ra = order[computeInvStatus(a.quantity).key] ?? 4;
+    const rb = order[computeInvStatus(b.quantity).key] ?? 4;
+    if (ra !== rb) return ra - rb;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  return `
+    <div class="c360-card">
+      <div class="c360-card-title">📦 Inventory</div>
+      ${ranked.slice(0, 5).map(e => {
+        const st = computeInvStatus(e.quantity);
+        return `
+          <div class="c360-activity-row">
+            <div class="c360-activity-dot c360-dot-${st.cls}"></div>
+            <div class="c360-activity-info">
+              <div class="c360-activity-title">${escapeHtml(e.name || 'Item')}</div>
+              <div class="c360-activity-meta">${escapeHtml(e.category || '—')} · ${escapeHtml(e.boatName)} · Qty ${e.quantity}${e.unit ? ' ' + escapeHtml(e.unit) : ''} (${st.label})</div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+      ${ranked.length > 5 ? `<div class="c360-alert-more">+${ranked.length - 5} more</div>` : ''}
     </div>
   `;
 }

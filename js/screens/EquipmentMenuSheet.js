@@ -6,6 +6,7 @@ import { showAddEquipmentSheet } from './AddEquipmentSheet.js';
 import { showEquipmentDetail } from './EquipmentDetailSheet.js';
 import { doc, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
+import { showEquipmentHistory } from './EquipmentHistorySheet.js';
 
 export function showEquipmentMenu(item) {
   const backdrop = document.createElement('div');
@@ -133,10 +134,7 @@ export function showEquipmentMenu(item) {
   });
 }
 
-function showEquipmentHistory(item) {
-  // TODO: wire to real history sheet. Stub so menu doesn't break.
-  toast('Equipment history coming soon');
-}
+
 
 async function showAssignOwner(item) {
   const clientId = Number(store.activeClientId);

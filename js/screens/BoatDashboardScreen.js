@@ -213,6 +213,7 @@ export function mountBoatDashboardScreen() {
       if (type === 'documents')   { location.hash = '#/documents';   return; }
       if (type === 'safety')      { location.hash = '#/safety';      return; }
       if (type === 'equipment')   { location.hash = '#/equipment';   return; }
+      if (type === 'inventory')   { location.hash = '#/inventory';   return; } 
       toast(`${label} coming soon`);
     });
   });
