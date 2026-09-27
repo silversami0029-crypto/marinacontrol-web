@@ -16,6 +16,7 @@ let currentBerth = null;
 let currentMaintenance = [];
 let currentSafety = [];
 let currentDocuments = [];
+let currentEquipment = [];
 
 const HEADER_HTML = `
   <div class="c360-header" id="c360Header">
@@ -337,6 +338,30 @@ async function loadAll(clientId, customerId) {
     });
   }
 
+  currentEquipment = [];
+  for (const boat of currentBoats) {
+    const eqSnap = await getDocs(
+      query(
+        collection(db, 'equipment'),
+        where('clientId', '==', clientId),
+        where('boatId', '==', boat.id)
+      )
+    );
+    eqSnap.forEach(d => {
+      const data = d.data();
+      currentEquipment.push({
+        _docId: d.id,
+        boatId: boat.id,
+        boatName: boat.name || '',
+        id: Number(data.id || 0),
+        manufacturer: data.manufacturer || '',
+        model: data.model || '',
+        type: data.type || '',
+        status: data.status || 'OPERATIONAL'
+      });
+    });
+  }
+
   currentMaintenance = [];
   for (const boat of currentBoats) {
     const maintSnap = await getDocs(
@@ -391,7 +416,7 @@ function render() {
     ${renderBerthCard()}
     ${renderFinancialCard()}
     ${renderActivityCard()}
-    ${renderComingNextCard('Equipment', 'Equipment view coming next')}
+    ${renderEquipmentCard()}
     ${renderSafetyCard()}
     ${renderDocumentsCard()}
     ${renderComingNextCard('Inventory', 'Inventory coming next')}
@@ -937,6 +962,38 @@ function renderAlerts(alerts) {
         `).join('')}
         ${alerts.length > 6 ? `<div class="c360-alert-more">+${alerts.length - 6} more</div>` : ''}
       </div>
+    </div>
+  `;
+}
+
+function renderEquipmentCard() {
+  if (!currentEquipment || !currentEquipment.length) {
+    return `
+      <div class="c360-card c360-card-disabled" data-coming-next="No equipment">
+        <div class="c360-card-title">⚙️ Equipment</div>
+        <div class="c360-line c360-line-dim">No equipment recorded</div>
+      </div>
+    `;
+  }
+  return `
+    <div class="c360-card">
+      <div class="c360-card-title">⚙️ Equipment</div>
+      ${currentEquipment.slice(0, 5).map(e => {
+        const v = String(e.status || '').toUpperCase();
+        const cls = v.includes('FAULT') || v.includes('BROKEN') || v.includes('OUT') ? 'err'
+          : v.includes('SERVICE') || v.includes('MAINT') ? 'warn'
+          : 'ok';
+        return `
+          <div class="c360-activity-row">
+            <div class="c360-activity-dot c360-dot-${cls}"></div>
+            <div class="c360-activity-info">
+              <div class="c360-activity-title">${escapeHtml(e.manufacturer || 'Equipment')} ${e.model ? escapeHtml(e.model) : ''}</div>
+              <div class="c360-activity-meta">${escapeHtml(e.type)} · ${escapeHtml(e.boatName)}</div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+      ${currentEquipment.length > 5 ? `<div class="c360-alert-more">+${currentEquipment.length - 5} more</div>` : ''}
     </div>
   `;
 }
