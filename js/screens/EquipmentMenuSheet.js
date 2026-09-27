@@ -7,6 +7,7 @@ import { showEquipmentDetail } from './EquipmentDetailSheet.js';
 import { doc, deleteDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 import { showEquipmentHistory } from './EquipmentHistorySheet.js';
+import { logHistory } from '../util/history.js';
 
 export function showEquipmentMenu(item) {
   const backdrop = document.createElement('div');
@@ -249,6 +250,16 @@ async function setOwner(item, name) {
       lastModifiedBy: userId
     });
 
+  await logHistory({
+      entityType: 'EQUIPMENT',
+      entityId: item.id,
+      itemName: item.manufacturer || '',
+      boatId: item.boatId,
+      action: 'OWNER_ASSIGNED',
+      title: name ? `Owner assigned: ${name}` : 'Owner unassigned',
+      detail: name ? `${item.assignedTo || 'None'} → ${name}` : `${item.assignedTo || 'None'} → None`
+    });
+
     toast(name ? `Assigned to ${name}` : 'Unassigned', { kind: 'success' });
   } catch (err) {
     console.error('[equipment assign] failed', err);
@@ -295,6 +306,16 @@ async function duplicateEquipment(item) {
       syncTime: serverTimestamp(),
       syncedAt: 0
     });
+    await logHistory({
+      entityType: 'EQUIPMENT',
+      entityId: nextId,
+      itemName: stripCopySuffix(item.manufacturer) + ' (Copy)',
+      boatId: item.boatId,
+      action: 'DUPLICATED',
+      title: 'Equipment duplicated',
+      detail: `Original: ${item.manufacturer}`
+    });
+
     toast('Equipment duplicated', { kind: 'success' });
   } catch (err) {
     console.error('[equipment duplicate] failed', err);
@@ -310,6 +331,15 @@ async function deleteEquipment(item) {
     cancelText: 'Cancel'
   });
   if (!ok) return;
+
+    await logHistory({
+      entityType: 'EQUIPMENT',
+      entityId: item.id,
+      itemName: item.manufacturer || '',
+      boatId: item.boatId,
+      action: 'DELETED',
+      title: 'Equipment deleted'
+    });
 
   try {
     await deleteDoc(doc(db, 'equipment', String(item._docId)));

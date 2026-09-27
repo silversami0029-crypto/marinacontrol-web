@@ -5,6 +5,7 @@ import {
   collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
+import { logHistory } from '../util/history.js';
 
 const EQUIPMENT_TYPES = [
   'Engine', 'Generator', 'Electrical - Battery', 'Electrical - Charger',
@@ -221,6 +222,16 @@ async function createEquipment(payload) {
     syncedAt: 0
   });
 
+  await logHistory({
+    entityType: 'EQUIPMENT',
+    entityId: nextId,
+    itemName: payload.manufacturer,
+    boatId: payload.boatId,
+    action: 'CREATED',
+    title: 'Equipment created',
+    detail: `${payload.type || ''}${payload.model ? ' — ' + payload.model : ''}`
+  });
+
   return nextId;
 }
 
@@ -238,6 +249,15 @@ async function updateEquipment(item, payload) {
     notes: payload.notes || '',
     lastModified: now,
     lastModifiedBy: userId
+  });
+
+  await logHistory({
+    entityType: 'EQUIPMENT',
+    entityId: item.id,
+    itemName: payload.manufacturer,
+    boatId: item.boatId,
+    action: 'UPDATED',
+    title: 'Equipment edited'
   });
 }
 

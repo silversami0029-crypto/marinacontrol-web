@@ -159,7 +159,7 @@ export function mountBoatDashboardScreen() {
         </button>
       </div>
 
-      <div class="dash-health" id="dashHealth">
+           <div class="dash-health" id="dashHealth">
         <div class="dash-health-title">Boat Health</div>
         <div class="dash-health-body" id="dashHealthBody">
           <div class="dash-health-good">
@@ -167,6 +167,12 @@ export function mountBoatDashboardScreen() {
             <span class="dash-health-label" style="color:#3DD68C;">All Good</span>
           </div>
         </div>
+      </div>
+
+      <div class="dash-filters" id="dashFilters">
+        <button type="button" class="dash-filter is-active" data-filter="all">All</button>
+        <button type="button" class="dash-filter" data-filter="attention">⚠ Attention</button>
+        <button type="button" class="dash-filter" data-filter="critical">⛔ Critical</button>
       </div>
 
       <div class="dash-grid" id="dashGrid"></div>
@@ -182,15 +188,36 @@ export function mountBoatDashboardScreen() {
   });
 
   screen.querySelector('#dashHealth').addEventListener('click', () => {
-    if (dashboardFilter === 'all') {
-      dashboardFilter = 'attention';
-    } else if (dashboardFilter === 'attention' && hasAnyCritical) {
-      dashboardFilter = 'critical';
-    } else {
-      dashboardFilter = 'all';
+    const filters = ['all'];
+
+    if (Object.values(tileStatus).includes('attention')) {
+      filters.push('attention');
     }
+
+    if (Object.values(tileStatus).includes('critical')) {
+      filters.push('critical');
+    }
+
+    const currentIndex = filters.indexOf(dashboardFilter);
+    dashboardFilter = filters[(currentIndex + 1) % filters.length];
+
+    syncFilterChips();
     applyDashboardFilter();
   });
+
+  screen.querySelectorAll('.dash-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      dashboardFilter = btn.dataset.filter;
+      syncFilterChips();
+      applyDashboardFilter();
+    });
+  });
+
+  function syncFilterChips() {
+    screen.querySelectorAll('.dash-filter').forEach(b =>
+      b.classList.toggle('is-active', b.dataset.filter === dashboardFilter)
+    );
+  }
 
   const grid = screen.querySelector('#dashGrid');
   grid.innerHTML = TILES.map(t => `
@@ -213,7 +240,7 @@ export function mountBoatDashboardScreen() {
       if (type === 'documents')   { location.hash = '#/documents';   return; }
       if (type === 'safety')      { location.hash = '#/safety';      return; }
       if (type === 'equipment')   { location.hash = '#/equipment';   return; }
-      if (type === 'inventory')   { location.hash = '#/inventory';   return; } 
+      if (type === 'inventory')   { location.hash = '#/inventory';   return; }
       toast(`${label} coming soon`);
     });
   });
@@ -294,7 +321,7 @@ async function computeStatuses(boatId, clientId) {
     criticalCount += overdue;
     attentionCount += upcoming;
   } catch {}
- // ============ NEW: SAFETY BLOCK — paste this ============
+
   try {
     const snap = await getDocs(query(
       collection(db, 'safety_items'),
@@ -317,7 +344,88 @@ async function computeStatuses(boatId, clientId) {
     criticalCount += expired;
     attentionCount += soon;
   } catch {}
-  // ============ END NEW BLOCK ============
+
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'documents'),
+      where('clientId', '==', clientId),
+      where('boatId', '==', Number(boatId))
+    ));
+    const now = Date.now();
+    const cutoff = now + 30 * 24 * 60 * 60 * 1000;
+    let expired = 0, soon = 0;
+    snap.forEach(d => {
+      const x = d.data();
+      const e = Number(x.expiryDate || 0);
+      if (e <= 0) return;
+      if (e < now) expired++;
+      else if (e <= cutoff) soon++;
+    });
+    if (expired > 0) perTile.documents = 'critical';
+    else if (soon > 0) perTile.documents = 'attention';
+    criticalCount += expired;
+    attentionCount += soon;
+  } catch (err) {
+    console.warn('[dashboard] documents status failed', err);
+  }
+
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'inventory'),
+      where('clientId', '==', clientId),
+      where('boatId', '==', Number(boatId))
+    ));
+    let outOfStock = 0, critical = 0, low = 0;
+    snap.forEach(d => {
+      const q = Number(d.data().quantity || 0);
+      if (q <= 0) outOfStock++;
+      else if (q <= 1) critical++;
+      else if (q <= 3) low++;
+    });
+    if (outOfStock + critical > 0) perTile.inventory = 'critical';
+    else if (low > 0)              perTile.inventory = 'attention';
+    criticalCount  += outOfStock + critical;
+    attentionCount += low;
+  } catch (err) {
+    console.warn('[dashboard] inventory status failed', err);
+  }
+
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'equipment'),
+      where('clientId', '==', clientId),
+      where('boatId', '==', Number(boatId))
+    ));
+
+    let fault = 0;
+    let outOfService = 0;
+    let serviceDue = 0;
+
+    snap.forEach(d => {
+      const status = String(
+        d.data().status || 'OPERATIONAL'
+      ).trim().toUpperCase();
+
+      if (status === 'FAULT') {
+        fault++;
+      } else if (status === 'OUT_OF_SERVICE') {
+        outOfService++;
+      } else if (status === 'SERVICE_DUE') {
+        serviceDue++;
+      }
+    });
+
+    if (fault + outOfService > 0) {
+      perTile.equipment = 'critical';
+    } else if (serviceDue > 0) {
+      perTile.equipment = 'attention';
+    }
+
+    criticalCount += fault + outOfService;
+    attentionCount += serviceDue;
+  } catch (err) {
+    console.warn('[dashboard] equipment status failed', err);
+  }
 
   return {
     perTile,
@@ -346,30 +454,37 @@ function paintHealth(status) {
   const body = document.getElementById('dashHealthBody');
   if (!body) return;
 
-  if (status.criticalCount > 0) {
-    body.innerHTML = `
-      <div class="dash-health-good">
-        <span class="dash-check" style="color:#FF4444;">⛔</span>
-        <span class="dash-health-label" style="color:#FF4444;">Critical</span>
-        <span class="dash-health-count" style="color:#FF4444;font-size:20px;font-weight:700;margin-top:4px;">${status.criticalCount}</span>
-      </div>
-    `;
-  } else if (status.attentionCount > 0) {
-    body.innerHTML = `
-      <div class="dash-health-good">
-        <span class="dash-check" style="color:#F5A524;">⚠</span>
-        <span class="dash-health-label" style="color:#F5A524;">Attention</span>
-        <span class="dash-health-count" style="color:#F5A524;font-size:20px;font-weight:700;margin-top:4px;">${status.attentionCount}</span>
-      </div>
-    `;
-  } else {
+  const hasCritical  = status.criticalCount > 0;
+  const hasAttention = status.attentionCount > 0;
+
+  if (!hasCritical && !hasAttention) {
     body.innerHTML = `
       <div class="dash-health-good">
         <span class="dash-check" style="color:#3DD68C;">✅</span>
         <span class="dash-health-label" style="color:#3DD68C;">All Good</span>
       </div>
     `;
+    return;
   }
+
+  body.innerHTML = `
+    <div class="dash-health-row">
+      ${hasAttention ? `
+        <div class="dash-health-col">
+          <span class="dash-check" style="color:#F5A524;">⚠</span>
+          <span class="dash-health-label" style="color:#F5A524;">Attention</span>
+          <span class="dash-health-count" style="color:#F5A524;">${status.attentionCount}</span>
+        </div>
+      ` : ''}
+      ${hasCritical ? `
+        <div class="dash-health-col">
+          <span class="dash-check" style="color:#FF4444;">⛔</span>
+          <span class="dash-health-label" style="color:#FF4444;">Critical</span>
+          <span class="dash-health-count" style="color:#FF4444;">${status.criticalCount}</span>
+        </div>
+      ` : ''}
+    </div>
+  `;
 }
 
 function applyDashboardFilter() {
@@ -378,37 +493,22 @@ function applyDashboardFilter() {
 
   grid.querySelectorAll('.dash-tile').forEach(el => {
     const type = el.dataset.type;
-    const st = tileStatus[type] || null;
+    const status = tileStatus[type] || null;
 
-    el.classList.toggle('is-critical', st === 'critical');
-    el.classList.toggle('is-attention', st === 'attention');
+    el.classList.toggle('is-critical', status === 'critical');
+    el.classList.toggle('is-attention', status === 'attention');
 
     let visible = true;
-    if (dashboardFilter === 'attention') visible = st === 'critical' || st === 'attention';
-    else if (dashboardFilter === 'critical') visible = st === 'critical';
+
+    if (dashboardFilter === 'attention') {
+      visible = status === 'attention';
+    } else if (dashboardFilter === 'critical') {
+      visible = status === 'critical';
+    }
 
     el.hidden = !visible;
+    el.style.display = visible ? '' : 'none';
   });
-
-  const body = document.getElementById('dashHealthBody');
-  if (!body) return;
-
-  if (dashboardFilter === 'attention') {
-    body.innerHTML = `
-      <div class="dash-health-good">
-        <span class="dash-check" style="color:#F5A524;">⚠</span>
-        <span class="dash-health-label" style="color:#F5A524;">Showing attention only</span>
-      </div>
-    `;
-  } else if (dashboardFilter === 'critical') {
-    body.innerHTML = `
-      <div class="dash-health-good">
-        <span class="dash-check" style="color:#FF4444;">⛔</span>
-        <span class="dash-health-label" style="color:#FF4444;">Showing critical only</span>
-      </div>
-    `;
-  }
-  // no else — paintHealth() already set the card in 'all' mode
 }
 
 /* ---------- Helpers ---------- */
