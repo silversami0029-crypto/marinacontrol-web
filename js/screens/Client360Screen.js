@@ -15,6 +15,7 @@ let currentBoats = [];
 let currentBerth = null;
 let currentMaintenance = [];
 let currentSafety = [];
+let currentDocuments = [];
 
 const HEADER_HTML = `
   <div class="c360-header" id="c360Header">
@@ -313,6 +314,28 @@ async function loadAll(clientId, customerId) {
     });
   }
 
+  currentDocuments = [];
+  for (const boat of currentBoats) {
+    const docsSnap = await getDocs(
+      query(
+        collection(db, 'documents'),
+        where('clientId', '==', clientId),
+        where('boatId', '==', boat.id)
+      )
+    );
+    docsSnap.forEach(d => {
+      const data = d.data();
+      currentDocuments.push({
+        _docId: d.id,
+        boatId: boat.id,
+        boatName: boat.name || '',
+        id: Number(data.id || 0),
+        name: data.name || '',
+        type: data.type || '',
+        expiryDate: Number(data.expiryDate || 0)
+      });
+    });
+  }
 
   currentMaintenance = [];
   for (const boat of currentBoats) {
@@ -369,8 +392,8 @@ function render() {
     ${renderFinancialCard()}
     ${renderActivityCard()}
     ${renderComingNextCard('Equipment', 'Equipment view coming next')}
-     ${renderComingNextCard('Safety',    'Safety items coming next')}
-    ${renderComingNextCard('Documents', 'Documents coming next')}
+    ${renderSafetyCard()}
+    ${renderDocumentsCard()}
     ${renderComingNextCard('Inventory', 'Inventory coming next')}
     ${renderQuickActions()}
   `;
@@ -400,6 +423,7 @@ function buildAlerts() {
   const now = Date.now();
   const alerts = [];
 
+  // --- Maintenance ---
   for (const m of currentMaintenance) {
     if (m.completed || m.status === 'COMPLETED') continue;
 
@@ -429,28 +453,38 @@ function buildAlerts() {
     }
   }
 
+  // --- Safety items ---
+  for (const s of currentSafety) {
+    if (!s.expiryDate) continue;
+    if (s.expiryDate < now) {
+      alerts.push({ kind: 'critical', text: `${s.title} expired`, boat: s.boatName });
+    } else if (s.expiryDate - now <= 30 * 24 * 60 * 60 * 1000) {
+      const days = Math.floor((s.expiryDate - now) / (24 * 60 * 60 * 1000));
+      alerts.push({
+        kind: 'warning',
+        text: `${s.title} expires in ${days} ${days === 1 ? 'day' : 'days'}`,
+        boat: s.boatName
+      });
+    }
+  }
+
+  // --- Documents ---
+  for (const d of currentDocuments) {
+    if (!d.expiryDate) continue;
+    if (d.expiryDate < now) {
+      alerts.push({ kind: 'critical', text: `${d.name} expired`, boat: d.boatName });
+    } else if (d.expiryDate - now <= 30 * 24 * 60 * 60 * 1000) {
+      const days = Math.floor((d.expiryDate - now) / (24 * 60 * 60 * 1000));
+      alerts.push({
+        kind: 'warning',
+        text: `${d.name} expires in ${days} ${days === 1 ? 'day' : 'days'}`,
+        boat: d.boatName
+      });
+    }
+  }
+
   alerts.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'critical' ? -1 : 1));
   return alerts;
-}
-
-function renderAlerts(alerts) {
-  const hasCritical = alerts.some(a => a.kind === 'critical');
-  const title = hasCritical ? '🔴 Critical Alerts' : '🟡 Attention Alerts';
-
-  return `
-    <div class="c360-card c360-alerts ${hasCritical ? 'is-critical' : 'is-warning'}">
-      <div class="c360-alert-title">${title}</div>
-      <div class="c360-alert-list">
-        ${alerts.slice(0, 6).map(a => `
-          <div class="c360-alert-line">
-            <span class="c360-alert-dot"></span>
-            <span>${escapeHtml(a.text)}${a.boat ? ` · ${escapeHtml(a.boat)}` : ''}</span>
-          </div>
-        `).join('')}
-        ${alerts.length > 6 ? `<div class="c360-alert-more">+${alerts.length - 6} more</div>` : ''}
-      </div>
-    </div>
-  `;
 }
 
 /* ============================================================
@@ -729,6 +763,80 @@ function renderSafetyCard() {
         `;
       }).join('')}
       ${currentSafety.length > 5 ? `<div class="c360-alert-more">+${currentSafety.length - 5} more</div>` : ''}
+    </div>
+  `;
+}
+
+
+
+function renderDocumentsCard() {
+  if (!currentDocuments || !currentDocuments.length) {
+    return `
+      <div class="c360-card c360-card-disabled" data-coming-next="No documents">
+        <div class="c360-card-title">📄 Documents</div>
+        <div class="c360-line c360-line-dim">No documents recorded</div>
+      </div>
+    `;
+  }
+
+  const now = Date.now();
+  const cutoff = now + 30 * 24 * 60 * 60 * 1000;
+  const sorted = [...currentDocuments].sort((a, b) => {
+    const rank = d => {
+      if (!d.expiryDate) return 3;
+      if (d.expiryDate < now) return 0;
+      if (d.expiryDate <= cutoff) return 1;
+      return 2;
+    };
+    const ra = rank(a), rb = rank(b);
+    if (ra !== rb) return ra - rb;
+    return (a.expiryDate || Infinity) - (b.expiryDate || Infinity);
+  });
+
+  return `
+    <div class="c360-card">
+      <div class="c360-card-title">📄 Documents</div>
+      ${sorted.slice(0, 5).map(d => {
+        const cls = !d.expiryDate ? 'info'
+          : d.expiryDate < now ? 'err'
+          : d.expiryDate <= cutoff ? 'warn'
+          : 'ok';
+        const label = !d.expiryDate ? 'No expiry'
+          : d.expiryDate < now ? 'Expired'
+          : d.expiryDate <= cutoff ? 'Expiring soon'
+          : 'Valid';
+        return `
+          <div class="c360-activity-row">
+            <div class="c360-activity-dot c360-dot-${cls}"></div>
+            <div class="c360-activity-info">
+              <div class="c360-activity-title">${escapeHtml(d.name || 'Document')}</div>
+              <div class="c360-activity-meta">${escapeHtml(d.type)} · ${escapeHtml(d.boatName)} · ${label}</div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+      ${currentDocuments.length > 5 ? `<div class="c360-alert-more">+${currentDocuments.length - 5} more</div>` : ''}
+    </div>
+  `;
+}
+
+
+function renderAlerts(alerts) {
+  const hasCritical = alerts.some(a => a.kind === 'critical');
+  const title = hasCritical ? '🔴 Critical Alerts' : '🟡 Attention Alerts';
+
+  return `
+    <div class="c360-card c360-alerts ${hasCritical ? 'is-critical' : 'is-warning'}">
+      <div class="c360-alert-title">${title}</div>
+      <div class="c360-alert-list">
+        ${alerts.slice(0, 6).map(a => `
+          <div class="c360-alert-line">
+            <span class="c360-alert-dot"></span>
+            <span>${escapeHtml(a.text)}${a.boat ? ` · ${escapeHtml(a.boat)}` : ''}</span>
+          </div>
+        `).join('')}
+        ${alerts.length > 6 ? `<div class="c360-alert-more">+${alerts.length - 6} more</div>` : ''}
+      </div>
     </div>
   `;
 }

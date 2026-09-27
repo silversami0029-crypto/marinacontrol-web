@@ -2891,13 +2891,27 @@ body {
 
 /* Alerts */
 .c360-alerts.is-critical {
-  background: rgba(255,68,68,.10);
+    background: var(--color-error-red); // soft red
   border-color: rgba(255,68,68,.35);
+
 }
+.c360-alerts.is-critical .c360-alert-title,
+.c360-alerts.is-critical .c360-alert-line,
+.c360-alerts.is-critical .c360-alert-more {
+  color: #1C222A;
+}
+
 .c360-alerts.is-warning {
-  background: rgba(245,165,36,.10);
+  background: rgba(--color-warning-yellow); // soft yellow
   border-color: rgba(245,165,36,.35);
 }
+
+.c360-alerts.is-warning .c360-alert-title,
+.c360-alerts.is-warning .c360-alert-line,
+.c360-alerts.is-warning .c360-alert-more {
+  color: #1C222A;
+}
+
 .c360-alert-title {
   font-size: 14px;
   font-weight: 700;
