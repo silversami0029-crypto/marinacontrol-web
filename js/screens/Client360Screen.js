@@ -601,6 +601,104 @@ function renderFinancialCard() {
    ACTIVITY (with search filter)
    ============================================================ */
 function renderActivityCard() {
+  const now = Date.now();
+
+  // Build a unified timeline from all sources
+  const events = [];
+
+  // Maintenance
+  for (const m of currentMaintenance) {
+    if (!m.date) continue;
+    const t = new Date(m.date + 'T00:00:00').getTime();
+    if (isNaN(t)) continue;
+    const completed = m.completed || m.status === 'COMPLETED';
+    events.push({
+      timestamp: t,
+      kind: completed ? 'ok' : 'warn',
+      title: completed ? `Maintenance completed: ${m.type}` : `Maintenance outstanding: ${m.type}`,
+      detail: completed ? '' : 'Action required',
+      boat: m.boatName
+    });
+  }
+
+  // Documents
+  for (const d of currentDocuments) {
+    if (!d.expiryDate) continue;
+    const expired = d.expiryDate < now;
+    events.push({
+      timestamp: d.expiryDate,
+      kind: expired ? 'err' : 'info',
+      title: `Document: ${d.name}`,
+      detail: expired ? 'Expired' : `Expires ${formatShortDate(new Date(d.expiryDate).toISOString().slice(0,10))}`,
+      boat: d.boatName
+    });
+  }
+
+  // Safety
+  for (const s of currentSafety) {
+    if (!s.expiryDate) continue;
+    const expired = s.expiryDate < now;
+    events.push({
+      timestamp: s.expiryDate,
+      kind: expired ? 'err' : 'info',
+      title: `Safety: ${s.title}`,
+      detail: expired ? 'Expired' : `Expires ${formatShortDate(new Date(s.expiryDate).toISOString().slice(0,10))}`,
+      boat: s.boatName
+    });
+  }
+
+  // Berth assignment (current only)
+  if (currentBerth && currentBerth.assignedDate) {
+    events.push({
+      timestamp: Number(currentBerth.assignedDate),
+      kind: 'info',
+      title: `Assigned to berth ${currentBerth.dockName || ''} ${currentBerth.berthNumber || ''}`.trim(),
+      detail: '',
+      boat: ''
+    });
+  }
+
+  // Apply search filter
+  const q = currentSearchQuery;
+  const filtered = q
+    ? events.filter(e =>
+        (e.title || '').toLowerCase().includes(q) ||
+        (e.detail || '').toLowerCase().includes(q) ||
+        (e.boat || '').toLowerCase().includes(q))
+    : events;
+
+  if (!filtered.length) {
+    const msg = q ? `No activity matches "${q}"` : 'No activity recorded';
+    return `
+      <div class="c360-card">
+        <div class="c360-card-title">📋 Recent Activity</div>
+        <div class="c360-line c360-line-dim">${escapeHtml(msg)}</div>
+      </div>
+    `;
+  }
+
+  const sorted = [...filtered]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 8);
+
+  return `
+    <div class="c360-card">
+      <div class="c360-card-title">📋 Recent Activity</div>
+      ${sorted.map(e => `
+        <div class="c360-activity-row">
+          <div class="c360-activity-dot c360-dot-${e.kind}"></div>
+          <div class="c360-activity-info">
+            <div class="c360-activity-title">${escapeHtml(e.title)}</div>
+            <div class="c360-activity-meta">
+              ${e.detail ? escapeHtml(e.detail) : ''}${e.detail && e.boat ? ' · ' : ''}${e.boat ? escapeHtml(e.boat) : ''}${!e.detail && !e.boat ? formatShortDate(new Date(e.timestamp).toISOString().slice(0,10)) : ''}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+/*function renderActivityCard() {
   const q = currentSearchQuery;
   const filtered = q
     ? currentMaintenance.filter(m =>
@@ -657,13 +755,15 @@ function renderActivityCard() {
       }).join('')}
     </div>
   `;
-}
+}*/
 
 function formatShortDate(s) {
   try {
     const d = new Date(s + 'T00:00:00');
     if (isNaN(d.getTime())) return s;
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    return d.toLocaleDateString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    });
   } catch {
     return s;
   }
