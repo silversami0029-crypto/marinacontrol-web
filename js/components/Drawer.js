@@ -47,7 +47,7 @@ const SECTIONS = [
       { id: 'berth-management', label: 'Berth Management', route: '#/berths' },
    { id: 'maintenance', label: 'Maintenance', route: '#/maintenance' },
       { id: 'documents', label: 'Documents', route: '#/documents' },
-      { id: 'safety', label: 'Safety Inspections', toast: 'Safety Inspections is coming to the web app' }
+    { id: 'safety', label: 'Safety Inspections', route: '#/safety' },
     ]
   },
   {

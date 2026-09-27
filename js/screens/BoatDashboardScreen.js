@@ -114,7 +114,7 @@ const COUNT_SOURCES = {
   maintenance: { collection: 'maintenance', filterIncomplete: true },
   crew:        { collection: 'crew' },
   documents:   { collection: 'documents' },
-  safety:      { collection: 'safety' },
+  safety:      { collection: 'safety_items', filterActive: true },
   equipment:   { collection: 'equipment' },
   inventory:   { collection: 'inventory' },
   checklists:  { collection: 'checklist' },
@@ -210,7 +210,8 @@ export function mountBoatDashboardScreen() {
 
       if (type === 'maintenance') { location.hash = '#/maintenance'; return; }
       if (type === 'crew')        { location.hash = '#/crew';        return; }
-if (type === 'documents')   { location.hash = '#/documents';   return; }
+      if (type === 'documents')   { location.hash = '#/documents';   return; }
+      if (type === 'safety')      { location.hash = '#/safety';      return; }
       toast(`${label} coming soon`);
     });
   });
@@ -243,6 +244,7 @@ async function loadCounts(boatId) {
         snap.forEach(d => {
           const data = d.data();
           if (src.filterIncomplete && (data.completed || data.status === 'COMPLETED')) return;
+          if (src.filterActive && data.status === 'DELETED') return;
           n++;
         });
         counts[type] = n;
@@ -290,6 +292,30 @@ async function computeStatuses(boatId, clientId) {
     criticalCount += overdue;
     attentionCount += upcoming;
   } catch {}
+ // ============ NEW: SAFETY BLOCK — paste this ============
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'safety_items'),
+      where('clientId', '==', clientId),
+      where('boatId', '==', Number(boatId))
+    ));
+    const now = Date.now();
+    const cutoff = now + 30 * 24 * 60 * 60 * 1000;
+    let expired = 0, soon = 0;
+    snap.forEach(d => {
+      const x = d.data();
+      if (x.status === 'DELETED') return;
+      const e = Number(x.expiryDate || 0);
+      if (e <= 0) return;
+      if (e < now) expired++;
+      else if (e <= cutoff) soon++;
+    });
+    if (expired > 0) perTile.safety = 'critical';
+    else if (soon > 0) perTile.safety = 'attention';
+    criticalCount += expired;
+    attentionCount += soon;
+  } catch {}
+  // ============ END NEW BLOCK ============
 
   return {
     perTile,

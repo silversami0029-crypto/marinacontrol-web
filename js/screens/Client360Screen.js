@@ -14,6 +14,7 @@ let currentSearchQuery = '';
 let currentBoats = [];
 let currentBerth = null;
 let currentMaintenance = [];
+let currentSafety = [];
 
 const HEADER_HTML = `
   <div class="c360-header" id="c360Header">
@@ -287,6 +288,31 @@ async function loadAll(clientId, customerId) {
       break;
     }
   }
+  currentSafety = [];
+  for (const boat of currentBoats) {
+    const safetySnap = await getDocs(
+      query(
+        collection(db, 'safety_items'),
+        where('clientId', '==', clientId),
+        where('boatId', '==', boat.id)
+      )
+    );
+    safetySnap.forEach(d => {
+      const data = d.data();
+      if (data.status === 'DELETED') return;
+      currentSafety.push({
+        _docId: d.id,
+        boatId: boat.id,
+        boatName: boat.name || '',
+        id: Number(data.id || 0),
+        title: data.title || '',
+        category: data.category || '',
+        importance: data.importance || 'MEDIUM',
+        expiryDate: Number(data.expiryDate || 0)
+      });
+    });
+  }
+
 
   currentMaintenance = [];
   for (const boat of currentBoats) {
@@ -343,7 +369,7 @@ function render() {
     ${renderFinancialCard()}
     ${renderActivityCard()}
     ${renderComingNextCard('Equipment', 'Equipment view coming next')}
-    ${renderComingNextCard('Safety',    'Safety items coming next')}
+     ${renderComingNextCard('Safety',    'Safety items coming next')}
     ${renderComingNextCard('Documents', 'Documents coming next')}
     ${renderComingNextCard('Inventory', 'Inventory coming next')}
     ${renderQuickActions()}
@@ -654,4 +680,55 @@ function escapeHtml(s) {
 
 function escapeAttr(s) {
   return String(s ?? '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function renderSafetyCard() {
+  if (!currentSafety || !currentSafety.length) {
+    return `
+      <div class="c360-card c360-card-disabled" data-coming-next="No safety items">
+        <div class="c360-card-title">🛟 Safety</div>
+        <div class="c360-line c360-line-dim">No safety items recorded</div>
+      </div>
+    `;
+  }
+
+  const now = Date.now();
+  const cutoff = now + 30 * 24 * 60 * 60 * 1000;
+  const sorted = [...currentSafety].sort((a, b) => {
+    const rank = s => {
+      if (!s.expiryDate) return 3;
+      if (s.expiryDate < now) return 0;
+      if (s.expiryDate <= cutoff) return 1;
+      return 2;
+    };
+    const ra = rank(a), rb = rank(b);
+    if (ra !== rb) return ra - rb;
+    return (a.expiryDate || Infinity) - (b.expiryDate || Infinity);
+  });
+
+  return `
+    <div class="c360-card">
+      <div class="c360-card-title">🛟 Safety</div>
+      ${sorted.slice(0, 5).map(s => {
+        const cls = !s.expiryDate ? 'info'
+          : s.expiryDate < now ? 'err'
+          : s.expiryDate <= cutoff ? 'warn'
+          : 'ok';
+        const label = !s.expiryDate ? 'No expiry'
+          : s.expiryDate < now ? 'Expired'
+          : s.expiryDate <= cutoff ? 'Expiring soon'
+          : 'Valid';
+        return `
+          <div class="c360-activity-row">
+            <div class="c360-activity-dot c360-dot-${cls}"></div>
+            <div class="c360-activity-info">
+              <div class="c360-activity-title">${escapeHtml(s.title || 'Safety item')}</div>
+              <div class="c360-activity-meta">${escapeHtml(s.category)} · ${escapeHtml(s.boatName)} · ${label}</div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+      ${currentSafety.length > 5 ? `<div class="c360-alert-more">+${currentSafety.length - 5} more</div>` : ''}
+    </div>
+  `;
 }

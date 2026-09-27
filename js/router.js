@@ -18,6 +18,7 @@ import { mountMaintenanceScreen } from './screens/MaintenanceScreen.js';
 import { mountClient360Screen } from './screens/Client360Screen.js';
 import { mountCrewManagementScreen } from './screens/CrewManagementScreen.js';
 import { mountDocumentScreen } from './screens/DocumentScreen.js';
+import { mountSafetyScreen } from './screens/SafetyScreen.js';
 
 const PROTECTED = ['/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/client-360'];
 
@@ -34,6 +35,7 @@ const routes = {
   '/client-360': mountClient360Screen,
  '/crew': mountCrewManagementScreen,
   '/documents': mountDocumentScreen,
+  '/safety': mountSafetyScreen,
   '/fleet':            () => renderStub('Fleet'),
   '/account':          mountAccountScreen,
  
