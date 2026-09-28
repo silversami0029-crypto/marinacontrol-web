@@ -1,6 +1,7 @@
 // js/screens/CrewManagementScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
+import { showCrewHelp } from './CrewHelp.js';
 import { confirmSheet } from '../ui/confirm.js';
 import { showAddCrewChooser } from './AddCrewSheet.js';
 import {
@@ -73,10 +74,8 @@ export function mountCrewManagementScreen() {
     location.hash = '#/boats';
   });
 
-  document.getElementById('cmHelp').addEventListener('click', () => {
-    toast('Crew help coming soon');
-  });
-
+const cmHelpBtn = document.getElementById('cmHelp');
+if (cmHelpBtn) cmHelpBtn.addEventListener('click', showCrewHelp);
   document.getElementById('cmSearchToggle').addEventListener('click', () => {
     isSearchOpen = true;
     document.getElementById('cmHeader').hidden = true;
