@@ -3941,3 +3941,34 @@ body {
 .help-gotit-btn:active {
   background: rgba(255,255,255,.06);
 }
+
+/* Safety help — category grid */
+.help-cat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+  margin-bottom: 8px;
+}
+.help-cat {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+/* Safety help — importance levels */
+.help-importance {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.help-imp-label {
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+.help-imp-label:first-child { margin-top: 0; }
+.help-imp-body {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}

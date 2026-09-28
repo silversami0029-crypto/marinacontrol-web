@@ -3,6 +3,7 @@ import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { showSafetyMenu } from './SafetyMenuSheet.js';
 import { showSafetyDetail } from './SafetyDetailSheet.js';
+import { showSafetyHelp } from './SafetyHelp.js';
 import {
   collection, query, where, onSnapshot, getDocs
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -100,9 +101,8 @@ export function mountSafetyScreen() {
     location.hash = '#/boats';
   });
 
-  document.getElementById('sfHelp').addEventListener('click', () => {
-    toast('Safety help coming soon');
-  });
+  document.getElementById('sfHelp').addEventListener('click', showSafetyHelp);
+  
 
   document.getElementById('sfSearchToggle').addEventListener('click', () => {
     isSearchOpen = true;
