@@ -2,6 +2,7 @@
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { showMaintenanceMenu } from './MaintenanceMenuSheet.js';
+import { showMaintenanceHelp } from './MaintenanceHelp.js';
 import { showMaintenanceDetail } from './MaintenanceDetailSheet.js';
 import {
   collection, query, where, onSnapshot, getDocs
@@ -80,9 +81,7 @@ export function mountMaintenanceScreen() {
     location.hash = '#/boats';
   });
 
-  document.getElementById('mtHelp').addEventListener('click', () => {
-    toast('Maintenance help coming soon');
-  });
+    document.getElementById('mtHelp').addEventListener('click', showMaintenanceHelp);
 
   document.getElementById('mtSearchToggle').addEventListener('click', () => {
     isSearchOpen = true;
