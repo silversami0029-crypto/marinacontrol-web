@@ -2,6 +2,7 @@
 
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
+import { showUserManagementHelp } from './UserManagementHelp.js';
 import { confirmSheet } from '../ui/confirm.js';
 import {
   getFunctions,
@@ -120,9 +121,8 @@ export function mountUserManagementScreen() {
     location.hash = '#/boats';
   });
 
-  document.getElementById('umHelp').addEventListener('click', () => {
-    toast('User management allows administrators to add users, change roles and remove marina access.');
-  });
+  const umHelpBtn = document.getElementById('umHelp');
+if (umHelpBtn) umHelpBtn.addEventListener('click', showUserManagementHelp);
 
   document
     .getElementById('umFabAdd')
