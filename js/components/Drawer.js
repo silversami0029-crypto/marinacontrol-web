@@ -45,6 +45,7 @@ const SECTIONS = [
     items: [
       { id: 'fleet-overview', label: 'Fleet Overview', route: '#/fleet' },
       { id: 'berth-management', label: 'Berth Management', route: '#/berths' },
+{ id: 'checklists', label: 'Checklists', route: '#/checklists' },
    { id: 'maintenance', label: 'Maintenance', route: '#/maintenance' },
       { id: 'documents', label: 'Documents', route: '#/documents' },
     { id: 'safety', label: 'Safety Inspections', route: '#/safety' },
