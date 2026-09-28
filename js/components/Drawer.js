@@ -69,17 +69,17 @@ const SECTIONS = [
       { id: 'live-360',     label: '360° Client View',  route: '#/client-360' }
     ]
   },
-  {
-    id: 'staff',
-    title: 'STAFF',
-    icon: ICONS.staff,
-    items: [
-      { id: 'user-mgmt', label: 'User Management', route: '#/user-management' },
-     { id: 'crew-mgmt', label: 'Crew Management', route: '#/crew' },
-      { id: 'permissions', label: 'Permissions & Roles', toast: 'Permissions & Roles is coming to the web app' },
-      { id: 'shift-schedule', label: 'Shift Schedule', toast: 'Shift Schedule is coming to the web app' }
-    ]
-  },
+{
+  id: 'staff',
+  title: 'STAFF',
+  icon: ICONS.staff,
+  items: [
+    { id: 'user-mgmt', label: 'User Management', route: '#/user-management' },
+    { id: 'crew-mgmt', label: 'Crew Management', route: '#/crew' },
+    { id: 'permissions', label: 'Permissions & Roles', route: '#/permissions' },
+    { id: 'shift-schedule', label: 'Shift Schedule', toast: 'Shift Schedule is coming to the web app' }
+  ]
+},
   {
     id: 'reports',
     title: 'REPORTS',
