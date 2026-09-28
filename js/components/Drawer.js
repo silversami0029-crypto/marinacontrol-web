@@ -9,19 +9,12 @@ import { db } from '../firebase.js';
 
 const ICONS = {
   quick: `<svg class="drawer-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-
   operations: `<svg class="drawer-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
-
   finance: `<svg class="drawer-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><path d="M5 21V10l7-7 7 7v11"/><line x1="9" y1="21" x2="9" y2="14"/><line x1="15" y1="21" x2="15" y2="14"/></svg>`,
-
   customers: `<svg class="drawer-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-
   staff: `<svg class="drawer-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>`,
-
   reports: `<svg class="drawer-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="18" y1="20" x2="18" y2="6"/></svg>`,
-
   settings: `<svg class="drawer-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
-
   chevron: `<svg class="drawer-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`
 };
 
@@ -31,11 +24,10 @@ const SECTIONS = [
     title: 'QUICK ACTIONS',
     icon: ICONS.quick,
     items: [
-      { id: 'assign-berth', label: 'Assign Berth', route: '#/berths' },
-      { id: 'ai-mechanic', label: 'AI Mechanic', toast: 'AI Mechanic is coming to the web app' },
-      { id: 'create-invoice', label: 'Create Invoice', toast: 'Create Invoice is coming to the web app' },
-      { id: 'add-task', label: 'Add Task', toast: 'Add Task is coming to the web app' },
-      { id: 'log-inspection', label: 'Log Inspection', toast: 'Log Inspection is coming to the web app' }
+      { id: 'assign-berth',    label: 'Assign Berth',    route: '#/berths' },
+      { id: 'create-invoice',  label: 'Create Invoice',  action: 'create-invoice' },
+      { id: 'add-task',        label: 'Add Task',        action: 'add-task' },
+      { id: 'log-inspection',  label: 'Log Inspection',  action: 'log-inspection' }
     ]
   },
   {
@@ -45,10 +37,10 @@ const SECTIONS = [
     items: [
       { id: 'fleet-overview', label: 'Fleet Overview', route: '#/fleet' },
       { id: 'berth-management', label: 'Berth Management', route: '#/berths' },
-{ id: 'checklists', label: 'Checklists', route: '#/checklists' },
-   { id: 'maintenance', label: 'Maintenance', route: '#/maintenance' },
+      { id: 'checklists', label: 'Checklists', route: '#/checklists' },
+      { id: 'maintenance', label: 'Maintenance', route: '#/maintenance' },
       { id: 'documents', label: 'Documents', route: '#/documents' },
-    { id: 'safety', label: 'Safety Inspections', route: '#/safety' },
+      { id: 'safety', label: 'Safety Inspections', route: '#/safety' },
     ]
   },
   {
@@ -56,7 +48,7 @@ const SECTIONS = [
     title: 'FINANCE',
     icon: ICONS.finance,
     items: [
-{ id: 'invoices', label: 'Invoices', route: '#/invoices' },
+      { id: 'invoices', label: 'Invoices', route: '#/invoices' },
       { id: 'revenue', label: 'Revenue Summary', toast: 'Revenue Summary is coming to the web app' },
       { id: 'outstanding', label: 'Outstanding Payments', toast: 'Outstanding Payments is coming to the web app' }
     ]
@@ -70,17 +62,17 @@ const SECTIONS = [
       { id: 'live-360',     label: '360° Client View',  route: '#/client-360' }
     ]
   },
-{
-  id: 'staff',
-  title: 'STAFF',
-  icon: ICONS.staff,
-  items: [
-    { id: 'user-mgmt', label: 'User Management', route: '#/user-management' },
-    { id: 'crew-mgmt', label: 'Crew Management', route: '#/crew' },
-    { id: 'permissions', label: 'Permissions & Roles', route: '#/permissions' },
-{ id: 'shift-schedule', label: 'Shift Schedule', route: '#/shift-schedule' }
-  ]
-},
+  {
+    id: 'staff',
+    title: 'STAFF',
+    icon: ICONS.staff,
+    items: [
+      { id: 'user-mgmt', label: 'User Management', route: '#/user-management' },
+      { id: 'crew-mgmt', label: 'Crew Management', route: '#/crew' },
+      { id: 'permissions', label: 'Permissions & Roles', route: '#/permissions' },
+      { id: 'shift-schedule', label: 'Shift Schedule', route: '#/shift-schedule' }
+    ]
+  },
   {
     id: 'reports',
     title: 'REPORTS',
@@ -130,8 +122,9 @@ export function initDrawer() {
   });
 
   drawer.querySelectorAll('.drawer-item').forEach(item => {
-    item.addEventListener('click', () => {
+    item.addEventListener('click', async () => {
       const route = item.dataset.route;
+      const action = item.dataset.action;
       const toastMessage = item.dataset.toast;
 
       lastSelectedId = item.dataset.itemId || null;
@@ -141,11 +134,40 @@ export function initDrawer() {
         closeDrawer();
       }
 
-     /* // Special case: 360° Client View has a pre-flight check
-      if (item.dataset.itemId === 'live-360') {
-        openClient360FromDrawer();
+      if (action === 'create-invoice') {
+        const activeBoatId = Number(store.activeBoatId || 0);
+        let customerId = 0;
+        if (activeBoatId) {
+          const boat = store.boatsFull?.find(b => Number(b.id) === activeBoatId);
+          customerId = Number(boat?.customerId || 0);
+        }
+        const m = await import('../screens/AddInvoiceSheet.js');
+        m.showAddInvoiceSheet({ customerId });
         return;
-      }*/
+      }
+
+  if (action === 'add-task') {
+  const boat = await resolveActiveBoat();
+
+  if (!boat) {
+    toast('Activate a boat first', { kind: 'error' });
+    return;
+  }
+
+  const module = await import('../screens/AddTaskSheet.js');
+
+  module.showAddTaskSheet({
+    boatId: Number(boat.id),
+    boatName: boat.name || boat.boatName || ''
+  });
+
+  return;
+}
+
+      if (action === 'log-inspection') {
+        location.hash = '#/safety';
+        return;
+      }
 
       if (route) {
         location.hash = route;
@@ -159,7 +181,6 @@ export function initDrawer() {
     if (!isDesktopDrawer()) {
       closeDrawer();
     }
-
     location.hash = '#/account';
   });
 
@@ -167,36 +188,25 @@ export function initDrawer() {
 
   if (document.body.dataset.drawerEscapeWired !== '1') {
     document.body.dataset.drawerEscapeWired = '1';
-
     document.addEventListener('keydown', event => {
-      if (
-        event.key === 'Escape' &&
-        drawerOpen &&
-        !isDesktopDrawer()
-      ) {
+      if (event.key === 'Escape' && drawerOpen && !isDesktopDrawer()) {
         closeDrawer();
       }
     });
   }
 
   const menuButton = document.getElementById('btnTopMenu');
-
-  if (
-    menuButton &&
-    menuButton.dataset.drawerWired !== '1'
-  ) {
+  if (menuButton && menuButton.dataset.drawerWired !== '1') {
     menuButton.dataset.drawerWired = '1';
     menuButton.addEventListener('click', toggleDrawer);
   }
 
   if (drawer.dataset.routeWired !== '1') {
     drawer.dataset.routeWired = '1';
-
     window.addEventListener('hashchange', () => {
       syncDrawerLayout();
       applySelection();
     });
-
     window.addEventListener('resize', syncDrawerLayout);
   }
 
@@ -206,40 +216,23 @@ export function initDrawer() {
 
 function renderSection(section) {
   return `
-    <div class="drawer-section is-collapsed"
-         data-section="${section.id}">
-
-      <button class="drawer-section-header"
-              type="button">
-        <span class="drawer-section-icon-wrap">
-          ${section.icon}
-        </span>
-
-        <span class="drawer-section-title">
-          ${section.title}
-        </span>
-
+    <div class="drawer-section is-collapsed" data-section="${section.id}">
+      <button class="drawer-section-header" type="button">
+        <span class="drawer-section-icon-wrap">${section.icon}</span>
+        <span class="drawer-section-title">${section.title}</span>
         ${ICONS.chevron}
       </button>
-
       <div class="drawer-section-items">
         ${section.items.map(item => `
           <button
             class="drawer-item"
             type="button"
             data-item-id="${item.id}"
-            ${item.route
-              ? `data-route="${item.route}"`
-              : ''}
-            ${item.toast
-              ? `data-toast="${escapeAttr(item.toast)}"`
-              : ''}>
-
+            ${item.route ? `data-route="${item.route}"` : ''}
+            ${item.action ? `data-action="${item.action}"` : ''}
+            ${item.toast ? `data-toast="${escapeAttr(item.toast)}"` : ''}>
             <span class="drawer-item-bullet">•</span>
-
-            <span class="drawer-item-label">
-              ${escapeHtml(item.label)}
-            </span>
+            <span class="drawer-item-label">${escapeHtml(item.label)}</span>
           </button>
         `).join('')}
       </div>
@@ -257,20 +250,10 @@ function renderUserRow() {
 
   return `
     <div class="drawer-user">
-      <div class="drawer-user-avatar">
-        ${escapeHtml(initials)}
-      </div>
-
+      <div class="drawer-user-avatar">${escapeHtml(initials)}</div>
       <div class="drawer-user-info">
-        <div class="drawer-user-name">
-          ${escapeHtml(name)}
-        </div>
-
-        ${subtitle
-          ? `<div class="drawer-user-subtitle">
-               ${escapeHtml(subtitle)}
-             </div>`
-          : ''}
+        <div class="drawer-user-name">${escapeHtml(name)}</div>
+        ${subtitle ? `<div class="drawer-user-subtitle">${escapeHtml(subtitle)}</div>` : ''}
       </div>
     </div>
   `;
@@ -278,26 +261,16 @@ function renderUserRow() {
 
 function computeInitials(name) {
   const clean = String(name || '').trim();
-
   if (!clean) return '?';
-
   const parts = clean.split(/\s+/);
-
   if (parts.length === 1) {
-    return parts[0]
-      .substring(0, Math.min(2, parts[0].length))
-      .toUpperCase();
+    return parts[0].substring(0, Math.min(2, parts[0].length)).toUpperCase();
   }
-
-  return (
-    parts[0][0] +
-    parts[parts.length - 1][0]
-  ).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 export function applySelection() {
   const drawer = document.getElementById('appDrawer');
-
   if (!drawer) return;
 
   drawer.querySelectorAll('.drawer-item').forEach(item => {
@@ -307,38 +280,23 @@ export function applySelection() {
   let target = null;
 
   if (lastSelectedId) {
-    target = drawer.querySelector(
-      `.drawer-item[data-item-id="${lastSelectedId}"]`
-    );
+    target = drawer.querySelector(`.drawer-item[data-item-id="${lastSelectedId}"]`);
   }
 
   if (!target) {
-    const hash = (location.hash || '')
-      .replace(/^#/, '');
-
-    const route =
-      '/' +
-      hash
-        .split('?')[0]
-        .replace(/^\//, '');
-
-    target = drawer.querySelector(
-      `.drawer-item[data-route="#${route}"]`
-    );
+    const hash = (location.hash || '').replace(/^#/, '');
+    const route = '/' + hash.split('?')[0].replace(/^\//, '');
+    target = drawer.querySelector(`.drawer-item[data-route="#${route}"]`);
   }
 
   if (!target) return;
 
   target.classList.add('is-active');
-
-  target
-    .closest('.drawer-section')
-    ?.classList.remove('is-collapsed');
+  target.closest('.drawer-section')?.classList.remove('is-collapsed');
 }
 
 export function toggleDrawer() {
   if (isDesktopDrawer()) return;
-
   if (drawerOpen) {
     closeDrawer();
   } else {
@@ -349,56 +307,30 @@ export function toggleDrawer() {
 
 function openDrawer() {
   drawerOpen = true;
-
-  document
-    .getElementById('drawerBackdrop')
-    ?.classList.add('is-open');
-
-  document
-    .getElementById('appDrawer')
-    ?.classList.add('is-open');
+  document.getElementById('drawerBackdrop')?.classList.add('is-open');
+  document.getElementById('appDrawer')?.classList.add('is-open');
 }
 
 function closeDrawer() {
   drawerOpen = false;
-
-  document
-    .getElementById('drawerBackdrop')
-    ?.classList.remove('is-open');
-
-  document
-    .getElementById('appDrawer')
-    ?.classList.remove('is-open');
+  document.getElementById('drawerBackdrop')?.classList.remove('is-open');
+  document.getElementById('appDrawer')?.classList.remove('is-open');
 }
 
 function isDesktopDrawer() {
-  return window
-    .matchMedia('(min-width: 1024px)')
-    .matches;
+  return window.matchMedia('(min-width: 1024px)').matches;
 }
 
 function syncDrawerLayout() {
-  const route = (location.hash || '#/login')
-    .replace(/^#/, '')
-    .split('?')[0];
-
+  const route = (location.hash || '#/login').replace(/^#/, '').split('?')[0];
   const hideDrawer = route === '/login';
 
-  document.body.classList.toggle(
-    'drawer-page-hidden',
-    hideDrawer
-  );
+  document.body.classList.toggle('drawer-page-hidden', hideDrawer);
 
   if (isDesktopDrawer()) {
     drawerOpen = !hideDrawer;
-
-    document
-      .getElementById('drawerBackdrop')
-      ?.classList.remove('is-open');
-
-    document
-      .getElementById('appDrawer')
-      ?.classList.toggle('is-open', !hideDrawer);
+    document.getElementById('drawerBackdrop')?.classList.remove('is-open');
+    document.getElementById('appDrawer')?.classList.toggle('is-open', !hideDrawer);
   } else if (hideDrawer) {
     closeDrawer();
   }
@@ -422,10 +354,52 @@ function escapeAttr(value) {
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;');
 }
+async function resolveActiveBoat() {
+  const clientId = Number(store.activeClientId || 0);
+  if (!clientId) return null;
 
-/* ============================================================
-   Open 360° Client View — only if the active boat has a customer
-   ============================================================ */
+  try {
+    const snapshot = await getDocs(query(
+      collection(db, 'boats'),
+      where('clientId', '==', clientId)
+    ));
+
+    const boats = snapshot.docs.map(document => document.data());
+    const storedId = Number(store.activeBoatId || 0);
+
+    const activeBoat =
+      boats.find(boat => Number(boat.id) === storedId) ||
+      boats.find(boat =>
+        boat.isActive === true ||
+        Number(boat.isActive) === 1
+      );
+
+    if (!activeBoat) return null;
+
+    store.activeBoatId = Number(activeBoat.id);
+
+    if (Array.isArray(store.boatsFull)) {
+      const index = store.boatsFull.findIndex(
+        boat => Number(boat.id) === Number(activeBoat.id)
+      );
+
+      if (index >= 0) {
+        store.boatsFull[index] = {
+          ...store.boatsFull[index],
+          ...activeBoat
+        };
+      } else {
+        store.boatsFull.push(activeBoat);
+      }
+    }
+
+    return activeBoat;
+  } catch (error) {
+    console.error('[drawer] active boat lookup failed', error);
+    return null;
+  }
+}
+
 async function openClient360FromDrawer() {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
@@ -469,7 +443,6 @@ async function openClient360FromDrawer() {
       return;
     }
 
-    // Confirm the customer doc actually exists
     const custSnap = await getDocs(
       query(
         collection(db, 'customers'),
@@ -483,7 +456,6 @@ async function openClient360FromDrawer() {
       return;
     }
 
-    // All good — navigate
     location.hash = `#/client-360?customerId=${customerId}`;
   } catch (err) {
     console.error('[drawer 360] check failed', err);
