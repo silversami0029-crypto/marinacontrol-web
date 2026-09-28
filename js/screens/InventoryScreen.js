@@ -3,6 +3,7 @@ import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { showInventoryMenu } from './InventoryMenuSheet.js';
 import { showInventoryDetail } from './InventoryDetailSheet.js';
+import { showInventoryHelp } from './InventoryHelp.js';
 import {
   collection, query, where, onSnapshot, getDocs
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -78,9 +79,8 @@ export function mountInventoryScreen() {
     location.hash = '#/boats';
   });
 
-  document.getElementById('invHelp').addEventListener('click', () => {
-    toast('Inventory help coming soon');
-  });
+  const invHelpBtn = document.getElementById('invHelp');
+  if (invHelpBtn) invHelpBtn.addEventListener('click', showInventoryHelp);
 
   document.getElementById('invSearchToggle').addEventListener('click', () => {
     isSearchOpen = true;
