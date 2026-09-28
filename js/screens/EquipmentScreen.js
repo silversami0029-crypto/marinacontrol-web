@@ -3,6 +3,7 @@ import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { showEquipmentMenu } from './EquipmentMenuSheet.js';
 import { showEquipmentDetail } from './EquipmentDetailSheet.js';
+import { showEquipmentHelp } from './EquipmentHelp.js';
 import {
   collection, query, where, onSnapshot, getDocs
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -78,9 +79,8 @@ export function mountEquipmentScreen() {
     location.hash = '#/boats';
   });
 
-  document.getElementById('eqHelp').addEventListener('click', () => {
-    toast('Equipment help coming soon');
-  });
+  const eqHelpBtn = document.getElementById('eqHelp');
+  if (eqHelpBtn) eqHelpBtn.addEventListener('click', showEquipmentHelp);
 
   document.getElementById('eqSearchToggle').addEventListener('click', () => {
     isSearchOpen = true;
