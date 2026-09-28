@@ -19,6 +19,7 @@ let currentDocuments = [];
 let currentEquipment = [];
 let currentInventory = [];
 let currentTasks = [];
+let currentInvoices = [];
 
 const HEADER_HTML = `
   <div class="c360-header" id="c360Header">
@@ -416,6 +417,33 @@ async function loadAll(clientId, customerId) {
     });
   }
 
+  currentInvoices = [];
+  const invSnap = await getDocs(
+    query(
+      collection(db, 'invoices'),
+      where('clientId', '==', clientId),
+      where('customerId', '==', customerId)
+    )
+  );
+  invSnap.forEach(d => {
+    const data = d.data();
+    currentInvoices.push({
+      _docId: d.id,
+      boatId: Number(data.boatId || 0),
+      boatName: data.boatName || '',
+      id: Number(data.id || 0),
+      customerId: Number(data.customerId || 0),
+      clientName: data.clientName || '',
+      invoiceNumber: data.invoiceNumber || '',
+      description: data.description || '',
+      category: data.category || 'GENERAL',
+      issueDate: Number(data.issueDate || 0),
+      dueDate: Number(data.dueDate || 0),
+      amount: Number(data.amount || 0),
+      status: (data.status || 'PENDING').toUpperCase()
+    });
+  });
+
   currentMaintenance = [];
   for (const boat of currentBoats) {
     const maintSnap = await getDocs(
@@ -487,8 +515,13 @@ function render() {
         return;
       }
 
-     if (action === 'berth') {
+         if (action === 'berth') {
         location.hash = '#/berths';
+        return;
+      }
+
+      if (action === 'invoice') {
+        location.hash = `#/invoices?customerId=${currentCustomer?.id || 0}`;
         return;
       }
 
@@ -533,6 +566,19 @@ function buildAlerts() {
         boat: m.boatName
       });
     }
+  }
+
+  // --- Invoices (overdue only) ---
+  for (const inv of currentInvoices) {
+    if (inv.status !== 'OVERDUE') continue;
+    const days = inv.dueDate
+      ? Math.floor((now - inv.dueDate) / (24 * 60 * 60 * 1000))
+      : 0;
+    alerts.push({
+      kind: 'critical',
+      text: `Invoice ${inv.invoiceNumber} overdue${days > 0 ? ` by ${days} ${days === 1 ? 'day' : 'days'}` : ''}`,
+      boat: inv.boatName
+    });
   }
 
   // --- Safety items ---
@@ -725,10 +771,46 @@ function renderBerthCard() {
    FINANCIAL (disabled)
    ============================================================ */
 function renderFinancialCard() {
+  const invoices = currentInvoices || [];
+  if (!invoices.length) {
+    return `
+      <div class="c360-card c360-card-disabled" data-coming-next="No invoices">
+        <div class="c360-card-title">£ Financial Snapshot</div>
+        <div class="c360-line c360-line-dim">No invoices recorded</div>
+      </div>
+    `;
+  }
+
+  let total = 0, paid = 0, outstanding = 0, overdue = 0;
+  for (const inv of invoices) {
+    total += inv.amount;
+    if (inv.status === 'PAID') paid += inv.amount;
+    else {
+      outstanding += inv.amount;
+      if (inv.status === 'OVERDUE') overdue += inv.amount;
+    }
+  }
+
+  const fmt = (n) => '£' + Number(n || 0).toFixed(2);
+
   return `
-    <div class="c360-card c360-card-disabled" data-coming-next="Invoices coming next">
+    <div class="c360-card">
       <div class="c360-card-title">£ Financial Snapshot</div>
-      <div class="c360-line c360-line-dim">Invoices coming next</div>
+      <div class="c360-fin-grid">
+        <div class="c360-fin-col">
+          <div class="c360-fin-label">Total</div>
+          <div class="c360-fin-value">${fmt(total)}</div>
+        </div>
+        <div class="c360-fin-col">
+          <div class="c360-fin-label">Outstanding</div>
+          <div class="c360-fin-value" style="color:#FF4444;">${fmt(outstanding)}</div>
+        </div>
+        <div class="c360-fin-col">
+          <div class="c360-fin-label">Paid</div>
+          <div class="c360-fin-value" style="color:#4CAF50;">${fmt(paid)}</div>
+        </div>
+      </div>
+      ${overdue > 0 ? `<div class="c360-alert-more" style="color:#FF4444;">Overdue: ${fmt(overdue)}</div>` : ''}
     </div>
   `;
 }

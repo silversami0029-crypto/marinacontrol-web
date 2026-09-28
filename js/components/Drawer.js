@@ -55,7 +55,7 @@ const SECTIONS = [
     title: 'FINANCE',
     icon: ICONS.finance,
     items: [
-      { id: 'invoices', label: 'Invoices & Payments', toast: 'Invoices & Payments is coming to the web app' },
+{ id: 'invoices', label: 'Invoices', route: '#/invoices' },
       { id: 'revenue', label: 'Revenue Summary', toast: 'Revenue Summary is coming to the web app' },
       { id: 'outstanding', label: 'Outstanding Payments', toast: 'Outstanding Payments is coming to the web app' }
     ]
