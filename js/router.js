@@ -5,6 +5,7 @@ import { wireBottomNav } from './components/BottomNav.js';
 import { mountBoatsScreen } from './screens/BoatsScreen.js';
 import { mountLoginScreen } from './screens/LoginScreen.js';
 import { watchAuth, loadUserProfile } from './auth.js';
+import { mountShiftScheduleScreen } from './screens/ShiftScheduleScreen.js';
 import { mountDashboardScreen } from './screens/DashboardScreen.js';
 import { mountAccountScreen } from './screens/AccountScreen.js';
 import { mountBerthsScreen } from './screens/BerthsScreen.js';
@@ -39,6 +40,7 @@ const routes = {
 '/maintenance': mountMaintenanceScreen,
   '/client-360': mountClient360Screen,
  '/crew': mountCrewManagementScreen,
+  '/shift-schedule': mountShiftScheduleScreen,
   '/documents': mountDocumentScreen,
   '/tasks': mountTaskScreen,
   '/inventory': mountInventoryScreen,

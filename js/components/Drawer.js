@@ -77,7 +77,7 @@ const SECTIONS = [
     { id: 'user-mgmt', label: 'User Management', route: '#/user-management' },
     { id: 'crew-mgmt', label: 'Crew Management', route: '#/crew' },
     { id: 'permissions', label: 'Permissions & Roles', route: '#/permissions' },
-    { id: 'shift-schedule', label: 'Shift Schedule', toast: 'Shift Schedule is coming to the web app' }
+{ id: 'shift-schedule', label: 'Shift Schedule', route: '#/shift-schedule' }
   ]
 },
   {
