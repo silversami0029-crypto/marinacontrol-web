@@ -4400,22 +4400,29 @@ body {
 /* ============================================================
    CHECKLISTS
    ============================================================ */
+
 .chk-row {
   position: relative;
   padding: 14px 4px 16px;
   margin: 0 4px 4px;
   cursor: pointer;
 }
-.chk-row:active { background: rgba(255,255,255,.02); }
 
-.chk-info { min-width: 0; }
+.chk-row:active {
+  background: rgba(255,255,255,.02);
+}
+
+.chk-info {
+  min-width: 0;
+}
 
 .chk-line-1 {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 4px;
 }
+
 .chk-name {
   flex: 1;
   min-width: 0;
@@ -4426,22 +4433,42 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.chk-status {
-  flex-shrink: 0;
+
+.chk-line-1 .chk-status {
+  flex: 0 0 auto;
+  padding: 2px 5px;
+  border-radius: 4px;
   color: #fff;
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 700;
-  letter-spacing: .05em;
-  padding: 4px 8px;
-  border-radius: 6px;
+  letter-spacing: .02em;
+  line-height: 1;
+  white-space: nowrap;
   text-transform: uppercase;
 }
-.chk-meta, .chk-meta2 {
+
+.chk-boat {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  opacity: .85;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chk-meta,
+.chk-meta2 {
   font-size: 12px;
   color: var(--color-text-secondary);
   margin-bottom: 6px;
 }
-.chk-meta2 { margin-top: 8px; margin-bottom: 0; }
+
+.chk-meta2 {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
 
 .chk-progress {
   display: flex;
@@ -4449,6 +4476,7 @@ body {
   gap: 10px;
   margin: 8px 0 6px;
 }
+
 .chk-progress-bar {
   flex: 1;
   height: 6px;
@@ -4456,18 +4484,20 @@ body {
   border-radius: 3px;
   overflow: hidden;
 }
+
 .chk-progress-fill {
   height: 100%;
   background: var(--color-accent, #2f6bff);
   transition: width .3s;
 }
+
 .chk-progress-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-text-primary);
   flex-shrink: 0;
   min-width: 42px;
   text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
 
 .chk-counters {
@@ -4476,20 +4506,28 @@ body {
   font-size: 12px;
   color: var(--color-text-secondary);
 }
-.chk-counter.chk-passed { color: #4CAF50; }
-.chk-counter.chk-failed { color: #F44336; }
+
+.chk-counter.chk-passed {
+  color: #4CAF50;
+}
+
+.chk-counter.chk-failed {
+  color: #F44336;
+}
 
 /* Detail sheet */
+
 .chk-detail-status {
   align-self: center;
-  margin: 0 auto 14px;
   display: inline-block;
+  margin: 0 auto 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
   color: #fff;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: .05em;
-  padding: 5px 12px;
-  border-radius: 8px;
+  letter-spacing: .03em;
+  line-height: 1;
   text-transform: uppercase;
 }
 
@@ -4504,18 +4542,21 @@ body {
   gap: 8px;
   margin-bottom: 16px;
 }
+
 .chk-summary-col {
   flex: 1;
-  background: var(--color-surface);
-  border-radius: 10px;
   padding: 10px;
   text-align: center;
+  background: var(--color-surface);
+  border-radius: 10px;
 }
+
 .chk-summary-label {
+  margin-bottom: 4px;
   font-size: 11px;
   color: var(--color-text-secondary);
-  margin-bottom: 4px;
 }
+
 .chk-summary-value {
   font-size: 16px;
   font-weight: 700;
@@ -4523,18 +4564,20 @@ body {
 }
 
 .chk-items-header {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-primary);
   margin: 16px 0 8px;
   padding-top: 12px;
   border-top: 1px solid var(--color-divider);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
+
 .chk-items-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
+
 .chk-item {
   display: flex;
   align-items: flex-start;
@@ -4542,21 +4585,31 @@ body {
   padding: 10px 4px;
   border-bottom: 1px solid var(--color-divider);
 }
-.chk-item:last-child { border-bottom: none; }
+
+.chk-item:last-child {
+  border-bottom: none;
+}
+
 .chk-item-mark {
   flex: 0 0 18px;
+  margin-top: 1px;
   font-size: 14px;
   font-weight: 700;
-  margin-top: 1px;
 }
-.chk-item-info { flex: 1; min-width: 0; }
+
+.chk-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .chk-item-label {
   font-size: 13px;
-  color: var(--color-text-primary);
   line-height: 1.35;
+  color: var(--color-text-primary);
 }
+
 .chk-item-notes {
+  margin-top: 3px;
   font-size: 12px;
   color: var(--color-text-secondary);
-  margin-top: 3px;
 }

@@ -3,11 +3,15 @@ import { store } from '../store.js';
 import { showChecklistDetail } from './ChecklistDetailSheet.js';
 import { showChecklistHelp } from './ChecklistHelp.js';
 import {
-  collection, query, where, onSnapshot, getDocs
+  //collection, query, where, onSnapshot, getDocs
+collection, query, where, onSnapshot
+
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
-let unsubscribe = null;
+//let unsubscribe = null;
+let unsubscribeChecklists = null;
+let unsubscribeBoats = null;
 let currentItems = [];
 let currentBoats = [];
 let isSearchOpen = false;
@@ -26,10 +30,15 @@ export function mountChecklistScreen() {
   const params = new URLSearchParams(location.hash.split('?')[1] || '');
   const urlBoatId = Number(params.get('boatId') || 0);
 
-  if (unsubscribe) {
-    unsubscribe();
-    unsubscribe = null;
-  }
+  if (unsubscribeChecklists) {
+  unsubscribeChecklists();
+  unsubscribeChecklists = null;
+}
+
+if (unsubscribeBoats) {
+  unsubscribeBoats();
+  unsubscribeBoats = null;
+}
 
   currentItems = [];
   currentBoats = [];
@@ -150,7 +159,35 @@ export function mountChecklistScreen() {
       renderList();
     });
 
-  subscribeToChecklists();
+  subscribeToBoats();
+subscribeToChecklists();
+}
+
+function subscribeToBoats() {
+  const clientId = Number(store.activeClientId);
+  if (!clientId) return;
+
+  const boatQuery = query(
+    collection(db, 'boats'),
+    where('clientId', '==', clientId)
+  );
+
+  unsubscribeBoats = onSnapshot(boatQuery, snapshot => {
+    currentBoats = snapshot.docs.map(document => {
+      const data = document.data();
+
+      return {
+        id: Number(data.id || 0),
+        name: data.name || data.boatName || `Boat ${data.id || ''}`
+      };
+    }).filter(boat => boat.id > 0)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    populateBoatDropdown();
+    renderList();
+  }, error => {
+    console.error('[checklist] boats listener failed', error);
+  });
 }
 
 function subscribeToChecklists() {
@@ -167,9 +204,9 @@ function subscribeToChecklists() {
     where('clientId', '==', clientId)
   );
 
-  unsubscribe = onSnapshot(
+  unsubscribeChecklists = onSnapshot(
     checklistQuery,
-    async snapshot => {
+    snapshot => {
       currentItems = snapshot.docs
         .map(document => {
           const data = document.data();
@@ -198,7 +235,7 @@ function subscribeToChecklists() {
         })
         .sort((a, b) => b.createdAt - a.createdAt);
 
-      await populateBoatDropdown();
+     
       renderList();
     },
     error => {
@@ -216,69 +253,24 @@ function subscribeToChecklists() {
   );
 }
 
-async function populateBoatDropdown() {
+function populateBoatDropdown() {
   const select = document.getElementById('chBoatSelect');
   if (!select) return;
 
-  const clientId = Number(store.activeClientId);
-
-  try {
-    const snapshot = await getDocs(query(
-      collection(db, 'boats'),
-      where('clientId', '==', clientId)
-    ));
-
-    currentBoats = snapshot.docs
-      .map(document => {
-        const data = document.data();
-
-        return {
-          id: Number(data.id || 0),
-          name:
-            data.name ||
-            data.boatName ||
-            `Boat ${data.id || ''}`
-        };
-      })
-      .filter(boat => boat.id > 0)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  } catch (error) {
-    console.error('[checklist] boats load failed', error);
-    currentBoats = [];
-  }
-
-  const previousValue = select.value;
+  const previousValue = String(boatFilter || 0);
 
   select.innerHTML =
     '<option value="0">All boats</option>' +
-    currentBoats
-      .map(boat => `
-        <option value="${boat.id}">
-          ${escapeHtml(boat.name)}
-        </option>
-      `)
-      .join('');
+    currentBoats.map(boat =>
+      `<option value="${boat.id}">${escapeHtml(boat.name)}</option>`
+    ).join('');
 
-  if (
-    currentBoats.some(
-      boat => String(boat.id) === previousValue
-    )
-  ) {
+  if (currentBoats.some(boat => String(boat.id) === previousValue)) {
     select.value = previousValue;
-    boatFilter = Number(previousValue) || 0;
-    return;
+  } else {
+    boatFilter = 0;
+    select.value = '0';
   }
-
-  if (
-    boatFilter > 0 &&
-    currentBoats.some(boat => boat.id === boatFilter)
-  ) {
-    select.value = String(boatFilter);
-    return;
-  }
-
-  boatFilter = 0;
-  select.value = '0';
 }
 
 function getVisible() {
