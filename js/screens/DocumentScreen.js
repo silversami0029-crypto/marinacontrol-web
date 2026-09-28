@@ -4,6 +4,7 @@ import { toast } from '../ui/toast.js';
 import { showAddDocumentSheet } from './AddDocumentSheet.js';
 import { showDocumentMenu } from './DocumentMenuSheet.js';
 import { showDocumentDetail } from './DocumentDetailSheet.js';
+import { showDocumentHelp } from './DocumentHelp.js';
 import {
   collection, query, where, onSnapshot, getDocs
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -79,9 +80,7 @@ export function mountDocumentScreen() {
     location.hash = '#/boats';
   });
 
-  document.getElementById('docHelp').addEventListener('click', () => {
-    toast('Documents help coming soon');
-  });
+  document.getElementById('docHelp').addEventListener('click', showDocumentHelp);
 
   document.getElementById('docSearchToggle').addEventListener('click', () => {
     isSearchOpen = true;
