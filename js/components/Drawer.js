@@ -322,7 +322,7 @@ function closeDrawer() {
 }
 
 function isDesktopDrawer() {
-  return window.matchMedia('(min-width: 1024px)').matches;
+  return window.matchMedia('(min-width: 768px)').matches;
 }
 
 function syncDrawerLayout() {
