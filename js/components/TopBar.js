@@ -12,10 +12,10 @@ let notificationKey = '';
 
 const TITLES = {
   '/boats':     'MarinaControl',
-  '/dashboard': 'Dashboard',
-  '/berths':    'Berths',
-  '/fleet':     'Fleet',
-  '/account':   'Account',
+  '/dashboard': 'MarinaControl',
+  '/berths':    'MarinaControl',
+  '/fleet':     'MarinaControl',
+  '/account':   'MarinaControl',
   '/notifications': 'MarinaControl',
 };
 

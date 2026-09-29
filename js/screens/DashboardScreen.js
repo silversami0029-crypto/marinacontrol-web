@@ -14,7 +14,14 @@ export async function mountDashboardScreen() {
 
   screen.innerHTML = `
     <div class="pf-wrap">
-      <div class="pf-heading">PORTFOLIO OVERVIEW</div>
+
+   <!-- Header pill -->
+      <div class="account-header">
+        <div class="account-pill">Portfolio Overview</div>
+      </div>
+
+
+    
       <div class="pf-context" id="pfContext">Loading…</div>
       <div class="pf-divider"></div>
 

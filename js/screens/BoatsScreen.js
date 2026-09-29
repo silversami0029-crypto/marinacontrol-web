@@ -34,9 +34,15 @@ export function mountBoatsScreen() {
 
   const screen = document.getElementById('screen');
   screen.innerHTML = `
-    <div class="boats-header" id="boatsHeader">
-      <h1>Boats</h1>
-      <button class="info-btn" id="helpBtn" aria-label="Help">
+  
+
+  <!-- Header pill -->
+      <div class="boats-header" id="boatsHeader">
+        <div class="account-pill">Boats</div>
+ <button class="info-btn" id="helpBtn" aria-label="Help">
+      
+
+
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
              stroke="currentColor" stroke-width="1.8"
              stroke-linecap="round" stroke-linejoin="round">
