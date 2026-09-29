@@ -1,4 +1,4 @@
-/* ============================================================
+ï»¿/* ============================================================
    theme tokens
    ============================================================ */
 :root {
@@ -225,7 +225,7 @@ body {
 .login-field input {
   width: 100%;
   padding: 14px 16px;
-  background: #1C222A;              /* dark_slate — same as Android */
+  background: #1C222A;              /* dark_slate   same as Android */
   border: 1px solid #2B323B;        /* dark_divider */
   border-radius: 8px;
   color: var(--color-text-primary);
@@ -953,7 +953,7 @@ body {
 }
 
 /* ============================================================
-   BERTHS SCREEN — GRID
+   BERTHS SCREEN   GRID
    ============================================================ */
 .berth-header {
   background: var(--color-surface);
@@ -1420,9 +1420,9 @@ body {
 .account-footer {
   padding: 10px 24px;
   text-align: center;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--color-text-secondary);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .account-version {
@@ -1433,7 +1433,7 @@ body {
   line-height: 1.5;
 }
 
-/* Berth menu — danger row */
+/* Berth menu   danger row */
 .sheet-item--danger .sheet-item-icon,
 .sheet-item--danger .sheet-item-title,
 .sheet-item--danger .sheet-item-subtitle,
@@ -1757,7 +1757,7 @@ body {
 .util-btn--primary:hover { opacity: .92; }
 
 /* ============================================================
-   VIEW BERTH — UTILITIES SECTION
+   VIEW BERTH   UTILITIES SECTION
    ============================================================ */
 .view-util-section {
   padding: 8px 20px 12px;
@@ -1854,7 +1854,7 @@ body {
 .util-save-btn:hover { background: rgba(33,150,243,.10); }
 .util-save-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-/* Berth Details sheet — wider */
+/* Berth Details sheet   wider */
 .berth-details-sheet {
   padding: 12px 20px 20px;
 }
@@ -2318,7 +2318,7 @@ body {
   box-shadow: 0 6px 16px rgba(33,150,243,.35);
 }
 
-/* Desktop — position CD FAB inside the 440px frame */
+/* Desktop   position CD FAB inside the 440px frame */
 @media (min-width: 768px) {
   body:not(.drawer-page-hidden) .cd-fab {
     left: calc(
@@ -2345,7 +2345,7 @@ body {
   font-family: inherit;
 }
 
-/* Customer Directory — scroll list above action buttons */
+/* Customer Directory   scroll list above action buttons */
 .cd-list {
   height: calc(
     100dvh -
@@ -2499,7 +2499,7 @@ body {
   height: 1px;
   background: var(--color-divider);
 }
-/* Maintenance menu — danger row */
+/* Maintenance menu   danger row */
 .sheet-item--danger .sheet-item-icon,
 .sheet-item--danger .sheet-item-title,
 .sheet-item--danger .sheet-item-subtitle {
@@ -3102,7 +3102,7 @@ body {
   padding-bottom: 24px;
 }
 
-/* Boat Dashboard — tile count */
+/* Boat Dashboard   tile count */
 .dash-tile-count {
   margin-top: 2px;
   font-size: 12px;
@@ -3128,11 +3128,11 @@ body {
 }
 
 /* ============================================================
-   MOBILE FIX — FABs must sit INSIDE the viewport on phones
+   MOBILE FIX   FABs must sit INSIDE the viewport on phones
    ============================================================ */
 @media (max-width: 767px) {
 
-  /* Right FAB — attach to the right edge of the screen */
+  /* Right FAB   attach to the right edge of the screen */
   .cd-fab,
   .um-fab,
   .cm-fab {
@@ -3142,7 +3142,7 @@ body {
     bottom: calc(var(--bottomnav-h) + 16px) !important;
   }
 
-  /* Left bulk-delete button — attach to the left edge of the screen */
+  /* Left bulk-delete button   attach to the left edge of the screen */
   .bulk-btn {
     left: 16px !important;
     right: auto !important;
@@ -3156,7 +3156,7 @@ body {
     bottom: calc(var(--bottomnav-h) + 16px) !important;
   }
 
-  /* .fab (Boats FAB with "+ Boat" text) — same treatment */
+  /* .fab (Boats FAB with "+ Boat" text)   same treatment */
   .fab {
     left: auto !important;
     right: 90px !important;
@@ -3534,7 +3534,7 @@ body {
 
 .eq-info { flex: 1; min-width: 0; }
 
-/* Boat name — bold, top-of-row, matches tvBoatName */
+/* Boat name   bold, top-of-row, matches tvBoatName */
 .eq-boat {
   font-size: 16px;
   font-weight: 700;
@@ -3545,7 +3545,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Manufacturer — bold, matches tvManufacturer */
+/* Manufacturer   bold, matches tvManufacturer */
 .eq-manufacturer {
   font-size: 14px;
   font-weight: 700;
@@ -3561,7 +3561,7 @@ body {
   font-size: 14px;
 }
 
-/* Type — matches tvType */
+/* Type   matches tvType */
 .eq-type {
   font-size: 14px;
   color: var(--color-text-secondary);
@@ -3571,7 +3571,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Model line — matches tvModel */
+/* Model line   matches tvModel */
 .eq-model-line {
   font-size: 14px;
   color: var(--color-text-secondary);
@@ -3581,7 +3581,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Serial — matches tvSerialNumber (mid-ellipsize) */
+/* Serial   matches tvSerialNumber (mid-ellipsize) */
 .eq-serial {
   font-size: 14px;
   color: var(--color-text-secondary);
@@ -3591,7 +3591,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Location — matches tvLocation with ?? */
+/* Location   matches tvLocation with ?? */
 .eq-location {
   font-size: 14px;
   color: var(--color-text-secondary);
@@ -3604,7 +3604,7 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Notes — matches tvNotes (13sp, 2 lines) */
+/* Notes   matches tvNotes (13sp, 2 lines) */
 .eq-notes {
   font-size: 13px;
   line-height: 1.35;
@@ -3616,7 +3616,7 @@ body {
   overflow: hidden;
 }
 
-/* Assigned owner — matches tvAssignedTo (12sp, cool grey) */
+/* Assigned owner   matches tvAssignedTo (12sp, cool grey) */
 .eq-assigned {
   font-size: 12px;
   color: #737D89;
@@ -3826,7 +3826,7 @@ body {
 .tk-count:empty { display: none; }
 
 
-/* Tasks filter chips — tighter than dash-filter */
+/* Tasks filter chips   tighter than dash-filter */
 #tkFilters {
   padding: 4px 12px 8px;
   gap: 6px;
@@ -3942,7 +3942,7 @@ body {
   background: rgba(255,255,255,.06);
 }
 
-/* Safety help — category grid */
+/* Safety help   category grid */
 .help-cat-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3954,7 +3954,7 @@ body {
   color: var(--color-text-primary);
 }
 
-/* Safety help — importance levels */
+/* Safety help   importance levels */
 .help-importance {
   display: flex;
   flex-direction: column;
@@ -4613,7 +4613,7 @@ body {
   font-size: 12px;
   color: var(--color-text-secondary);
 }
-/* Boats screen — list scrolls inside a fixed frame */
+/* Boats screen   list scrolls inside a fixed frame */
 #screen {
   display: flex;
   flex-direction: column;
@@ -4865,7 +4865,7 @@ body {
   font-family: inherit;
   cursor: pointer;
 }
-/* Reports — pinned header + tabs, scrolling body */
+/* Reports   pinned header + tabs, scrolling body */
 #screen.rp-screen {
   display: flex;
   flex-direction: column;

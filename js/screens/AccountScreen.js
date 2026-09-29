@@ -90,15 +90,7 @@ export function mountAccountScreen() {
         </button>
       </div>
 
-      <!-- Footer -->
-      <div class="account-footer">
-        By continuing to use MarinaControl, you agree to the Terms of Use and Privacy Policy
-      </div>
-
-      <div class="account-version">
-        MarinaControl<br>Version 1.0.0
-      </div>
-    </div>
+      
   `;
 
   document.getElementById('btnEditProfile').addEventListener('click', () => {
