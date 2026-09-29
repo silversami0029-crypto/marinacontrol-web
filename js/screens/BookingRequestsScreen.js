@@ -3,9 +3,12 @@
 
 import { listenForBookingRequests } from '../db.js';
 import { store } from '../store.js';
+import { approveBookingRequest, showRequestMoreMenu } from './BookingRequestActions.js';
 import { showBookingRequestsHelp } from './BookingRequestsHelp.js';
 let unsubscribe = null;
 let searchQuery = '';
+let openRequestDocId = null;
+
 
 export function mountBookingRequestsScreen() {
   if (!store.activeClientId) {
@@ -18,8 +21,10 @@ export function mountBookingRequestsScreen() {
   }
 
   searchQuery = '';
+  openRequestDocId = null;
 
   const screen = document.getElementById('screen');
+
   screen.innerHTML = `
     <div class="bkr-header">
       <div class="bkr-header-row">
@@ -126,27 +131,37 @@ function renderList() {
   const all = store.bookingRequests || [];
   const filtered = applySearch(all);
 
-  if (countEl) countEl.textContent = `Booking Requests: ${filtered.length}`;
+  if (countEl) {
+    countEl.textContent = `Booking Requests: ${filtered.length}`;
+  }
 
   if (!filtered.length) {
     listEl.innerHTML = `
       <div class="boats-empty">
         <h2>${searchQuery ? 'No matches' : 'No booking requests'}</h2>
         <p>${searchQuery
-              ? `No requests match "${escapeHtml(searchQuery)}"`
-              : 'Incoming berth booking requests will appear here.'}</p>
-      </div>`;
+          ? `No requests match "${escapeHtml(searchQuery)}"`
+          : 'Incoming berth booking requests will appear here.'}</p>
+      </div>
+    `;
     return;
   }
 
-  const sorted = [...filtered].sort((a, b) => (b.receivedAt || 0) - (a.receivedAt || 0));
+  const sorted = [...filtered].sort(
+    (a, b) => (b.receivedAt || 0) - (a.receivedAt || 0)
+  );
+
   listEl.innerHTML = sorted.map(renderRequestCard).join('');
 
-  listEl.querySelectorAll('.bkr-card').forEach((el) => {
-    const id = String(el.dataset.requestId);
-    const req = all.find(r => String(r.id) === id);
-    if (!req) return;
-    el.addEventListener('click', () => showDetail(req));
+  listEl.querySelectorAll('.bkr-card').forEach((card) => {
+    const docId = card.dataset.requestDocId;
+    const request = all.find(
+      r => String(r._docId) === String(docId)
+    );
+
+    if (!request) return;
+
+    card.addEventListener('click', () => showDetail(request));
   });
 }
 
@@ -154,17 +169,28 @@ function renderRequestCard(r) {
   const status = r.status || 'NEW';
   const source = r.source || 'UNKNOWN';
   const vessel = r.vesselName || 'Unknown vessel';
-
   const sender = r.senderName || 'Unknown sender';
-  const senderLine = r.senderPhone ? `${sender} · ${r.senderPhone}` : sender;
 
-  const arrival   = r.arrivalDate   ? formatDate(r.arrivalDate)   : 'Arrival not specified';
-  const departure = r.departureDate ? formatDate(r.departureDate) : 'Departure not specified';
+  const senderLine = r.senderPhone
+    ? `${sender} · ${r.senderPhone}`
+    : sender;
 
-  const message = r.message && r.message.trim() ? r.message : 'No message';
+  const arrival = r.arrivalDate
+    ? formatDate(r.arrivalDate)
+    : 'Arrival not specified';
+
+  const departure = r.departureDate
+    ? formatDate(r.departureDate)
+    : 'Departure not specified';
+
+  const message = r.message?.trim() || 'No message';
+
+  const isSelected =
+    String(r._docId) === String(openRequestDocId);
 
   return `
-    <div class="bkr-card" data-request-id="${esc(r.id)}">
+    <div class="bkr-card${isSelected ? ' is-selected' : ''}"
+         data-request-doc-id="${esc(r._docId)}">
       <div class="bkr-status">${esc(status)} · ${esc(source)}</div>
       <div class="bkr-vessel">${esc(vessel)}</div>
       <div class="bkr-sender">${esc(senderLine)}</div>
@@ -173,11 +199,14 @@ function renderRequestCard(r) {
     </div>
   `;
 }
-
 /* ---------- Detail sheet ---------- */
 function showDetail(r) {
+
+ openRequestDocId = r._docId;
+  renderList();   // re-render so the selected class applies
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
+
 
   const sheet = document.createElement('div');
   sheet.className = 'sheet assign-sheet';
@@ -216,8 +245,14 @@ function showDetail(r) {
       <div class="bkr-detail-message">${esc(message)}</div>
     </div>
 
-    <div class="assign-divider"></div>
-    <button class="md-close-btn" id="bkrClose">Close</button>
+    <button type="button" class="add-save" id="bkrApprove" style="margin-top:12px;">
+      Approve
+    </button>
+
+    <div class="ao-actions" style="margin-top:8px;">
+      <button type="button" class="csv-btn csv-btn--cancel" id="bkrClose">Close</button>
+      <button type="button" class="csv-btn csv-btn--cancel" id="bkrMore">More</button>
+    </div>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -234,6 +269,16 @@ function showDetail(r) {
 
   backdrop.addEventListener('click', close);
   sheet.querySelector('#bkrClose').addEventListener('click', close);
+
+  sheet.querySelector('#bkrApprove').addEventListener('click', () => {
+    close();
+    approveBookingRequest(r);
+  });
+
+  sheet.querySelector('#bkrMore').addEventListener('click', () => {
+    close();
+    showRequestMoreMenu(r);
+  });
 }
 
 /* ---------- Helpers ---------- */
