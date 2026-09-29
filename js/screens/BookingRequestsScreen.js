@@ -3,8 +3,7 @@
 
 import { listenForBookingRequests } from '../db.js';
 import { store } from '../store.js';
-import { toast } from '../ui/toast.js';
-
+import { showBookingRequestsHelp } from './BookingRequestsHelp.js';
 let unsubscribe = null;
 let searchQuery = '';
 
@@ -57,9 +56,7 @@ export function mountBookingRequestsScreen() {
     </div>
   `;
 
-  document.getElementById('bkrHelp').addEventListener('click', () => {
-    toast('Booking request help coming soon');
-  });
+
 
   setupSearch();
 
@@ -85,6 +82,8 @@ function setupSearch() {
   const bar    = document.getElementById('bkrSearchBar');
   const input  = document.getElementById('bkrSearchInput');
   const cancel = document.getElementById('bkrSearchCancel');
+  const bkrHelpBtn = document.getElementById('bkrHelp');
+  if (bkrHelpBtn) bkrHelpBtn.addEventListener('click', showBookingRequestsHelp);
 
   toggle.addEventListener('click', () => {
     bar.hidden = false;
@@ -144,8 +143,9 @@ function renderList() {
   listEl.innerHTML = sorted.map(renderRequestCard).join('');
 
   listEl.querySelectorAll('.bkr-card').forEach((el) => {
-    const id = Number(el.dataset.requestId);
-    const req = all.find(r => r.id === id);
+    const id = String(el.dataset.requestId);
+    const req = all.find(r => String(r.id) === id);
+    if (!req) return;
     el.addEventListener('click', () => showDetail(req));
   });
 }
@@ -217,7 +217,7 @@ function showDetail(r) {
     </div>
 
     <div class="assign-divider"></div>
-    <button class="assign-cancel" id="bkrClose">Close</button>
+    <button class="md-close-btn" id="bkrClose">Close</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);

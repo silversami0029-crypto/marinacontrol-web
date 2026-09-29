@@ -4634,3 +4634,16 @@ body {
   padding: 6px 8px 16px;
   overscroll-behavior: contain;
 }
+
+.bkr-list {
+  height: calc(
+    100dvh -
+    var(--topbar-h) -
+    var(--bottomnav-h) -
+    120px
+  );
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 8px 16px;
+  overscroll-behavior: contain;
+}
