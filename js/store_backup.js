@@ -12,7 +12,6 @@ export const store = {
   syncTime:       0,
   customers:     [],          // array of customer objects
   customerCache:  new Map(),
-  notifications: [],
 
   // Subscribers (screens re-render on emit)
   listeners: new Set(),
