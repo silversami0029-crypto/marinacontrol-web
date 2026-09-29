@@ -5,6 +5,7 @@ import { wireBottomNav } from './components/BottomNav.js';
 import { mountBoatsScreen } from './screens/BoatsScreen.js';
 import { mountLoginScreen } from './screens/LoginScreen.js';
 import { watchAuth, loadUserProfile } from './auth.js';
+import { mountReportsScreen } from './screens/ReportsScreen.js';
 import { mountInvoiceScreen } from './screens/InvoiceScreen.js';
 import { mountChecklistScreen } from './screens/ChecklistScreen.js';
 import { mountShiftScheduleScreen } from './screens/ShiftScheduleScreen.js';
@@ -43,6 +44,7 @@ const routes = {
 '/maintenance': mountMaintenanceScreen,
   '/client-360': mountClient360Screen,
  '/crew': mountCrewManagementScreen,
+  '/reports': mountReportsScreen,
   '/checklists': mountChecklistScreen,
   '/invoices': mountInvoiceScreen,
   '/shift-schedule': mountShiftScheduleScreen,
@@ -98,6 +100,8 @@ function navigate() {
   });
 
   if (route !== '/login') renderTopBar(route);
+
+  document.getElementById('screen')?.classList.remove('rp-screen');
 
   routes[route]();
 }

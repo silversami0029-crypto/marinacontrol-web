@@ -50,8 +50,8 @@ const SECTIONS = [
     icon: ICONS.finance,
     items: [
       { id: 'invoices', label: 'Invoices', route: '#/invoices' },
-      { id: 'revenue', label: 'Revenue Summary', toast: 'Revenue Summary is coming to the web app' },
-      { id: 'outstanding', label: 'Outstanding Payments', toast: 'Outstanding Payments is coming to the web app' }
+      { id: 'revenue', label: 'Revenue Summary', route: '#/reports?tab=3' },
+      { id: 'outstanding', label: 'Outstanding Payments', route: '#/reports?tab=0' }
     ]
   },
   {
@@ -79,9 +79,9 @@ const SECTIONS = [
     title: 'REPORTS',
     icon: ICONS.reports,
     items: [
-      { id: 'daily-report', label: 'Daily Report', toast: 'Daily Report is coming to the web app' },
-      { id: 'occupancy', label: 'Occupancy Trends', toast: 'Occupancy Trends is coming to the web app' },
-      { id: 'export-data', label: 'Export Data', toast: 'Export Data is coming to the web app' }
+      { id: 'daily-report', label: 'Daily Report',     route: '#/reports?tab=0' },
+      { id: 'occupancy',    label: 'Occupancy Trends', route: '#/reports?tab=2' },
+      { id: 'export-data',  label: 'Export Data',      toast: 'Export Data is coming to the web app' }
     ]
   },
   {
