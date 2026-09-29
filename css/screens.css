@@ -4900,3 +4900,21 @@ body {
   z-index: 4;
   background: var(--color-bg);
 }
+
+.rp-export-btn {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 14px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px solid #2E9BFF;
+  color: #2E9BFF;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+.rp-export-btn:active {
+  background: rgba(46,155,255,.16);
+}

@@ -7,6 +7,8 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
+// jsPDF is loaded lazily when the user exports — see exportReport()
+
 const TABS = ['Unpaid', 'Expiring', 'Occupancy', 'Revenue'];
 let currentTab = 0;
 let invoicesCache = [];
@@ -203,11 +205,14 @@ function renderUnpaid() {
           </div>
         `;
       }).join('')}
-    ` : `<div class="rp-empty">No outstanding invoices</div>`}
+      ` : `<div class="rp-empty">No outstanding invoices</div>`}
+
+    <button type="button" class="rp-export-btn" id="rpExport">📄 Export PDF</button>
   `;
 
   const helpIcon = body.querySelector('#rpHelpIcon');
   if (helpIcon) helpIcon.addEventListener('click', showReportsHelp);
+  body.querySelector('#rpExport')?.addEventListener('click', () => exportReport(0));
 }
 
 /* ============================================================
@@ -279,11 +284,22 @@ function renderExpiring() {
           </div>
         `;
       }).join('')}
-    ` : `<div class="rp-empty">No expiring documents</div>`}
+
+    ` : ''}
+
+    <button type="button" class="rp-export-btn" id="rpExport">
+      📄 Export PDF
+    </button>
   `;
 
   const helpIcon = body.querySelector('#rpHelpIcon');
-  if (helpIcon) helpIcon.addEventListener('click', showReportsHelp);
+  if (helpIcon) {
+    helpIcon.addEventListener('click', showReportsHelp);
+  }
+
+  body.querySelector('#rpExport')?.addEventListener('click', () => {
+    exportReport(1);
+  });
 }
 
 /* ============================================================
@@ -364,11 +380,12 @@ function renderOccupancy() {
           </div>
         `;
       }).join('')}
-    ` : ''}
-  `;
+       ` : ''}
 
-  const helpIcon = body.querySelector('#rpHelpIcon');
-  if (helpIcon) helpIcon.addEventListener('click', showReportsHelp);
+    <button type="button" class="rp-export-btn" id="rpExport">
+      📄 Export PDF
+    </button>
+  `;
 }
 
 /* ============================================================
@@ -467,13 +484,19 @@ function renderRevenue() {
           <div class="rp-detail-value">${fmtMoney(amt)}</div>
         </div>
       `).join('')}
+
+
     ` : `<div class="rp-empty">No revenue for this filter</div>`}
+
+    <button type="button" class="rp-export-btn" id="rpExport">📄 Export PDF</button>
   `;
 
   const helpIcon = body.querySelector('#rpHelpIcon');
   if (helpIcon) helpIcon.addEventListener('click', showReportsHelp);
+  body.querySelector('#rpExport')?.addEventListener('click', () => exportReport(3));
 
   body.querySelector('#rpCatFilter')?.addEventListener('change', (e) => {
+
     revenueFilters.category = e.target.value;
     renderRevenue();
   });
@@ -529,4 +552,95 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
+}
+
+async function exportReport(tab) {
+  if (!window.jspdf?.jsPDF) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Failed to load jsPDF'));
+      document.head.appendChild(s);
+    });
+  }
+  const { jsPDF } = window.jspdf;
+  const titles = ['Unpaid Invoices', 'Expiring Documents', 'Occupancy', 'Revenue'];
+  const title = titles[tab] || 'Report';
+  const generated = new Date().toLocaleString('en-GB');
+
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text(title, 14, 20);
+
+  doc.setFontSize(10);
+  doc.text(`Generated: ${generated}`, 14, 28);
+
+  let y = 42;
+  doc.setFontSize(11);
+
+  const rows = getDetailRows(tab);
+  rows.forEach(row => {
+    if (y > 275) { doc.addPage(); y = 20; }
+    doc.text(`• ${row.left}`, 14, y);
+    y += 5;
+    doc.setFontSize(9);
+    doc.text(row.mid || '', 20, y);
+    if (row.right) doc.text(String(row.right), 150, y);
+    y += 8;
+    doc.setFontSize(11);
+  });
+
+  doc.save(`report-${tab}-${Date.now()}.pdf`);
+  toast('Report exported', { kind: 'success' });
+}
+
+function getDetailRows(tab) {
+  const rows = [];
+
+  if (tab === 0) {
+    const unpaid = invoicesCache.filter(inv => String(inv.status || '').toUpperCase() !== 'PAID');
+    unpaid.forEach(inv => {
+      rows.push({
+        left: inv.boatName || 'Unknown boat',
+        mid: `${inv.description || ''} – Due: ${fmtDate(inv.dueDate)}`,
+        right: fmtMoney(inv.amount)
+      });
+    });
+  } else if (tab === 1) {
+    const now = Date.now();
+    const cutoff = now + 30 * 24 * 60 * 60 * 1000;
+    const expiring = documentsCache.filter(d => {
+      const e = toMs(d.expiryDate);
+      return e > 0 && e <= cutoff;
+    });
+    expiring.forEach(d => {
+      rows.push({
+        left: boatsCache[Number(d.boatId)] || 'Unknown boat',
+        mid: `${d.name || ''} (${d.type || ''})`,
+        right: `Expires ${fmtDate(toMs(d.expiryDate))}`
+      });
+    });
+  } else if (tab === 2) {
+    const occupied = berthsCache.filter(b => String(b.status || '').toUpperCase() === 'OCCUPIED');
+    occupied.forEach(b => {
+      rows.push({
+        left: b.berthNumber || '',
+        mid: b.boatId ? (boatsCache[Number(b.boatId)] || 'Unknown') : 'Unknown',
+        right: 'Occupied'
+      });
+    });
+  } else if (tab === 3) {
+    const paid = invoicesCache.filter(inv => String(inv.status || '').toUpperCase() === 'PAID');
+    const byBoat = {};
+    for (const inv of paid) {
+      const bn = inv.boatName || 'Unknown boat';
+      byBoat[bn] = (byBoat[bn] || 0) + Number(inv.amount || 0);
+    }
+    Object.entries(byBoat).forEach(([boat, amt]) => {
+      rows.push({ left: boat, mid: 'Total paid', right: fmtMoney(amt) });
+    });
+  }
+
+  return rows;
 }

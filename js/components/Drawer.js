@@ -81,7 +81,7 @@ const SECTIONS = [
     items: [
       { id: 'daily-report', label: 'Daily Report',     route: '#/reports?tab=0' },
       { id: 'occupancy',    label: 'Occupancy Trends', route: '#/reports?tab=2' },
-      { id: 'export-data',  label: 'Export Data',      toast: 'Export Data is coming to the web app' }
+      { id: 'export-data',  label: 'Export Data',      route: '#/reports?tab=3' }
     ]
   },
   {
