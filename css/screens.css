@@ -4918,3 +4918,87 @@ body {
 .rp-export-btn:active {
   background: rgba(46,155,255,.16);
 }
+/* ============================================================
+   ABOUT SHEET
+   ============================================================ */
+.about-body {
+  text-align: center;
+  padding: 4px 4px 8px;
+}
+.about-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.about-logo img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+.about-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+.about-version {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 16px;
+}
+.about-desc {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+.about-divider {
+  height: 1px;
+  background: var(--color-divider);
+  margin-bottom: 16px;
+}
+.about-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 20px;
+}
+.about-link {
+  flex: 1;
+  height: 48px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.about-link:active {
+  background: rgba(255,255,255,.06);
+}
+.about-link-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--color-divider);
+}
+
+.about-close {
+  display: block;
+  width: 100%;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--color-accent, #2E9BFF);
+  border: none;
+  color: #151A20;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+.about-close:active {
+  opacity: .9;
+}

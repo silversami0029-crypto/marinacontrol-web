@@ -2,6 +2,7 @@
 
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
+import { showAboutSheet } from '../screens/AboutSheet.js';
 import {
   collection, query, where, getDocs
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -90,13 +91,9 @@ const SECTIONS = [
     title: 'SETTINGS & SUPPORT',
     icon: ICONS.settings,
     items: [
-      { id: 'account', label: 'Account', route: '#/account' },
-      { id: 'subscription', label: 'Manage Subscription', toast: 'Manage Subscription is coming to the web app' },
-      { id: 'billing', label: 'Billing History', toast: 'Billing History is coming to the web app' },
-      { id: 'notifications', label: 'Notifications', toast: 'Notifications is coming to the web app' },
-      { id: 'help', label: 'Help Center', toast: 'Help Center is coming to the web app' },
-      { id: 'emergency', label: 'Emergency Contacts', toast: 'Emergency Contacts is coming to the web app' },
-      { id: 'about', label: 'About', toast: 'About is coming to the web app' }
+     // Future feature:
+      //{ id: 'billing', label: 'Billing History', toast: 'Billing History is coming to the web app' }, 
+           { id: 'about', label: 'About', action: 'about' }
     ]
   }
 ];
@@ -168,6 +165,11 @@ export function initDrawer() {
 
       if (action === 'log-inspection') {
         location.hash = '#/safety';
+        return;
+      }
+
+      if (action === 'about') {
+        showAboutSheet();
         return;
       }
 
