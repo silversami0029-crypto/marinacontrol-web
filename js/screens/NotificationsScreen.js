@@ -119,8 +119,44 @@ function ensureStyles() {
   style.textContent = `
     .nt-head{display:flex;align-items:center;gap:10px;padding:16px 18px 10px}.nt-back{font-size:34px;color:var(--color-text-primary)}
     .nt-title{font-size:20px;font-weight:700;flex:1}.nt-action,.nt-clear{color:var(--color-accent);font-size:13px}
-    .nt-filters{display:flex;gap:8px;overflow-x:auto;padding:8px 18px 14px}.nt-chip{flex:none;border:1px solid var(--color-divider);border-radius:18px;padding:7px 12px;color:var(--color-text-secondary)}
-    .nt-chip.is-active{background:var(--color-accent);border-color:var(--color-accent);color:#fff}.nt-list{padding:0 18px 86px}
+
+
+.nt-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 18px 14px;
+}
+
+.nt-chip {
+  flex: none;
+  border: 1px solid var(--color-divider);
+  border-radius: 15px;
+  padding: 5px 8px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.nt-chip.is-active {
+  background: var(--color-accent, #2f9cf4);
+  border-color: var(--color-accent, #2f9cf4);
+  color: #fff;
+  font-weight: 700;
+}
+
+.nt-chip:active {
+  transform: scale(.96);
+}
+
+.nt-list { padding: 0 18px 10px; }
+
+.nt-clear {
+  display: block;
+  margin: 16px auto 90px;
+  padding: 10px 16px;
+}
+
     .nt-card{display:block;width:100%;margin:0 0 10px;padding:14px;text-align:left;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:10px;color:var(--color-text-primary)}
     .nt-card.is-unread{border-left:4px solid var(--color-accent)}.nt-card-top{display:flex;justify-content:space-between;gap:10px}.nt-type{font-size:11px;font-weight:700;color:var(--color-accent)}
     .nt-time{font-size:11px;color:var(--color-text-muted)}.nt-card-title{font-size:14px;font-weight:700;margin-top:8px}.nt-message{font-size:13px;color:var(--color-text-secondary);margin-top:5px;line-height:1.35}

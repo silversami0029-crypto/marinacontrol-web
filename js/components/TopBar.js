@@ -16,7 +16,7 @@ const TITLES = {
   '/berths':    'Berths',
   '/fleet':     'Fleet',
   '/account':   'Account',
-  '/notifications': 'Notifications',
+  '/notifications': 'MarinaControl',
 };
 
 export function renderTopBar(route) {
