@@ -5094,3 +5094,11 @@ body {
   font-weight: 700;
   text-align: right;
 }
+
+/* Fleet cards use the same width */
+.dash-wrap .fleet-compliance-card,
+.dash-wrap .dash-health {
+  width: 100%;
+  margin: 0 0 12px;
+  box-sizing: border-box;
+}
