@@ -27,6 +27,7 @@ import { mountEquipmentScreen } from './screens/EquipmentScreen.js';
 import { mountInventoryScreen } from './screens/InventoryScreen.js';
 import { mountPermissionsScreen } from './screens/PermissionsScreen.js';
 import { mountTaskScreen } from './screens/TaskScreen.js';
+import { mountFleetScreen } from './screens/FleetScreen.js';
 import { mountNotificationsScreen } from './screens/NotificationsScreen.js';
 
 const PROTECTED = ['/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/client-360','/notifications'];
@@ -54,8 +55,8 @@ const routes = {
   '/equipment': mountEquipmentScreen,
   '/safety': mountSafetyScreen,
   '/notifications': mountNotificationsScreen,
-  '/fleet':            () => renderStub('Fleet'),
-  '/account':          mountAccountScreen,
+   '/fleet':  mountFleetScreen,
+  '/account': mountAccountScreen,
  
 };
 

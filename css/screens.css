@@ -5000,3 +5000,97 @@ body {
   opacity: .9;
 }
 
+.fleet-page-header {
+  padding: 12px 8px 10px;
+}
+
+.fleet-compliance-card {
+  display: block;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 14px 16px 12px;
+  box-sizing: border-box;
+
+  background: #1c222a;
+  border: 1px solid #303844;
+  border-radius: 14px;
+
+  color: #f5f7f9;
+  cursor: pointer;
+}
+
+.fleet-compliance-card:hover {
+  border-color: #3d4856;
+}
+
+.fleet-compliance-top {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.fleet-compliance-shield {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  margin-right: 10px;
+  align-items: center;
+  justify-content: center;
+
+  color: #aeb6c1;
+  flex: 0 0 auto;
+}
+
+.fleet-compliance-shield svg {
+  width: 28px;
+  height: 28px;
+}
+
+.fleet-compliance-title {
+  flex: 1;
+  color: #f5f7f9;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.fleet-compliance-score {
+  margin-left: auto;
+  color: #3dd68c;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.fleet-compliance-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.fleet-compliance-warning {
+  color: #f5a524;
+  font-size: 17px;
+}
+
+.fleet-compliance-actions {
+  color: #f5f7f9;
+  font-weight: 700;
+}
+
+.fleet-compliance-divider,
+.fleet-compliance-due {
+  color: #aeb6c1;
+}
+
+.fleet-compliance-link {
+  margin-top: 10px;
+  color: #f5f7f9;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
