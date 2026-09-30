@@ -111,6 +111,8 @@ if (unsubscribeBoats) {
     </div>
   `;
 
+ /* back arrow*/
+
  document.getElementById('chBack')?.addEventListener('click', () => history.back());
 
   document.getElementById('chHelp')

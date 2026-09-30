@@ -75,9 +75,8 @@ export function mountEquipmentScreen() {
     </button>
   `;
 
-  document.getElementById('eqBack').addEventListener('click', () => {
-    location.hash = '#/boats';
-  });
+ /* back arrow*/
+   document.getElementById('eqBack')?.addEventListener('click', () => history.back());
 
   const eqHelpBtn = document.getElementById('eqHelp');
   if (eqHelpBtn) eqHelpBtn.addEventListener('click', showEquipmentHelp);
