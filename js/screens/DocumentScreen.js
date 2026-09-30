@@ -76,9 +76,9 @@ export function mountDocumentScreen() {
     </button>
   `;
 
-  document.getElementById('docBack').addEventListener('click', () => {
-    location.hash = '#/boats';
-  });
+/* back button */
+
+ document.getElementById('docBack')?.addEventListener('click', () => history.back());
 
   document.getElementById('docHelp').addEventListener('click', showDocumentHelp);
 

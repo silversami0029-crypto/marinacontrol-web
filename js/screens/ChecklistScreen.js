@@ -111,9 +111,7 @@ if (unsubscribeBoats) {
     </div>
   `;
 
-  document.getElementById('chBack').addEventListener('click', () => {
-    location.hash = '#/boats';
-  });
+ document.getElementById('chBack')?.addEventListener('click', () => history.back());
 
   document.getElementById('chHelp')
     ?.addEventListener('click', showChecklistHelp);

@@ -77,9 +77,9 @@ export function mountMaintenanceScreen() {
     </button>
   `;
 
-  document.getElementById('mtBack').addEventListener('click', () => {
-    location.hash = '#/boats';
-  });
+
+
+ document.getElementById('mtBack')?.addEventListener('click', () => history.back());
 
     document.getElementById('mtHelp').addEventListener('click', showMaintenanceHelp);
 

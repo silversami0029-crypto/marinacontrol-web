@@ -97,9 +97,9 @@ export function mountSafetyScreen() {
     </button>
   `;
 
-  document.getElementById('sfBack').addEventListener('click', () => {
-    location.hash = '#/boats';
-  });
+  /* back arrow*/
+
+ document.getElementById('sfBack')?.addEventListener('click', () => history.back());
 
   document.getElementById('sfHelp').addEventListener('click', showSafetyHelp);
   

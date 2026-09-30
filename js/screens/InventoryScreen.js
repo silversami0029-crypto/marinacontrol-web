@@ -75,9 +75,9 @@ export function mountInventoryScreen() {
     </button>
   `;
 
-  document.getElementById('invBack').addEventListener('click', () => {
-    location.hash = '#/boats';
-  });
+   /* back arrow*/
+
+ document.getElementById('invBack')?.addEventListener('click', () => history.back());
 
   const invHelpBtn = document.getElementById('invHelp');
   if (invHelpBtn) invHelpBtn.addEventListener('click', showInventoryHelp);

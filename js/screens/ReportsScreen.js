@@ -72,9 +72,9 @@ export async function mountReportsScreen() {
     }
   });
 
-  document.getElementById('rpBack').addEventListener('click', () => {
-    location.hash = '#/boats';
-  });
+   /* back arrow*/
+
+ document.getElementById('rpBack')?.addEventListener('click', () => history.back());
 
   document.getElementById('rpHelp').addEventListener('click', showReportsHelp);
 

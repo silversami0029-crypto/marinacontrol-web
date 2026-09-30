@@ -80,7 +80,16 @@ export async function mountClient360Screen() {
     screen.innerHTML = HEADER_HTML + `
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     `;
-    wireHeader({ onSearch: null, onBack: () => { location.hash = '#/customer-directory'; } });
+  wireHeader({
+  onSearch: null,
+  onBack: () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      location.hash = '#/customer-directory';
+    }
+  }
+});
 
     let activeBoat = null;
     try {
@@ -194,7 +203,7 @@ export async function mountClient360Screen() {
       currentSearchQuery = query;
       render();
     },
-    onBack: () => { location.hash = '#/customer-directory'; }
+    onBack: () => history.back()
   });
 
   try {

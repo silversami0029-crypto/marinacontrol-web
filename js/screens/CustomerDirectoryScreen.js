@@ -90,9 +90,11 @@ export function mountCustomerDirectoryScreen() {
     </button>
   `;
 
-  document.getElementById('cdBack').addEventListener('click', () => {
-    location.hash = '#/boats';
-  });
+ 
+
+  /* back arrow*/
+
+ document.getElementById('cdBack')?.addEventListener('click', () => history.back());
 
   document.getElementById('cdSearchToggle').addEventListener('click', () => {
     isSearchOpen = true;

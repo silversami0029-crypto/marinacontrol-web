@@ -111,9 +111,11 @@ export function mountInvoiceScreen() {
     </button>
   `;
 
-  document.getElementById('ivBack').addEventListener('click', () => {
-    location.hash = '#/boats';
-  });
+
+
+  /* back arrow*/
+
+ document.getElementById('ivBack')?.addEventListener('click', () => history.back());
 
 
 
