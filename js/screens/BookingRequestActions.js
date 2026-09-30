@@ -25,9 +25,15 @@ export async function approveBookingRequest(request) {
   let matchedBoat = await findBoatByName(clientId, request.vesselName);
 
   if (!matchedBoat) {
-    const confirmed = window.confirm(
-      `${request.vesselName} is not registered in MarinaControl.\n\nCreate this vessel from the request?`
-    );
+    const confirmed = await confirmSheet({
+      title: 'Vessel not registered',
+      message: `${request.vesselName} is not registered in MarinaControl.\n\nCreate this vessel from the request?`,
+      confirmText: 'Create',
+      cancelText: 'Cancel'
+    });
+    if (!confirmed) return;
+    matchedBoat = await createBoatFromRequest(clientId, request);
+
     if (!confirmed) return;
     matchedBoat = await createBoatFromRequest(clientId, request);
     if (!matchedBoat) {

@@ -710,6 +710,8 @@ function showRoleSheet(user) {
     .getElementById('modalRoot')
     .append(backdrop, sheet);
 
+
+
   requestAnimationFrame(() => {
     backdrop.classList.add('is-open');
     sheet.classList.add('is-open');
