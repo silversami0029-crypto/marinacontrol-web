@@ -200,9 +200,9 @@ function updateSummary() {
   const pct = total > 0 ? Math.round((occupied * 100) / total) : 0;
 
   el.innerHTML = `
-    <div>Occupied: <b>${occupied}</b> (${pct}%)  â€¢  Total: <b>${total}</b></div>
-    <div>Booked: <b>${booked}</b>  â€¢  Available: <b>${available}</b></div>
-    <div>Maintenance: <b>${maintenance}</b>  â€¢  Alerts: <b>${alerts}</b></div>
+    <div>Occupied: <b>${occupied}</b> (${pct}%)    Total: <b>${total}</b></div>
+    <div>Booked: <b>${booked}</b>    Available: <b>${available}</b></div>
+    <div>Maintenance: <b>${maintenance}</b>    Alerts: <b>${alerts}</b></div>
   `;
 }
 
