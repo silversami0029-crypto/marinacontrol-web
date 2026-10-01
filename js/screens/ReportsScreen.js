@@ -7,8 +7,6 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
-// jsPDF is loaded lazily when the user exports — see exportReport()
-
 const TABS = ['Unpaid', 'Expiring', 'Occupancy', 'Revenue'];
 let currentTab = 0;
 let invoicesCache = [];
@@ -20,7 +18,7 @@ let revenueFilters = { category: 'ALL', dateRange: 'ALL' };
 /* ============================================================ */
 
 export async function mountReportsScreen() {
-  
+
   const screen = document.getElementById('screen');
   screen.classList.add('rp-screen');
 
@@ -61,20 +59,22 @@ export async function mountReportsScreen() {
     <div class="rp-body" id="rpBody">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
+
+    <div class="rp-footer">
+      <button type="button" class="rp-export-btn" id="rpExport">📄 Export PDF</button>
+    </div>
   `;
+
   requestAnimationFrame(() => {
     const tabs = document.querySelector('.rp-tabs');
     const activeTab = document.querySelector('.rp-tab.is-active');
     if (tabs && activeTab) {
-      // Only scroll the tab strip horizontally, never the page
       const left = activeTab.offsetLeft - (tabs.clientWidth / 2) + (activeTab.clientWidth / 2);
       tabs.scrollTo({ left, behavior: 'smooth' });
     }
   });
 
-   /* back arrow*/
-
- document.getElementById('rpBack')?.addEventListener('click', () => history.back());
+  document.getElementById('rpBack')?.addEventListener('click', () => history.back());
 
   document.getElementById('rpHelp').addEventListener('click', showReportsHelp);
 
@@ -88,6 +88,9 @@ export async function mountReportsScreen() {
       renderTab();
     });
   });
+
+  // Single handler — always exports whichever tab is active
+  document.getElementById('rpExport')?.addEventListener('click', () => exportReport(currentTab));
 
   await loadAll();
   renderTab();
@@ -145,7 +148,6 @@ function renderUnpaid() {
   const overdueAmt = overdue.reduce((s, inv) => s + Number(inv.amount || 0), 0);
   const pendingAmt = pending.reduce((s, inv) => s + Number(inv.amount || 0), 0);
 
-  // Group by boat
   const byBoat = {};
   for (const inv of unpaid) {
     const bn = inv.boatName || 'Unknown boat';
@@ -205,14 +207,11 @@ function renderUnpaid() {
           </div>
         `;
       }).join('')}
-      ` : `<div class="rp-empty">No outstanding invoices</div>`}
-
-    <button type="button" class="rp-export-btn" id="rpExport">📄 Export PDF</button>
+    ` : `<div class="rp-empty">No outstanding invoices</div>`}
   `;
 
   const helpIcon = body.querySelector('#rpHelpIcon');
   if (helpIcon) helpIcon.addEventListener('click', showReportsHelp);
-  body.querySelector('#rpExport')?.addEventListener('click', () => exportReport(0));
 }
 
 /* ============================================================
@@ -284,22 +283,11 @@ function renderExpiring() {
           </div>
         `;
       }).join('')}
-
     ` : ''}
-
-    <button type="button" class="rp-export-btn" id="rpExport">
-      📄 Export PDF
-    </button>
   `;
 
   const helpIcon = body.querySelector('#rpHelpIcon');
-  if (helpIcon) {
-    helpIcon.addEventListener('click', showReportsHelp);
-  }
-
-  body.querySelector('#rpExport')?.addEventListener('click', () => {
-    exportReport(1);
-  });
+  if (helpIcon) helpIcon.addEventListener('click', showReportsHelp);
 }
 
 /* ============================================================
@@ -380,12 +368,11 @@ function renderOccupancy() {
           </div>
         `;
       }).join('')}
-       ` : ''}
-
-    <button type="button" class="rp-export-btn" id="rpExport">
-      📄 Export PDF
-    </button>
+    ` : ''}
   `;
+
+  const helpIcon = body.querySelector('#rpHelpIcon');
+  if (helpIcon) helpIcon.addEventListener('click', showReportsHelp);
 }
 
 /* ============================================================
@@ -399,12 +386,10 @@ function renderRevenue() {
     String(inv.status || '').toUpperCase() === 'PAID'
   );
 
-  // Category filter
   const afterCategory = revenueFilters.category === 'ALL'
     ? paid
     : paid.filter(inv => String(inv.category || 'GENERAL').toUpperCase() === revenueFilters.category);
 
-  // Date filter
   const now = Date.now();
   const ranges = {
     ALL:         [0, now],
@@ -484,19 +469,13 @@ function renderRevenue() {
           <div class="rp-detail-value">${fmtMoney(amt)}</div>
         </div>
       `).join('')}
-
-
     ` : `<div class="rp-empty">No revenue for this filter</div>`}
-
-    <button type="button" class="rp-export-btn" id="rpExport">📄 Export PDF</button>
   `;
 
   const helpIcon = body.querySelector('#rpHelpIcon');
   if (helpIcon) helpIcon.addEventListener('click', showReportsHelp);
-  body.querySelector('#rpExport')?.addEventListener('click', () => exportReport(3));
 
   body.querySelector('#rpCatFilter')?.addEventListener('change', (e) => {
-
     revenueFilters.category = e.target.value;
     renderRevenue();
   });

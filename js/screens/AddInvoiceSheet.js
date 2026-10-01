@@ -93,7 +93,7 @@ export async function showAddInvoiceSheet(opts = {}) {
 
         <label class="add-label" for="iv-customer">Customer</label>
         <select class="add-input add-select" id="iv-customer">
-          <option value="">Select customerâ€¦</option>
+          <option value="">Select customer¦</option>
           ${customers.map(c => `
             <option value="${c.id}">
               ${escapeHtml(c.name)}
@@ -103,7 +103,7 @@ export async function showAddInvoiceSheet(opts = {}) {
 
         <label class="add-label" for="iv-boat">Boat</label>
         <select class="add-input add-select" id="iv-boat">
-          <option value="">Select boatâ€¦</option>
+          <option value="">Select boat¦</option>
           ${boats.map(b => `
             <option value="${b.id}" data-customer="${b.customerId}">
               ${escapeHtml(b.name)}
@@ -282,7 +282,7 @@ export async function showAddInvoiceSheet(opts = {}) {
       boatSelect.selectedOptions[0]?.textContent.trim() || '';
 
     save.disabled = true;
-    save.textContent = 'Savingâ€¦';
+    save.textContent = 'Saving¦';
 
     try {
       if (isEdit) {

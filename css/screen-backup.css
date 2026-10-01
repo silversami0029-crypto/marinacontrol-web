@@ -12,7 +12,7 @@
   --color-success:         #3DD68C;
   --phone-w:               440px;
   --topbar-h:              64px;
-  --bottomnav-h:           0px;
+  --bottomnav-h:           64px;
 }
 
 /* ============================================================
@@ -142,7 +142,6 @@
    PHONE-WIDTH LAYOUT
    ============================================================ */
 body {
-  
   max-width: var(--phone-w);
   margin: 0 auto;
   border-left: 1px solid var(--color-divider);
@@ -150,7 +149,7 @@ body {
   min-height: 100vh;
   position: relative;
   padding-top: var(--topbar-h);
-  padding-bottom: 0;
+  padding-bottom: var(--bottomnav-h);
 }
 
 .topbar,
@@ -162,11 +161,10 @@ body {
   transform: translateX(-50%);
 }
 .topbar     { top: 0; }
-/*.bottomnav  { bottom: 0; border-top: 1px solid var(--color-divider); }*/
+.bottomnav  { bottom: 0; }
 
 .screen {
-  min-height: calc(100vh - var(--topbar-h) );
-  bottom: auto;   /* needed, or content will clip */
+  min-height: calc(100vh - var(--topbar-h) - var(--bottomnav-h));
   padding-bottom: 0;
 }
 
@@ -2410,16 +2408,7 @@ body {
 .mt-header-spacer { flex: 1; }
 
 .mt-list {
-  height: calc(
-    100dvh -
-    var(--topbar-h) -
-    var(--bottomnav-h) -
-    244px
-  );
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   padding: 6px 8px 16px;
-  overscroll-behavior: contain;
 }
 
 .mt-row {
@@ -3211,21 +3200,7 @@ body {
 .doc-icon-btn:hover { background: rgba(255,255,255,.06); }
 .doc-header-spacer { flex: 1; }
 
-
-.doc-list {
-  height: calc(
-    100dvh -
-    var(--topbar-h) -
-    var(--bottomnav-h) -
-    244px
-  );
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 6px 8px 16px;
-  overscroll-behavior: contain;
-}
-
-
+.doc-list { padding: 6px 8px 16px; }
 
 .doc-row {
   position: relative;
@@ -3309,19 +3284,6 @@ body {
   left: 0; right: 0; bottom: 0;
   height: 1px;
   background: var(--color-divider);
-}
-
-/* Document scroll list above action buttons */
-.doc-list {
-  height: calc(
-    100dvh -
-    var(--topbar-h) -
-    var(--bottomnav-h) -
-    164px
-  );
-  overflow-y: auto;
-  padding: 6px 8px 16px;
-  overscroll-behavior: contain;
 }
 
 /* ============================================================
@@ -3408,18 +3370,7 @@ body {
 .sf-card-dates.is-active .sf-card-count     { color: #737D89; }
 
 /* List */
-.sf-list {
-  height: calc(
-    100dvh -
-    var(--topbar-h) -
-    var(--bottomnav-h) -
-    244px
-  );
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 6px 8px 16px;
-  overscroll-behavior: contain;
-}
+.sf-list { padding: 6px 8px 16px; }
 
 .sf-row {
   position: relative;
@@ -3513,8 +3464,6 @@ body {
   height: 1px;
   background: var(--color-divider);
 }
-
-
 /* ============================================================
    EQUIPMENT
    ============================================================ */
@@ -4665,13 +4614,10 @@ body {
 #screen {
   display: flex;
   flex-direction: column;
-  /*height: calc(100vh - var(--topbar-h));*/
-  height: auto;
-  overflow: visible;
+  height: calc(100vh - var(--topbar-h) - var(--bottomnav-h));
+  overflow: hidden;
   padding-bottom: 0;
-/*border-bottom: 1px solid var(--color-divider);*/
-} 
-
+}
 
 .boats-header,
 .boats-search-bar {
@@ -4916,7 +4862,7 @@ body {
   font-family: inherit;
   cursor: pointer;
 }
-/* Reports — pinned header + tabs, scrolling body, pinned footer */
+/* Reports   pinned header + tabs, scrolling body */
 #screen.rp-screen {
   display: flex;
   flex-direction: column;
@@ -4926,42 +4872,16 @@ body {
 }
 
 #screen.rp-screen .rp-header,
-#screen.rp-screen .rp-tabs,
-#screen.rp-screen .rp-footer {
+#screen.rp-screen .rp-tabs {
   flex-shrink: 0;
 }
 
 #screen.rp-screen .rp-body {
-  flex: 1 1 auto;
+  flex: 1;
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: 24px;
-}
-
-#screen.rp-screen .rp-footer {
-  padding: 12px 12px 16px;
-  border-top: 1px solid var(--color-divider);
-  background: var(--color-bg);
-}
-
-#screen.rp-screen .rp-footer .rp-export-btn {
-  display: block;
-  width: 100%;
-  margin: 0;
-  padding: 14px;
-  border-radius: 14px;
-  background: transparent;
-  border: 1px solid #2E9BFF;
-  color: #2E9BFF;
-  font-size: 15px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-#screen.rp-screen .rp-footer .rp-export-btn:active {
-  background: rgba(46,155,255,.16);
 }
 
 /* Hide tab strip scrollbar */
@@ -5184,282 +5104,25 @@ body {
 }
 
 /* Invoice screen — FAB strip below the list */
-/* Invoice list */
 .iv-list,
 #ivList {
   height: calc(
     100dvh -
     var(--topbar-h) -
     var(--bottomnav-h) -
-    316px
+    260px -
+    72px              /* ← reserve for FAB strip */
   );
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 6px 8px 16px;
+  padding: 6px 8px 16px;    /* ← back to normal, no FAB padding */
   overscroll-behavior: contain;
 }
 
-/* ============================================================
-   CENTRED RESPONSIVE DESKTOP WORKSPACE
-   ============================================================ */
-@media (min-width: 1024px) {
-  :root {
-    --desktop-app-max: 1180px;
-    --desktop-app-width: min(
-      var(--desktop-app-max),
-      calc(100vw - var(--drawer-w) - 48px)
-    );
-    --desktop-app-left: calc(
-      var(--drawer-w) +
-      max(24px, calc((100vw - var(--drawer-w) - var(--desktop-app-max)) / 2))
-    );
-  }
-
-  body:not(.drawer-page-hidden) {
-    width: var(--desktop-app-width) !important;
-    min-width: 0 !important;
-    max-width: var(--desktop-app-max) !important;
-    margin-left: var(--desktop-app-left) !important;
-    margin-right: 0 !important;
-  }
-
-  body:not(.drawer-page-hidden) .topbar,
-  body:not(.drawer-page-hidden) .bottomnav {
-    left: var(--desktop-app-left) !important;
-    right: auto !important;
-    width: var(--desktop-app-width) !important;
-    min-width: 0 !important;
-    max-width: var(--desktop-app-max) !important;
-    transform: none !important;
-  }
-
-  body:not(.drawer-page-hidden) .screen {
-    width: 100%;
-    max-width: none;
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-
-  body:not(.drawer-page-hidden) .fab,
-  body:not(.drawer-page-hidden) .um-fab,
-  body:not(.drawer-page-hidden) .cm-fab,
-  body:not(.drawer-page-hidden) .cd-fab {
-    left: calc(var(--desktop-app-left) + var(--desktop-app-width) - 16px) !important;
-    right: auto !important;
-    transform: translateX(-100%) !important;
-  }
-
-  body:not(.drawer-page-hidden) .bulk-btn {
-    left: calc(var(--desktop-app-left) + 16px) !important;
-  }
-
-  body:not(.drawer-page-hidden) .bulk-bar {
-    left: calc(var(--desktop-app-left) + 66px) !important;
-  }
-
-  body:not(.drawer-page-hidden) .sheet,
-  body:not(.drawer-page-hidden) .confirm-sheet {
-    left: calc((100vw + var(--drawer-w)) / 2) !important;
-    width: min(520px, calc(var(--desktop-app-width) - 48px)) !important;
-    max-width: 520px !important;
-  }
-
-  .pf-wrap {
-    width: 100%;
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 24px 24px 32px;
-  }
-
-  .pf-filters {
-    max-width: 680px;
-  }
-
-  .pf-card--big {
-    margin-top: 20px;
-  }
-
-  .dash-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    padding: 8px 16px 0;
-  }
-
-  .berth-grid {
-    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-    gap: 10px;
-    padding: 12px 16px 20px;
-  }
-
-  .bkr-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-content: start;
-    gap: 12px;
-    padding: 12px 8px 20px;
-  }
-
-  .bkr-card {
-    margin: 0;
-  }
-}
-
-
-/* MarinaControl desktop refinement: Berths + Checklists
-   Append this once at the END of css/screens.css. */
-
-.chk-table-head {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  /* Desktop navigation is complete in the sidebar. */
-  :root {
-    --bottomnav-h: 0px;
-  }
-
-  body:not(.drawer-page-hidden) .bottomnav {
-    display: none !important;
-  }
-
-  /* BERTHS: compact operational grid; mobile remains four columns. */
-  .berth-grid {
-    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
-    gap: 10px;
-    padding: 16px;
-  }
-
-  .berth-card {
-    min-height: 108px;
-    aspect-ratio: 1 / 1;
-  }
-
-  .berth-card-num {
-    font-size: 15px;
-  }
-
-  .berth-card-boat {
-    font-size: 11px;
-  }
-
-  /* CHECKLISTS: same DOM as mobile, arranged as a desktop table. */
-  #chList.eq-list {
-    margin: 10px 8px 24px;
-    padding: 0;
-    overflow-x: auto;
-    border: 1px solid var(--color-divider);
-    border-radius: 14px;
-    background: var(--color-surface);
-  }
-
-  .chk-table-head,
-  #chList .chk-info {
-    display: grid;
-    grid-template-columns:
-      minmax(180px, 1.8fr)
-      minmax(120px, 1.15fr)
-      minmax(95px, .85fr)
-      minmax(150px, 1.35fr)
-      minmax(150px, 1.25fr)
-      minmax(110px, 1fr)
-      110px;
-    align-items: center;
-    column-gap: 18px;
-    min-width: 1040px;
-  }
-
-  .chk-table-head {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--color-divider);
-    color: var(--color-text-secondary);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-  }
-
-  #chList .chk-row {
-    margin: 0;
-    padding: 0;
-    border-bottom: 1px solid var(--color-divider);
-  }
-
-  #chList .chk-row:last-child {
-    border-bottom: 0;
-  }
-
-  #chList .chk-row:hover {
-    background: rgba(255, 255, 255, .025);
-  }
-
-  #chList .chk-info {
-    padding: 13px 16px;
-  }
-
-  #chList .chk-line-1 {
-    display: contents;
-  }
-
-  #chList .chk-name,
-  #chList .chk-boat,
-  #chList .chk-meta,
-  #chList .chk-progress,
-  #chList .chk-counters,
-  #chList .chk-meta2,
-  #chList .chk-status {
-    grid-row: 1;
-    min-width: 0;
-    margin: 0;
-  }
-
-  #chList .chk-name { grid-column: 1; }
-  #chList .chk-boat { grid-column: 2; }
-  #chList .chk-meta { grid-column: 3; }
-  #chList .chk-progress { grid-column: 4; }
-  #chList .chk-counters { grid-column: 5; gap: 8px; flex-wrap: wrap; }
-  #chList .chk-meta2 { grid-column: 6; }
-  #chList .chk-line-1 .chk-status { grid-column: 7; justify-self: start; }
-
-  #chList .chk-progress-bar {
-    min-width: 80px;
-  }
-
-  #chList .chk-progress-label {
-    min-width: 34px;
-  }
-
-  #chList .chk-completed-label {
-    display: none;
-  }
-
-  #chList .eq-row-divider {
-    display: none;
-  }
-}
-
-
-/* ============================================================
-   DESKTOP — list screens: reserve FAB strip under scroller
-   ============================================================ */
-@media (min-width: 1024px) {
-  body:not(.drawer-page-hidden)
-  :is(
-    .eq-list:not(#chList):not(#ivList),
-    .tk-list,
-   
-  ) {
-    flex: 1;
-    min-height: 0;
-    height: auto !important;
-    max-height: none !important;
-    margin-bottom: 88px;
-    padding-bottom: 16px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    border-bottom: 1px solid var(--color-divider);
-  }
-}
-
-body:not(.drawer-page-hidden) .bottomnav {
-  bottom: 32px !important;
+/* Move the FAB into the reserved strip */
+#ivFabAdd.cm-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(var(--bottomnav-h) + 16px);
+  /* …or however it's currently positioned */
 }

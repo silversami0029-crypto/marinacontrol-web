@@ -51,8 +51,6 @@
 
   <main id="screen" class="screen"></main>
 
-
-<!-- This is an HTML comment
   <nav id="bottomnav" class="bottomnav">
     <button class="nav-item is-active" data-route="/boats">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
@@ -100,7 +98,7 @@
       <span>Account</span>
     </button>
   </nav>
- -->
+
   <div id="modalRoot"></div>
 
   <script type="module" src="js/router.js"></script>

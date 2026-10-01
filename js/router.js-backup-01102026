@@ -69,7 +69,7 @@ function renderStub(name) {
 
 function showChrome(on) {
   document.getElementById('topbar').style.display     = on ? '' : 'none';
-  /*document.getElementById('bottomnav').style.display  = on ? '' : 'none';*/
+  document.getElementById('bottomnav').style.display  = on ? '' : 'none';
 }
 
 function currentRoute() {
