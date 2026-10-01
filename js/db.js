@@ -817,6 +817,152 @@ export async function getActiveTariff(clientId, utilityType) {
     effectiveFrom: Number(t.effectiveFrom ?? 0)
   };
 }
+
+export async function prepareUtilityInvoice(clientId, berth) {
+  const berthId = Number(berth?.id || 0);
+  const boatId = Number(berth?.boatId || 0);
+  if (!boatId) throw new Error('No boat assigned to this berth');
+
+  const [readingSnap, boatSnap, chargeSnap] = await Promise.all([
+    getDocs(query(
+      collection(db, 'utility_readings'),
+      where('clientId', '==', clientId),
+      where('berthId', '==', berthId)
+    )),
+    getDocs(query(collection(db, 'boats'), where('clientId', '==', clientId))),
+    getDocs(query(collection(db, 'utility_charges'), where('clientId', '==', clientId)))
+  ]);
+
+  const boatDoc = boatSnap.docs.find(d => Number(d.data().id || 0) === boatId);
+  const customerId = Number(boatDoc?.data().customerId || 0);
+  const readings = readingSnap.docs.map(d => ({
+    _docId: d.id,
+    ...d.data(),
+    id: Number(d.data().id || 0),
+    value: Number(d.data().value || 0),
+    recordedAt: Number(d.data().recordedAt || 0)
+  }));
+  const existing = new Map(chargeSnap.docs.map(d => [d.data().chargeKey, {
+    _docId: d.id,
+    ...d.data()
+  }]));
+  const charges = [];
+
+  for (const spec of [
+    { type: 'ELECTRICITY', readingType: 'ENERGY', unit: 'kWh', label: 'Electricity' },
+    { type: 'WATER', readingType: 'WATER_VOLUME', unit: 'L', label: 'Water' }
+  ]) {
+    const pair = readings
+      .filter(r => r.utilityType === spec.type &&
+        r.readingMode === 'CUMULATIVE' && r.readingType === spec.readingType)
+      .sort((a, b) => b.recordedAt - a.recordedAt)
+      .slice(0, 2);
+
+    if (pair.length < 2) continue;
+
+    const [latest, previous] = pair;
+    const quantity = latest.value - previous.value;
+    if (quantity < 0) throw new Error(`Invalid ${spec.label.toLowerCase()} meter readings`);
+
+    const tariff = await getActiveTariff(clientId, spec.type);
+    if (!tariff) throw new Error(`No ${spec.label.toLowerCase()} tariff is configured`);
+    if (tariff.pricingMode === 'INCLUDED' || quantity === 0) continue;
+
+    const chargeKey = `${clientId}_${berthId}_${spec.type}_${previous.id}_${latest.id}`;
+    let charge = existing.get(chargeKey);
+
+    if (!charge) {
+      const amount = quantity * tariff.pricePerUnit;
+      const chargeRef = doc(db, 'utility_charges', chargeKey);
+      charge = {
+        _docId: chargeKey,
+        chargeKey,
+        clientId,
+        berthId,
+        boatId,
+        customerId,
+        utilityType: spec.type,
+        unit: spec.unit,
+        fromReadingId: previous.id,
+        toReadingId: latest.id,
+        fromValue: previous.value,
+        toValue: latest.value,
+        quantity,
+        rate: tariff.pricePerUnit,
+        amount,
+        billed: false,
+        invoiceId: null,
+        invoiceDocId: null,
+        createdAt: Date.now()
+      };
+      await setDoc(chargeRef, charge);
+    }
+
+    if (charge.billed !== true) charges.push(charge);
+  }
+
+  if (!charges.length) throw new Error('No unbilled utility charges');
+
+  return {
+    boatId,
+    customerId,
+    category: 'UTILITIES',
+    amount: charges.reduce((sum, c) => sum + Number(c.amount || 0), 0),
+    description: charges.map(c =>
+      `${c.utilityType === 'WATER' ? 'Water' : 'Electricity'}: ` +
+      `${Number(c.quantity).toFixed(2)} ${c.unit} @ ` +
+      `£${Number(c.rate).toFixed(4)}/${c.unit} = £${Number(c.amount).toFixed(2)}`
+    ).join('\n'),
+    utilityChargeDocIds: charges.map(c => c._docId)
+  };
+}
+
+
+/* ============================================================
+   SAVE TARIFFS
+   ============================================================ */
+
+export async function saveTariff(clientId, userId, fields) {
+  const effectiveFrom = Number(fields.effectiveFrom || Date.now());
+
+  const activeSnap = await getDocs(query(
+    collection(db, 'utility_tariffs'),
+    where('clientId', '==', clientId),
+    where('utilityType', '==', fields.utilityType),
+    where('active', '==', true)
+  ));
+
+  const batch = writeBatch(db);
+
+  activeSnap.docs.forEach(current => {
+    batch.update(current.ref, {
+      active: false,
+      effectiveTo: effectiveFrom,
+      updatedAt: Date.now()
+    });
+  });
+
+  const id = Date.now();
+  const tariffRef = doc(db, 'utility_tariffs', String(id));
+
+  batch.set(tariffRef, {
+    id,
+    clientId,
+    utilityType: fields.utilityType,
+    unit: fields.unit,
+    pricingMode: fields.pricingMode,
+    pricePerUnit: Number(fields.pricePerUnit),
+    effectiveFrom,
+    effectiveTo: null,
+    active: true,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    lastModifiedBy: String(userId || '')
+  });
+
+  await batch.commit();
+}
+
 /* ============================================================
    USERS
    ============================================================ */

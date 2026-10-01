@@ -3,7 +3,8 @@ import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { logHistory } from '../util/history.js';
 import {
-  collection, query, where, getDocs, doc, setDoc, updateDoc, serverTimestamp
+  collection, query, where, getDocs, doc, setDoc, updateDoc,
+  writeBatch, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
@@ -92,7 +93,7 @@ export async function showAddInvoiceSheet(opts = {}) {
 
         <label class="add-label" for="iv-customer">Customer</label>
         <select class="add-input add-select" id="iv-customer">
-          <option value="">Select customer…</option>
+          <option value="">Select customerâ€¦</option>
           ${customers.map(c => `
             <option value="${c.id}">
               ${escapeHtml(c.name)}
@@ -102,7 +103,7 @@ export async function showAddInvoiceSheet(opts = {}) {
 
         <label class="add-label" for="iv-boat">Boat</label>
         <select class="add-input add-select" id="iv-boat">
-          <option value="">Select boat…</option>
+          <option value="">Select boatâ€¦</option>
           ${boats.map(b => `
             <option value="${b.id}" data-customer="${b.customerId}">
               ${escapeHtml(b.name)}
@@ -118,13 +119,13 @@ export async function showAddInvoiceSheet(opts = {}) {
           placeholder="INV-..."
         >
 
-        <label class="add-label" for="iv-desc">Description</label>
-        <input
-          class="add-input"
-          id="iv-desc"
-          type="text"
-          placeholder="e.g. Mooring – January 2026"
-        >
+     <label class="add-label" for="iv-desc">Description</label>
+<textarea
+  class="add-input"
+  id="iv-desc"
+  rows="4"
+  placeholder="Invoice description"
+></textarea>
 
         <label class="add-label" for="iv-category">Category</label>
         <select class="add-input add-select" id="iv-category">
@@ -214,6 +215,10 @@ export async function showAddInvoiceSheet(opts = {}) {
     sheet.querySelector('#iv-issue').value = todayStr;
     sheet.querySelector('#iv-due').value = defaultDue;
     sheet.querySelector('#iv-status').value = 'PENDING';
+    sheet.querySelector('#iv-desc').value = opts.description || '';
+    sheet.querySelector('#iv-category').value = opts.category || 'GENERAL';
+    sheet.querySelector('#iv-amount').value =
+      opts.amount == null ? '' : Number(opts.amount).toFixed(2);
   }
 
   boatSelect.addEventListener('change', () => {
@@ -277,7 +282,7 @@ export async function showAddInvoiceSheet(opts = {}) {
       boatSelect.selectedOptions[0]?.textContent.trim() || '';
 
     save.disabled = true;
-    save.textContent = 'Saving…';
+    save.textContent = 'Savingâ€¦';
 
     try {
       if (isEdit) {
@@ -334,9 +339,10 @@ export async function showAddInvoiceSheet(opts = {}) {
           ? crypto.randomUUID()
           : `inv-${clientId}-${nextId}`;
 
-        await setDoc(
-          doc(db, 'invoices', cloudId),
-          {
+        const invoiceRef = doc(db, 'invoices', cloudId);
+        const batch = writeBatch(db);
+
+        batch.set(invoiceRef, {
             id: nextId,
             clientId,
             customerId: selectedCustomerId,
@@ -353,8 +359,18 @@ export async function showAddInvoiceSheet(opts = {}) {
             createdAt: now,
             syncTime: serverTimestamp(),
             syncedAt: 0
-          }
-        );
+        });
+
+        for (const chargeDocId of opts.utilityChargeDocIds || []) {
+          batch.update(doc(db, 'utility_charges', chargeDocId), {
+            billed: true,
+            invoiceId: nextId,
+            invoiceDocId: cloudId,
+            billedAt: now
+          });
+        }
+
+        await batch.commit();
 
         await logHistory({
           entityType: 'INVOICE',
@@ -363,7 +379,7 @@ export async function showAddInvoiceSheet(opts = {}) {
           boatId,
           action: 'CREATED',
           title: 'Invoice created',
-          detail: `£${amount.toFixed(2)} · ${status}`
+          detail: `£${amount.toFixed(2)} Â· ${status}`
         });
       }
 

@@ -5102,3 +5102,27 @@ body {
   margin: 0 0 12px;
   box-sizing: border-box;
 }
+
+/* Invoice screen — FAB strip below the list */
+.iv-list,
+#ivList {
+  height: calc(
+    100dvh -
+    var(--topbar-h) -
+    var(--bottomnav-h) -
+    260px -
+    72px              /* ← reserve for FAB strip */
+  );
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 8px 16px;    /* ← back to normal, no FAB padding */
+  overscroll-behavior: contain;
+}
+
+/* Move the FAB into the reserved strip */
+#ivFabAdd.cm-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(var(--bottomnav-h) + 16px);
+  /* …or however it's currently positioned */
+}

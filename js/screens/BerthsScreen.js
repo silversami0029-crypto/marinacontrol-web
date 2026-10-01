@@ -1,5 +1,5 @@
 // js/screens/BerthsScreen.js
-// Berths grid — mirrors fragment_berths.xml
+// Berths grid â€” mirrors fragment_berths.xml
 
 import { renderBerthCard } from '../components/BerthCard.js';
 import { store } from '../store.js';
@@ -16,7 +16,7 @@ import {
   updateBerthStatus, updateBerth, deleteBerth,
   assignBoatToBerth, releaseBoatFromBerth,
   listenForUtilityReadings, createUtilityReading,
-  getActiveTariff
+  getActiveTariff, saveTariff, prepareUtilityInvoice
 } from '../db.js';
 
 let unsubscribe = null;
@@ -67,7 +67,7 @@ export function mountBerthsScreen() {
         </button>
       </div>
 
-      <div class="berth-summary" id="berthSummary">Loading…</div>
+      <div class="berth-summary" id="berthSummary">Loadingâ€¦</div>
     </div>
 
     <div class="berth-search" id="berthSearch" hidden>
@@ -200,9 +200,9 @@ function updateSummary() {
   const pct = total > 0 ? Math.round((occupied * 100) / total) : 0;
 
   el.innerHTML = `
-    <div>Occupied: <b>${occupied}</b> (${pct}%)  •  Total: <b>${total}</b></div>
-    <div>Booked: <b>${booked}</b>  •  Available: <b>${available}</b></div>
-    <div>Maintenance: <b>${maintenance}</b>  •  Alerts: <b>${alerts}</b></div>
+    <div>Occupied: <b>${occupied}</b> (${pct}%)  â€¢  Total: <b>${total}</b></div>
+    <div>Booked: <b>${booked}</b>  â€¢  Available: <b>${available}</b></div>
+    <div>Maintenance: <b>${maintenance}</b>  â€¢  Alerts: <b>${alerts}</b></div>
   `;
 }
 
@@ -308,8 +308,8 @@ async function runBerthImport(rows) {
   sheet.className = 'confirm-sheet is-open';
   sheet.innerHTML = `
     <div class="confirm-handle"></div>
-    <div class="confirm-title">Importing berths…</div>
-    <div class="confirm-message" id="berthImportProgress">Starting…</div>
+    <div class="confirm-title">Importing berthsâ€¦</div>
+    <div class="confirm-message" id="berthImportProgress">Startingâ€¦</div>
     <div class="import-bar-wrap"><div class="import-bar" id="berthImportBar"></div></div>
   `;
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -324,7 +324,7 @@ async function runBerthImport(rows) {
       (done, skipped, total) => {
         const processed = done + skipped;
         const pct = Math.round((processed / total) * 100);
-        progressEl.textContent = `${processed} of ${total} · ${done} added, ${skipped} skipped`;
+        progressEl.textContent = `${processed} of ${total} Â· ${done} added, ${skipped} skipped`;
         barEl.style.width = pct + '%';
       }
     );
@@ -335,7 +335,7 @@ async function runBerthImport(rows) {
     backdrop.remove();
     sheet.remove();
 
-    toast(`Imported ${result.success} · skipped ${result.skipped} · failed ${result.failed}`,
+    toast(`Imported ${result.success} Â· skipped ${result.skipped} Â· failed ${result.failed}`,
           { kind: result.success > 0 ? 'success' : 'info' });
   } catch (err) {
     console.error('[berth import] failed', err);
@@ -421,7 +421,7 @@ async function onRestoreDefaults() {
         status:       'AVAILABLE'
       });
     }
-    toast('Reset complete — 10 berths created', { kind: 'success' });
+    toast('Reset complete â€” 10 berths created', { kind: 'success' });
   } catch (err) {
     console.error('[restore defaults] failed', err);
     toast('Reset failed', { kind: 'error' });
@@ -499,8 +499,8 @@ function onViewBerth(berth) {
     <div class="assign-divider"></div>
 
     <div class="bkr-detail-body">
-      <div class="bkr-detail-row"><span>Dock</span><b>${escapeHtml(berth.dockName || '—')}</b></div>
-      <div class="bkr-detail-row"><span>Berth</span><b>${escapeHtml(berth.berthNumber || '—')}</b></div>
+      <div class="bkr-detail-row"><span>Dock</span><b>${escapeHtml(berth.dockName || 'â€”')}</b></div>
+      <div class="bkr-detail-row"><span>Berth</span><b>${escapeHtml(berth.berthNumber || 'â€”')}</b></div>
       <div class="bkr-detail-row"><span>Size</span><b>${berth.length}m x ${berth.width}m</b></div>
       <div class="bkr-detail-row"><span>Depth</span><b>${berth.depth} m</b></div>
       <div class="bkr-detail-row"><span>Electric</span><b>${berth.hasElectric ? 'Yes' : 'No'}</b></div>
@@ -512,7 +512,7 @@ function onViewBerth(berth) {
     <div class="assign-divider"></div>
     <div class="view-util-section">
       <div class="view-util-heading">Utilities</div>
-      <div id="${utilsId}" class="view-util-body">Loading…</div>
+      <div id="${utilsId}" class="view-util-body">Loadingâ€¦</div>
     </div>
 
     <div class="assign-divider"></div>
@@ -520,7 +520,7 @@ function onViewBerth(berth) {
       <button class="view-berth-btn" id="viewAddReading">+ Reading</button>
       <button class="view-berth-btn" id="viewTariffs">£ Tariffs</button>
     </div>
-    <button class="view-berth-generate" id="viewGenerate">Generate Invoice ›</button>
+    <button class="view-berth-generate" id="viewGenerate">Generate Invoice</button>
     <button class="assign-cancel" id="berthDetailClose">CLOSE</button>
   `;
 
@@ -549,8 +549,16 @@ function onViewBerth(berth) {
     openTariffsSheet(berth);
   });
 
-  sheet.querySelector('#viewGenerate').addEventListener('click', () => {
-    toast('Invoice generation coming soon');
+  sheet.querySelector('#viewGenerate').addEventListener('click', async () => {
+    try {
+      const draft = await prepareUtilityInvoice(store.activeClientId, berth);
+      close();
+      const { showAddInvoiceSheet } = await import('./AddInvoiceSheet.js');
+      await showAddInvoiceSheet(draft);
+    } catch (err) {
+      console.error('[utility invoice]', err);
+      toast(err.message || 'Unable to generate utility invoice', { kind: 'error' });
+    }
   });
 
   renderViewUtilities(berth, utilsId);
@@ -707,7 +715,7 @@ function onEditBerth(berth) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     save.disabled = true;
-    save.textContent = 'Updating…';
+    save.textContent = 'Updatingâ€¦';
 
     try {
       const fields = {
@@ -922,7 +930,7 @@ async function openTariffsSheet(berth) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     save.disabled = true;
-    save.textContent = 'Saving…';
+    save.textContent = 'Savingâ€¦';
 
     try {
       const elecVal = parseFloat(sheet.querySelector('#tf-elecPrice').value);
