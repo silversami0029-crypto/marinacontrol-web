@@ -1,5 +1,5 @@
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
-import { t, getLocale, languagePicker } from '../i18n.js';
+import { t, getLocale, languagePicker, getLanguage } from '../i18n.js';
 // js/screens/ManageMarinasSheet.js
 import { store } from '../store.js';
 import { auth } from '../firebase.js';
@@ -10,6 +10,7 @@ import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/
 const functions = getFunctions(auth.app, 'us-central1');
 let openSheet = null;
 const buttonStyle = 'padding:12px;border:1px solid #737D89;border-radius:8px;background:#151A20;color:#F5F7F9;font:inherit;cursor:pointer;';
+const inviteText = (en, ar) => getLanguage() === 'ar' ? ar : en;
 const inputStyle = 'box-sizing:border-box;width:100%;margin-top:5px;padding:11px;border:1px solid #737D89;border-radius:7px;background:#151A20;color:#F5F7F9;font:inherit;';
 
 export function showManageMarinasSheet() {
@@ -26,7 +27,24 @@ export function showManageMarinasSheet() {
   sheet.setAttribute('aria-labelledby', 'mmTitle');
   sheet.style.cssText = 'padding:20px;box-sizing:border-box;max-height:85dvh;overflow:auto;color:#F5F7F9;background:#1C222A;';
   sheet.innerHTML = `
-    <div class="assign-handle"></div>
+    <div class="marina-sheet-header"
+  style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface,#1C222A);">
+
+  <h2 id="mmTitle" class="sheet-title"
+    style="flex:1;margin:0;padding:12px 48px;text-align:center;font-size:20px;">
+    ${t('Manage Marinas')}
+  </h2>
+
+  <button type="button" id="mmHeaderClose" aria-label="${t('Close')}"
+    style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      aria-hidden="true">
+      <path d="M6 6l12 12M18 6L6 18"/>
+    </svg>
+  </button>
+</div>
+
     <h2 id="mmTitle" style="margin:10px 0 16px;font-size:20px;">${t("Manage Marinas")}</h2>
     <div id="mmList" style="display:grid;gap:8px;margin-bottom:16px;"></div>
     <div id="mmActions" style="display:flex;flex-wrap:wrap;gap:8px;">
@@ -75,6 +93,7 @@ export function showManageMarinasSheet() {
   document.addEventListener('keydown', onKey);
   backdrop.addEventListener('click', close);
   $('#mmClose').addEventListener('click', close);
+$('#mmHeaderClose').addEventListener('click', close);
   requestAnimationFrame(() => {
     if (!sheet.isConnected) return;
     backdrop.classList.add('is-open'); sheet.classList.add('is-open');
@@ -84,9 +103,21 @@ export function showManageMarinasSheet() {
     $('#mmList').innerHTML = store.marinas.map(m => `
       <div style="border:1px solid #0A8EF7;border-radius:10px;padding:14px;background:#172532;">
         <strong>${esc(m.name)}</strong>
-        <div style="color:#AEB6C1;font-size:13px;margin-top:4px;">${esc(m.role || 'staff')}${Number(m.id) === sourceClientId ? ' · Active' : ''}</div>
+        <div style="color:#AEB6C1;font-size:13px;margin-top:4px;">${esc(t(m.role || 'staff'))}${Number(m.id) === sourceClientId ? ' · ' + t('Active') : ''}</div>
         ${Number(m.id) !== sourceClientId ? `<button type="button" data-switch="${Number(m.id)}" style="${buttonStyle}margin-top:8px;">${t("Switch to Marina")}</button>` : ''}
-        ${m.role === 'admin' ? `<button type="button" data-invite="${Number(m.id)}" style="${buttonStyle}margin-top:8px;">${t("Show Invite Code")}</button>` : ''}
+        ${m.role === 'admin' ? `
+          <div style="display:flex;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-top:8px;">
+            <button type="button" data-invite="${Number(m.id)}" style="${buttonStyle}">${t("Show Invite Code")}</button>
+            <div data-invite-panel="${Number(m.id)}" hidden style="flex:1;min-width:200px;border:1px solid #0A8EF7;border-radius:8px;padding:10px;background:#151A20;">
+              <div data-invite-message role="status" aria-live="polite" style="font-size:13px;overflow-wrap:anywhere;"></div>
+              <div data-invite-controls hidden>
+                <label style="display:block;font-size:12px;margin-top:8px;">${t('Invite Code:')}
+                  <input data-invite-code readonly aria-label="${t('Invite code')}" style="${inputStyle}direction:ltr;text-align:center;font-weight:700;font-size:18px;letter-spacing:2px;">
+                </label>
+                <button type="button" data-copy-invite style="${buttonStyle}margin-top:8px;width:100%;">${t('Copy')}</button>
+              </div>
+            </div>
+          </div>` : ''}
       </div>`).join('');
     $('#mmList').querySelectorAll('[data-switch]').forEach(btn => {
       btn.addEventListener('click', () => run(async () => {
@@ -95,10 +126,47 @@ export function showManageMarinasSheet() {
       }));
     });
     $('#mmList').querySelectorAll('[data-invite]').forEach(btn => {
-      btn.addEventListener('click', () => run(async () => {
-        const result = await call('getMarinaInvite', {clientId: Number(btn.dataset.invite)});
-        status(`Invite code: ${result.inviteCode}\nAnyone with this code can join as staff. Share it only with authorised colleagues.`);
-      }));
+      const panel = $('#mmList').querySelector(`[data-invite-panel="${btn.dataset.invite}"]`);
+      const message = panel.querySelector('[data-invite-message]');
+      const controls = panel.querySelector('[data-invite-controls]');
+      const codeInput = panel.querySelector('[data-invite-code]');
+      btn.addEventListener('click', async () => {
+        if (busy) return;
+        panel.hidden = false;
+        controls.hidden = true;
+        message.style.color = '#AEB6C1';
+        message.textContent = inviteText('Loading invite code…', 'جارٍ تحميل رمز الدعوة…');
+        setBusy(true);
+        try {
+          const result = await call('getMarinaInvite', {clientId: Number(btn.dataset.invite)});
+          validSession();
+          if (!sheet.isConnected) return;
+          const code = String(result?.inviteCode || '').trim();
+          if (!code) throw new Error(inviteText('No invite code returned. Please try again.', 'لم يتم إرجاع رمز دعوة. حاول مجدداً.'));
+          codeInput.value = code;
+          controls.hidden = false;
+          message.textContent = inviteText('Anyone with this code can join as staff. Share it only with authorised colleagues.', 'يمكن لمن لديه هذا الرمز الانضمام كموظف. شاركه مع الزملاء المصرّح لهم فقط.');
+        } catch (error) {
+          console.error('[marina invite]', error);
+          message.style.color = '#FF8A80';
+          message.textContent = error.message || inviteText('Unable to load invite code. Please try again.', 'تعذّر تحميل رمز الدعوة. حاول مجدداً.');
+        } finally {
+          if (sheet.isConnected) setBusy(false);
+        }
+      });
+      panel.querySelector('[data-copy-invite]').addEventListener('click', async () => {
+        try {
+          validSession();
+          await navigator.clipboard.writeText(codeInput.value);
+          message.style.color = '#3DD68C';
+          message.textContent = t('Invite code copied');
+        } catch {
+          codeInput.focus();
+          codeInput.select();
+          message.style.color = '#AEB6C1';
+          message.textContent = inviteText('Select and copy the code manually.', 'حدّد الرمز وانسخه يدوياً.');
+        }
+      });
     });
   }
   async function call(name, data) {
