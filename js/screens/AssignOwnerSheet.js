@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AssignOwnerSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -9,7 +10,7 @@ import { db } from '../firebase.js';
 export async function showAssignOwnerSheet(item, { onChanged } = {}) {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
-    toast('No active client', { kind: 'error' });
+    toast(tr('No active client'), { kind: 'error' });
     return;
   }
 
@@ -25,11 +26,11 @@ export async function showAssignOwnerSheet(item, { onChanged } = {}) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Assign Owner</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Assign Owner")}</div>
 
     <div class="ao-scroll">
       ${crewNames.length === 0
-        ? `<div class="assign-empty">No crew members found.<br>Add crew first.</div>`
+        ? `<div class="assign-empty">${tr("No crew members found.")}<br>${tr("Add crew first.")}</div>`
         : crewNames.map(name => `
             <button type="button" class="ao-row${name === current ? ' is-current' : ''}" data-name="${escapeAttr(name)}">
               <span class="ao-radio"></span>
@@ -40,9 +41,9 @@ export async function showAssignOwnerSheet(item, { onChanged } = {}) {
     </div>
 
     <div class="ao-actions">
-      <button type="button" class="csv-btn csv-btn--cancel" id="aoCancel">Cancel</button>
-      ${current ? `<button type="button" class="csv-btn ao-unassign" id="aoUnassign">Unassign</button>` : ''}
-      <button type="button" class="csv-btn csv-btn--choose" id="aoAssign">Assign</button>
+      <button type="button" class="csv-btn csv-btn--cancel" id="aoCancel">${tr("Cancel")}</button>
+      ${current ? `<button type="button" class="csv-btn ao-unassign" id="aoUnassign">${tr("Unassign")}</button>` : ''}
+      <button type="button" class="csv-btn csv-btn--choose" id="aoAssign">${tr("Assign")}</button>
     </div>
   `;
 
@@ -82,7 +83,7 @@ export async function showAssignOwnerSheet(item, { onChanged } = {}) {
 
   sheet.querySelector('#aoAssign').addEventListener('click', async () => {
     if (!picked) {
-      toast('Select a crew member', { kind: 'error' });
+      toast(tr('Select a crew member'), { kind: 'error' });
       return;
     }
     close();
@@ -147,11 +148,11 @@ async function setOwner(item, name, onChanged) {
       lastModifiedBy: userId
     });
 
-    toast(name ? `Assigned to ${name}` : 'Unassigned', { kind: 'success' });
+    toast(name ? `Assigned to ${name}` : tr('Unassigned'), { kind: 'success' });
     if (onChanged) onChanged();
   } catch (err) {
     console.error('[assign owner] save failed', err);
-    toast('Failed to assign owner', { kind: 'error' });
+    toast(tr('Failed to assign owner'), { kind: 'error' });
   }
 }
 

@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/SafetyDetailSheet.js
 
 export function showSafetyDetail(item) {
@@ -23,18 +24,18 @@ export function showSafetyDetail(item) {
     <div class="sheet-title">${escapeHtml(item.title || 'Safety Item')}</div>
 
     <div class="md-body">
-      <div class="md-line"><span class="md-label">Category:</span> <span class="md-value">${escapeHtml(item.category || '—')}</span></div>
-      ${item.location ? `<div class="md-line"><span class="md-label">Location:</span> <span class="md-value">${escapeHtml(item.location)}</span></div>` : ''}
-      <div class="md-line"><span class="md-label">Importance:</span> <span class="md-value">${escapeHtml(item.importance || '—')}</span></div>
-      <div class="md-line"><span class="md-label">Status:</span> <span class="md-value" style="color:${statusColor};">${escapeHtml(status)}</span></div>
-      ${item.expiryDate > 0 ? `<div class="md-line"><span class="md-label">Expiry:</span> <span class="md-value">${escapeHtml(formatDate(item.expiryDate))}</span></div>` : ''}
-      ${item.nextInspectionDate > 0 ? `<div class="md-line"><span class="md-label">Next Inspection:</span> <span class="md-value">${escapeHtml(formatDate(item.nextInspectionDate))}</span></div>` : ''}
-      ${item.purchaseDate > 0 ? `<div class="md-line"><span class="md-label">Purchased:</span> <span class="md-value">${escapeHtml(formatDate(item.purchaseDate))}</span></div>` : ''}
-      ${(item.validityYears || item.validityMonths) ? `<div class="md-line"><span class="md-label">Validity:</span> <span class="md-value">${item.validityYears || 0}y ${item.validityMonths || 0}m</span></div>` : ''}
-      ${item.notes ? `<div class="md-spacer"></div><div class="md-line"><span class="md-label">Notes:</span> <span class="md-value">${escapeHtml(item.notes)}</span></div>` : ''}
+      <div class="md-line"><span class="md-label">${tr("Category:")}</span> <span class="md-value">${escapeHtml(tr(item.category || '—'))}</span></div>
+      ${item.location ? `<div class="md-line"><span class="md-label">${tr("Location:")}</span> <span class="md-value">${escapeHtml(item.location)}</span></div>` : ''}
+      <div class="md-line"><span class="md-label">${tr("Importance:")}</span> <span class="md-value">${escapeHtml(tr(item.importance || '—'))}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Status:")}</span> <span class="md-value" style="color:${statusColor};">${escapeHtml(status)}</span></div>
+      ${item.expiryDate > 0 ? `<div class="md-line"><span class="md-label">${tr("Expiry:")}</span> <span class="md-value">${escapeHtml(formatDate(item.expiryDate))}</span></div>` : ''}
+      ${item.nextInspectionDate > 0 ? `<div class="md-line"><span class="md-label">${tr("Next Inspection:")}</span> <span class="md-value">${escapeHtml(formatDate(item.nextInspectionDate))}</span></div>` : ''}
+      ${item.purchaseDate > 0 ? `<div class="md-line"><span class="md-label">${tr("Purchased:")}</span> <span class="md-value">${escapeHtml(formatDate(item.purchaseDate))}</span></div>` : ''}
+      ${(item.validityYears || item.validityMonths) ? `<div class="md-line"><span class="md-label">${tr("Validity:")}</span> <span class="md-value">${item.validityYears || 0}y ${item.validityMonths || 0}m</span></div>` : ''}
+      ${item.notes ? `<div class="md-spacer"></div><div class="md-line"><span class="md-label">${tr("Notes:")}</span> <span class="md-value">${escapeHtml(item.notes)}</span></div>` : ''}
     </div>
 
-    <button type="button" class="md-close-btn" id="sfDetailClose">Close</button>
+    <button type="button" class="md-close-btn" id="sfDetailClose">${tr("Close")}</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -55,7 +56,7 @@ export function showSafetyDetail(item) {
 
 function formatDate(ts) {
   try {
-    return new Date(ts).toLocaleDateString('en-GB', {
+    return new Date(ts).toLocaleDateString(uiLocale(), {
       day: '2-digit', month: 'short', year: 'numeric'
     });
   } catch { return '—'; }

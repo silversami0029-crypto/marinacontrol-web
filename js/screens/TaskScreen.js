@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/TaskScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -40,15 +41,15 @@ export function mountTaskScreen() {
   screen.innerHTML = `
     <div class="eq-header" id="tkHeader">
       <div class="eq-header-row">
-        <button class="eq-icon-btn" id="tkBack" aria-label="Back">
+        <button class="eq-icon-btn" id="tkBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="eq-pill" id="tkPill">Tasks</div>
-        <button class="eq-icon-btn" id="tkHelp" aria-label="Help">
+        <div class="eq-pill" id="tkPill">${tr("Tasks")}</div>
+        <button class="eq-icon-btn" id="tkHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -58,7 +59,7 @@ export function mountTaskScreen() {
           </svg>
         </button>
         <div class="eq-header-spacer"></div>
-        <button class="eq-icon-btn" id="tkSearchToggle" aria-label="Search">
+        <button class="eq-icon-btn" id="tkSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -70,22 +71,22 @@ export function mountTaskScreen() {
     </div>
 
     <div class="boats-search-bar" id="tkSearchBar" hidden>
-      <input id="tkSearchInput" type="text" placeholder="Search tasks..." autocomplete="off">
-      <button type="button" class="search-cancel" id="tkSearchCancel">Cancel</button>
+      <input id="tkSearchInput" type="text" placeholder="${tr("Search tasks...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="tkSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="dash-filters" id="tkFilters">
-      <button type="button" class="dash-filter is-active" data-tk-filter="ALL">All <span class="tk-count" data-tk-count="ALL"></span></button>
-      <button type="button" class="dash-filter" data-tk-filter="OPEN">Open <span class="tk-count" data-tk-count="OPEN"></span></button>
-      <button type="button" class="dash-filter" data-tk-filter="OVERDUE">Overdue <span class="tk-count" data-tk-count="OVERDUE"></span></button>
-      <button type="button" class="dash-filter" data-tk-filter="COMPLETED">Completed <span class="tk-count" data-tk-count="COMPLETED"></span></button>
+      <button type="button" class="dash-filter is-active" data-tk-filter="ALL">${tr("All")}<span class="tk-count" data-tk-count="ALL"></span></button>
+      <button type="button" class="dash-filter" data-tk-filter="OPEN">${tr("Open")}<span class="tk-count" data-tk-count="OPEN"></span></button>
+      <button type="button" class="dash-filter" data-tk-filter="OVERDUE">${tr("Overdue")}<span class="tk-count" data-tk-count="OVERDUE"></span></button>
+      <button type="button" class="dash-filter" data-tk-filter="COMPLETED">${tr("Completed")}<span class="tk-count" data-tk-count="COMPLETED"></span></button>
     </div>
 
     <div class="eq-list" id="tkList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button class="cm-fab" id="tkFabAdd" aria-label="Add task">
+    <button class="cm-fab" id="tkFabAdd" aria-label="${tr("Add task")}">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
            stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -141,7 +142,7 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
     document.getElementById('tkList').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -176,16 +177,16 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   if (!boatId) {
     document.getElementById('tkList').innerHTML =
       `<div class="boats-empty">
-         <h2>No active boat</h2>
-         <p>Set a boat as active to see its tasks.</p>
+         <h2>${tr("No active boat")}</h2>
+         <p>${tr("Set a boat as active to see its tasks.")}</p>
        </div>`;
     return;
   }
 
   currentBoatId = boatId;
   document.getElementById('tkPill').textContent = currentBoatName
-    ? `Tasks · ${currentBoatName}`
-    : 'Tasks';
+    ? `${tr('Tasks')} · ${currentBoatName}`
+    : tr('Tasks');
 
   subscribeToTasks(clientId);
 }
@@ -234,7 +235,7 @@ function subscribeToTasks(clientId) {
     console.error('[tasks] listen failed', err);
     document.getElementById('tkList').innerHTML =
       `<div class="boats-empty">
-         <h2>Couldn't load tasks</h2>
+         <h2>${tr("Couldn't load tasks")}</h2>
          <p>${escapeHtml(err.message || 'Permission denied.')}</p>
        </div>`;
   });
@@ -293,7 +294,7 @@ function formatDue(dueDate) {
   try {
     const d = new Date(dueDate + 'T00:00:00');
     if (isNaN(d.getTime())) return dueDate;
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString(uiLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
   } catch { return dueDate; }
 }
 
@@ -306,12 +307,12 @@ function renderList() {
   if (!items.length) {
     const q = (document.getElementById('tkSearchInput')?.value || '').trim();
     let msg = 'No tasks';
-    if (q) msg = `No tasks match "${escapeHtml(q)}"`;
+    if (q) msg = `${escapeHtml(tr("ui.noMatches", {query:q}))}`;
     else if (filterMode === 'OPEN') msg = 'No open tasks';
     else if (filterMode === 'OVERDUE') msg = 'No overdue tasks';
     else if (filterMode === 'COMPLETED') msg = 'No completed tasks';
 
-    listEl.innerHTML = `<div class="boats-empty"><h2>${msg}</h2><p>Tap + to add the first task.</p></div>`;
+    listEl.innerHTML = `<div class="boats-empty"><h2>${msg}</h2><p>${tr("Tap + to add the first task.")}</p></div>`;
     return;
   }
 
@@ -332,13 +333,13 @@ function renderList() {
         <div class="tk-priority-strip" style="background:${color};"></div>
 
         <div class="tk-info">
-          <div class="tk-badge" style="background:${color};">${escapeHtml(e.priority)}</div>
-          <div class="tk-title">${escapeHtml(e.title || 'Untitled')}</div>
+          <div class="tk-badge" style="background:${color};">${escapeHtml(tr(e.priority))}</div>
+          <div class="tk-title">${escapeHtml(e.title || tr('Untitled'))}</div>
           ${e.boatName ? `<div class="tk-boat">${escapeHtml(e.boatName)}</div>` : ''}
-          ${e.dueDate ? `<div class="tk-due">Due: ${escapeHtml(formatDue(e.dueDate))}${isOverdue(e) ? ' · <span style="color:#EF4444;">OVERDUE</span>' : ''}</div>` : ''}
+          ${e.dueDate ? `<div class="tk-due">${tr("Due:" )} ${escapeHtml(formatDue(e.dueDate))}${isOverdue(e) ? ` · <span style="color:#EF4444;">${tr("OVERDUE")}</span>` : ''}</div>` : ''}
         </div>
 
-        <button class="eq-kebab" data-task-menu="${e.id}" aria-label="Menu">
+        <button class="eq-kebab" data-task-menu="${e.id}" aria-label="${tr("Menu")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">

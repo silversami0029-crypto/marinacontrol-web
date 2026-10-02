@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ReviewMaintenanceSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -15,43 +16,43 @@ export function showReviewMaintenanceSheet(item, { onChanged } = {}) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Deferred Review</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Deferred Review")}</div>
 
     <div class="add-scroll">
       <div class="rm-info">
-        <div class="rm-info-line"><b>Task:</b> ${escapeHtml(item.type || '')}</div>
-        <div class="rm-info-line"><b>Reason:</b> ${escapeHtml(item.deferReason || 'N/A')}</div>
-        <div class="rm-info-line"><b>Review Date:</b> ${escapeHtml(item.reviewDate || 'N/A')}</div>
+        <div class="rm-info-line"><b>${tr("Task:")}</b> ${escapeHtml(tr(item.type || ''))}</div>
+        <div class="rm-info-line"><b>${tr("Reason:")}</b> ${escapeHtml(item.deferReason || 'N/A')}</div>
+        <div class="rm-info-line"><b>${tr("Review Date:")}</b> ${escapeHtml(item.reviewDate || 'N/A')}</div>
       </div>
 
-      <div class="add-section-title">Choose Action</div>
+      <div class="add-section-title">${tr("Choose Action")}</div>
 
       <label class="rm-radio">
         <input type="radio" name="rm-action" value="COMPLETED">
-        <span>Complete Task</span>
+        <span>${tr("Complete Task")}</span>
       </label>
       <label class="rm-radio">
         <input type="radio" name="rm-action" value="EXTENDED">
-        <span>Extend Deferral</span>
+        <span>${tr("Extend Deferral")}</span>
       </label>
       <label class="rm-radio">
         <input type="radio" name="rm-action" value="ESCALATED">
-        <span>Escalate</span>
+        <span>${tr("Escalate")}</span>
       </label>
       <label class="rm-radio">
         <input type="radio" name="rm-action" value="CANCELLED">
-        <span style="color:#FF4444;">Cancel Deferral</span>
+        <span style="color:#FF4444;">${tr("Cancel Deferral")}</span>
       </label>
 
       <div id="rmExtendBox" style="display:none; margin-top:8px;">
-        <label class="add-label" for="rm-newdate">New Review Date</label>
+        <label class="add-label" for="rm-newdate">${tr("New Review Date")}</label>
         <input class="add-input" id="rm-newdate" type="date" value="${today}">
       </div>
     </div>
 
     <div class="csv-info-actions">
-      <button type="button" class="csv-btn csv-btn--cancel" id="rmCancel">Cancel</button>
-      <button type="button" class="csv-btn csv-btn--choose" id="rmConfirm">Confirm</button>
+      <button type="button" class="csv-btn csv-btn--cancel" id="rmCancel">${tr("Cancel")}</button>
+      <button type="button" class="csv-btn csv-btn--choose" id="rmConfirm">${tr("Confirm")}</button>
     </div>
   `;
 
@@ -80,7 +81,7 @@ export function showReviewMaintenanceSheet(item, { onChanged } = {}) {
   sheet.querySelector('#rmConfirm').addEventListener('click', async () => {
     const checked = sheet.querySelector('input[name="rm-action"]:checked');
     if (!checked) {
-      toast('Choose an action', { kind: 'error' });
+      toast(tr('Choose an action'), { kind: 'error' });
       return;
     }
 
@@ -88,7 +89,7 @@ export function showReviewMaintenanceSheet(item, { onChanged } = {}) {
     const newDate = sheet.querySelector('#rm-newdate').value;
 
     if (action === 'EXTENDED' && !newDate) {
-      toast('Select a new review date', { kind: 'error' });
+      toast(tr('Select a new review date'), { kind: 'error' });
       return;
     }
 
@@ -139,7 +140,7 @@ async function applyReview(item, action, newDate, onChanged) {
     if (onChanged) onChanged();
   } catch (err) {
     console.error('[review] failed', err);
-    toast('Failed to review', { kind: 'error' });
+    toast(tr('Failed to review'), { kind: 'error' });
   }
 }
 

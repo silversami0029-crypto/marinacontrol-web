@@ -1,3 +1,5 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
+import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/BoatsScreen.js
 import { renderBoatRow }    from '../components/BoatRow.js';
 import { showBoatMenu }     from '../components/BoatMenuSheet.js';
@@ -21,8 +23,8 @@ export function mountBoatsScreen() {
   if (!store.activeClientId) {
     document.getElementById('screen').innerHTML =
       `<div class="boats-empty">
-         <h2>No client assigned</h2>
-         <p>Your user profile doesn't include a clientId.</p>
+         <h2>${t("No client assigned")}</h2>
+         <p>${t("Your user profile doesn't include a clientId.")}</p>
        </div>`;
     return;
   }
@@ -38,8 +40,8 @@ export function mountBoatsScreen() {
 
   <!-- Header pill -->
       <div class="boats-header" id="boatsHeader">
-        <div class="account-pill">Boats</div>
- <button class="info-btn" id="helpBtn" aria-label="Help">
+        <div class="account-pill">${t("Boats")}</div>
+ <button class="info-btn" id="helpBtn" aria-label="${t("Help")}">
       
 
 
@@ -51,7 +53,7 @@ export function mountBoatsScreen() {
           <circle cx="12" cy="7.5" r="0.8" fill="currentColor"/>
         </svg>
       </button>
-      <button class="search-btn" id="searchToggle" aria-label="Search">
+      <button class="search-btn" id="searchToggle" aria-label="${t("Search")}">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
              stroke="currentColor" stroke-width="1.8"
              stroke-linecap="round" stroke-linejoin="round">
@@ -62,15 +64,15 @@ export function mountBoatsScreen() {
     </div>
 
     <div class="boats-search-bar" id="searchBar" hidden>
-      <input id="searchInput" type="text" placeholder="Search boats..." autocomplete="off">
-      <button type="button" class="search-cancel" id="searchCancel">Cancel</button>
+      <input id="searchInput" type="text" placeholder="${t("Search boats...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="searchCancel">${t("Cancel")}</button>
     </div>
 
     <div class="boats-list" id="boatsList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button class="bulk-btn" id="bulkBtn" aria-label="Bulk delete" hidden>
+    <button class="bulk-btn" id="bulkBtn" aria-label="${t("Bulk delete")}" hidden>
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
            stroke="currentColor" stroke-width="1.8"
            stroke-linecap="round" stroke-linejoin="round">
@@ -85,10 +87,10 @@ export function mountBoatsScreen() {
     <div class="bulk-bar" id="bulkBar" hidden>
       <label class="bulk-select-all">
         <input type="checkbox" id="bulkSelectAll">
-        <span>Select all</span>
+        <span>${t("Select all")}</span>
       </label>
-      <span class="bulk-count" id="bulkCount">0 selected</span>
-      <button type="button" class="bulk-cancel" id="bulkCancel">Cancel</button>
+      <span class="bulk-count" id="bulkCount">${t("0 selected")}</span>
+      <button type="button" class="bulk-cancel" id="bulkCancel">${t("Cancel")}</button>
     </div>
 
     <button class="fab" id="fabAddBoat">
@@ -97,7 +99,7 @@ export function mountBoatsScreen() {
         <line x1="12" y1="5" x2="12" y2="19"/>
         <line x1="5" y1="12" x2="19" y2="12"/>
       </svg>
-      <span>Boat</span>
+      <span>${t("Boat")}</span>
     </button>
   `;
 
@@ -117,7 +119,7 @@ export function mountBoatsScreen() {
     if (err) {
       document.getElementById('boatsList').innerHTML =
         `<div class="boats-empty">
-           <h2>Couldn't load boats</h2>
+           <h2>${t("Couldn't load boats")}</h2>
            <p>${err.message || 'Permission denied.'}</p>
          </div>`;
       return;
@@ -130,7 +132,7 @@ export function mountBoatsScreen() {
     store.syncTime  = Date.now();
 
     const sub = document.getElementById('topbarSync');
-    if (sub) sub.textContent = 'Online · Synced just now';
+    if (sub) sub.textContent = tr('Online · Synced just now');
 
     const liveIds = new Set(boats.map(b => b.id));
     for (const id of Array.from(selectedIds)) {
@@ -206,12 +208,12 @@ function renderList() {
   if (!boats.length) {
     const msg = store.searchQuery
       ? `<div class="boats-empty">
-           <h2>No matches</h2>
-           <p>No boats match "${escapeHtml(store.searchQuery)}"</p>
+           <h2>${t("No matches")}</h2>
+           <p>${escapeHtml(tr("ui.noMatches", {query:store.searchQuery}))}</p>
          </div>`
       : `<div class="boats-empty">
-           <h2>No boats yet</h2>
-           <p>Tap "+ Boat" to add your first vessel.</p>
+           <h2>${t("No boats yet")}</h2>
+           <p>${t("Tap \"+ Boat\" to add your first vessel.")}</p>
          </div>`;
     listEl.innerHTML = msg;
     return;
@@ -250,12 +252,12 @@ function renderList() {
 
     rowEl.querySelector('[data-action="voice"]')?.addEventListener('click', (e) => {
       e.stopPropagation();
-      toast('Voice playback coming soon');
+      toast(tr('Voice playback coming soon'));
     });
 
     rowEl.querySelector('[data-action="photo"]')?.addEventListener('click', (e) => {
       e.stopPropagation();
-      toast('Photo viewer coming soon');
+      toast(tr('Photo viewer coming soon'));
     });
   });
 }
@@ -319,38 +321,38 @@ function updateCount() {
   const el = document.getElementById('bulkCount');
   if (!el) return;
   const n = selectedIds.size;
-  el.textContent = n === 1 ? '1 selected' : `${n} selected`;
+  el.textContent = t('selectedCount', {count:n});
 }
 
 function onBulkButtonTap() {
   if (!isBulkMode) { enterBulkMode(); return; }
-  if (selectedIds.size === 0) { toast('No boats selected'); return; }
+  if (selectedIds.size === 0) { toast(tr('No boats selected')); return; }
   confirmBulkDelete();
 }
 
 async function confirmBulkDelete() {
   const count = selectedIds.size;
   const ok = await confirmSheet({
-    title: `Delete ${count} boat${count === 1 ? '' : 's'}?`,
-    message: `This action cannot be undone.`,
-    confirmText: 'Delete',
-    cancelText: 'Cancel'
+    title: tr(`Delete ${count} boat${count === 1 ? '' : 's'}?`),
+    message: tr(`This action cannot be undone.`),
+    confirmText: tr('Delete'),
+    cancelText: tr('Cancel')
   });
   if (!ok) return;
   try {
     const docIds = Array.from(selectedIds).map(String);
     await deleteBoatDocsByIds(docIds);
-    toast(`Deleted ${count} boat${count === 1 ? '' : 's'}`, { kind: 'success' });
+    toast(tr(`Deleted ${count} boat${count === 1 ? '' : 's'}`), { kind: 'success' });
     exitBulkMode();
   } catch (err) {
-    toast('Failed to delete boats', { kind: 'error' });
+    toast(tr('Failed to delete boats'), { kind: 'error' });
   }
 }
 
 function openMenu(boat) {
   showBoatMenu(boat, {
     onDashboard:      onOpenDashboard,
-    onNotes:          () => toast('Boat notes coming soon'),
+    onNotes:          () => toast(tr('Boat notes coming soon')),
     onAssignCustomer: onAssignCustomer,
     onEdit:           onEditBoat,
     onPhoto:          () => toast(boat.hasPhoto() ? 'Photo options coming soon' : 'Add photo coming soon'),
@@ -366,9 +368,9 @@ function onOpenDashboard(boat) {
 
 async function onSetActive(boat) {
   try {
-    toast('Setting active…', { duration: 1200 });
+    toast(tr('Setting active…'), { duration: 1200 });
     await setActiveBoat(store.activeClientId, boat.id);
-    toast(`${boat.name} is now active`, { kind: 'success' });
+    toast(tr(`${boat.name} is now active`), { kind: 'success' });
   } catch (err) {
     console.error('[boats] set active failed', err);
     toast(err.message || 'Failed to set active', { kind: 'error', duration: 5000 });
@@ -378,16 +380,16 @@ async function onSetActive(boat) {
 async function onDelete(boat) {
   const ok = await confirmSheet({
     title: 'Delete boat',
-    message: `Are you sure you want to delete "${boat.name}"? This action cannot be undone.`,
-    confirmText: 'Delete',
-    cancelText: 'Cancel'
+    message: tr(`Are you sure you want to delete "${boat.name}"? This action cannot be undone.`),
+    confirmText: tr('Delete'),
+    cancelText: tr('Cancel')
   });
   if (!ok) return;
   try {
     await deleteBoatById(String(boat.id));
-    toast(`${boat.name} deleted`, { kind: 'success' });
+    toast(tr(`${boat.name} deleted`), { kind: 'success' });
   } catch (err) {
-    toast('Failed to delete boat', { kind: 'error' });
+    toast(tr('Failed to delete boat'), { kind: 'error' });
   }
 }
 
@@ -401,7 +403,7 @@ function openAddBoatSheet() {
       const userId = store.userProfile?.userId || 0;
       const newId  = await createBoat(store.activeClientId, userId, fields);
       if (fields.isActive) await setActiveBoat(store.activeClientId, newId);
-      toast(`${fields.name} added`, { kind: 'success' });
+      toast(tr(`${fields.name} added`), { kind: 'success' });
     }
   });
 }
@@ -421,7 +423,7 @@ function onEditBoat(boat) {
       if (fields.isActive && !boat.isActive) {
         await setActiveBoat(store.activeClientId, boat.id);
       }
-      toast(`${fields.name} updated`, { kind: 'success' });
+      toast(tr(`${fields.name} updated`), { kind: 'success' });
     }
   });
 }
@@ -435,7 +437,7 @@ async function onAssignCustomer(boat) {
       const userId = store.userProfile?.userId || 0;
       await assignCustomerToBoat(String(boat.id), customerId, userId);
       const customer = customers.find(c => c.id === customerId);
-      toast(customer ? `${customer.name} assigned to ${boat.name}` : 'Customer assigned', { kind: 'success' });
+      toast(customer ? `${customer.name} assigned to ${boat.name}` : tr('Customer assigned'), { kind: 'success' });
     }
   });
 }

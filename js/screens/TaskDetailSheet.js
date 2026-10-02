@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/TaskDetailSheet.js
 
 const PRIORITY_COLORS = {
@@ -22,16 +23,16 @@ export function showTaskDetail(item) {
     <div class="sheet-title">${escapeHtml(item.title || 'Task')}</div>
 
     <div class="md-body">
-      <div class="md-line"><span class="md-label">Priority:</span> <span class="md-value" style="color:${color};font-weight:600;">${escapeHtml(item.priority || 'MEDIUM')}</span></div>
-      <div class="md-line"><span class="md-label">Status:</span> <span class="md-value">${escapeHtml(item.status || 'OPEN')}</span></div>
-      <div class="md-line"><span class="md-label">Boat:</span> <span class="md-value">${escapeHtml(item.boatName || '—')}</span></div>
-      <div class="md-line"><span class="md-label">Category:</span> <span class="md-value">${escapeHtml(item.category || '—')}</span></div>
-      <div class="md-line"><span class="md-label">Due:</span> <span class="md-value">${escapeHtml(dueLabel)}</span></div>
-      ${item.assignedTo ? `<div class="md-line"><span class="md-label">Assigned To:</span> <span class="md-value">${escapeHtml(item.assignedTo)}</span></div>` : ''}
-      ${item.notes ? `<div class="md-spacer"></div><div class="md-line"><span class="md-label">Notes:</span> <span class="md-value">${escapeHtml(item.notes)}</span></div>` : ''}
+      <div class="md-line"><span class="md-label">${tr("Priority:")}</span> <span class="md-value" style="color:${color};font-weight:600;">${escapeHtml(item.priority || 'MEDIUM')}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Status:")}</span> <span class="md-value">${escapeHtml(item.status || 'OPEN')}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Boat:")}</span> <span class="md-value">${escapeHtml(item.boatName || '—')}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Category:")}</span> <span class="md-value">${escapeHtml(tr(item.category || '—'))}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Due:")}</span> <span class="md-value">${escapeHtml(dueLabel)}</span></div>
+      ${item.assignedTo ? `<div class="md-line"><span class="md-label">${tr("Assigned To:")}</span> <span class="md-value">${escapeHtml(item.assignedTo)}</span></div>` : ''}
+      ${item.notes ? `<div class="md-spacer"></div><div class="md-line"><span class="md-label">${tr("Notes:")}</span> <span class="md-value">${escapeHtml(item.notes)}</span></div>` : ''}
     </div>
 
-    <button type="button" class="md-close-btn" id="tkDetailClose">Close</button>
+    <button type="button" class="md-close-btn" id="tkDetailClose">${tr("Close")}</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -54,7 +55,7 @@ function formatDate(s) {
   try {
     const d = new Date(s + 'T00:00:00');
     if (isNaN(d.getTime())) return s;
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString(uiLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
   } catch { return s; }
 }
 

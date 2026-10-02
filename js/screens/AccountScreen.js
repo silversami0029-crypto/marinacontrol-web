@@ -1,3 +1,5 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
+import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/AccountScreen.js
 // Account — mirrors activity_account.xml + AccountFragment.java
 
@@ -56,7 +58,7 @@ export function mountAccountScreen() {
 
       <!-- Header pill -->
       <div class="account-header">
-        <div class="account-pill">My Account</div>
+        <div class="account-pill">${t("My Account")}</div>
       </div>
 
       <!-- User info card -->
@@ -70,29 +72,30 @@ export function mountAccountScreen() {
         </div>
       </div>
 
+      <div class="account-card">${languagePicker()}</div>
       <!-- Menu card -->
       <div class="account-card account-menu">
         <button class="account-item" id="btnEditProfile">
           <span class="account-item-icon">${ICONS.person}</span>
-          <span class="account-item-text">Edit Profile</span>
+          <span class="account-item-text">${t("Edit Profile")}</span>
           <span class="account-item-chevron">${ICONS.chevron}</span>
         </button>
 
         <button type="button" class="account-item" id="btnManageMarinas">
           <span class="account-item-icon">${ICONS.person}</span>
-          <span class="account-item-text">Manage Marinas</span>
+          <span class="account-item-text">${t("Manage Marinas")}</span>
           <span class="account-item-chevron">${ICONS.chevron}</span>
         </button>
 
         <button class="account-item account-item--danger" id="btnDeleteAccount">
           <span class="account-item-icon">${ICONS.delete}</span>
-          <span class="account-item-text">Delete Account</span>
+          <span class="account-item-text">${t("Delete Account")}</span>
           <span class="account-item-chevron">${ICONS.chevron}</span>
         </button>
 
         <button class="account-item account-item--danger" id="btnLogout">
           <span class="account-item-icon">${ICONS.logout}</span>
-          <span class="account-item-text">Logout</span>
+          <span class="account-item-text">${t("Logout")}</span>
           <span class="account-item-chevron">${ICONS.chevron}</span>
         </button>
       </div>
@@ -101,7 +104,7 @@ export function mountAccountScreen() {
   `;
 
   document.getElementById('btnEditProfile').addEventListener('click', () => {
-    toast('Edit Profile coming soon');
+    toast(tr('Edit Profile coming soon'));
   });
 
   document.getElementById('btnManageMarinas').addEventListener('click', showManageMarinasSheet);
@@ -122,16 +125,16 @@ function computeInitials(name) {
 
 async function onDeleteAccount() {
   const ok = await confirmSheet({
-    title: 'Delete Account',
-    message: 'This will permanently delete your account data. This action cannot be undone.',
-    confirmText: 'Delete',
-    cancelText: 'Cancel'
+    title: t("Delete Account"),
+    message: t("This will permanently delete your account data. This action cannot be undone."),
+    confirmText: t("Delete"),
+    cancelText: t("Cancel")
   });
   if (!ok) return;
 
   try {
     const uid = store.authUser?.uid;
-    if (!uid) throw new Error('No authenticated user');
+    if (!uid) throw new Error(tr('No authenticated user'));
 
     // Find the users doc matching this firebaseUid and delete it
     const { collection, query, where, getDocs } = await import('../firebase.js');
@@ -142,33 +145,33 @@ async function onDeleteAccount() {
       await deleteDoc(d.ref);
     }
 
-    toast('Account deleted', { kind: 'success' });
+    toast(tr('Account deleted'), { kind: 'success' });
 
     // Sign out → router will redirect to /login
     await signOut(auth);
 
   } catch (err) {
     console.error('[delete account] failed', err);
-    toast('Failed to delete account', { kind: 'error' });
+    toast(tr('Failed to delete account'), { kind: 'error' });
   }
 }
 
 async function onLogout() {
   const ok = await confirmSheet({
-    title: 'Log out',
-    message: 'Are you sure you want to log out of MarinaControl?',
-    confirmText: 'Log out',
-    cancelText: 'Cancel'
+    title: t("Log out"),
+    message: t("Are you sure you want to log out of MarinaControl?"),
+    confirmText: t("Log out"),
+    cancelText: t("Cancel")
   });
   if (!ok) return;
 
   try {
     await signOut(auth);
-    toast('Signed out');
+    toast(t("Signed out"));
     // router will redirect to /login automatically
   } catch (err) {
     console.error('[logout] failed', err);
-    toast('Failed to log out', { kind: 'error' });
+    toast(t("Failed to log out"), { kind: 'error' });
   }
 }
 

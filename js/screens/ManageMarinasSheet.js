@@ -1,3 +1,5 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
+import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/ManageMarinasSheet.js
 import { store } from '../store.js';
 import { auth } from '../firebase.js';
@@ -25,16 +27,16 @@ export function showManageMarinasSheet() {
   sheet.style.cssText = 'padding:20px;box-sizing:border-box;max-height:85dvh;overflow:auto;color:#F5F7F9;background:#1C222A;';
   sheet.innerHTML = `
     <div class="assign-handle"></div>
-    <h2 id="mmTitle" style="margin:10px 0 16px;font-size:20px;">Manage Marinas</h2>
+    <h2 id="mmTitle" style="margin:10px 0 16px;font-size:20px;">${t("Manage Marinas")}</h2>
     <div id="mmList" style="display:grid;gap:8px;margin-bottom:16px;"></div>
     <div id="mmActions" style="display:flex;flex-wrap:wrap;gap:8px;">
-      ${canCreate ? `<button type="button" id="mmAdd" style="${buttonStyle}">Add Marina</button>` : ''}
-      <button type="button" id="mmJoin" style="${buttonStyle}">Join Marina</button>
-      <button type="button" id="mmRefresh" style="${buttonStyle}">Refresh List</button>
+      ${canCreate ? `<button type="button" id="mmAdd" style="${buttonStyle}">${t("Add Marina")}</button>` : ''}
+      <button type="button" id="mmJoin" style="${buttonStyle}">${t("Join Marina")}</button>
+      <button type="button" id="mmRefresh" style="${buttonStyle}">${t("Refresh List")}</button>
     </div>
     <div id="mmForm"></div>
     <p id="mmStatus" role="status" aria-live="polite" style="white-space:pre-wrap;overflow-wrap:anywhere;"></p>
-    <button type="button" id="mmClose" style="${buttonStyle}width:100%;">Close</button>`;
+    <button type="button" id="mmClose" style="${buttonStyle}width:100%;">${t("Close")}</button>`;
   const root = document.getElementById('modalRoot');
   if (!root) return;
   root.append(backdrop, sheet);
@@ -44,7 +46,7 @@ export function showManageMarinasSheet() {
   const $ = selector => sheet.querySelector(selector);
   function validSession() {
     if (store.authUser?.uid !== uid || Number(store.activeClientId) !== sourceClientId) {
-      throw new Error('Your active marina changed. Close this sheet and try again.');
+      throw new Error(tr('Your active marina changed. Close this sheet and try again.'));
     }
   }
   function status(message, error = false) {
@@ -83,8 +85,8 @@ export function showManageMarinasSheet() {
       <div style="border:1px solid #0A8EF7;border-radius:10px;padding:14px;background:#172532;">
         <strong>${esc(m.name)}</strong>
         <div style="color:#AEB6C1;font-size:13px;margin-top:4px;">${esc(m.role || 'staff')}${Number(m.id) === sourceClientId ? ' · Active' : ''}</div>
-        ${Number(m.id) !== sourceClientId ? `<button type="button" data-switch="${Number(m.id)}" style="${buttonStyle}margin-top:8px;">Switch to Marina</button>` : ''}
-        ${m.role === 'admin' ? `<button type="button" data-invite="${Number(m.id)}" style="${buttonStyle}margin-top:8px;">Show Invite Code</button>` : ''}
+        ${Number(m.id) !== sourceClientId ? `<button type="button" data-switch="${Number(m.id)}" style="${buttonStyle}margin-top:8px;">${t("Switch to Marina")}</button>` : ''}
+        ${m.role === 'admin' ? `<button type="button" data-invite="${Number(m.id)}" style="${buttonStyle}margin-top:8px;">${t("Show Invite Code")}</button>` : ''}
       </div>`).join('');
     $('#mmList').querySelectorAll('[data-switch]').forEach(btn => {
       btn.addEventListener('click', () => run(async () => {
@@ -119,7 +121,7 @@ export function showManageMarinasSheet() {
         .filter(m => Number(m.isActive) === 1);
       validSession();
       store.marinas = marinas;
-      if (!marinas.some(m => Number(m.id) === Number(id))) throw new Error('New marina not yet visible');
+      if (!marinas.some(m => Number(m.id) === Number(id))) throw new Error(tr('New marina not yet visible'));
       // Storage failure must not repeat an already successful backend operation.
       localStorage.setItem(`marinacontrol.activeMarina.${uid}`, String(id));
       const route = location.hash.split('?')[0];
@@ -143,17 +145,17 @@ export function showManageMarinasSheet() {
     $('#mmForm').innerHTML = `
       <form id="mmDetails" style="display:grid;gap:12px;margin-top:16px;">
         ${adding ? `
-          <label>Marina name<input name="name" required maxlength="120" style="${inputStyle}"></label>
-          <label>Country code (e.g. ES, AE, GB)<input name="countryCode" required minlength="2" maxlength="2" pattern="[A-Za-z]{2}" style="${inputStyle}"></label>
-          <label>Email (optional)<input name="email" type="email" maxlength="254" style="${inputStyle}"></label>
-          <label>Phone (optional)<input name="phone" type="tel" maxlength="50" style="${inputStyle}"></label>
-          <p style="margin:0;color:#AEB6C1;">The new marina joins the current marina’s organisation. You will be its administrator.</p>
+          <label>${t("Marina name")}<input name="name" required maxlength="120" style="${inputStyle}"></label>
+          <label>${t("Country code (e.g. ES, AE, GB)")}<input name="countryCode" required minlength="2" maxlength="2" pattern="[A-Za-z]{2}" style="${inputStyle}"></label>
+          <label>${t("Email (optional)")}<input name="email" type="email" maxlength="254" style="${inputStyle}"></label>
+          <label>${t("Phone (optional)")}<input name="phone" type="tel" maxlength="50" style="${inputStyle}"></label>
+          <p style="margin:0;color:#AEB6C1;">${t("The new marina joins the current marina’s organisation. You will be its administrator.")}</p>
         ` : `
-          <label>Invite code<input name="inviteCode" required minlength="6" maxlength="32" pattern="[A-Za-z0-9]{6,32}" autocomplete="off" style="${inputStyle}"></label>
-          <label>Your name<input name="displayName" required minlength="2" maxlength="100" value="${esc(store.userProfile?.name || '')}" style="${inputStyle}"></label>
-          <p style="margin:0;color:#AEB6C1;">Use the invite code provided by that marina’s administrator. Joining requires a verified email.</p>
+          <label>${t("Invite code")}<input name="inviteCode" required minlength="6" maxlength="32" pattern="[A-Za-z0-9]{6,32}" autocomplete="off" style="${inputStyle}"></label>
+          <label>${t("Your name")}<input name="displayName" required minlength="2" maxlength="100" value="${esc(store.userProfile?.name || '')}" style="${inputStyle}"></label>
+          <p style="margin:0;color:#AEB6C1;">${t("Use the invite code provided by that marina’s administrator. Joining requires a verified email.")}</p>
         `}
-        <button type="submit" style="${buttonStyle}background:#0A8EF7;border-color:#0A8EF7;">${adding ? 'Create Marina' : 'Join Marina'}</button>
+        <button type="submit" style="${buttonStyle}background:#0A8EF7;border-color:#0A8EF7;">${adding ? 'Create Marina' : tr('Join Marina')}</button>
       </form>`;
     status('');
     $('#mmDetails input')?.focus();
@@ -172,10 +174,10 @@ export function showManageMarinasSheet() {
   }
   $('#mmAdd')?.addEventListener('click', () => {
     $('#mmForm').innerHTML = `
-      <h3 style="margin:18px 0 12px;">Add Marina</h3>
+      <h3 style="margin:18px 0 12px;">${t("Add Marina")}</h3>
       <div style="display:grid;gap:10px;">
-        <button type="button" id="mmSingle" style="${buttonStyle}text-align:left;">Add Single Marina<br><small>Add one marina manually</small></button>
-        <button type="button" id="mmBulk" style="${buttonStyle}text-align:left;">Bulk Import<br><small>Import multiple marinas from a CSV file</small></button>
+        <button type="button" id="mmSingle" style="${buttonStyle}text-align:left;">${t("Add Single Marina")}<br><small>${t("Add one marina manually")}</small></button>
+        <button type="button" id="mmBulk" style="${buttonStyle}text-align:left;">${t("Bulk Import")}<br><small>${t("Import multiple marinas from a CSV file")}</small></button>
       </div>`;
     status('');
     $('#mmSingle').addEventListener('click', () => showForm('add'));
@@ -185,12 +187,12 @@ export function showManageMarinasSheet() {
   function showBulkForm() {
     $('#mmForm').innerHTML = `
       <form id="mmBulkForm" style="display:grid;gap:12px;margin-top:18px;">
-        <h3 style="margin:0;">Bulk Import Marinas</h3>
-        <p style="margin:0;color:#AEB6C1;">CSV columns: name,countryCode,email,phone. Name and two-letter country code are required. Maximum 50 marinas.</p>
-        <button type="button" id="mmTemplate" style="${buttonStyle}">Download CSV Template</button>
-        <label>CSV file<input name="csv" type="file" accept=".csv,text/csv" required style="${inputStyle}"></label>
+        <h3 style="margin:0;">${t("Bulk Import Marinas")}</h3>
+        <p style="margin:0;color:#AEB6C1;">${t("CSV columns: name,countryCode,email,phone. Name and two-letter country code are required. Maximum 50 marinas.")}</p>
+        <button type="button" id="mmTemplate" style="${buttonStyle}">${t("Download CSV Template")}</button>
+        <label>${t("CSV file")}<input name="csv" type="file" accept=".csv,text/csv" required style="${inputStyle}"></label>
         <div id="mmPreview" style="color:#AEB6C1;"></div>
-        <button type="submit" style="${buttonStyle}background:#0A8EF7;">Import Marinas</button>
+        <button type="submit" style="${buttonStyle}background:#0A8EF7;">${t("Import Marinas")}</button>
       </form>`;
     status('');
     $('#mmTemplate').addEventListener('click', () => {
@@ -205,7 +207,7 @@ export function showManageMarinasSheet() {
       const file = event.target.files[0];
       if (!file) return;
       try {
-        if (file.size > 1024 * 1024) throw new Error('CSV file must be smaller than 1 MB.');
+        if (file.size > 1024 * 1024) throw new Error(tr('CSV file must be smaller than 1 MB.'));
         prepared = parseMarinaCsv(await file.text());
         $('#mmPreview').textContent = `${prepared.length} marinas ready to import.`;
         status('');
@@ -260,7 +262,7 @@ export function parseMarinaCsv(text) {
       else if (ch === '"') { quoted = false; closed = true; }
       else field += ch;
     } else if (ch === '"') {
-      if (field || closed) throw new Error('Invalid CSV quoting.');
+      if (field || closed) throw new Error(tr('Invalid CSV quoting.'));
       quoted = true;
     } else if (ch === ',' || ch === '\n' || ch === '\r') {
       row.push(field); field = ''; closed = false;
@@ -270,19 +272,19 @@ export function parseMarinaCsv(text) {
         if (ch === '\r' && text[i + 1] === '\n') i++;
       }
     } else {
-      if (closed && !/\s/.test(ch)) throw new Error('Unexpected text after a quoted CSV field.');
+      if (closed && !/\s/.test(ch)) throw new Error(tr('Unexpected text after a quoted CSV field.'));
       if (!closed) field += ch;
     }
   }
-  if (quoted) throw new Error('Unclosed quoted CSV field.');
+  if (quoted) throw new Error(tr('Unclosed quoted CSV field.'));
   row.push(field);
   if (row.some(v => v.trim())) rows.push(row);
-  if (rows.length < 2) throw new Error('CSV must contain a header and at least one marina.');
+  if (rows.length < 2) throw new Error(tr('CSV must contain a header and at least one marina.'));
   const header = rows.shift().map(v => v.trim().toLowerCase());
   if (new Set(header).size !== header.length || !header.includes('name') || !header.includes('countrycode')) {
-    throw new Error('CSV requires unique column headers including name and countryCode.');
+    throw new Error(tr('CSV requires unique column headers including name and countryCode.'));
   }
-  if (rows.length > 50) throw new Error('Import a maximum of 50 marinas at a time.');
+  if (rows.length > 50) throw new Error(tr('Import a maximum of 50 marinas at a time.'));
   return rows.map((values, index) => {
     if (values.length !== header.length) throw new Error(`Row ${index + 2}: column count does not match the header.`);
     const get = name => (values[header.indexOf(name)] || '').trim();

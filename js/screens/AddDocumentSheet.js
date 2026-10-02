@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddDocumentSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -43,10 +44,10 @@ export function showAddDocumentSheet(opts = {}) {
 
   <div class="sheet-title"
     style="flex:1;margin:0;padding:12px 48px;text-align:center;">
-    ${isEdit ? 'Edit Document' : 'Add Document'}
+    ${isEdit ? tr('Edit Document') : tr('Add Document')}
   </div>
 
-  <button type="button" id="iv-close" aria-label="Close invoice sheet"
+  <button type="button" id="iv-close" aria-label="${tr("Close invoice sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -60,30 +61,30 @@ export function showAddDocumentSheet(opts = {}) {
       <div class="add-scroll">
 
         ${boatName ? `
-          <label class="add-label">Boat</label>
+          <label class="add-label">${tr("Boat")}</label>
           <div class="add-input" style="padding-top:14px; padding-bottom:14px; color:var(--color-text-secondary);">
-            Boat: ${escapeHtml(boatName)}
+            ${tr("Boat:" )} ${escapeHtml(boatName)}
           </div>
         ` : ''}
 
-        <label class="add-label" for="doc-name">Document Name</label>
-        <input class="add-input" id="doc-name" type="text" placeholder="e.g. 2026 Insurance">
+        <label class="add-label" for="doc-name">${tr("Document Name")}</label>
+        <input class="add-input" id="doc-name" type="text" placeholder="${tr("e.g. 2026 Insurance")}">
 
-        <label class="add-label" for="doc-type">Document Type</label>
+        <label class="add-label" for="doc-type">${tr("Document Type")}</label>
         <select class="add-input add-select" id="doc-type">
-          <option value="">Select type…</option>
-          ${DOCUMENT_TYPES.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join('')}
+          <option value="">${tr("Select type…")}</option>
+          ${DOCUMENT_TYPES.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(tr(t))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="doc-expiry">Expiry Date</label>
+        <label class="add-label" for="doc-expiry">${tr("Expiry Date")}</label>
         <input class="add-input" id="doc-expiry" type="date">
 
-        <label class="add-label" for="doc-notes">Notes</label>
-        <textarea class="add-input" id="doc-notes" rows="3" placeholder="Notes"></textarea>
+        <label class="add-label" for="doc-notes">${tr("Notes")}</label>
+        <textarea class="add-input" id="doc-notes" rows="3" placeholder="${tr("Notes")}"></textarea>
       </div>
 
       <button type="submit" class="add-save" id="doc-save">
-        ${isEdit ? 'Update Document' : '+ Add Document'}
+        ${isEdit ? tr('Update Document') : tr('+ Add Document')}
       </button>
     </form>
   `;
@@ -125,40 +126,40 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     const notes  = sheet.querySelector('#doc-notes').value.trim();
 
     if (!name) { sheet.querySelector('#doc-name').focus(); return; }
-    if (!type) { toast('Select a type', { kind: 'error' }); return; }
+    if (!type) { toast(tr('Select a type'), { kind: 'error' }); return; }
 
     const expiryMs = expiry ? new Date(expiry + 'T00:00:00').getTime() : null;
 
     save.disabled = true;
-    save.textContent = 'Saving…';
+    save.textContent = tr('Saving…');
 
     try {
       if (isEdit) {
         await updateDocument(item, { name, type, expiryMs, notes });
       } else {
-        if (!boatId) throw new Error('No boat selected');
+        if (!boatId) throw new Error(tr('No boat selected'));
         await createDocument({ boatId, name, type, expiryMs, notes });
       }
       close();
-      toast(isEdit ? 'Document updated' : 'Document added', { kind: 'success' });
+      toast(isEdit ? tr('Document updated') : tr('Document added'), { kind: 'success' });
     } catch (err) {
       console.error('[document save] failed', err);
       save.disabled = false;
-      save.textContent = isEdit ? 'Update Document' : '+ Add Document';
+      save.textContent = isEdit ? tr('Update Document') : tr('+ Add Document');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to save.';
+      errEl.textContent = err.message || tr('Failed to save.');
     }
   });
 }
 
 async function createDocument({ boatId, name, type, expiryMs, notes }) {
   const clientId = Number(store.activeClientId);
-  if (!clientId) throw new Error('No active client');
+  if (!clientId) throw new Error(tr('No active client'));
 
   const snap = await getDocs(
     query(collection(db, 'documents'), where('clientId', '==', clientId))

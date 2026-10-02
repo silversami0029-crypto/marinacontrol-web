@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/EquipmentScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -28,15 +29,15 @@ export function mountEquipmentScreen() {
   screen.innerHTML = `
     <div class="eq-header" id="eqHeader">
       <div class="eq-header-row">
-        <button class="eq-icon-btn" id="eqBack" aria-label="Back">
+        <button class="eq-icon-btn" id="eqBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="eq-pill" id="eqPill">Equipment</div>
-        <button class="eq-icon-btn" id="eqHelp" aria-label="Help">
+        <div class="eq-pill" id="eqPill">${tr("Equipment")}</div>
+        <button class="eq-icon-btn" id="eqHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -46,7 +47,7 @@ export function mountEquipmentScreen() {
           </svg>
         </button>
         <div class="eq-header-spacer"></div>
-        <button class="eq-icon-btn" id="eqSearchToggle" aria-label="Search">
+        <button class="eq-icon-btn" id="eqSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -58,15 +59,15 @@ export function mountEquipmentScreen() {
     </div>
 
     <div class="boats-search-bar" id="eqSearchBar" hidden>
-      <input id="eqSearchInput" type="text" placeholder="Search equipment..." autocomplete="off">
-      <button type="button" class="search-cancel" id="eqSearchCancel">Cancel</button>
+      <input id="eqSearchInput" type="text" placeholder="${tr("Search equipment...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="eqSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="eq-list" id="eqList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button class="cm-fab" id="eqFabAdd" aria-label="Add equipment">
+    <button class="cm-fab" id="eqFabAdd" aria-label="${tr("Add equipment")}">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
            stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -110,7 +111,7 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
     document.getElementById('eqList').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -145,16 +146,16 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   if (!boatId) {
     document.getElementById('eqList').innerHTML =
       `<div class="boats-empty">
-         <h2>No active boat</h2>
-         <p>Set a boat as active to see its equipment.</p>
+         <h2>${tr("No active boat")}</h2>
+         <p>${tr("Set a boat as active to see its equipment.")}</p>
        </div>`;
     return;
   }
 
   currentBoatId = boatId;
   document.getElementById('eqPill').textContent = currentBoatName
-    ? `Equipment · ${currentBoatName}`
-    : 'Equipment';
+    ? `${tr('Equipment')} · ${currentBoatName}`
+    : tr('Equipment');
 
   subscribeToEquipment(clientId);
 }
@@ -195,7 +196,7 @@ function subscribeToEquipment(clientId) {
     console.error('[equipment] listen failed', err);
     document.getElementById('eqList').innerHTML =
       `<div class="boats-empty">
-         <h2>Couldn't load equipment</h2>
+         <h2>${tr("Couldn't load equipment")}</h2>
          <p>${escapeHtml(err.message || 'Permission denied.')}</p>
        </div>`;
   });
@@ -225,8 +226,8 @@ function renderList() {
   if (!items.length) {
     const q = (document.getElementById('eqSearchInput')?.value || '').trim();
     listEl.innerHTML = q
-      ? `<div class="boats-empty"><h2>No matches</h2><p>No equipment matches "${escapeHtml(q)}"</p></div>`
-      : `<div class="boats-empty"><h2>No equipment</h2><p>Tap + to add the first item.</p></div>`;
+      ? `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>No equipment matches "${escapeHtml(q)}"</p></div>`
+      : `<div class="boats-empty"><h2>${tr("No equipment")}</h2><p>${tr("Tap + to add the first item.")}</p></div>`;
     return;
   }
 
@@ -243,17 +244,17 @@ function renderList() {
         </div>
 
         <div class="eq-info">
-          <div class="eq-boat">Boat: ${escapeHtml(e.boatName || '—')}</div>
-          <div class="eq-manufacturer">${escapeHtml(e.manufacturer || 'Unnamed')}</div>
-          ${e.type ? `<div class="eq-type">${escapeHtml(e.type)}</div>` : ''}
+          <div class="eq-boat">${tr("Boat:" )} ${escapeHtml(e.boatName || '—')}</div>
+          <div class="eq-manufacturer">${escapeHtml(e.manufacturer || tr('Unnamed'))}</div>
+          ${e.type ? `<div class="eq-type">${escapeHtml(tr(e.type))}</div>` : ''}
           ${e.model ? `<div class="eq-model-line">${escapeHtml(e.model)}</div>` : ''}
-          ${e.serialNumber ? `<div class="eq-serial">Serial: ${escapeHtml(midEllipsize(e.serialNumber, 20))}</div>` : ''}
+          ${e.serialNumber ? `<div class="eq-serial">${tr("Serial:" )} ${escapeHtml(midEllipsize(e.serialNumber, 20))}</div>` : ''}
           ${e.location ? `<div class="eq-location"><span class="eq-loc-pin">📍</span>${escapeHtml(e.location)}</div>` : ''}
           ${e.notes ? `<div class="eq-notes">${escapeHtml(e.notes)}</div>` : ''}
-          ${e.assignedTo ? `<div class="eq-assigned">👤 Assigned: ${escapeHtml(e.assignedTo)}</div>` : ''}
+          ${e.assignedTo ? `<div class="eq-assigned">👤 ${tr("Assigned:")} ${escapeHtml(e.assignedTo)}</div>` : ''}
         </div>
 
-        <button class="eq-kebab" data-equip-menu="${e.id}" aria-label="Menu">
+        <button class="eq-kebab" data-equip-menu="${e.id}" aria-label="${tr("Menu")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">

@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/BookingRequestsHelp.js
 
 export function showBookingRequestsHelp() {
@@ -9,13 +10,11 @@ export function showBookingRequestsHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">📅 Booking Requests</div>
+      <div class="help-pill">${tr("📅 Booking Requests")}</div>
 
-      <p class="help-desc">
-        Incoming berth booking requests for your marina. Review each one, check the boat and dates, then approve or decline.
-      </p>
+      <p class="help-desc">${tr("Incoming berth booking requests for your marina. Review each one, check the boat and dates, then approve or decline.")}</p>
 
-      <div class="help-section-title">What you'll see</div>
+      <div class="help-section-title">${tr("What you'll see")}</div>
 
       ${step('1', 'Vessel', 'The boat name requested by the customer')}
       ${step('2', 'Sender', 'Who sent the request (WhatsApp, email or manual) and their phone number')}
@@ -25,7 +24,7 @@ export function showBookingRequestsHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">How to handle a request</div>
+      <div class="help-section-title">${tr("How to handle a request")}</div>
 
       ${step('1', 'Open', 'Tap a card to see the full request')}
       ${step('2', 'Approve', 'Assign a compatible berth for the requested dates')}
@@ -33,17 +32,14 @@ export function showBookingRequestsHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">💡 Pro Tips</div>
-      <div class="help-tips">• Approving creates a berth booking automatically
-• The vessel is created in MarinaControl if not already registered
-• Only compatible berths for the vessel size are offered
-• Maintenance berths are never offered</div>
+      <div class="help-section-title">${tr("💡 Pro Tips")}</div>
+      <div class="help-tips">${tr("• Approving creates a berth booking automatically • The vessel is created in MarinaControl if not already registered • Only compatible berths for the vessel size are offered • Maintenance berths are never offered")}</div>
 
-      <div class="help-footer">Need help? support@marinacontrol.com</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="bkrHelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="bkrHelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/CustomerDirectoryScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -18,7 +19,7 @@ let isSearchOpen = false;
 export function mountCustomerDirectoryScreen() {
   if (!store.activeClientId) {
     document.getElementById('screen').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -31,16 +32,16 @@ export function mountCustomerDirectoryScreen() {
   screen.innerHTML = `
     <div class="cd-header" id="cdHeader">
       <div class="cd-header-row">
-        <button class="cd-icon-btn" id="cdBack" aria-label="Back">
+        <button class="cd-icon-btn" id="cdBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="cd-pill">Customers</div>
+        <div class="cd-pill">${tr("Customers")}</div>
         <div class="cd-header-spacer"></div>
-        <button class="cd-icon-btn" id="cdSearchToggle" aria-label="Search">
+        <button class="cd-icon-btn" id="cdSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -52,15 +53,15 @@ export function mountCustomerDirectoryScreen() {
     </div>
 
     <div class="boats-search-bar" id="cdSearchBar" hidden>
-      <input id="cdSearchInput" type="text" placeholder="Search customers..." autocomplete="off">
-      <button type="button" class="search-cancel" id="cdSearchCancel">Cancel</button>
+      <input id="cdSearchInput" type="text" placeholder="${tr("Search customers...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="cdSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="cd-list" id="cdList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button class="bulk-btn" id="cdBulkBtn" aria-label="Bulk delete" hidden>
+    <button class="bulk-btn" id="cdBulkBtn" aria-label="${tr("Bulk delete")}" hidden>
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
            stroke="currentColor" stroke-width="1.8"
            stroke-linecap="round" stroke-linejoin="round">
@@ -75,13 +76,13 @@ export function mountCustomerDirectoryScreen() {
     <div class="bulk-bar" id="cdBulkBar" hidden>
       <label class="bulk-select-all">
         <input type="checkbox" id="cdBulkSelectAll">
-        <span>Select all</span>
+        <span>${tr("Select all")}</span>
       </label>
-      <span class="bulk-count" id="cdBulkCount">0 selected</span>
-      <button type="button" class="bulk-cancel" id="cdBulkCancel">Cancel</button>
+      <span class="bulk-count" id="cdBulkCount">${tr("0 selected")}</span>
+      <button type="button" class="bulk-cancel" id="cdBulkCancel">${tr("Cancel")}</button>
     </div>
 
-    <button class="cd-fab" id="cdFabAdd" aria-label="Add customer">
+    <button class="cd-fab" id="cdFabAdd" aria-label="${tr("Add customer")}">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
            stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -167,7 +168,7 @@ export function mountCustomerDirectoryScreen() {
     console.error('[customers] listen failed', err);
     document.getElementById('cdList').innerHTML =
       `<div class="boats-empty">
-         <h2>Couldn't load customers</h2>
+         <h2>${tr("Couldn't load customers")}</h2>
          <p>${err.message || 'Permission denied.'}</p>
        </div>`;
   });
@@ -195,8 +196,8 @@ function renderList() {
   if (!customers.length) {
     const q = (document.getElementById('cdSearchInput')?.value || '').trim();
     listEl.innerHTML = q
-      ? `<div class="boats-empty"><h2>No matches</h2><p>No customers match "${escapeHtml(q)}"</p></div>`
-      : `<div class="boats-empty"><h2>No customers yet</h2><p>Tap + to add your first customer.</p></div>`;
+      ? `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>${escapeHtml(tr("ui.noMatches", {query:q}))}</p></div>`
+      : `<div class="boats-empty"><h2>${tr("No customers yet")}</h2><p>${tr("Tap + to add your first customer.")}</p></div>`;
     return;
   }
 
@@ -212,7 +213,7 @@ function renderList() {
         <div class="cd-avatar">${escapeHtml(computeInitials(c.name))}</div>
         <div class="cd-info">
           <div class="cd-name-line">
-            <div class="cd-name">${escapeHtml(c.name || 'Unnamed')}</div>
+            <div class="cd-name">${escapeHtml(c.name || tr('Unnamed'))}</div>
             ${c.isPreferred ? '<span class="cd-star">★</span>' : ''}
           </div>
           ${c.email ? `<div class="cd-email">${escapeHtml(c.email)}</div>` : ''}
@@ -327,17 +328,17 @@ function updateCount() {
 
 function onBulkButtonTap() {
   if (!isBulkMode) { enterBulkMode(); return; }
-  if (selectedIds.size === 0) { toast('No customers selected'); return; }
+  if (selectedIds.size === 0) { toast(tr('No customers selected')); return; }
   confirmBulkDelete();
 }
 
 async function confirmBulkDelete() {
   const count = selectedIds.size;
   const ok = await confirmSheet({
-    title: `Delete ${count} customer${count === 1 ? '' : 's'}?`,
-    message: `Boats linked to these customers will be unlinked.`,
-    confirmText: 'Delete',
-    cancelText: 'Cancel'
+    title: tr(`Delete ${count} customer${count === 1 ? '' : 's'}?`),
+    message: tr(`Boats linked to these customers will be unlinked.`),
+    confirmText: tr('Delete'),
+    cancelText: tr('Cancel')
   });
   if (!ok) return;
 
@@ -350,7 +351,7 @@ async function confirmBulkDelete() {
   for (const customerId of ids) {
     try {
       const customer = currentCustomers.find(c => c.id === customerId);
-if (!customer?._docId) throw new Error('Customer document ID is missing');
+if (!customer?._docId) throw new Error(tr('Customer document ID is missing'));
 const docRef = doc(db, 'customers', customer._docId);
       await updateDoc(docRef, {
         isActive: 0,

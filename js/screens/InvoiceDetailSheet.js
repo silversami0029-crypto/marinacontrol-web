@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InvoiceDetailSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -35,18 +36,18 @@ export function showInvoiceDetail(inv) {
     <div class="sheet-title">${escapeHtml(inv.invoiceNumber || 'Invoice')}</div>
 
     <div class="md-body">
-      <div class="md-line"><span class="md-label">Customer:</span> <span class="md-value">${escapeHtml(inv.clientName || '—')}</span></div>
-      <div class="md-line"><span class="md-label">Boat:</span> <span class="md-value">${escapeHtml(inv.boatName || '—')}</span></div>
-      ${inv.description ? `<div class="md-line"><span class="md-label">Description:</span> <span class="md-value">${escapeHtml(inv.description)}</span></div>` : ''}
-      <div class="md-line"><span class="md-label">Category:</span> <span class="md-value">${escapeHtml(CATEGORY_LABELS[inv.category] || inv.category)}</span></div>
-      <div class="md-line"><span class="md-label">Amount:</span> <span class="md-value" style="font-weight:700;">£${Number(inv.amount || 0).toFixed(2)}</span></div>
-      <div class="md-line"><span class="md-label">Issue Date:</span> <span class="md-value">${escapeHtml(formatDate(inv.issueDate))}</span></div>
-      <div class="md-line"><span class="md-label">Due Date:</span> <span class="md-value">${escapeHtml(formatDate(inv.dueDate))}</span></div>
-      <div class="md-line"><span class="md-label">Status:</span> <span class="md-value" style="color:${statusColor};font-weight:700;">${escapeHtml(inv.status)}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Customer:")}</span> <span class="md-value">${escapeHtml(inv.clientName || '—')}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Boat:")}</span> <span class="md-value">${escapeHtml(inv.boatName || '—')}</span></div>
+      ${inv.description ? `<div class="md-line"><span class="md-label">${tr("Description:")}</span> <span class="md-value">${escapeHtml(inv.description)}</span></div>` : ''}
+      <div class="md-line"><span class="md-label">${tr("Category:")}</span> <span class="md-value">${escapeHtml(tr(CATEGORY_LABELS[inv.category] || inv.category))}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Amount:")}</span> <span class="md-value" style="font-weight:700;">£${Number(inv.amount || 0).toFixed(2)}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Issue Date:")}</span> <span class="md-value">${escapeHtml(formatDate(inv.issueDate))}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Due Date:")}</span> <span class="md-value">${escapeHtml(formatDate(inv.dueDate))}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Status:")}</span> <span class="md-value" style="color:${statusColor};font-weight:700;">${escapeHtml(tr(inv.status))}</span></div>
     </div>
 
-    ${!isPaid ? `<button type="button" class="add-save" id="ivMarkPaid" style="margin-top:16px;">Mark as Paid</button>` : ''}
-    <button type="button" class="md-close-btn" id="ivDetailClose" style="margin-top:8px;">Close</button>
+    ${!isPaid ? `<button type="button" class="add-save" id="ivMarkPaid" style="margin-top:16px;">${tr("Mark as Paid")}</button>` : ''}
+    <button type="button" class="md-close-btn" id="ivDetailClose" style="margin-top:8px;">${tr("Close")}</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -68,7 +69,7 @@ export function showInvoiceDetail(inv) {
   if (markBtn) {
     markBtn.addEventListener('click', async () => {
       markBtn.disabled = true;
-      markBtn.textContent = 'Saving…';
+      markBtn.textContent = tr('Saving…');
       try {
         await updateDoc(doc(db, 'invoices', String(inv._docId)), {
           status: 'PAID',
@@ -84,12 +85,12 @@ export function showInvoiceDetail(inv) {
           detail: `£${Number(inv.amount || 0).toFixed(2)}`
         });
         close();
-        toast('Invoice marked as paid', { kind: 'success' });
+        toast(tr('Invoice marked as paid'), { kind: 'success' });
       } catch (err) {
         console.error('[invoice mark paid] failed', err);
         markBtn.disabled = false;
-        markBtn.textContent = 'Mark as Paid';
-        toast('Failed to update invoice', { kind: 'error' });
+        markBtn.textContent = tr('Mark as Paid');
+        toast(tr('Failed to update invoice'), { kind: 'error' });
       }
     });
   }
@@ -98,7 +99,7 @@ export function showInvoiceDetail(inv) {
 function formatDate(ts) {
   if (!ts) return '—';
   const d = new Date(Number(ts));
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(uiLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function escapeHtml(s) {

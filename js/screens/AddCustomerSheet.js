@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddCustomerSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -18,7 +19,7 @@ export function showAddCustomerChooser() {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Add Customer</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Add Customer")}</div>
 
     <div class="sheet-gap-8"></div>
 
@@ -32,8 +33,8 @@ export function showAddCustomerChooser() {
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">Add Single Customer</div>
-        <div class="sheet-item-subtitle">Add one customer manually with all details</div>
+        <div class="sheet-item-title">${tr("Add Single Customer")}</div>
+        <div class="sheet-item-subtitle">${tr("Add one customer manually with all details")}</div>
       </div>
       <div class="sheet-chevron">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -57,8 +58,8 @@ export function showAddCustomerChooser() {
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">Bulk Import</div>
-        <div class="sheet-item-subtitle">Import multiple customers from a CSV file</div>
+        <div class="sheet-item-title">${tr("Bulk Import")}</div>
+        <div class="sheet-item-subtitle">${tr("Import multiple customers from a CSV file")}</div>
       </div>
       <div class="sheet-chevron">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -104,42 +105,40 @@ function showAddCustomerForm() {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Add Customer</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Add Customer")}</div>
 
     <form id="acsForm" class="add-form" novalidate autocomplete="off">
       <input type="text"     name="fakeusernameremembered" style="display:none" tabindex="-1" autocomplete="username">
       <input type="password" name="fakepasswordremembered"  style="display:none" tabindex="-1" autocomplete="current-password">
 
       <div class="add-scroll">
-        <label class="add-label" for="acs-name">Full Name</label>
+        <label class="add-label" for="acs-name">${tr("Full Name")}</label>
         <input class="add-input" id="acs-name" name="acs-name"
-               type="text" placeholder="Full Name"
+               type="text" placeholder="${tr("Full Name")}"
                autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
 
-        <label class="add-label" for="acs-email">Email</label>
+        <label class="add-label" for="acs-email">${tr("Email")}</label>
         <input class="add-input" id="acs-email" name="acs-email"
-               type="email" placeholder="Email"
+               type="email" placeholder="${tr("Email")}"
                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 
-        <label class="add-label" for="acs-phone">Phone</label>
+        <label class="add-label" for="acs-phone">${tr("Phone")}</label>
         <input class="add-input" id="acs-phone" name="acs-phone"
-               type="tel" placeholder="Phone"
+               type="tel" placeholder="${tr("Phone")}"
                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 
-        <label class="add-label" for="acs-notes">Notes</label>
+        <label class="add-label" for="acs-notes">${tr("Notes")}</label>
         <textarea class="add-input" id="acs-notes" name="acs-notes"
-                  placeholder="Notes" rows="3"
+                  placeholder="${tr("Notes")}" rows="3"
                   autocomplete="off" spellcheck="false"></textarea>
 
         <label class="add-checkbox">
           <input type="checkbox" id="acs-preferred">
-          <span>★ Preferred Customer</span>
+          <span>${tr("★ Preferred Customer")}</span>
         </label>
       </div>
 
-      <button type="submit" class="add-save" id="acs-save">
-        + Add Customer
-      </button>
+      <button type="submit" class="add-save" id="acs-save">${tr("+ Add Customer")}</button>
     </form>
   `;
 
@@ -172,16 +171,16 @@ function showAddCustomerForm() {
     if (!name) { sheet.querySelector('#acs-name').focus(); return; }
 
     save.disabled = true;
-    save.textContent = 'Adding…';
+    save.textContent = tr('Adding…');
 
     try {
       await createCustomer({ name, email, phone, notes, isPreferred });
       close();
-      toast(`Customer added: ${name}`, { kind: 'success' });
+      toast(tr(`Customer added: ${name}`), { kind: 'success' });
     } catch (err) {
       console.error('[add customer] failed', err);
       save.disabled = false;
-      save.textContent = '+ Add Customer';
+      save.textContent = tr('+ Add Customer');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');
@@ -198,7 +197,7 @@ function showAddCustomerForm() {
    ============================================================ */
 async function createCustomer({ name, email, phone, notes, isPreferred }) {
   const clientId = Number(store.activeClientId);
-  if (!clientId) throw new Error('No active client');
+  if (!clientId) throw new Error(tr('No active client'));
 
   // 1. Find next id = max(existing.id) + 1
   const snap = await getDocs(

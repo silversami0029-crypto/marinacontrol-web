@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ChecklistHelp.js
 
 export function showChecklistHelp() {
@@ -9,13 +10,11 @@ export function showChecklistHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">📋 Checklists</div>
+      <div class="help-pill">${tr("📋 Checklists")}</div>
 
-      <p class="help-desc">
-        View completion status of all checklists across your boats. Checklists are created and completed in the Android app — the web view is for management oversight.
-      </p>
+      <p class="help-desc">${tr("View completion status of all checklists across your boats. Checklists are created and completed in the Android app — the web view is for management oversight.")}</p>
 
-      <div class="help-section-title">What you can see</div>
+      <div class="help-section-title">${tr("What you can see")}</div>
 
       ${step('1', 'Progress', 'How many items are complete out of the total')}
       ${step('2', 'Results', 'Items passed vs. items that failed')}
@@ -24,18 +23,14 @@ export function showChecklistHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">Status</div>
-      <div class="help-tips">• <b>Pending</b> — checklist created, not yet started
+      <div class="help-section-title">${tr("Status")}</div>
+      <div class="help-tips">• <b>${tr("Pending")}</b>${tr("— checklist created, not yet started •")}<b>${tr("In Progress")}</b>${tr("— some items completed •")}<b>${tr("Completed")}</b>${tr("— all items processed")}</div>
 
-• <b>In Progress</b> — some items completed
-
-• <b>Completed</b> — all items processed</div>
-
-      <div class="help-footer">Need help? support@marinacontrol.com</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="chkHelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="chkHelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

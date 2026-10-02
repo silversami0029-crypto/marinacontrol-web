@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AdjustQuantitySheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -14,19 +15,19 @@ export function showAdjustQuantitySheet(item) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Adjust Quantity</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Adjust Quantity")}</div>
 
     <form id="aqForm" class="add-form" novalidate>
       <div class="add-scroll">
-        <label class="add-label">Item</label>
+        <label class="add-label">${tr("Item")}</label>
         <div class="add-input" style="padding-top:14px; padding-bottom:14px; color:var(--color-text-secondary);">
           ${escapeHtml(item.name || 'Item')} — current Qty: ${item.quantity}${item.unit ? ' ' + escapeHtml(item.unit) : ''}
         </div>
 
-        <label class="add-label" for="aq-input">New Quantity</label>
+        <label class="add-label" for="aq-input">${tr("New Quantity")}</label>
         <input class="add-input" id="aq-input" type="number" inputmode="numeric" min="0" step="1" value="${item.quantity ?? 0}">
       </div>
-      <button type="submit" class="add-save" id="aq-save">Update Quantity</button>
+      <button type="submit" class="add-save" id="aq-save">${tr("Update Quantity")}</button>
     </form>
   `;
 
@@ -54,7 +55,7 @@ export function showAdjustQuantitySheet(item) {
 
     const btn = sheet.querySelector('#aq-save');
     btn.disabled = true;
-    btn.textContent = 'Saving…';
+    btn.textContent = tr('Saving…');
 
     try {
       const now = Date.now();
@@ -79,12 +80,12 @@ export function showAdjustQuantitySheet(item) {
       });
 
       close();
-      toast(`Quantity updated to ${newQty}`, { kind: 'success' });
+      toast(tr(`Quantity updated to ${newQty}`), { kind: 'success' });
     } catch (err) {
       console.error('[inventory adjust] failed', err);
       btn.disabled = false;
-      btn.textContent = 'Update Quantity';
-      toast('Failed to update quantity', { kind: 'error' });
+      btn.textContent = tr('Update Quantity');
+      toast(tr('Failed to update quantity'), { kind: 'error' });
     }
   });
 }

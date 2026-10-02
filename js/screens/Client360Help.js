@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/Client360Help.js
 
 export function showClient360Help() {
@@ -9,13 +10,11 @@ export function showClient360Help() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">360° ⓘ Client View</div>
+      <div class="help-pill">${tr("360° ⓘ Client View")}</div>
 
-      <p class="help-desc">
-        Get a complete overview of any client — all key information in one place.
-      </p>
+      <p class="help-desc">${tr("Get a complete overview of any client — all key information in one place.")}</p>
 
-      <div class="help-section-title">What you'll see</div>
+      <div class="help-section-title">${tr("What you'll see")}</div>
 
       ${step('1', 'Client Card', 'Client name, email, phone, and membership status.')}
       ${step('2', 'Action Banner', 'Alerts you to outstanding invoices, expiring documents, and safety items needing attention.')}
@@ -27,17 +26,14 @@ export function showClient360Help() {
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">Tips</div>
-      <div class="help-tips">• Use the search icon to find any client by name or email
-• Tap any card to view more details
-• Red alert banner shows items needing immediate attention
-• Swipe back to return to Fleet Dashboard</div>
+      <div class="help-section-title">${tr("Tips")}</div>
+      <div class="help-tips">${tr("• Use the search icon to find any client by name or email • Tap any card to view more details • Red alert banner shows items needing immediate attention • Swipe back to return to Fleet Dashboard")}</div>
 
-      <div class="help-footer">Need help? support@marinacontrol.com</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="c360HelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="c360HelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

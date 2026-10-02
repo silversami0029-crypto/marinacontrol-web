@@ -1,3 +1,4 @@
+import { initLanguage } from './i18n.js';
 // js/router.js
 import { store } from './store.js';
 import { renderTopBar, resetTopBarNotifications } from './components/TopBar.js';
@@ -29,6 +30,8 @@ import { mountPermissionsScreen } from './screens/PermissionsScreen.js';
 import { mountTaskScreen } from './screens/TaskScreen.js';
 import { mountFleetScreen } from './screens/FleetScreen.js';
 import { mountNotificationsScreen } from './screens/NotificationsScreen.js';
+
+initLanguage();
 
 const PROTECTED = ['/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/client-360','/notifications'];
 

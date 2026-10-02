@@ -1,3 +1,5 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
+import { t } from '../i18n.js';
 // js/components/TopBar.js
 import { store } from '../store.js';
 import { formatSyncTime } from '../utils.js';
@@ -28,8 +30,8 @@ export function renderTopBar(route) {
   if (!syncEl) return;
 
   syncEl.textContent = store.syncTime
-    ? `Online · Synced ${formatSyncTime(store.syncTime)}`
-    : 'Online';
+    ? t('sync', {time:tr(formatSyncTime(store.syncTime))})
+    : t('Online');
 
   wireBell();
   listenForNotifications();
@@ -116,17 +118,17 @@ function renderMarinaSelector() {
     button.className = 'marina-selector';
     button.setAttribute('aria-label', 'Manage and switch marinas');
     button.setAttribute('aria-haspopup', 'dialog');
-    button.style.cssText = 'display:block;max-width:260px;width:100%;min-width:0;height:32px;padding:4px 8px;border:1px solid #AEB6C1;border-radius:6px;background:#1C222A;color:#F5F7F9;font:inherit;font-size:14px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;';
+    button.style.cssText = 'display:block;max-width:260px;width:100%;min-width:0;height:32px;padding:4px 8px;border:1px solid #AEB6C1;border-radius:6px;background:#1C222A;color:#F5F7F9;font:inherit;font-size:14px;text-align:start;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;';
     title.after(button);
     button.addEventListener('click', async () => {
       try {
         const { showManageMarinasSheet } = await import('../screens/ManageMarinasSheet.js');
         showManageMarinasSheet();
-      } catch (error) { console.error('Marina sheet failed', error); alert('Unable to open marina management. Please refresh and try again.'); }
+      } catch (error) { console.error('Marina sheet failed', error); alert(tr('Unable to open marina management. Please refresh and try again.')); }
     });
   }
   title.hidden = !!store.activeMarina;
-  button.textContent = `${store.activeMarina?.name || 'Marinas'} · ${store.activeRole || 'staff'} ▾`;
+  button.textContent = `${store.activeMarina?.name || t('Marinas')} · ${t(store.activeRole || 'staff')} ▾`;
   button.hidden = !store.activeMarina;
   button.style.display = button.hidden ? 'none' : 'block';
   button.disabled = store.marinaSwitching;

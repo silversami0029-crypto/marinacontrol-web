@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/AssignBoatSheet.js
 // Assign boat to berth — mirrors AlertDialog in showAssignDialogLocked()
 
@@ -23,12 +24,9 @@ export function showAssignBoatSheet(opts) {
       <div class="assign-handle"></div>
       <div class="assign-title">Assign Boat to ${esc(berth.berthNumber)}</div>
       <div class="assign-divider"></div>
-      <div class="assign-empty">
-        No unassigned boats available.<br>
-        Release a boat from another berth first.
-      </div>
+      <div class="assign-empty">${tr("No unassigned boats available.")}<br>${tr("Release a boat from another berth first.")}</div>
       <div class="assign-divider"></div>
-      <button class="assign-cancel" id="assignBoatCancel">Cancel</button>
+      <button class="assign-cancel" id="assignBoatCancel">${tr("Cancel")}</button>
     `;
   } else {
     sheet.innerHTML = `
@@ -43,7 +41,7 @@ export function showAssignBoatSheet(opts) {
         `).join('')}
       </div>
       <div class="assign-divider"></div>
-      <button class="assign-cancel" id="assignBoatCancel">Cancel</button>
+      <button class="assign-cancel" id="assignBoatCancel">${tr("Cancel")}</button>
     `;
   }
 

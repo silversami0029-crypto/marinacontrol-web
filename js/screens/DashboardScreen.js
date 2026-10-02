@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DashboardScreen.js
 // Portfolio Dashboard — mirrors PortfolioDashboardFragment.java
 
@@ -17,38 +18,36 @@ export async function mountDashboardScreen() {
 
    <!-- Header pill -->
       <div class="account-header">
-        <div class="account-pill">Portfolio Overview</div>
+        <div class="account-pill">${tr("Portfolio Overview")}</div>
       </div>
 
 
     
-      <div class="pf-context" id="pfContext">Loading…</div>
+      <div class="pf-context" id="pfContext">${tr("Loading…")}</div>
       <div class="pf-divider"></div>
 
       <div class="pf-filters">
         <div class="pf-filter-col">
-          <div class="pf-filter-label">Country</div>
+          <div class="pf-filter-label">${tr("Country")}</div>
           <button class="pf-filter-btn" id="pfCountryBtn">
-            <span id="pfCountryText">All countries</span>
+            <span id="pfCountryText">${tr("All countries")}</span>
             <span class="pf-caret">⌄</span>
           </button>
         </div>
 
         <div class="pf-filter-col">
-          <div class="pf-filter-label">Marina</div>
+          <div class="pf-filter-label">${tr("Marina")}</div>
           <button class="pf-filter-btn" id="pfMarinaBtn">
-            <span id="pfMarinaText">All marinas</span>
+            <span id="pfMarinaText">${tr("All marinas")}</span>
             <span class="pf-caret">⌄</span>
           </button>
         </div>
       </div>
 
       <div class="pf-card pf-card--big">
-        <div class="pf-card-label">Berths occupied</div>
+        <div class="pf-card-label">${tr("Berths occupied")}</div>
         <div class="pf-card-value" id="pfBerthsValue">0 / 0</div>
-        <div class="pf-card-sub" id="pfBerthsSub">
-          0% portfolio occupancy
-        </div>
+        <div class="pf-card-sub" id="pfBerthsSub">${tr("0% portfolio occupancy")}</div>
 
         <div class="pf-progress-track">
           <div
@@ -61,27 +60,27 @@ export async function mountDashboardScreen() {
 
       <div class="pf-row-2">
         <div class="pf-card" id="pfTasksCard">
-          <div class="pf-card-label">Open tasks</div>
+          <div class="pf-card-label">${tr("Open tasks")}</div>
           <div class="pf-card-value-sm" id="pfTasksValue">0</div>
-          <div class="pf-card-sub" id="pfTasksSub">0 overdue</div>
+          <div class="pf-card-sub" id="pfTasksSub">${tr("0 overdue")}</div>
         </div>
 
         <div class="pf-card" id="pfDockCard">
-          <div class="pf-card-label">Dock Walk</div>
+          <div class="pf-card-label">${tr("Dock Walk")}</div>
           <div class="pf-card-value-sm" id="pfDockValue">0</div>
-          <div class="pf-card-sub">issues found</div>
+          <div class="pf-card-sub">${tr("issues found")}</div>
         </div>
       </div>
 
       <div class="pf-comparison-head">
-        <div class="pf-comparison-title">Marina comparison</div>
-        <div class="pf-comparison-hint">Highest attention first</div>
+        <div class="pf-comparison-title">${tr("Marina comparison")}</div>
+        <div class="pf-comparison-hint">${tr("Highest attention first")}</div>
       </div>
 
       <div class="pf-comparison-cols">
-        <div class="pf-col-marina">Marina</div>
-        <div class="pf-col-occ">Occupancy</div>
-        <div class="pf-col-issues">Issues</div>
+        <div class="pf-col-marina">${tr("Marina")}</div>
+        <div class="pf-col-occ">${tr("Occupancy")}</div>
+        <div class="pf-col-issues">${tr("Issues")}</div>
       </div>
 
       <div class="pf-comparison-list" id="pfComparisonList">
@@ -90,9 +89,7 @@ export async function mountDashboardScreen() {
         </div>
       </div>
 
-      <div class="pf-empty" id="pfEmpty" hidden>
-        No marinas available for this scope.
-      </div>
+      <div class="pf-empty" id="pfEmpty" hidden>${tr("No marinas available for this scope.")}</div>
     </div>
   `;
 
@@ -107,13 +104,13 @@ export async function mountDashboardScreen() {
   document
     .getElementById('pfTasksCard')
     .addEventListener('click', () => {
-      toast('Maintenance is coming to the web app');
+      toast(tr('Maintenance is coming to the web app'));
     });
 
   document
     .getElementById('pfDockCard')
     .addEventListener('click', () => {
-      toast('Dock Walk is available in the Android app');
+      toast(tr('Dock Walk is available in the Android app'));
     });
 
   await loadData();
@@ -140,9 +137,7 @@ async function loadData() {
     console.error('[dashboard] load failed', err);
 
     document.getElementById('pfComparisonList').innerHTML = `
-      <div class="pf-empty">
-        Couldn't load portfolio data.
-      </div>
+      <div class="pf-empty">${tr("Couldn't load portfolio data.")}</div>
     `;
   }
 }
@@ -173,10 +168,10 @@ function showCountryMenu() {
     selectedMarinaId = -1;
 
     document.getElementById('pfCountryText').textContent =
-      value || 'All countries';
+      value || tr('All countries');
 
     document.getElementById('pfMarinaText').textContent =
-      'All marinas';
+      tr('All marinas');
 
     renderContext();
     renderComparison();
@@ -211,7 +206,7 @@ function showMarinaMenu() {
     );
 
     document.getElementById('pfMarinaText').textContent =
-      found ? found.name : 'All marinas';
+      found ? found.name : tr('All marinas');
 
     renderContext();
     renderComparison();
@@ -244,9 +239,7 @@ function showMenu(items, onPick) {
 
     <div class="assign-divider"></div>
 
-    <button class="assign-cancel" id="pfMenuCancel">
-      Cancel
-    </button>
+    <button class="assign-cancel" id="pfMenuCancel">${tr("Cancel")}</button>
   `;
 
   document
@@ -315,7 +308,7 @@ function renderContext() {
 
   if (selectedMarinaId !== -1 && visible.length === 1) {
     element.textContent =
-      `${visible[0].name} • Individual marina`;
+      tr(`${visible[0].name} • Individual marina`);
 
     return;
   }
@@ -324,7 +317,7 @@ function renderContext() {
 
   element.textContent =
     `${scope} • ${visible.length} ` +
-    `${visible.length === 1 ? 'marina' : 'marinas'}`;
+    `${visible.length === 1 ? tr('marina') : tr('marinas')}`;
 }
 
 async function renderPortfolioStats() {
@@ -335,7 +328,7 @@ async function renderPortfolioStats() {
       '0 / 0';
 
     document.getElementById('pfBerthsSub').textContent =
-      '0% portfolio occupancy';
+      tr('0% portfolio occupancy');
 
     document.getElementById('pfProgress').style.width =
       '0%';
@@ -361,7 +354,7 @@ async function renderPortfolioStats() {
     `${occupiedBerths} / ${totalBerths}`;
 
   document.getElementById('pfBerthsSub').textContent =
-    `${rate}% portfolio occupancy`;
+    tr(`${rate}% portfolio occupancy`);
 
   document.getElementById('pfProgress').style.width =
     `${rate}%`;
@@ -437,7 +430,7 @@ async function renderComparison() {
         );
 
         if (marina) {
-          toast(`${marina.name} — dashboard coming soon`);
+          toast(tr(`${marina.name} — dashboard coming soon`));
         }
       });
     });

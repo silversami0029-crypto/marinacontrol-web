@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ShiftScheduleScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -28,15 +29,15 @@ export async function mountShiftScheduleScreen() {
   screen.innerHTML = `
     <div class="eq-header" id="shHeader">
       <div class="eq-header-row">
-        <button class="eq-icon-btn" id="shBack" aria-label="Back">
+        <button class="eq-icon-btn" id="shBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="eq-pill">Shift Schedule</div>
-        <button class="eq-icon-btn" id="shHelp" aria-label="Help">
+        <div class="eq-pill">${tr("Shift Schedule")}</div>
+        <button class="eq-icon-btn" id="shHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +51,7 @@ export async function mountShiftScheduleScreen() {
     </div>
 
     <div class="sh-weeknav">
-      <button class="sh-nav-btn" id="shPrev" aria-label="Previous week">
+      <button class="sh-nav-btn" id="shPrev" aria-label="${tr("Previous week")}">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
              stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round">
@@ -58,14 +59,14 @@ export async function mountShiftScheduleScreen() {
         </svg>
       </button>
       <div class="sh-week-label" id="shWeekLabel"></div>
-      <button class="sh-nav-btn" id="shNext" aria-label="Next week">
+      <button class="sh-nav-btn" id="shNext" aria-label="${tr("Next week")}">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
              stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
       </button>
-      <button class="sh-nav-btn sh-today-btn" id="shToday" aria-label="Today">
+      <button class="sh-nav-btn sh-today-btn" id="shToday" aria-label="${tr("Today")}">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
              stroke="currentColor" stroke-width="1.8"
              stroke-linecap="round" stroke-linejoin="round">
@@ -156,7 +157,7 @@ function formatWeekLabel() {
   const end = new Date(weekStart);
   end.setDate(end.getDate() + 6);
   const fmt = { month: 'short', day: 'numeric' };
-  return `${weekStart.toLocaleDateString('en-GB', fmt)} – ${end.toLocaleDateString('en-GB', fmt)}`;
+  return `${weekStart.toLocaleDateString(uiLocale(), fmt)} – ${end.toLocaleDateString(uiLocale(), fmt)}`;
 }
 
 function subscribeToShifts() {
@@ -190,7 +191,7 @@ function subscribeToShifts() {
     console.error('[shift] listen failed', err);
     const body = document.getElementById('shBody');
     if (body) {
-      body.innerHTML = `<div class="boats-empty"><h2>Couldn't load shifts</h2><p>${escapeHtml(err.message || 'Permission denied.')}</p></div>`;
+      body.innerHTML = `<div class="boats-empty"><h2>${tr("Couldn't load shifts")}</h2><p>${escapeHtml(err.message || 'Permission denied.')}</p></div>`;
     }
   });
 }
@@ -238,9 +239,9 @@ function renderGrid() {
     ${rows}
     <div class="sh-legend">
       <span class="sh-legend-swatch is-assigned"></span>
-      <span class="sh-legend-label">Assigned</span>
+      <span class="sh-legend-label">${tr("Assigned")}</span>
       <span class="sh-legend-swatch"></span>
-      <span class="sh-legend-label">Unassigned</span>
+      <span class="sh-legend-label">${tr("Unassigned")}</span>
     </div>
   `;
 
@@ -269,10 +270,10 @@ async function openCell(ts, shiftType, existing) {
     } else if (choice === 'remove') {
       try {
         await deleteDoc(doc(db, 'shift_assignments', String(existing._docId)));
-        toast('Assignment removed', { kind: 'success' });
+        toast(tr('Assignment removed'), { kind: 'success' });
       } catch (err) {
         console.error('[shift] remove failed', err);
-        toast('Failed to remove', { kind: 'error' });
+        toast(tr('Failed to remove'), { kind: 'error' });
       }
     }
   } else {
@@ -292,7 +293,7 @@ function showCellMenu(existing, shiftType, ts) {
     const sheet = document.createElement('div');
     sheet.className = 'sheet';
 
-    const dateLabel = new Date(ts).toLocaleDateString('en-GB', {
+    const dateLabel = new Date(ts).toLocaleDateString(uiLocale(), {
       weekday: 'short', day: '2-digit', month: 'short'
     });
 
@@ -306,7 +307,7 @@ function showCellMenu(existing, shiftType, ts) {
             <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>
           </svg>
         </div>
-        <div class="sheet-item-text"><div class="sheet-item-title">Change Assignment</div></div>
+        <div class="sheet-item-text"><div class="sheet-item-title">${tr("Change Assignment")}</div></div>
       </div>
       <div class="sheet-gap-8"></div>
 
@@ -317,7 +318,7 @@ function showCellMenu(existing, shiftType, ts) {
             <path d="M6 6l1 14a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-14"/>
           </svg>
         </div>
-        <div class="sheet-item-text"><div class="sheet-item-title">Remove Assignment</div></div>
+        <div class="sheet-item-text"><div class="sheet-item-title">${tr("Remove Assignment")}</div></div>
       </div>
     `;
 

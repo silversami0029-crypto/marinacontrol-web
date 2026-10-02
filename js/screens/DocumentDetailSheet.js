@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DocumentDetailSheet.js
 
 export function showDocumentDetail(item) {
@@ -23,14 +24,14 @@ export function showDocumentDetail(item) {
     <div class="sheet-title">${escapeHtml(item.name || 'Document')}</div>
 
     <div class="md-body">
-      <div class="md-line"><span class="md-label">Type:</span> <span class="md-value">${escapeHtml(item.type || '—')}</span></div>
-      <div class="md-line"><span class="md-label">Status:</span> <span class="md-value" style="color:${statusColor};">${escapeHtml(statusText)}</span></div>
-      ${item.expiryDate ? `<div class="md-line"><span class="md-label">Expiry:</span> <span class="md-value">${escapeHtml(formatDate(item.expiryDate))}</span></div>` : ''}
-      ${item.assignedTo ? `<div class="md-line"><span class="md-label">Assigned To:</span> <span class="md-value">${escapeHtml(item.assignedTo)}</span></div>` : ''}
-      ${item.notes ? `<div class="md-spacer"></div><div class="md-line"><span class="md-label">Notes:</span> <span class="md-value">${escapeHtml(item.notes)}</span></div>` : ''}
+      <div class="md-line"><span class="md-label">${tr("Type:")}</span> <span class="md-value">${escapeHtml(tr(item.type || '—'))}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Status:")}</span> <span class="md-value" style="color:${statusColor};">${escapeHtml(tr(statusText))}</span></div>
+      ${item.expiryDate ? `<div class="md-line"><span class="md-label">${tr("Expiry:")}</span> <span class="md-value">${escapeHtml(formatDate(item.expiryDate))}</span></div>` : ''}
+      ${item.assignedTo ? `<div class="md-line"><span class="md-label">${tr("Assigned To:")}</span> <span class="md-value">${escapeHtml(item.assignedTo)}</span></div>` : ''}
+      ${item.notes ? `<div class="md-spacer"></div><div class="md-line"><span class="md-label">${tr("Notes:")}</span> <span class="md-value">${escapeHtml(item.notes)}</span></div>` : ''}
     </div>
 
-    <button type="button" class="md-close-btn" id="docDetailClose">Close</button>
+    <button type="button" class="md-close-btn" id="docDetailClose">${tr("Close")}</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -51,7 +52,7 @@ export function showDocumentDetail(item) {
 
 function formatDate(ts) {
   try {
-    return new Date(ts).toLocaleDateString('en-GB', {
+    return new Date(ts).toLocaleDateString(uiLocale(), {
       day: '2-digit', month: 'short', year: 'numeric'
     });
   } catch { return '—'; }

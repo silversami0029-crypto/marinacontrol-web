@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InventoryDetailSheet.js
 
 export function showInventoryDetail(item) {
@@ -14,18 +15,18 @@ export function showInventoryDetail(item) {
     <div class="sheet-title">${escapeHtml(item.name || 'Inventory Item')}</div>
 
     <div class="md-body">
-      <div class="md-line"><span class="md-label">Category:</span> <span class="md-value">${escapeHtml(item.category || '—')}</span></div>
-      ${item.location ? `<div class="md-line"><span class="md-label">Location:</span> <span class="md-value">${escapeHtml(item.location)}</span></div>` : ''}
-      <div class="md-line"><span class="md-label">Quantity:</span> <span class="md-value">${item.quantity}${item.unit ? ' ' + escapeHtml(item.unit) : ''}</span></div>
-      <div class="md-line"><span class="md-label">Reorder Level:</span> <span class="md-value">${item.reorderLevel}</span></div>
-      <div class="md-line"><span class="md-label">Status:</span> <span class="md-value" style="color:${state.color};">${state.label}</span></div>
-      ${item.supplier ? `<div class="md-line"><span class="md-label">Supplier:</span> <span class="md-value">${escapeHtml(item.supplier)}</span></div>` : ''}
-      ${item.assignedTo ? `<div class="md-line"><span class="md-label">Assigned To:</span> <span class="md-value">${escapeHtml(item.assignedTo)}</span></div>` : ''}
-      ${item.lastUpdated ? `<div class="md-line"><span class="md-label">Last Updated:</span> <span class="md-value">${escapeHtml(item.lastUpdated)}</span></div>` : ''}
-      ${item.notes ? `<div class="md-spacer"></div><div class="md-line"><span class="md-label">Notes:</span> <span class="md-value">${escapeHtml(item.notes)}</span></div>` : ''}
+      <div class="md-line"><span class="md-label">${tr("Category:")}</span> <span class="md-value">${escapeHtml(tr(item.category || '—'))}</span></div>
+      ${item.location ? `<div class="md-line"><span class="md-label">${tr("Location:")}</span> <span class="md-value">${escapeHtml(item.location)}</span></div>` : ''}
+      <div class="md-line"><span class="md-label">${tr("Quantity:")}</span> <span class="md-value">${item.quantity}${item.unit ? ' ' + escapeHtml(item.unit) : ''}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Reorder Level:")}</span> <span class="md-value">${item.reorderLevel}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Status:")}</span> <span class="md-value" style="color:${state.color};">${tr(state.label)}</span></div>
+      ${item.supplier ? `<div class="md-line"><span class="md-label">${tr("Supplier:")}</span> <span class="md-value">${escapeHtml(item.supplier)}</span></div>` : ''}
+      ${item.assignedTo ? `<div class="md-line"><span class="md-label">${tr("Assigned To:")}</span> <span class="md-value">${escapeHtml(item.assignedTo)}</span></div>` : ''}
+      ${item.lastUpdated ? `<div class="md-line"><span class="md-label">${tr("Last Updated:")}</span> <span class="md-value">${escapeHtml(item.lastUpdated)}</span></div>` : ''}
+      ${item.notes ? `<div class="md-spacer"></div><div class="md-line"><span class="md-label">${tr("Notes:")}</span> <span class="md-value">${escapeHtml(item.notes)}</span></div>` : ''}
     </div>
 
-    <button type="button" class="md-close-btn" id="invDetailClose">Close</button>
+    <button type="button" class="md-close-btn" id="invDetailClose">${tr("Close")}</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);

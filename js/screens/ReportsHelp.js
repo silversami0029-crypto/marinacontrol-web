@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ReportsHelp.js
 
 // js/screens/ReportsHelp.js
@@ -11,11 +12,9 @@ export function showReportsHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">📊 Reports</div>
+      <div class="help-pill">${tr("📊 Reports")}</div>
 
-      <p class="help-desc">
-        Generate and export reports to track your fleet's financial health, documents, and occupancy.
-      </p>
+      <p class="help-desc">${tr("Generate and export reports to track your fleet's financial health, documents, and occupancy.")}</p>
 
       ${step('1', 'Unpaid Invoices', 'See all outstanding invoices, overdue amounts, and what each boat owes.')}
       ${step('2', 'Expiring Documents', 'Track certificates, insurance, and registrations before they expire.')}
@@ -24,16 +23,14 @@ export function showReportsHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="rp-help-heading">📄 Exporting Reports</div>
-      <div class="rp-help-export">
-        Tap the Export button to generate a PDF report. You can then share it via email, messages, or save it to your device.
-      </div>
+      <div class="rp-help-heading">${tr("📄 Exporting Reports")}</div>
+      <div class="rp-help-export">${tr("Tap the Export button to generate a PDF report. You can then share it via email, messages, or save it to your device.")}</div>
 
-      <div class="help-footer">Need help? support@marinacontrol.com</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="rpHelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="rpHelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

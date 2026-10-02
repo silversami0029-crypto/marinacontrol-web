@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/CrewManagementScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -23,15 +24,15 @@ export function mountCrewManagementScreen() {
   screen.innerHTML = `
     <div class="cm-header" id="cmHeader">
       <div class="cm-header-row">
-        <button class="cm-icon-btn" id="cmBack" aria-label="Back">
+        <button class="cm-icon-btn" id="cmBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="cm-pill">Crew</div>
-        <button class="cm-icon-btn" id="cmHelp" aria-label="Help">
+        <div class="cm-pill">${tr("Crew")}</div>
+        <button class="cm-icon-btn" id="cmHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -41,7 +42,7 @@ export function mountCrewManagementScreen() {
           </svg>
         </button>
         <div class="cm-header-spacer"></div>
-        <button class="cm-icon-btn" id="cmSearchToggle" aria-label="Search">
+        <button class="cm-icon-btn" id="cmSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -53,15 +54,15 @@ export function mountCrewManagementScreen() {
     </div>
 
     <div class="boats-search-bar" id="cmSearchBar" hidden>
-      <input id="cmSearchInput" type="text" placeholder="Search crew..." autocomplete="off">
-      <button type="button" class="search-cancel" id="cmSearchCancel">Cancel</button>
+      <input id="cmSearchInput" type="text" placeholder="${tr("Search crew...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="cmSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="cm-list" id="cmList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button class="cm-fab" id="cmFabAdd" aria-label="Add crew">
+    <button class="cm-fab" id="cmFabAdd" aria-label="${tr("Add crew")}">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
            stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -102,7 +103,7 @@ function subscribeToCrew() {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
     document.getElementById('cmList').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -136,7 +137,7 @@ function subscribeToCrew() {
     console.error('[crew] listen failed', err);
     document.getElementById('cmList').innerHTML =
       `<div class="boats-empty">
-         <h2>Couldn't load crew</h2>
+         <h2>${tr("Couldn't load crew")}</h2>
          <p>${err.message || 'Permission denied.'}</p>
        </div>`;
   });
@@ -161,8 +162,8 @@ function renderList() {
   if (!crew.length) {
     const q = (document.getElementById('cmSearchInput')?.value || '').trim();
     listEl.innerHTML = q
-      ? `<div class="boats-empty"><h2>No matches</h2><p>No crew match "${escapeHtml(q)}"</p></div>`
-      : `<div class="boats-empty"><h2>No crew yet</h2><p>Tap + to add your first crew member.</p></div>`;
+      ? `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>${escapeHtml(tr("ui.noMatches", {query:q}))}</p></div>`
+      : `<div class="boats-empty"><h2>${tr("No crew yet")}</h2><p>${tr("Tap + to add your first crew member.")}</p></div>`;
     return;
   }
 
@@ -176,7 +177,7 @@ function renderList() {
         ${c.notes ? `<div class="cm-notes">${escapeHtml(c.notes)}</div>` : ''}
         ${c.status ? `<div class="cm-status">${escapeHtml(c.status)}</div>` : ''}
       </div>
-      <button class="cm-kebab" data-crew-menu="${c.id}" aria-label="Menu">
+      <button class="cm-kebab" data-crew-menu="${c.id}" aria-label="${tr("Menu")}">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
              stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round">
@@ -223,7 +224,7 @@ function showCrewDetail(member) {
   sheet.className = 'sheet';
 
   const joined = member.createdAt
-    ? new Date(member.createdAt).toLocaleDateString('en-GB', {
+    ? new Date(member.createdAt).toLocaleDateString(uiLocale(), {
         weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
       })
     : '—';
@@ -233,14 +234,14 @@ function showCrewDetail(member) {
     <div class="sheet-title" style="text-align:center;">${escapeHtml(member.name)}</div>
 
     <div class="cm-detail-body">
-      <div class="bkr-detail-row"><span>Role</span><b>${escapeHtml(member.role || 'N/A')}</b></div>
-      <div class="bkr-detail-row"><span>Email</span><b>${escapeHtml(member.email || 'N/A')}</b></div>
-      <div class="bkr-detail-row"><span>Joined</span><b>${escapeHtml(joined)}</b></div>
-      ${member.notes ? `<div class="bkr-detail-row"><span>Notes</span><b>${escapeHtml(member.notes)}</b></div>` : ''}
+      <div class="bkr-detail-row"><span>${tr("Role")}</span><b>${escapeHtml(member.role || 'N/A')}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Email")}</span><b>${escapeHtml(member.email || 'N/A')}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Joined")}</span><b>${escapeHtml(joined)}</b></div>
+      ${member.notes ? `<div class="bkr-detail-row"><span>${tr("Notes")}</span><b>${escapeHtml(member.notes)}</b></div>` : ''}
     </div>
 
     <div class="csv-info-actions">
-      <button type="button" class="csv-btn csv-btn--cancel" id="cmCloseDetail">Close</button>
+      <button type="button" class="csv-btn csv-btn--cancel" id="cmCloseDetail">${tr("Close")}</button>
     </div>
   `;
 
@@ -284,7 +285,7 @@ function showCrewMenu(member) {
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">View Details</div>
+        <div class="sheet-item-title">${tr("View Details")}</div>
       </div>
     </div>
     <div class="sheet-gap-8"></div>
@@ -300,7 +301,7 @@ function showCrewMenu(member) {
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">Delete</div>
+        <div class="sheet-item-title">${tr("Delete")}</div>
       </div>
     </div>
   `;
@@ -327,19 +328,19 @@ function showCrewMenu(member) {
   sheet.querySelector('#cmDelete').addEventListener('click', async () => {
     close();
     const ok = await confirmSheet({
-      title: 'Delete crew member?',
-      message: `This will permanently remove ${member.name}. This cannot be undone.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel'
+      title: tr('Delete crew member?'),
+      message: tr(`This will permanently remove ${member.name}. This cannot be undone.`),
+      confirmText: tr('Delete'),
+      cancelText: tr('Cancel')
     });
     if (!ok) return;
 
     try {
       await deleteDoc(doc(db, 'crew', String(member._docId)));
-      toast(`Deleted ${member.name}`, { kind: 'success' });
+      toast(tr(`Deleted ${member.name}`), { kind: 'success' });
     } catch (err) {
       console.error('[crew] delete failed', err);
-      toast('Failed to delete crew member', { kind: 'error' });
+      toast(tr('Failed to delete crew member'), { kind: 'error' });
     }
   });
 }

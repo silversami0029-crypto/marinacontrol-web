@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 ﻿// js/components/BoatRow.js
 // Renders one row exactly mirroring item_boat.xml (with bulk-mode checkbox)
 
@@ -70,7 +71,7 @@ export function renderBoatRow(boat, opts = {}) {
         <div class="boat-name-line">
           <span class="boat-name">${esc(boat.name)}</span>
           ${boat.isActive ? '<span class="boat-star">★</span>' : ''}
-          ${boat.isActive ? '<span class="boat-status">ACTIVE</span>' : ''}
+          ${boat.isActive ? `<span class="boat-status">${tr("ACTIVE")}</span>` : ''}
         </div>
 
         ${hasCustomer ? `
@@ -87,17 +88,17 @@ export function renderBoatRow(boat, opts = {}) {
       </div>
 
       ${!bulkMode && boat.hasVoiceNote() ? `
-        <button class="boat-icon-btn" data-action="voice" aria-label="Voice note">
+        <button class="boat-icon-btn" data-action="voice" aria-label="${tr("Voice note")}">
           ${ICON_VOICE}
         </button>` : ''}
 
       ${!bulkMode && boat.hasPhoto() ? `
-        <button class="boat-icon-btn" data-action="photo" aria-label="Photo">
+        <button class="boat-icon-btn" data-action="photo" aria-label="${tr("Photo")}">
           ${ICON_PHOTO}
         </button>` : ''}
 
       ${!bulkMode ? `
-        <button class="boat-kebab" data-action="menu" aria-label="Boat menu">
+        <button class="boat-kebab" data-action="menu" aria-label="${tr("Boat menu")}">
           ${ICON_KEBAB}
         </button>` : ''}
 

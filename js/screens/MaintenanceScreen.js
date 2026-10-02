@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/MaintenanceScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -30,15 +31,15 @@ export function mountMaintenanceScreen() {
   screen.innerHTML = `
     <div class="mt-header" id="mtHeader">
       <div class="mt-header-row">
-        <button class="mt-icon-btn" id="mtBack" aria-label="Back">
+        <button class="mt-icon-btn" id="mtBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="mt-pill" id="mtPill">Maintenance</div>
-        <button class="mt-icon-btn" id="mtHelp" aria-label="Help">
+        <div class="mt-pill" id="mtPill">${tr("Maintenance")}</div>
+        <button class="mt-icon-btn" id="mtHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -48,7 +49,7 @@ export function mountMaintenanceScreen() {
           </svg>
         </button>
         <div class="mt-header-spacer"></div>
-        <button class="mt-icon-btn" id="mtSearchToggle" aria-label="Search">
+        <button class="mt-icon-btn" id="mtSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -60,15 +61,15 @@ export function mountMaintenanceScreen() {
     </div>
 
     <div class="boats-search-bar" id="mtSearchBar" hidden>
-      <input id="mtSearchInput" type="text" placeholder="Search maintenance..." autocomplete="off">
-      <button type="button" class="search-cancel" id="mtSearchCancel">Cancel</button>
+      <input id="mtSearchInput" type="text" placeholder="${tr("Search maintenance...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="mtSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="mt-list" id="mtList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button class="cm-fab" id="mtFabAdd" aria-label="Add maintenance">
+    <button class="cm-fab" id="mtFabAdd" aria-label="${tr("Add maintenance")}">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
            stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -106,7 +107,7 @@ export function mountMaintenanceScreen() {
       await m.showAddMaintenanceSheet({});
     } catch (err) {
       console.error('[maintenance fab] failed', err);
-      toast('Could not open Add Maintenance');
+      toast(tr('Could not open Add Maintenance'));
     }
   });
 
@@ -120,7 +121,7 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
     document.getElementById('mtList').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -160,8 +161,8 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   if (!boatId) {
     document.getElementById('mtList').innerHTML =
       `<div class="boats-empty">
-         <h2>No active boat</h2>
-         <p>Set a boat as active to see its maintenance.</p>
+         <h2>${tr("No active boat")}</h2>
+         <p>${tr("Set a boat as active to see its maintenance.")}</p>
        </div>`;
     return;
   }
@@ -169,8 +170,8 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   currentBoatId = boatId;
 
   const pillText = attentionFilter
-    ? `Attention · ${currentBoatName || 'Maintenance'}`
-    : (currentBoatName ? `Maintenance · ${currentBoatName}` : 'Maintenance');
+    ? `${tr('Attention')} · ${currentBoatName || tr('Maintenance')}`
+    : (currentBoatName ? `${tr('Maintenance')} · ${currentBoatName}` : tr('Maintenance'));
 
   document.getElementById('mtPill').textContent = pillText;
 
@@ -236,7 +237,7 @@ function subscribeToMaintenance(clientId, boatId) {
     if (!listEl) return;
     listEl.innerHTML = `
       <div class="boats-empty">
-        <h2>Couldn't load maintenance</h2>
+        <h2>${tr("Couldn't load maintenance")}</h2>
         <p>${escapeHtml(err.message || 'Permission denied.')}</p>
       </div>
     `;
@@ -269,11 +270,11 @@ function renderList() {
     const q = (document.getElementById('mtSearchInput')?.value || '').trim();
     let emptyHTML;
     if (q) {
-      emptyHTML = `<div class="boats-empty"><h2>No matches</h2><p>No maintenance matches "${escapeHtml(q)}"</p></div>`;
+      emptyHTML = `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>No maintenance matches "${escapeHtml(q)}"</p></div>`;
     } else if (attentionFilter) {
-      emptyHTML = `<div class="boats-empty"><h2>All clear</h2><p>No items need attention.</p></div>`;
+      emptyHTML = `<div class="boats-empty"><h2>${tr("All clear")}</h2><p>${tr("No items need attention.")}</p></div>`;
     } else {
-      emptyHTML = `<div class="boats-empty"><h2>No maintenance</h2><p>Tap + to add a task.</p></div>`;
+      emptyHTML = `<div class="boats-empty"><h2>${tr("No maintenance")}</h2><p>${tr("Tap + to add a task.")}</p></div>`;
     }
     listEl.innerHTML = emptyHTML;
     return;
@@ -300,18 +301,18 @@ function renderList() {
         <div class="mt-info">
           <div class="mt-title">${escapeHtml(m.type || 'Maintenance')}</div>
           ${m.notes ? `<div class="mt-notes">${escapeHtml(m.notes)}</div>` : ''}
-          ${m.assignedTo ? `<div class="mt-assigned">Assigned: ${escapeHtml(m.assignedTo)}</div>` : ''}
+          ${m.assignedTo ? `<div class="mt-assigned">${tr("Assigned:" )} ${escapeHtml(m.assignedTo)}</div>` : ''}
           ${m.source ? `
             <span class="mt-source-badge ${isChecklist ? 'mt-source-checklist' : 'mt-source-manual'}">
               ${isChecklist ? '📝 Checklist' : '🔧 Manual'}
             </span>
           ` : ''}
           <div class="mt-date" style="color:${state.dateColor};">
-            ${escapeHtml(state.dateLabel)}
+            ${escapeHtml(tr(state.dateLabel))}
           </div>
         </div>
 
-        <button class="mt-kebab" data-maint-menu="${m.id}" aria-label="Menu">
+        <button class="mt-kebab" data-maint-menu="${m.id}" aria-label="${tr("Menu")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
@@ -395,7 +396,7 @@ function getRowState(m) {
   }
 
   const d = new Date(m.date + 'T00:00:00');
-  const label = d.toLocaleDateString('en-GB', {
+  const label = d.toLocaleDateString(uiLocale(), {
     day: '2-digit', month: 'short', year: 'numeric'
   });
   return { color: '#3DD68C', icon: '', dateLabel: label, dateColor: '#AEB6C1' };

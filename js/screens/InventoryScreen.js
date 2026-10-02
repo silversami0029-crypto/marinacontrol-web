@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InventoryScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -28,15 +29,15 @@ export function mountInventoryScreen() {
   screen.innerHTML = `
     <div class="eq-header" id="invHeader">
       <div class="eq-header-row">
-        <button class="eq-icon-btn" id="invBack" aria-label="Back">
+        <button class="eq-icon-btn" id="invBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="eq-pill" id="invPill">Inventory</div>
-        <button class="eq-icon-btn" id="invHelp" aria-label="Help">
+        <div class="eq-pill" id="invPill">${tr("Inventory")}</div>
+        <button class="eq-icon-btn" id="invHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -46,7 +47,7 @@ export function mountInventoryScreen() {
           </svg>
         </button>
         <div class="eq-header-spacer"></div>
-        <button class="eq-icon-btn" id="invSearchToggle" aria-label="Search">
+        <button class="eq-icon-btn" id="invSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -58,15 +59,15 @@ export function mountInventoryScreen() {
     </div>
 
     <div class="boats-search-bar" id="invSearchBar" hidden>
-      <input id="invSearchInput" type="text" placeholder="Search inventory..." autocomplete="off">
-      <button type="button" class="search-cancel" id="invSearchCancel">Cancel</button>
+      <input id="invSearchInput" type="text" placeholder="${tr("Search inventory...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="invSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="eq-list" id="invList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button class="cm-fab" id="invFabAdd" aria-label="Add inventory item">
+    <button class="cm-fab" id="invFabAdd" aria-label="${tr("Add inventory item")}">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
            stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -111,7 +112,7 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
     document.getElementById('invList').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -146,16 +147,16 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   if (!boatId) {
     document.getElementById('invList').innerHTML =
       `<div class="boats-empty">
-         <h2>No active boat</h2>
-         <p>Set a boat as active to see its inventory.</p>
+         <h2>${tr("No active boat")}</h2>
+         <p>${tr("Set a boat as active to see its inventory.")}</p>
        </div>`;
     return;
   }
 
   currentBoatId = boatId;
   document.getElementById('invPill').textContent = currentBoatName
-    ? `Inventory · ${currentBoatName}`
-    : 'Inventory';
+    ? `${tr('Inventory')} · ${currentBoatName}`
+    : tr('Inventory');
 
   subscribeToInventory(clientId);
 }
@@ -199,7 +200,7 @@ function subscribeToInventory(clientId) {
     console.error('[inventory] listen failed', err);
     document.getElementById('invList').innerHTML =
       `<div class="boats-empty">
-         <h2>Couldn't load inventory</h2>
+         <h2>${tr("Couldn't load inventory")}</h2>
          <p>${escapeHtml(err.message || 'Permission denied.')}</p>
        </div>`;
   });
@@ -248,8 +249,8 @@ function renderList() {
   if (!items.length) {
     const q = (document.getElementById('invSearchInput')?.value || '').trim();
     listEl.innerHTML = q
-      ? `<div class="boats-empty"><h2>No matches</h2><p>No items match "${escapeHtml(q)}"</p></div>`
-      : `<div class="boats-empty"><h2>No inventory items</h2><p>Tap + to add the first item.</p></div>`;
+      ? `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>${escapeHtml(tr("ui.noMatches", {query:q}))}</p></div>`
+      : `<div class="boats-empty"><h2>${tr("No inventory items")}</h2><p>${tr("Tap + to add the first item.")}</p></div>`;
     return;
   }
 
@@ -266,17 +267,17 @@ function renderList() {
         </div>
 
         <div class="eq-info">
-          <div class="eq-boat">Boat: ${escapeHtml(e.boatName || '—')}</div>
-          <div class="eq-manufacturer">${escapeHtml(e.name || 'Unnamed')}</div>
-          ${e.category ? `<div class="eq-type">${escapeHtml(e.category)}</div>` : ''}
+          <div class="eq-boat">${tr("Boat:" )} ${escapeHtml(e.boatName || '—')}</div>
+          <div class="eq-manufacturer">${escapeHtml(e.name || tr('Unnamed'))}</div>
+          ${e.category ? `<div class="eq-type">${escapeHtml(tr(e.category))}</div>` : ''}
           ${e.location ? `<div class="eq-location"><span class="eq-loc-pin">📍</span>${escapeHtml(e.location)}</div>` : ''}
-          ${e.assignedTo ? `<div class="eq-assigned">👤 Assigned: ${escapeHtml(e.assignedTo)}</div>` : ''}
-          <div class="eq-model-line">Qty: ${e.quantity}${e.unit ? ' ' + escapeHtml(e.unit) : ''} · <span style="color:${state.color};font-weight:600;">${state.label}</span></div>
-          ${e.supplier ? `<div class="eq-serial">Supplier: ${escapeHtml(e.supplier)}</div>` : ''}
+          ${e.assignedTo ? `<div class="eq-assigned">👤 ${tr("Assigned:")} ${escapeHtml(e.assignedTo)}</div>` : ''}
+          <div class="eq-model-line">${tr("Qty:" )} ${e.quantity}${e.unit ? ' ' + escapeHtml(e.unit) : ''} · <span style="color:${state.color};font-weight:600;">${tr(state.label)}</span></div>
+          ${e.supplier ? `<div class="eq-serial">${tr("Supplier:" )} ${escapeHtml(e.supplier)}</div>` : ''}
           ${e.lastUpdated ? `<div class="eq-notes">Updated: ${escapeHtml(e.lastUpdated)}</div>` : ''}
         </div>
 
-        <button class="eq-kebab" data-inv-menu="${e.id}" aria-label="Menu">
+        <button class="eq-kebab" data-inv-menu="${e.id}" aria-label="${tr("Menu")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">

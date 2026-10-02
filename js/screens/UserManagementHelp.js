@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/UserManagementHelp.js
 
 export function showUserManagementHelp() {
@@ -9,13 +10,11 @@ export function showUserManagementHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">User Management</div>
+      <div class="help-pill">${tr("User Management")}</div>
 
-      <p class="help-desc">
-        Manage the people who can access your marina account and control the role assigned to each user.
-      </p>
+      <p class="help-desc">${tr("Manage the people who can access your marina account and control the role assigned to each user.")}</p>
 
-      <div class="help-section-title">How to manage users</div>
+      <div class="help-section-title">${tr("How to manage users")}</div>
 
       ${step('1', 'Add users', 'Add users using the + Add User button. Enter their name, email, password and required role.')}
       ${step('2', 'Change role', 'Tap an existing user to change their role and adjust their level of access.')}
@@ -24,26 +23,17 @@ export function showUserManagementHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">User Roles</div>
-      <div class="help-tips">• <b>Admin</b> — Full administrative access and user management.
-
-• <b>Manager</b> — Management-level operational access.
-
-• <b>Staff</b> — Day-to-day marina operational access.
-
-• <b>Inspector</b> — Intended for inspection-related work.
-
-• <b>Viewer</b> — Read-focused access.</div>
+      <div class="help-section-title">${tr("User Roles")}</div>
+      <div class="help-tips">• <b>${tr("Admin")}</b>${tr("— Full administrative access and user management. •")}<b>${tr("Manager")}</b>${tr("— Management-level operational access. •")}<b>${tr("Staff")}</b>${tr("— Day-to-day marina operational access. •")}<b>${tr("Inspector")}</b>${tr("— Intended for inspection-related work. •")}<b>${tr("Viewer")}</b>${tr("— Read-focused access.")}</div>
 
       <div class="help-note">
-        <b>Important:</b> User Management is restricted to administrators. Only give access and invite codes to authorised marina personnel.
-      </div>
+        <b>${tr("Important:")}</b>${tr("User Management is restricted to administrators. Only give access and invite codes to authorised marina personnel.")}</div>
 
-      <div class="help-footer">Need help? support@marinacontrol.com</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="userMgmtHelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="userMgmtHelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

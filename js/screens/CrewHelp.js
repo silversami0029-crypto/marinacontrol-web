@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/CrewHelp.js
 
 export function showCrewHelp() {
@@ -9,13 +10,11 @@ export function showCrewHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">👥 Import Crew</div>
+      <div class="help-pill">${tr("👥 Import Crew")}</div>
 
-      <p class="help-desc">
-        Import your boat crew members in bulk using a CSV file.
-      </p>
+      <p class="help-desc">${tr("Import your boat crew members in bulk using a CSV file.")}</p>
 
-      <div class="help-section-title">How to import</div>
+      <div class="help-section-title">${tr("How to import")}</div>
 
       ${step('1', 'Template', 'Download the sample CSV template to see the correct format')}
       ${step('2', 'Fill in', 'Edit the CSV with crew details (name, email, role, role details)')}
@@ -24,22 +23,14 @@ export function showCrewHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">CSV Format Requirements</div>
-      <div class="help-tips">• First row must be headers:
-   Name, Email, Role, Role Details
+      <div class="help-section-title">${tr("CSV Format Requirements")}</div>
+      <div class="help-tips">${tr("• First row must be headers: Name, Email, Role, Role Details • Name and Email are required fields • Role Examples: Captain, Engineer, Deckhand, Steward, Chef • Role Details (optional): Additional notes or certifications")}</div>
 
-• Name and Email are required fields
-
-• Role Examples:
-   Captain, Engineer, Deckhand, Steward, Chef
-
-• Role Details (optional): Additional notes or certifications</div>
-
-      <div class="help-footer">Need help? support@marinacontrol.com</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="crewHelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="crewHelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

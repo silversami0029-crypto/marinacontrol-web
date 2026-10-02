@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/EquipmentHelp.js
 
 export function showEquipmentHelp() {
@@ -9,28 +10,26 @@ export function showEquipmentHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">⚙️ Equipment</div>
+      <div class="help-pill">${tr("⚙️ Equipment")}</div>
 
-      <p class="help-desc">
-        Keep track of all equipment installed on your boat. From engines to electronics, maintain a complete inventory.
-      </p>
+      <p class="help-desc">${tr("Keep track of all equipment installed on your boat. From engines to electronics, maintain a complete inventory.")}</p>
 
-      <div class="help-section-title">What can you track?</div>
+      <div class="help-section-title">${tr("What can you track?")}</div>
 
       <div class="help-cat-grid">
-        <div class="help-cat">⚙️ Engine</div>
-        <div class="help-cat">🧭 Navigation</div>
-        <div class="help-cat">📻 Communication</div>
-        <div class="help-cat">🛟 Safety</div>
-        <div class="help-cat">⚓ Ground Tackle</div>
-        <div class="help-cat">🔋 Electrical</div>
-        <div class="help-cat">🚽 Plumbing</div>
-        <div class="help-cat">🌀 HVAC</div>
+        <div class="help-cat">${tr("⚙️ Engine")}</div>
+        <div class="help-cat">${tr("🧭 Navigation")}</div>
+        <div class="help-cat">${tr("📻 Communication")}</div>
+        <div class="help-cat">${tr("🛟 Safety")}</div>
+        <div class="help-cat">${tr("⚓ Ground Tackle")}</div>
+        <div class="help-cat">${tr("🔋 Electrical")}</div>
+        <div class="help-cat">${tr("🚽 Plumbing")}</div>
+        <div class="help-cat">${tr("🌀 HVAC")}</div>
       </div>
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">How to add equipment?</div>
+      <div class="help-section-title">${tr("How to add equipment?")}</div>
 
       ${step('1', 'Type', 'Select equipment type (Engine, Navigation, Safety, etc.)')}
       ${step('2', 'Manufacturer', 'Enter manufacturer name (Yanmar, Garmin, Icom, etc.)')}
@@ -40,22 +39,14 @@ export function showEquipmentHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">💡 Pro Tips</div>
-      <div class="help-tips">• Include serial numbers for warranty claims
+      <div class="help-section-title">${tr("💡 Pro Tips")}</div>
+      <div class="help-tips">${tr("• Include serial numbers for warranty claims • Take photos of equipment nameplates • Add purchase date and cost for insurance • Link Inventory records to each equipment • Update when equipment is serviced or replaced")}</div>
 
-• Take photos of equipment nameplates
-
-• Add purchase date and cost for insurance
-
-• Link Inventory records to each equipment
-
-• Update when equipment is serviced or replaced</div>
-
-      <div class="help-footer">Need help? support@marinacontrol.com</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="eqHelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="eqHelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

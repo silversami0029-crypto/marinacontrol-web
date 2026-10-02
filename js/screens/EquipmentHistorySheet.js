@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/EquipmentHistorySheet.js
 import { store } from '../store.js';
 import {
@@ -22,7 +23,7 @@ export async function showEquipmentHistory(item) {
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button type="button" class="md-close-btn" id="eqHistClose">Close</button>
+    <button type="button" class="md-close-btn" id="eqHistClose">${tr("Close")}</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -46,7 +47,7 @@ export async function showEquipmentHistory(item) {
   const listEl = sheet.querySelector('#eqHistList');
 
   if (!clientId || !itemId) {
-    listEl.innerHTML = `<div class="eq-hist-empty">No history recorded yet</div>`;
+    listEl.innerHTML = `<div class="eq-hist-empty">${tr("No history recorded yet")}</div>`;
     return;
   }
 
@@ -60,7 +61,7 @@ export async function showEquipmentHistory(item) {
     ));
 
     if (snap.empty) {
-      listEl.innerHTML = `<div class="eq-hist-empty">No history recorded yet</div>`;
+      listEl.innerHTML = `<div class="eq-hist-empty">${tr("No history recorded yet")}</div>`;
       return;
     }
 
@@ -89,7 +90,7 @@ export async function showEquipmentHistory(item) {
     `).join('');
   } catch (err) {
     console.error('[equipment history] failed', err);
-    listEl.innerHTML = `<div class="eq-hist-empty">Couldn't load history</div>`;
+    listEl.innerHTML = `<div class="eq-hist-empty">${tr("Couldn't load history")}</div>`;
   }
 }
 

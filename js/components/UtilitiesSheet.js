@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/UtilitiesSheet.js
 // Utilities sheet — Add Reading dialog
 
@@ -19,34 +20,34 @@ export function showAddReadingDialog(berth, onAddReading) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Add ${esc(berth.berthNumber)} Reading</div>
+    <div class="sheet-title" style="text-align:center;">${esc(tr("Add Berth Reading", {berth:berth.berthNumber}))}</div>
 
     <form id="utilForm" class="add-form" novalidate>
       <div class="add-scroll">
 
-        <div class="add-section-title">Utility Type</div>
+        <div class="add-section-title">${tr("Utility Type")}</div>
         <select class="add-input add-select" id="utilType">
-          ${UTILITY_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
+          ${UTILITY_TYPES.map(t => `<option value="${t}">${esc(tr(t))}</option>`).join('')}
         </select>
 
-        <div class="add-section-title">Reading Mode</div>
+        <div class="add-section-title">${tr("Reading Mode")}</div>
         <select class="add-input add-select" id="utilMode">
-          ${MODES.map(m => `<option value="${m}">${m}</option>`).join('')}
+          ${MODES.map(m => `<option value="${m}">${esc(tr(m))}</option>`).join('')}
         </select>
 
         <input class="add-input" id="utilValue"
-               type="number" step="0.01" placeholder="Meter reading">
+               type="number" step="0.01" placeholder="${tr("Meter reading")}">
 
         <input class="add-input" id="utilNotes"
-               type="text" placeholder="Notes (optional)">
+               type="text" placeholder="${tr("Notes (optional)")}">
 
-        <div class="add-section-title">Unit</div>
+        <div class="add-section-title">${tr("Unit")}</div>
         <input class="add-input" id="utilUnit" type="text" value="kWh" readonly>
       </div>
 
       <div class="util-dialog-actions">
-        <button type="button" class="util-cancel-btn" id="utilCancel">CANCEL</button>
-        <button type="submit" class="util-save-btn" id="utilSave">SAVE</button>
+        <button type="button" class="util-cancel-btn" id="utilCancel">${tr("CANCEL")}</button>
+        <button type="submit" class="util-save-btn" id="utilSave">${tr("SAVE")}</button>
       </div>
     </form>
   `;
@@ -85,7 +86,7 @@ export function showAddReadingDialog(berth, onAddReading) {
     if (isNaN(value)) { valueInput.focus(); return; }
 
     save.disabled = true;
-    save.textContent = 'SAVING…';
+    save.textContent = tr('SAVING…');
 
     try {
       const type = typeEl.value;
@@ -103,20 +104,20 @@ export function showAddReadingDialog(berth, onAddReading) {
       valueInput.value = '';
       notesInput.value = '';
       save.disabled = false;
-      save.textContent = 'SAVE';
+      save.textContent = tr('SAVE');
       valueInput.focus();
 
     } catch (err) {
       console.error('[utility] save failed', err);
       save.disabled = false;
-      save.textContent = 'SAVE';
+      save.textContent = tr('SAVE');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to save reading.';
+      errEl.textContent = err.message || tr('Failed to save reading.');
     }
   });
 }

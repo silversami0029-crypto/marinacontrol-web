@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InventoryHistorySheet.js
 import { store } from '../store.js';
 import {
@@ -22,7 +23,7 @@ export async function showInventoryHistory(item) {
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button type="button" class="md-close-btn" id="invHistClose">Close</button>
+    <button type="button" class="md-close-btn" id="invHistClose">${tr("Close")}</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -46,7 +47,7 @@ export async function showInventoryHistory(item) {
   const listEl = sheet.querySelector('#invHistList');
 
   if (!clientId || !itemId) {
-    listEl.innerHTML = `<div class="eq-hist-empty">No history recorded yet</div>`;
+    listEl.innerHTML = `<div class="eq-hist-empty">${tr("No history recorded yet")}</div>`;
     return;
   }
 
@@ -60,7 +61,7 @@ export async function showInventoryHistory(item) {
     ));
 
     if (snap.empty) {
-      listEl.innerHTML = `<div class="eq-hist-empty">No history recorded yet</div>`;
+      listEl.innerHTML = `<div class="eq-hist-empty">${tr("No history recorded yet")}</div>`;
       return;
     }
 
@@ -86,7 +87,7 @@ export async function showInventoryHistory(item) {
         <div class="eq-hist-info">
           <div class="eq-hist-action">${escapeHtml(r.title)}</div>
           ${r.detail ? `<div class="eq-hist-detail">${escapeHtml(r.detail)}</div>` : ''}
-          ${r.reason ? `<div class="eq-hist-detail">Reason: ${escapeHtml(r.reason)}</div>` : ''}
+          ${r.reason ? `<div class="eq-hist-detail">${tr("Reason:" )} ${escapeHtml(r.reason)}</div>` : ''}
           ${r.reference ? `<div class="eq-hist-detail">Ref: ${escapeHtml(r.reference)}</div>` : ''}
           <div class="eq-hist-meta">${escapeHtml(r.by)} · ${formatWhen(r.at)}</div>
         </div>
@@ -94,7 +95,7 @@ export async function showInventoryHistory(item) {
     `).join('');
   } catch (err) {
     console.warn('[inventory history] no history available', err?.code || err?.message || err);
-    listEl.innerHTML = `<div class="eq-hist-empty">No history recorded yet</div>`;
+    listEl.innerHTML = `<div class="eq-hist-empty">${tr("No history recorded yet")}</div>`;
   }
 }
 

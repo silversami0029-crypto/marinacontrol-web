@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/BoatDashboardScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -133,8 +134,8 @@ export function mountBoatDashboardScreen() {
   if (!boat) {
     screen.innerHTML = `
       <div class="boats-empty">
-        <h2>Boat not found</h2>
-        <p>Returning to boats list…</p>
+        <h2>${tr("Boat not found")}</h2>
+        <p>${tr("Returning to boats list…")}</p>
       </div>
     `;
     setTimeout(() => { location.hash = '#/boats'; }, 800);
@@ -151,29 +152,29 @@ export function mountBoatDashboardScreen() {
   screen.innerHTML = `
     <div class="dash-wrap">
       <div class="dash-header">
-        <button class="dash-back" id="dashBack" aria-label="Back">
+        <button class="dash-back" id="dashBack" aria-label="${tr("Back")}">
           ${ICONS.back}
         </button>
         <div class="dash-title">${escapeHtml(boat.name)}</div>
-        <button class="dash-info" id="dashInfo" aria-label="Help">
+        <button class="dash-info" id="dashInfo" aria-label="${tr("Help")}">
           ${ICONS.info}
         </button>
       </div>
 
            <div class="dash-health" id="dashHealth">
-        <div class="dash-health-title">Boat Health</div>
+        <div class="dash-health-title">${tr("Boat Health")}</div>
         <div class="dash-health-body" id="dashHealthBody">
           <div class="dash-health-good">
             <span class="dash-check" style="color:#3DD68C;">✅</span>
-            <span class="dash-health-label" style="color:#3DD68C;">All Good</span>
+            <span class="dash-health-label" style="color:#3DD68C;">${tr("All Good")}</span>
           </div>
         </div>
       </div>
 
       <div class="dash-filters" id="dashFilters">
-        <button type="button" class="dash-filter is-active" data-filter="all">All</button>
-        <button type="button" class="dash-filter" data-filter="attention">⚠ Attention</button>
-        <button type="button" class="dash-filter" data-filter="critical">⛔ Critical</button>
+        <button type="button" class="dash-filter is-active" data-filter="all">${tr("All")}</button>
+        <button type="button" class="dash-filter" data-filter="attention">${tr("⚠ Attention")}</button>
+        <button type="button" class="dash-filter" data-filter="critical">${tr("⛔ Critical")}</button>
       </div>
 
       <div class="dash-grid" id="dashGrid"></div>
@@ -185,7 +186,7 @@ export function mountBoatDashboardScreen() {
   });
 
   screen.querySelector('#dashInfo').addEventListener('click', () => {
-    toast('Dashboard help coming soon');
+    toast(tr('Dashboard help coming soon'));
   });
 
   screen.querySelector('#dashHealth').addEventListener('click', () => {
@@ -225,7 +226,7 @@ export function mountBoatDashboardScreen() {
     <button class="dash-tile" data-type="${t.type}">
       <div class="dash-tile-icon">${t.icon}</div>
       <div class="dash-tile-text">
-        <div class="dash-tile-title" data-label="${t.type}">${t.label}</div>
+        <div class="dash-tile-title" data-label="${t.type}">${tr(t.label)}</div>
         <div class="dash-tile-count" data-count="${t.type}" hidden></div>
       </div>
     </button>
@@ -244,7 +245,7 @@ export function mountBoatDashboardScreen() {
       if (type === 'inventory')   { location.hash = '#/inventory';   return; }
       if (type === 'tasks')   { location.hash = '#/tasks';   return; }
 
-      toast(`${label} coming soon`);
+      toast(tr("ui.comingSoon", {label:tr(label)}));
     });
   });
 
@@ -493,7 +494,7 @@ function paintHealth(status) {
     body.innerHTML = `
       <div class="dash-health-good">
         <span class="dash-check" style="color:#3DD68C;">✅</span>
-        <span class="dash-health-label" style="color:#3DD68C;">All Good</span>
+        <span class="dash-health-label" style="color:#3DD68C;">${tr("All Good")}</span>
       </div>
     `;
     return;
@@ -504,14 +505,14 @@ function paintHealth(status) {
       ${hasAttention ? `
         <div class="dash-health-col">
           <span class="dash-check" style="color:#F5A524;">⚠</span>
-          <span class="dash-health-label" style="color:#F5A524;">Attention</span>
+          <span class="dash-health-label" style="color:#F5A524;">${tr("Attention")}</span>
           <span class="dash-health-count" style="color:#F5A524;">${status.attentionCount}</span>
         </div>
       ` : ''}
       ${hasCritical ? `
         <div class="dash-health-col">
           <span class="dash-check" style="color:#FF4444;">⛔</span>
-          <span class="dash-health-label" style="color:#FF4444;">Critical</span>
+          <span class="dash-health-label" style="color:#FF4444;">${tr("Critical")}</span>
           <span class="dash-health-count" style="color:#FF4444;">${status.criticalCount}</span>
         </div>
       ` : ''}

@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/FleetScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -111,7 +112,7 @@ export function mountFleetScreen() {
     <div class="dash-wrap">
 
       <div class="account-header fleet-page-header">
-        <div class="account-pill">Fleet</div>
+        <div class="account-pill">${tr("Fleet")}</div>
       </div>
 
       <div class="fleet-compliance-card"
@@ -124,9 +125,7 @@ export function mountFleetScreen() {
             ${ICONS.shield}
           </span>
 
-          <span class="fleet-compliance-title">
-            Compliance
-          </span>
+          <span class="fleet-compliance-title">${tr("Compliance")}</span>
 
           <span class="fleet-compliance-score"
                 id="fleetComplianceScore">
@@ -138,32 +137,24 @@ export function mountFleetScreen() {
           <span class="fleet-compliance-warning">⚠</span>
 
           <span class="fleet-compliance-actions"
-                id="fleetComplianceActions">
-            0 actions
-          </span>
+                id="fleetComplianceActions">${tr("0 actions")}</span>
 
           <span class="fleet-compliance-divider">•</span>
 
           <span class="fleet-compliance-due"
-                id="fleetComplianceDueSoon">
-            0 due soon
-          </span>
+                id="fleetComplianceDueSoon">${tr("0 due soon")}</span>
         </div>
 
-        <div class="fleet-compliance-link">
-          View details&nbsp;›
-        </div>
+        <div class="fleet-compliance-link">${tr("View details&nbsp;›")}</div>
       </div>
 
       <div class="dash-health" id="fleetHealth">
-        <div class="dash-health-title">Fleet Health</div>
+        <div class="dash-health-title">${tr("Fleet Health")}</div>
 
         <div class="dash-health-body" id="fleetHealthBody">
           <div class="dash-health-good">
             <span class="dash-check" style="color:#3DD68C;">✅</span>
-            <span class="dash-health-label" style="color:#3DD68C;">
-              All Good
-            </span>
+            <span class="dash-health-label" style="color:#3DD68C;">${tr("All Good")}</span>
           </div>
         </div>
       </div>
@@ -171,21 +162,15 @@ export function mountFleetScreen() {
       <div class="dash-filters" id="fleetFilters">
         <button type="button"
                 class="dash-filter is-active"
-                data-filter="all">
-          All
-        </button>
+                data-filter="all">${tr("All")}</button>
 
         <button type="button"
                 class="dash-filter"
-                data-filter="attention">
-          ⚠ Attention
-        </button>
+                data-filter="attention">${tr("⚠ Attention")}</button>
 
         <button type="button"
                 class="dash-filter"
-                data-filter="critical">
-          ⛔ Critical
-        </button>
+                data-filter="critical">${tr("⛔ Critical")}</button>
       </div>
 
       <div class="dash-grid" id="fleetGrid"></div>
@@ -230,7 +215,7 @@ screen.querySelector('#fleetComplianceCard')
     <button class="dash-tile" data-type="${t.type}">
       <div class="dash-tile-icon">${t.icon}</div>
       <div class="dash-tile-text">
-        <div class="dash-tile-title">${t.label}</div>
+        <div class="dash-tile-title">${tr(t.label)}</div>
         <div class="dash-tile-count" data-count="${t.type}" hidden></div>
       </div>
     </button>
@@ -245,7 +230,7 @@ screen.querySelector('#fleetComplianceCard')
       else if (type === 'equipment')   location.hash = '#/equipment';
       else if (type === 'inventory')   location.hash = '#/inventory';
       else if (type === 'checklists')  location.hash = '#/checklists';
-      else toast(`${type} coming soon`);
+      else toast(tr(`${type} coming soon`));
     });
   });
 
@@ -458,7 +443,7 @@ function paintHealth(status) {
     body.innerHTML = `
       <div class="dash-health-good">
         <span class="dash-check" style="color:#3DD68C;">✅</span>
-        <span class="dash-health-label" style="color:#3DD68C;">All Good</span>
+        <span class="dash-health-label" style="color:#3DD68C;">${tr("All Good")}</span>
       </div>`;
     return;
   }
@@ -469,18 +454,18 @@ function paintHealth(status) {
         <div class="dash-health-col"
              data-health-filter="attention"
              role="button" tabindex="0"
-             aria-label="Show attention items">
+             aria-label="${tr("Show attention items")}">
           <span class="dash-check" style="color:#F5A524;">⚠</span>
-          <span class="dash-health-label" style="color:#F5A524;">Attention</span>
+          <span class="dash-health-label" style="color:#F5A524;">${tr("Attention")}</span>
           <span class="dash-health-count" style="color:#F5A524;">${status.attentionCount}</span>
         </div>` : ''}
       ${hasCritical ? `
         <div class="dash-health-col"
              data-health-filter="critical"
              role="button" tabindex="0"
-             aria-label="Show critical items">
+             aria-label="${tr("Show critical items")}">
           <span class="dash-check" style="color:#FF4444;">⛔</span>
-          <span class="dash-health-label" style="color:#FF4444;">Critical</span>
+          <span class="dash-health-label" style="color:#FF4444;">${tr("Critical")}</span>
           <span class="dash-health-count" style="color:#FF4444;">${status.criticalCount}</span>
         </div>` : ''}
     </div>`;
@@ -527,11 +512,11 @@ function paintCompliance({
   }
 
   if (actionsEl) {
-    actionsEl.textContent = actions + (actions === 1 ? ' action' : ' actions');
+    actionsEl.textContent = tr('ui.count', {label:tr('actions'), count:actions});
   }
 
   if (dueEl) {
-    dueEl.textContent = dueSoon + ' due soon';
+    dueEl.textContent = tr('ui.count', {label:tr('due soon'), count:dueSoon});
   }
 }
 

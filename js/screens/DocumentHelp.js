@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DocumentHelp.js
 
 export function showDocumentHelp() {
@@ -9,13 +10,11 @@ export function showDocumentHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">📄 Import Documents</div>
+      <div class="help-pill">${tr("📄 Import Documents")}</div>
 
-      <p class="help-desc">
-        Import your boat documents in bulk using a CSV file.
-      </p>
+      <p class="help-desc">${tr("Import your boat documents in bulk using a CSV file.")}</p>
 
-      <div class="help-section-title">How to import</div>
+      <div class="help-section-title">${tr("How to import")}</div>
 
       ${step('1', 'Template', 'Download the sample CSV template to see the correct format')}
       ${step('2', 'Fill in', 'Edit the CSV with your document details (name, type, expiry date, notes, file path)')}
@@ -24,22 +23,14 @@ export function showDocumentHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">CSV Format Requirements</div>
-      <div class="help-tips">• First row must be headers:
-   Document Name, Document Type, Expiry Date, Notes, File Path
+      <div class="help-section-title">${tr("CSV Format Requirements")}</div>
+      <div class="help-tips">${tr("• First row must be headers: Document Name, Document Type, Expiry Date, Notes, File Path • Document Type must match available types: Insurance Policy, Vessel Registration, Radio License, Safety Equipment Certificate, etc. • Expiry Date format: YYYY-MM-DD • File Path is optional (leave blank if no file)")}</div>
 
-• Document Type must match available types:
-   Insurance Policy, Vessel Registration, Radio License, Safety Equipment Certificate, etc.
-
-• Expiry Date format: YYYY-MM-DD
-
-• File Path is optional (leave blank if no file)</div>
-
-      <div class="help-footer">Need help? support@marinacontrol.com</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="docHelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="docHelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

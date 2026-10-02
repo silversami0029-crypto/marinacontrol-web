@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ChecklistScreen.js
 import { store } from '../store.js';
 import { showChecklistDetail } from './ChecklistDetailSheet.js';
@@ -49,7 +50,7 @@ if (unsubscribeBoats) {
   screen.innerHTML = `
     <div class="eq-header" id="chHeader">
       <div class="eq-header-row">
-        <button class="eq-icon-btn" id="chBack" aria-label="Back">
+        <button class="eq-icon-btn" id="chBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
@@ -57,9 +58,9 @@ if (unsubscribeBoats) {
           </svg>
         </button>
 
-        <div class="eq-pill">Checklists</div>
+        <div class="eq-pill">${tr("Checklists")}</div>
 
-        <button class="eq-icon-btn" id="chHelp" aria-label="Help">
+        <button class="eq-icon-btn" id="chHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -71,7 +72,7 @@ if (unsubscribeBoats) {
 
         <div class="eq-header-spacer"></div>
 
-        <button class="eq-icon-btn" id="chSearchToggle" aria-label="Search">
+        <button class="eq-icon-btn" id="chSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -84,23 +85,23 @@ if (unsubscribeBoats) {
 
     <div class="boats-search-bar" id="chSearchBar" hidden>
       <input id="chSearchInput" type="text"
-             placeholder="Search checklists..." autocomplete="off">
+             placeholder="${tr("Search checklists...")}" autocomplete="off">
       <button type="button" class="search-cancel"
-              id="chSearchCancel">Cancel</button>
+              id="chSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="ch-filters-row">
       <div class="dash-filters" id="chFilters">
         <button type="button" class="dash-filter is-active"
-                data-ch-filter="ALL">All</button>
+                data-ch-filter="ALL">${tr("All")}</button>
         <button type="button" class="dash-filter"
-                data-ch-filter="IN_PROGRESS">In Progress</button>
+                data-ch-filter="IN_PROGRESS">${tr("In Progress")}</button>
         <button type="button" class="dash-filter"
-                data-ch-filter="COMPLETED">Completed</button>
+                data-ch-filter="COMPLETED">${tr("Completed")}</button>
       </div>
 
       <select class="ch-boat-select" id="chBoatSelect">
-        <option value="0">All boats</option>
+        <option value="0">${tr("All boats")}</option>
       </select>
     </div>
 
@@ -195,7 +196,7 @@ function subscribeToChecklists() {
 
   if (!clientId) {
     document.getElementById('chList').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -243,7 +244,7 @@ function subscribeToChecklists() {
 
       document.getElementById('chList').innerHTML = `
         <div class="boats-empty">
-          <h2>Couldn't load checklists</h2>
+          <h2>${tr("Couldn't load checklists")}</h2>
           <p>${escapeHtml(
             error.message || 'Permission denied.'
           )}</p>
@@ -260,7 +261,7 @@ function populateBoatDropdown() {
   const previousValue = String(boatFilter || 0);
 
   select.innerHTML =
-    '<option value="0">All boats</option>' +
+    `<option value="0">${tr("All boats")}</option>` +
     currentBoats.map(boat =>
       `<option value="${boat.id}">${escapeHtml(boat.name)}</option>`
     ).join('');
@@ -328,7 +329,7 @@ function renderList() {
 
     if (searchText) {
       message =
-        `No checklists match "${escapeHtml(searchText)}"`;
+        `${escapeHtml(tr("ui.noMatches", {query:searchText}))}`;
     } else if (boatFilter > 0) {
       message = 'No checklists for this boat';
     } else if (filterMode === 'IN_PROGRESS') {
@@ -347,13 +348,13 @@ function renderList() {
 
   const desktopHeader = `
     <div class="chk-table-head" aria-hidden="true">
-      <span>Checklist</span>
-      <span>Boat</span>
-      <span>Type</span>
-      <span>Progress</span>
-      <span>Results</span>
-      <span>Completed by</span>
-      <span>Status</span>
+      <span>${tr("Checklist")}</span>
+      <span>${tr("Boat")}</span>
+      <span>${tr("Type")}</span>
+      <span>${tr("Progress")}</span>
+      <span>${tr("Results")}</span>
+      <span>${tr("Completed by")}</span>
+      <span>${tr("Status")}</span>
     </div>
   `;
 
@@ -379,7 +380,7 @@ function renderList() {
             <div class="chk-line-1">
               <div class="chk-name">
                 ${escapeHtml(
-                  checklist.name || 'Untitled'
+                  checklist.name || tr('Untitled')
                 )}
               </div>
 
@@ -395,7 +396,7 @@ function renderList() {
               ${
                 boatName
                   ? `🚤 ${escapeHtml(boatName)}`
-                  : '<span style="opacity:.5;">No boat</span>'
+                  : `<span style="opacity:.5;">${tr("No boat")}</span>`
               }
             </div>
 
@@ -444,7 +445,7 @@ function renderList() {
               checklist.completedBy
                 ? `
                   <div class="chk-meta2">
-                    <span class="chk-completed-label">Completed by </span>
+                    <span class="chk-completed-label">${tr("Completed by")}</span>
                     ${escapeHtml(checklist.completedBy)}
                   </div>
                 `

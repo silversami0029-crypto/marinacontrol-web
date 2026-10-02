@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/BerthHelpDialog.js
 // Berth help modal — mirrors dialog_berth_help.xml
 
@@ -17,68 +18,45 @@ export function showBerthHelp() {
              stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 8h18M3 12h18M3 16h18M5 8v12M19 8v12"/>
         </svg>
-        <span>Berths</span>
+        <span>${tr("Berths")}</span>
       </div>
 
-      <p class="help-desc">
-        Manage your marina berths — Dock Walk, assign boats, track occupancy,
-        and maintain berth details.
-      </p>
+      <p class="help-desc">${tr("Manage your marina berths — Dock Walk, assign boats, track occupancy, and maintain berth details.")}</p>
 
       <div class="help-step">
         <div class="help-step-num">1</div>
-        <div class="help-step-text">
-          Tap any berth to view options (assign boat, edit, delete, change status).
-        </div>
+        <div class="help-step-text">${tr("Tap any berth to view options (assign boat, edit, delete, change status).")}</div>
       </div>
 
       <div class="help-step">
         <div class="help-step-num">2</div>
-        <div class="help-step-text">
-          Long press a berth to quickly assign or release a boat.
-        </div>
+        <div class="help-step-text">${tr("Long press a berth to quickly assign or release a boat.")}</div>
       </div>
 
       <div class="help-step">
         <div class="help-step-num">3</div>
-        <div class="help-step-text">
-          Use the three-dot menu on each berth to edit, delete, or view details.
-        </div>
+        <div class="help-step-text">${tr("Use the three-dot menu on each berth to edit, delete, or view details.")}</div>
       </div>
 
       <div class="help-step">
         <div class="help-step-num">4</div>
-        <div class="help-step-text">
-          Use the toolbar menu to start Dock Walk, import CSV, reset to default
-          berths, or delete all berths.
-        </div>
+        <div class="help-step-text">${tr("Use the toolbar menu to start Dock Walk, import CSV, reset to default berths, or delete all berths.")}</div>
       </div>
 
       <div class="help-divider"></div>
 
-      <h3 class="help-section-title">Tips</h3>
+      <h3 class="help-section-title">${tr("Tips")}</h3>
 
-      <div class="help-tips">
-        • Berth status colors:<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;🟢 Available<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;🔴 Occupied<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;🟠 Under Maintenance<br>
-        • CSV import requires:<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;Dock Name, Berth Number<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;Length, Width, Depth<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;Has Electric, Has Water, Status
-      </div>
+      <div class="help-tips">${tr("• Berth status colors:")}<br>${tr("🟢 Available")}<br>${tr("🔴 Occupied")}<br>${tr("🟠 Under Maintenance")}<br>${tr("• CSV import requires:")}<br>${tr("Dock Name, Berth Number")}<br>${tr("Length, Width, Depth")}<br>${tr("Has Electric, Has Water, Status")}</div>
 
       <div class="help-divider"></div>
 
-      <div class="help-footer">
-        Need help? support@marinacontrol.com
-      </div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
 
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="berthHelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="berthHelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddInventorySheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -42,50 +43,50 @@ export function showAddInventorySheet(opts = {}) {
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
     <div class="sheet-title" style="text-align:center;">
-      ${isEdit ? 'Edit Inventory' : 'Add Inventory'}
+      ${isEdit ? tr('Edit Inventory') : tr('Add Inventory')}
     </div>
 
     <form id="invForm" class="add-form" novalidate autocomplete="off">
       <div class="add-scroll">
         ${boatName ? `
-          <label class="add-label">Boat</label>
+          <label class="add-label">${tr("Boat")}</label>
           <div class="add-input" style="padding-top:14px; padding-bottom:14px; color:var(--color-text-secondary);">
-            Boat: ${escapeHtml(boatName)}
+            ${tr("Boat:" )} ${escapeHtml(boatName)}
           </div>
         ` : ''}
 
-        <label class="add-label" for="inv-name">Item Name</label>
-        <input class="add-input" id="inv-name" type="text" placeholder="e.g. Engine Oil 15W-40">
+        <label class="add-label" for="inv-name">${tr("Item Name")}</label>
+        <input class="add-input" id="inv-name" type="text" placeholder="${tr("e.g. Engine Oil 15W-40")}">
 
-        <label class="add-label" for="inv-category">Category</label>
+        <label class="add-label" for="inv-category">${tr("Category")}</label>
         <select class="add-input add-select" id="inv-category">
-          <option value="">Select category…</option>
-          ${INVENTORY_TYPES.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join('')}
+          <option value="">${tr("Select category…")}</option>
+          ${INVENTORY_TYPES.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(tr(t))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="inv-location">Location</label>
+        <label class="add-label" for="inv-location">${tr("Location")}</label>
         <select class="add-input add-select" id="inv-location">
-          <option value="">Select location…</option>
-          ${BOAT_LOCATIONS.map(l => `<option value="${escapeAttr(l)}">${escapeHtml(l)}</option>`).join('')}
+          <option value="">${tr("Select location…")}</option>
+          ${BOAT_LOCATIONS.map(l => `<option value="${escapeAttr(l)}">${escapeHtml(tr(l))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="inv-quantity">Quantity</label>
+        <label class="add-label" for="inv-quantity">${tr("Quantity")}</label>
         <input class="add-input" id="inv-quantity" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
 
-        <label class="add-label" for="inv-reorder">Reorder Level</label>
+        <label class="add-label" for="inv-reorder">${tr("Reorder Level")}</label>
         <input class="add-input" id="inv-reorder" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
 
-        <label class="add-label" for="inv-unit">Unit</label>
+        <label class="add-label" for="inv-unit">${tr("Unit")}</label>
         <select class="add-input add-select" id="inv-unit">
-          <option value="">Select unit…</option>
-          ${INVENTORY_UNITS.map(u => `<option value="${escapeAttr(u)}">${escapeHtml(u)}</option>`).join('')}
+          <option value="">${tr("Select unit…")}</option>
+          ${INVENTORY_UNITS.map(u => `<option value="${escapeAttr(u)}">${escapeHtml(tr(u))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="inv-supplier">Supplier</label>
-        <input class="add-input" id="inv-supplier" type="text" placeholder="Supplier name">
+        <label class="add-label" for="inv-supplier">${tr("Supplier")}</label>
+        <input class="add-input" id="inv-supplier" type="text" placeholder="${tr("Supplier name")}">
 
-        <label class="add-label" for="inv-notes">Notes</label>
-        <textarea class="add-input" id="inv-notes" rows="3" placeholder="Notes"></textarea>
+        <label class="add-label" for="inv-notes">${tr("Notes")}</label>
+        <textarea class="add-input" id="inv-notes" rows="3" placeholder="${tr("Notes")}"></textarea>
       </div>
 
       <button type="submit" class="add-save" id="inv-save">
@@ -134,24 +135,24 @@ export function showAddInventorySheet(opts = {}) {
     const supplier     = sheet.querySelector('#inv-supplier').value.trim();
     const notes        = sheet.querySelector('#inv-notes').value.trim();
 
-    if (!name) { toast('Enter an item name', { kind: 'error' }); sheet.querySelector('#inv-name').focus(); return; }
-    if (!category) { toast('Select a category', { kind: 'error' }); return; }
+    if (!name) { toast(tr('Enter an item name'), { kind: 'error' }); sheet.querySelector('#inv-name').focus(); return; }
+    if (!category) { toast(tr('Select a category'), { kind: 'error' }); return; }
 
     const quantity = quantityStr === '' ? 0 : Math.max(0, parseInt(quantityStr, 10) || 0);
     const reorderLevel = reorderStr === '' ? 0 : Math.max(0, parseInt(reorderStr, 10) || 0);
 
     save.disabled = true;
-    save.textContent = 'Saving…';
+    save.textContent = tr('Saving…');
 
     try {
       if (isEdit) {
         await updateInventory(item, { name, category, location, quantity, reorderLevel, unit, supplier, notes });
       } else {
-        if (!boatId) throw new Error('No boat selected');
+        if (!boatId) throw new Error(tr('No boat selected'));
         await createInventory({ boatId, name, category, location, quantity, reorderLevel, unit, supplier, notes });
       }
       close();
-      toast(isEdit ? 'Item updated' : 'Item added', { kind: 'success' });
+      toast(isEdit ? tr('Item updated') : tr('Item added'), { kind: 'success' });
     } catch (err) {
       console.error('[inventory save] failed', err);
       save.disabled = false;
@@ -162,7 +163,7 @@ export function showAddInventorySheet(opts = {}) {
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to save.';
+      errEl.textContent = err.message || tr('Failed to save.');
     }
   });
 }
@@ -191,7 +192,7 @@ function computeStatus(quantity) {
 
 async function createInventory(payload) {
   const clientId = Number(store.activeClientId);
-  if (!clientId) throw new Error('No active client');
+  if (!clientId) throw new Error(tr('No active client'));
 
   const snap = await getDocs(
     query(collection(db, 'inventory'), where('clientId', '==', clientId))

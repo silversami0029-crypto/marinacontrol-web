@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/UserManagementScreen.js
 
 import { store } from '../store.js';
@@ -27,7 +28,7 @@ export function mountUserManagementScreen() {
   if (!store.activeClientId) {
     document.getElementById('screen').innerHTML = `
       <div class="boats-empty">
-        <h2>No client assigned</h2>
+        <h2>${tr("No client assigned")}</h2>
       </div>
     `;
     return;
@@ -42,9 +43,9 @@ export function mountUserManagementScreen() {
   screen.innerHTML = `
     <div class="um-header">
       <div class="um-header-row">
-        <div class="um-pill">User Management</div>
+        <div class="um-pill">${tr("User Management")}</div>
 
-        <button class="um-icon-btn" id="umHelp" aria-label="Help">
+        <button class="um-icon-btn" id="umHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20"
                fill="none" stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -56,7 +57,7 @@ export function mountUserManagementScreen() {
 
         <div class="um-header-spacer"></div>
 
-        <button class="um-icon-btn" id="umClose" aria-label="Close">
+        <button class="um-icon-btn" id="umClose" aria-label="${tr("Close")}">
           <svg viewBox="0 0 24 24" width="20" height="20"
                fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
@@ -68,24 +69,20 @@ export function mountUserManagementScreen() {
     </div>
 
     <div class="um-invite-row" id="umInviteRow">
-      <span class="um-invite-label">Invite Code:</span>
-      <span class="um-invite-code" id="umInviteCode">Loading…</span>
-      <button class="um-copy-btn" id="umCopyBtn" disabled>
-        Copy
-      </button>
+      <span class="um-invite-label">${tr("Invite Code:")}</span>
+      <span class="um-invite-code" id="umInviteCode">${tr("Loading…")}</span>
+      <button class="um-copy-btn" id="umCopyBtn" disabled>${tr("Copy")}</button>
     </div>
 
     <div class="bulk-bar" id="umBulkBar" hidden>
       <label class="bulk-select-all">
         <input type="checkbox" id="umBulkSelectAll">
-        <span>Select all</span>
+        <span>${tr("Select all")}</span>
       </label>
 
-      <span class="bulk-count" id="umBulkCount">0 selected</span>
+      <span class="bulk-count" id="umBulkCount">${tr("0 selected")}</span>
 
-      <button type="button" class="bulk-cancel" id="umBulkCancel">
-        Cancel
-      </button>
+      <button type="button" class="bulk-cancel" id="umBulkCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="um-list" id="umList">
@@ -95,7 +92,7 @@ export function mountUserManagementScreen() {
     </div>
 
     <button class="bulk-btn" id="umBulkBtn"
-            aria-label="Bulk delete" hidden>
+            aria-label="${tr("Bulk delete")}" hidden>
       <svg viewBox="0 0 24 24" width="20" height="20"
            fill="none" stroke="currentColor" stroke-width="1.8"
            stroke-linecap="round" stroke-linejoin="round">
@@ -107,7 +104,7 @@ export function mountUserManagementScreen() {
       </svg>
     </button>
 
-    <button class="um-fab" id="umFabAdd" aria-label="Add user">
+    <button class="um-fab" id="umFabAdd" aria-label="${tr("Add user")}">
       <svg viewBox="0 0 24 24" width="20" height="20"
            fill="none" stroke="currentColor" stroke-width="2.4"
            stroke-linecap="round">
@@ -160,10 +157,10 @@ if (umHelpBtn) umHelpBtn.addEventListener('click', showUserManagementHelp);
 
     try {
       await navigator.clipboard.writeText(code);
-      toast('Invite code copied', { kind: 'success' });
+      toast(tr('Invite code copied'), { kind: 'success' });
     } catch (error) {
       console.error('[invite] copy failed', error);
-      toast('Failed to copy invite code', { kind: 'error' });
+      toast(tr('Failed to copy invite code'), { kind: 'error' });
     }
   });
 
@@ -225,7 +222,7 @@ async function loadUsers() {
 
     list.innerHTML = `
       <div class="boats-empty">
-        <h2>Couldn't load users</h2>
+        <h2>${tr("Couldn't load users")}</h2>
         <p>
           ${escapeHtml(
             error?.message || 'Unable to load marina users.'
@@ -246,7 +243,7 @@ async function loadInviteCode() {
 
   if (!codeElement || !copyButton) return;
 
-  codeElement.textContent = 'Loading…';
+  codeElement.textContent = tr('Loading…');
   copyButton.disabled = true;
 
   try {
@@ -263,7 +260,7 @@ async function loadInviteCode() {
   } catch (error) {
     console.error('[invite] load failed', error);
 
-    codeElement.textContent = 'Unavailable';
+    codeElement.textContent = tr('Unavailable');
     copyButton.disabled = true;
   }
 }
@@ -289,10 +286,10 @@ async function rotateInviteCode() {
 
     document.getElementById('umInviteCode').textContent = code;
 
-    toast('Invite code rotated', { kind: 'success' });
+    toast(tr('Invite code rotated'), { kind: 'success' });
   } catch (error) {
     console.error('[invite] rotate failed', error);
-    toast('Failed to rotate invite code', { kind: 'error' });
+    toast(tr('Failed to rotate invite code'), { kind: 'error' });
   }
 }
 
@@ -308,7 +305,7 @@ function renderUserList(users) {
   if (!users.length) {
     list.innerHTML = `
       <div class="boats-empty">
-        <h2>No users</h2>
+        <h2>${tr("No users")}</h2>
       </div>
     `;
     return;
@@ -347,7 +344,7 @@ function renderUserList(users) {
 
         <div class="um-info">
           <div class="um-name">
-            ${escapeHtml(user.name || 'Unnamed')}
+            ${escapeHtml(user.name || tr('Unnamed'))}
           </div>
 
           <div class="um-email">
@@ -355,7 +352,7 @@ function renderUserList(users) {
           </div>
 
           <div class="um-role">
-            <span class="um-role-label">Role:</span>
+            <span class="um-role-label">${tr("Role:")}</span>
             <span class="um-role-value">
               ${escapeHtml(user.role || 'staff')}
             </span>
@@ -473,7 +470,7 @@ function toggleSelection(userId) {
 
   if (Number(userId) === currentUserId) {
     toast(
-      'You cannot delete your own account',
+      tr('You cannot delete your own account'),
       { kind: 'error' }
     );
     return;
@@ -574,7 +571,7 @@ function onBulkButtonTap() {
   }
 
   if (selectedIds.size === 0) {
-    toast('No users selected');
+    toast(tr('No users selected'));
     return;
   }
 
@@ -596,7 +593,7 @@ async function confirmBulkDelete() {
 
   if (ids.length !== selectedIds.size) {
     toast(
-      'You cannot delete your own account',
+      tr('You cannot delete your own account'),
       { kind: 'error' }
     );
   }
@@ -609,10 +606,10 @@ async function confirmBulkDelete() {
   const count = ids.length;
 
   const confirmed = await confirmSheet({
-    title: `Delete ${count} user${count === 1 ? '' : 's'}?`,
+    title: tr(`Delete ${count} user${count === 1 ? '' : 's'}?`),
     message: 'Their access to this marina will be removed.',
-    confirmText: 'Delete',
-    cancelText: 'Cancel'
+    confirmText: tr('Delete'),
+    cancelText: tr('Cancel')
   });
 
   if (!confirmed) return;
@@ -652,15 +649,13 @@ async function confirmBulkDelete() {
   await loadUsers();
 
   if (deleted > 0) {
-    toast(
-      `Deleted ${deleted} user${deleted === 1 ? '' : 's'}`,
+    toast(`Deleted ${deleted} user${deleted === 1 ? '' : 's'}`,
       { kind: 'success' }
     );
   }
 
   if (failed > 0) {
-    toast(
-      `Failed to delete ${failed} user${failed === 1 ? '' : 's'}`,
+    toast(`Failed to delete ${failed} user${failed === 1 ? '' : 's'}`,
       { kind: 'error' }
     );
   }
@@ -701,9 +696,7 @@ function showRoleSheet(user) {
 
     <div class="assign-divider"></div>
 
-    <button class="assign-cancel" id="umRoleCancel">
-      Cancel
-    </button>
+    <button class="assign-cancel" id="umRoleCancel">${tr("Cancel")}</button>
   `;
 
   document
@@ -748,11 +741,11 @@ function showRoleSheet(user) {
           userId:   Number(user.id),
           role:     newRole
         });
-        toast(`Role updated to ${newRole}`, { kind: 'success' });
+        toast(tr(`Role updated to ${newRole}`), { kind: 'success' });
         await loadUsers();
       } catch (err) {
         console.error('[role] update failed', err);
-        toast('Failed to update role', { kind: 'error' });
+        toast(tr('Failed to update role'), { kind: 'error' });
       }
     });
   });
@@ -772,9 +765,7 @@ function showAddUserSheet() {
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
 
-    <div class="sheet-title" style="text-align:center;">
-      Add User
-    </div>
+    <div class="sheet-title" style="text-align:center;">${tr("Add User")}</div>
 
     <form id="umAddForm"
           class="add-form"
@@ -794,49 +785,41 @@ function showAddUserSheet() {
              autocomplete="current-password">
 
       <div class="add-scroll">
-        <label class="add-label" for="um-name">
-          Full Name
-        </label>
+        <label class="add-label" for="um-name">${tr("Full Name")}</label>
 
         <input class="add-input"
                id="um-name"
                name="um-name"
                type="text"
-               placeholder="Full Name"
+               placeholder="${tr("Full Name")}"
                autocomplete="off"
                autocorrect="off"
                autocapitalize="words"
                spellcheck="false">
 
-        <label class="add-label" for="um-email">
-          Email
-        </label>
+        <label class="add-label" for="um-email">${tr("Email")}</label>
 
         <input class="add-input"
                id="um-email"
                name="um-email"
                type="email"
-               placeholder="Email"
+               placeholder="${tr("Email")}"
                autocomplete="off"
                autocorrect="off"
                autocapitalize="off"
                spellcheck="false">
 
-        <label class="add-label" for="um-password">
-          Password
-        </label>
+        <label class="add-label" for="um-password">${tr("Password")}</label>
 
         <input class="add-input"
                id="um-password"
                name="um-password"
                type="password"
-               placeholder="Password"
+               placeholder="${tr("Password")}"
                autocomplete="new-password">
 
         <div class="add-section-title"
-             style="margin-top:16px;">
-          User Role
-        </div>
+             style="margin-top:16px;">${tr("User Role")}</div>
 
         <select class="add-input add-select"
                 id="um-role"
@@ -853,9 +836,7 @@ function showAddUserSheet() {
 
       <button type="submit"
               class="add-save"
-              id="um-save">
-        + Create User
-      </button>
+              id="um-save">${tr("+ Create User")}</button>
     </form>
   `;
 
@@ -921,7 +902,7 @@ function showAddUserSheet() {
     }
 
     saveButton.disabled = true;
-    saveButton.textContent = 'Creating…';
+    saveButton.textContent = tr('Creating…');
 
     try {
       const callable = httpsCallable(
@@ -949,7 +930,7 @@ function showAddUserSheet() {
       console.error('[add user] failed', error);
 
       saveButton.disabled = false;
-      saveButton.textContent = '+ Create User';
+      saveButton.textContent = tr('+ Create User');
 
       let errorElement = sheet.querySelector('.add-error');
 

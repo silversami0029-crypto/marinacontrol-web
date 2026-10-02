@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/TaskHelp.js
 
 export function showTaskHelp() {
@@ -9,13 +10,11 @@ export function showTaskHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">✓ Tasks</div>
+      <div class="help-pill">${tr("✓ Tasks")}</div>
 
-      <p class="help-desc">
-        Tasks are your boat's general operational to-do items — cleaning, crew, administrative, and general technical jobs that don't belong in another MarinaControl module.
-      </p>
+      <p class="help-desc">${tr("Tasks are your boat's general operational to-do items — cleaning, crew, administrative, and general technical jobs that don't belong in another MarinaControl module.")}</p>
 
-      <div class="help-section-title">How to use Tasks</div>
+      <div class="help-section-title">${tr("How to use Tasks")}</div>
 
       ${step('1', 'Swipe to complete', 'Swipe a task card to mark it as completed.')}
       ${step('2', 'Open a task', 'Open a task to view or edit its details, or mark it as completed using the Complete switch.')}
@@ -23,16 +22,14 @@ export function showTaskHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">Tips</div>
-      <div class="help-tips">• Use the filter chips to view All, Open, Overdue or Completed
-• Overdue tasks appear in red on the Boat Dashboard
-• Open the kebab menu for View, Edit, Complete, Duplicate and more</div>
+      <div class="help-section-title">${tr("Tips")}</div>
+      <div class="help-tips">${tr("• Use the filter chips to view All, Open, Overdue or Completed • Overdue tasks appear in red on the Boat Dashboard • Open the kebab menu for View, Edit, Complete, Duplicate and more")}</div>
 
-      <div class="help-footer">Need help? support@marinacontrol.com</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="tkHelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="tkHelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

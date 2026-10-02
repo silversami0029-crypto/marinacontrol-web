@@ -1,3 +1,5 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
+import { t, getLocale, languagePicker } from '../i18n.js';
 // js/components/AddBoatSheet.js
 // Two views in one sheet (Options → Form) + CSV info sheet
 // Supports two modes:
@@ -47,7 +49,7 @@ export function showAddBoatSheet(opts = {}) {
   const sheet = document.createElement('div');
   sheet.className = 'sheet';
 sheet.innerHTML = `
-  <button type="button" id="boatSheetClose" aria-label="Close boat sheet"
+  <button type="button" id="boatSheetClose" aria-label="${tr("Close boat sheet")}"
     style="position:absolute;right:8px;top:8px;z-index:3;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;font-size:28px;cursor:pointer;">
     &times;
   </button>
@@ -75,13 +77,13 @@ sheet.style.position = 'fixed';
   /* ---------- Options (only in ADD mode) ---------- */
   function renderOptions() {
     body.innerHTML = `
-      <div class="sheet-title" style="text-align:center;">Add Boat</div>
+      <div class="sheet-title" style="text-align:center;">${t("Add Boat")}</div>
 
       <div class="add-option" id="optSingle">
         <div class="add-option-icon">${ICONS.add}</div>
         <div class="add-option-text">
-          <div class="add-option-title">Add Single Boat</div>
-          <div class="add-option-sub">Add one boat manually with all details</div>
+          <div class="add-option-title">${t("Add Single Boat")}</div>
+          <div class="add-option-sub">${t("Add one boat manually with all details")}</div>
         </div>
         ${ICONS.chevron}
       </div>
@@ -89,8 +91,8 @@ sheet.style.position = 'fixed';
       <div class="add-option" id="optBulk" style="margin-top:8px;">
         <div class="add-option-icon">${ICONS.upload}</div>
         <div class="add-option-text">
-          <div class="add-option-title">Bulk Import</div>
-          <div class="add-option-sub">Import multiple boats from CSV file</div>
+          <div class="add-option-title">${t("Bulk Import")}</div>
+          <div class="add-option-sub">${t("Import multiple boats from CSV file")}</div>
         </div>
         ${ICONS.chevron}
       </div>
@@ -106,33 +108,30 @@ sheet.style.position = 'fixed';
   /* ---------- CSV info ---------- */
   function renderCsvInfo() {
     body.innerHTML = `
-      <div class="sheet-title" style="text-align:center;">Import from CSV</div>
+      <div class="sheet-title" style="text-align:center;">${tr("Import from CSV")}</div>
 
       <div class="csv-info-scroll">
-        <p class="csv-info-intro">
-          Your CSV file should have a <b>header row</b> and
-          <b>comma-separated columns</b> in this order:
-        </p>
+        <p class="csv-info-intro">${tr("Your CSV file should have a")}<b>${tr("header row")}</b>${t("and")}<b>${tr("comma-separated columns")}</b>${tr("in this order:")}</p>
 
         <ul class="csv-info-list">
-          <li><b>name</b> — Boat name <span class="csv-req">(required)</span></li>
-          <li><b>type</b> — Vessel type</li>
-          <li><b>model</b> — Model number</li>
-          <li><b>hin</b> — HIN number</li>
-          <li><b>mmsi</b> — MMSI number</li>
-          <li><b>port</b> — Home port</li>
-          <li><b>status</b> — In Service / Off Service / Maintenance</li>
+          <li><b>name</b>${tr("— Boat name")}<span class="csv-req">${tr("(required)")}</span></li>
+          <li><b>type</b>${tr("— Vessel type")}</li>
+          <li><b>model</b>${tr("— Model number")}</li>
+          <li><b>hin</b>${tr("— HIN number")}</li>
+          <li><b>mmsi</b>${tr("— MMSI number")}</li>
+          <li><b>port</b>${tr("— Home port")}</li>
+          <li><b>status</b>${tr("— In Service / Off Service / Maintenance")}</li>
         </ul>
 
-        <div class="csv-info-example-label">Example:</div>
+        <div class="csv-info-example-label">${tr("Example:")}</div>
         <pre class="csv-info-example">name,type,model,hin,mmsi,port,status
 Sea Ray,Sport,270,ABC123,123456789,Monaco,Active
 Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
       </div>
 
       <div class="csv-info-actions">
-        <button type="button" class="csv-btn csv-btn--cancel" id="csvCancel">Cancel</button>
-        <button type="button" class="csv-btn csv-btn--choose" id="csvChoose">Choose File</button>
+        <button type="button" class="csv-btn csv-btn--cancel" id="csvCancel">${t("Cancel")}</button>
+        <button type="button" class="csv-btn csv-btn--choose" id="csvChoose">${tr("Choose File")}</button>
       </div>
     `;
 
@@ -145,7 +144,7 @@ Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
 
   /* ---------- Form (used for both Add + Edit) ---------- */
   function renderForm() {
-    const title  = isEditMode ? 'Edit Boat'   : 'Boat Details';
+    const title  = isEditMode ? t('Edit Boat') : t('Boat Details');
     const btnTxt = isEditMode ? 'Update Boat' : 'Save Boat';
 
     // Build status options — in edit mode, add the current value if non-standard
@@ -167,36 +166,36 @@ Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
       <form id="addBoatForm" class="add-form" novalidate>
         <div class="add-scroll">
 
-          <input class="add-input" id="f-name"  type="text" placeholder="Boat Name *"
+          <input class="add-input" id="f-name"  type="text" placeholder="${tr("Boat Name *")}"
                  autocomplete="off" autocapitalize="words"
                  value="${isEditMode ? escapeAttr(prefill(boat.name)) : ''}">
 
-          <input class="add-input" id="f-type"  type="text" placeholder="Boat Type"
+          <input class="add-input" id="f-type"  type="text" placeholder="${tr("Boat Type")}"
                  autocomplete="off" autocapitalize="words"
                  value="${isEditMode ? escapeAttr(prefill(boat.type)) : ''}">
 
-          <div class="add-section-title">Vessel Dimensions</div>
-          <div class="add-section-sub">Optional • used for berth compatibility checks</div>
+          <div class="add-section-title">${t("Vessel Dimensions")}</div>
+          <div class="add-section-sub">${tr("Optional • used for berth compatibility checks")}</div>
 
           <div class="add-row-2">
-            <input class="add-input" id="f-length" type="number" step="0.1" placeholder="Length (m)"
+            <input class="add-input" id="f-length" type="number" step="0.1" placeholder="${t("Length (m)")}"
                    value="${isEditMode ? escapeAttr(prefill(boat.length)) : ''}">
-            <input class="add-input" id="f-beam"   type="number" step="0.1" placeholder="Beam (m)"
+            <input class="add-input" id="f-beam"   type="number" step="0.1" placeholder="${tr("Beam (m)")}"
                    value="${isEditMode ? escapeAttr(prefill(boat.beam)) : ''}">
           </div>
 
           <div class="add-row-2">
-            <input class="add-input" id="f-draft"    type="number" step="0.1" placeholder="Draft (m)"
+            <input class="add-input" id="f-draft"    type="number" step="0.1" placeholder="${tr("Draft (m)")}"
                    value="${isEditMode ? escapeAttr(prefill(boat.draft)) : ''}">
-            <input class="add-input" id="f-airDraft" type="number" step="0.1" placeholder="Air Draft (m)"
+            <input class="add-input" id="f-airDraft" type="number" step="0.1" placeholder="${tr("Air Draft (m)")}"
                    value="${isEditMode ? escapeAttr(prefill(boat.airDraft)) : ''}">
           </div>
 
-          <input class="add-input" id="f-engineType" type="text" placeholder="Engine Type"
+          <input class="add-input" id="f-engineType" type="text" placeholder="${tr("Engine Type")}"
                  autocomplete="off" autocapitalize="words"
                  value="${isEditMode ? escapeAttr(prefill(boat.engineType)) : ''}">
 
-          <input class="add-input" id="f-hin"  type="text" placeholder="HIN Number"
+          <input class="add-input" id="f-hin"  type="text" placeholder="${tr("HIN Number")}"
                  autocomplete="off" style="text-transform:uppercase;"
                  value="${isEditMode ? escapeAttr(prefill(boat.hin)) : ''}">
 
@@ -204,11 +203,11 @@ Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
                  inputmode="numeric" autocomplete="off"
                  value="${isEditMode ? escapeAttr(prefill(boat.mmsi)) : ''}">
 
-          <input class="add-input" id="f-port" type="text" placeholder="Port Name"
+          <input class="add-input" id="f-port" type="text" placeholder="${tr("Port Name")}"
                  autocomplete="off" autocapitalize="words"
                  value="${isEditMode ? escapeAttr(prefill(boat.port)) : ''}">
 
-          <div class="add-section-title" style="margin-top:20px;">Status</div>
+          <div class="add-section-title" style="margin-top:20px;">${t("Status")}</div>
           <select class="add-input add-select" id="f-status">
             ${statusOptions.map(s => {
               const selected = isEditMode && s === boat.status ? 'selected' : '';
@@ -219,7 +218,7 @@ Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
           <label class="add-checkbox" style="margin-top:16px;">
             <input type="checkbox" id="f-setActive"
                    ${isEditMode ? (boat.isActive ? 'checked' : '') : 'checked'}>
-            <span>Set as active boat</span>
+            <span>${t("Set as active boat")}</span>
           </label>
         </div>
 
@@ -260,7 +259,7 @@ Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
       };
 
       save.disabled = true;
-      save.textContent = isEditMode ? 'Updating…' : 'Saving…';
+      save.textContent = isEditMode ? 'Updating…' : tr('Saving…');
 
       try {
         if (isEditMode) {
@@ -279,7 +278,7 @@ Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
           errEl.className = 'add-error';
           form.insertBefore(errEl, save);
         }
-        errEl.textContent = err.message || 'Failed to save.';
+        errEl.textContent = err.message || tr('Failed to save.');
       }
     });
   }
@@ -386,8 +385,8 @@ async function runImportWithProgress(rows) {
   sheet.className = 'confirm-sheet is-open';
   sheet.innerHTML = `
     <div class="confirm-handle"></div>
-    <div class="confirm-title">Importing boats…</div>
-    <div class="confirm-message" id="importProgress">Starting…</div>
+    <div class="confirm-title">${tr("Importing boats…")}</div>
+    <div class="confirm-message" id="importProgress">${tr("Starting…")}</div>
     <div class="import-bar-wrap">
       <div class="import-bar" id="importBar"></div>
     </div>
@@ -413,7 +412,7 @@ async function runImportWithProgress(rows) {
       }
     );
 
-    progressEl.textContent = 'Done';
+    progressEl.textContent = tr('Done');
     barEl.style.width = '100%';
 
     await new Promise((r) => setTimeout(r, 300));
@@ -424,7 +423,7 @@ async function runImportWithProgress(rows) {
     showResultModal(result);
 
     if (result.success > 0) {
-      toast(`Imported ${result.success} boat${result.success === 1 ? '' : 's'}`,
+      toast(tr(`Imported ${result.success} boat${result.success === 1 ? '' : 's'}`),
             { kind: 'success' });
     }
   } catch (err) {
@@ -446,26 +445,26 @@ function showResultModal({ success, skipped, failed, errors = [] }) {
   sheet.className = 'confirm-sheet';
   sheet.innerHTML = `
     <div class="confirm-handle"></div>
-    <div class="confirm-title">Import complete</div>
+    <div class="confirm-title">${tr("Import complete")}</div>
 
     <div class="import-stats">
       <div class="import-stat">
         <div class="import-stat-value ok">${success}</div>
-        <div class="import-stat-label">Added</div>
+        <div class="import-stat-label">${tr("Added")}</div>
       </div>
       <div class="import-stat">
         <div class="import-stat-value skip">${skipped}</div>
-        <div class="import-stat-label">Skipped</div>
+        <div class="import-stat-label">${tr("Skipped")}</div>
       </div>
       <div class="import-stat">
         <div class="import-stat-value fail">${failed}</div>
-        <div class="import-stat-label">Failed</div>
+        <div class="import-stat-label">${tr("Failed")}</div>
       </div>
     </div>
 
     ${errors.length ? `
       <div class="import-errors">
-        <div class="import-errors-title">Errors</div>
+        <div class="import-errors-title">${tr("Errors")}</div>
         ${errors.slice(0, 10).map(e => `<div class="import-error-line">• ${escapeHtml(e)}</div>`).join('')}
         ${errors.length > 10 ? `<div class="import-error-line">…and ${errors.length - 10} more</div>` : ''}
       </div>
@@ -473,9 +472,7 @@ function showResultModal({ success, skipped, failed, errors = [] }) {
 
     <div class="confirm-actions">
       <button class="confirm-btn confirm-btn--cancel" id="closeImportResult"
-              style="flex:1;">
-        Close
-      </button>
+              style="flex:1;">${t("Close")}</button>
     </div>
   `;
 

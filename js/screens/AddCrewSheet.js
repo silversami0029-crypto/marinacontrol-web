@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddCrewSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -15,7 +16,7 @@ export function showAddCrewChooser() {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Add Crew</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Add Crew")}</div>
 
     <div class="sheet-gap-8"></div>
 
@@ -29,8 +30,8 @@ export function showAddCrewChooser() {
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">Add Single Crew</div>
-        <div class="sheet-item-subtitle">Add one crew member with all details</div>
+        <div class="sheet-item-title">${tr("Add Single Crew")}</div>
+        <div class="sheet-item-subtitle">${tr("Add one crew member with all details")}</div>
       </div>
       <div class="sheet-chevron">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -54,8 +55,8 @@ export function showAddCrewChooser() {
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">Bulk Import</div>
-        <div class="sheet-item-subtitle">Import multiple crew from CSV</div>
+        <div class="sheet-item-title">${tr("Bulk Import")}</div>
+        <div class="sheet-item-subtitle">${tr("Import multiple crew from CSV")}</div>
       </div>
       <div class="sheet-chevron">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -103,54 +104,52 @@ function showAddCrewForm() {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Add Crew</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Add Crew")}</div>
 
     <form id="acsForm" class="add-form" novalidate autocomplete="off">
       <input type="text"     name="fakeusernameremembered" style="display:none" tabindex="-1" autocomplete="username">
       <input type="password" name="fakepasswordremembered"  style="display:none" tabindex="-1" autocomplete="current-password">
 
       <div class="add-scroll">
-        <label class="add-label" for="acs-name">Full Name</label>
+        <label class="add-label" for="acs-name">${tr("Full Name")}</label>
         <input class="add-input" id="acs-name" name="acs-name"
-               type="text" placeholder="Full Name"
+               type="text" placeholder="${tr("Full Name")}"
                autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
 
-        <label class="add-label" for="acs-email">Email</label>
+        <label class="add-label" for="acs-email">${tr("Email")}</label>
         <input class="add-input" id="acs-email" name="acs-email"
-               type="email" placeholder="Email"
+               type="email" placeholder="${tr("Email")}"
                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 
-        <label class="add-label" for="acs-role">Role</label>
+        <label class="add-label" for="acs-role">${tr("Role")}</label>
         <select class="add-input add-select" id="acs-role" name="acs-role">
-          <option value="">Select role…</option>
-          <option value="Captain">Captain</option>
-          <option value="First Mate">First Mate</option>
-          <option value="Mate">Mate</option>
-          <option value="Deck Officer">Deck Officer</option>
-          <option value="Deckhand">Deckhand</option>
-          <option value="Engineer">Engineer</option>
-          <option value="Chief Engineer">Chief Engineer</option>
-          <option value="Navigator">Navigator</option>
-          <option value="Boatswain">Boatswain</option>
-          <option value="Steward">Steward</option>
-          <option value="Stewardess">Stewardess</option>
-          <option value="Cook">Cook</option>
-          <option value="Marina Staff">Marina Staff</option>
-          <option value="Harbor Master">Harbor Master</option>
-          <option value="Pilot">Pilot</option>
-          <option value="Guest">Guest</option>
-          <option value="Owner">Owner</option>
+          <option value="">${tr("Select role…")}</option>
+          <option value="Captain">${tr("Captain")}</option>
+          <option value="First Mate">${tr("First Mate")}</option>
+          <option value="Mate">${tr("Mate")}</option>
+          <option value="Deck Officer">${tr("Deck Officer")}</option>
+          <option value="Deckhand">${tr("Deckhand")}</option>
+          <option value="Engineer">${tr("Engineer")}</option>
+          <option value="Chief Engineer">${tr("Chief Engineer")}</option>
+          <option value="Navigator">${tr("Navigator")}</option>
+          <option value="Boatswain">${tr("Boatswain")}</option>
+          <option value="Steward">${tr("Steward")}</option>
+          <option value="Stewardess">${tr("Stewardess")}</option>
+          <option value="Cook">${tr("Cook")}</option>
+          <option value="Marina Staff">${tr("Marina Staff")}</option>
+          <option value="Harbor Master">${tr("Harbor Master")}</option>
+          <option value="Pilot">${tr("Pilot")}</option>
+          <option value="Guest">${tr("Guest")}</option>
+          <option value="Owner">${tr("Owner")}</option>
         </select>
 
-        <label class="add-label" for="acs-notes">Notes</label>
+        <label class="add-label" for="acs-notes">${tr("Notes")}</label>
         <textarea class="add-input" id="acs-notes" name="acs-notes"
-                  placeholder="Notes" rows="3"
+                  placeholder="${tr("Notes")}" rows="3"
                   autocomplete="off" spellcheck="false"></textarea>
       </div>
 
-      <button type="submit" class="add-save" id="acs-save">
-        + Add Crew
-      </button>
+      <button type="submit" class="add-save" id="acs-save">${tr("+ Add Crew")}</button>
     </form>
   `;
 
@@ -184,16 +183,16 @@ function showAddCrewForm() {
     if (!role)  { sheet.querySelector('#acs-role').focus(); return; }
 
     save.disabled = true;
-    save.textContent = 'Adding…';
+    save.textContent = tr('Adding…');
 
     try {
       await createCrew({ name, email, role, notes });
       close();
-      toast(`Crew added: ${name}`, { kind: 'success' });
+      toast(tr(`Crew added: ${name}`), { kind: 'success' });
     } catch (err) {
       console.error('[add crew] failed', err);
       save.disabled = false;
-      save.textContent = '+ Add Crew';
+      save.textContent = tr('+ Add Crew');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');
@@ -210,7 +209,7 @@ function showAddCrewForm() {
    ============================================================ */
 async function createCrew({ name, email, role, notes }) {
   const clientId = Number(store.activeClientId);
-  if (!clientId) throw new Error('No active client');
+  if (!clientId) throw new Error(tr('No active client'));
 
   // Next numeric id
   const snap = await getDocs(

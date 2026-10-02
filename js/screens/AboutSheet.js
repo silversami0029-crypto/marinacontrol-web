@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AboutSheet.js
 
 const APP_NAME = 'MarinaControl';
@@ -21,19 +22,17 @@ export function showAboutSheet() {
       <div class="about-name">${APP_NAME}</div>
  
 
-      <div class="about-desc">
-        MarinaControl gives marinas a single place to manage boats, berths, crew and customers — from daily operations to compliance.
-      </div>
+      <div class="about-desc">${tr("MarinaControl gives marinas a single place to manage boats, berths, crew and customers — from daily operations to compliance.")}</div>
 
       <div class="about-divider"></div>
 
       <div class="about-links">
-        <button type="button" class="about-link" id="aboutTerms">Terms</button>
+        <button type="button" class="about-link" id="aboutTerms">${tr("Terms")}</button>
         <div class="about-link-sep"></div>
-        <button type="button" class="about-link" id="aboutPrivacy">Privacy</button>
+        <button type="button" class="about-link" id="aboutPrivacy">${tr("Privacy")}</button>
       </div>
 
-           <button type="button" class="about-close" id="aboutClose">Close</button>
+           <button type="button" class="about-close" id="aboutClose">${tr("Close")}</button>
     </div>
   `;
 

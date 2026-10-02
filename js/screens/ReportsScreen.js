@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ReportsScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -29,15 +30,15 @@ export async function mountReportsScreen() {
   screen.innerHTML = `
     <div class="rp-header" id="rpHeader">
       <div class="rp-header-row">
-        <button class="rp-icon-btn" id="rpBack" aria-label="Back">
+        <button class="rp-icon-btn" id="rpBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="rp-pill">Reports</div>
-        <button class="rp-icon-btn" id="rpHelp" aria-label="Help">
+        <div class="rp-pill">${tr("Reports")}</div>
+        <button class="rp-icon-btn" id="rpHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -52,7 +53,7 @@ export async function mountReportsScreen() {
 
     <div class="rp-tabs" id="rpTabs">
       ${TABS.map((label, i) => `
-        <button type="button" class="rp-tab${i === currentTab ? ' is-active' : ''}" data-rp-tab="${i}">${label}</button>
+        <button type="button" class="rp-tab${i === currentTab ? ' is-active' : ''}" data-rp-tab="${i}">${tr(label)}</button>
       `).join('')}
     </div>
 
@@ -61,7 +62,7 @@ export async function mountReportsScreen() {
     </div>
 
     <div class="rp-footer">
-      <button type="button" class="rp-export-btn" id="rpExport">📄 Export PDF</button>
+      <button type="button" class="rp-export-btn" id="rpExport">${tr("📄 Export PDF")}</button>
     </div>
   `;
 
@@ -160,18 +161,18 @@ function renderUnpaid() {
   body.innerHTML = `
     <div class="rp-summary">
       <div class="rp-summary-row">
-        <div class="rp-summary-label">Total Outstanding</div>
-        <button class="rp-info-icon" id="rpHelpIcon" aria-label="Help">ⓘ</button>
+        <div class="rp-summary-label">${tr("Total Outstanding")}</div>
+        <button class="rp-info-icon" id="rpHelpIcon" aria-label="${tr("Help")}">ⓘ</button>
       </div>
       <div class="rp-summary-value">${fmtMoney(total)}</div>
     </div>
 
     ${unpaid.length ? `
-      <div class="rp-section-title">By Status</div>
+      <div class="rp-section-title">${tr("By Status")}</div>
       ${overdue.length ? `
         <div class="rp-status-row">
           <span class="rp-status-dot" style="background:#FF4444;"></span>
-          <span class="rp-status-label">Overdue</span>
+          <span class="rp-status-label">${tr("Overdue")}</span>
           <span class="rp-status-count">${overdue.length} ${overdue.length === 1 ? 'invoice' : 'invoices'}</span>
           <span class="rp-status-amount" style="color:#FF4444;">${fmtMoney(overdueAmt)}</span>
         </div>
@@ -179,13 +180,13 @@ function renderUnpaid() {
       ${pending.length ? `
         <div class="rp-status-row">
           <span class="rp-status-dot" style="background:#FF9800;"></span>
-          <span class="rp-status-label">Pending</span>
+          <span class="rp-status-label">${tr("Pending")}</span>
           <span class="rp-status-count">${pending.length} ${pending.length === 1 ? 'invoice' : 'invoices'}</span>
           <span class="rp-status-amount" style="color:#FF9800;">${fmtMoney(pendingAmt)}</span>
         </div>
       ` : ''}
 
-      <div class="rp-section-title">By Boat</div>
+      <div class="rp-section-title">${tr("By Boat")}</div>
       ${Object.entries(byBoat).map(([boat, s]) => `
         <div class="rp-boat-row">
           <div class="rp-boat-name">${escapeHtml(boat)}</div>
@@ -193,7 +194,7 @@ function renderUnpaid() {
         </div>
       `).join('')}
 
-      <div class="rp-section-title">Details</div>
+      <div class="rp-section-title">${tr("Details")}</div>
       ${unpaid.map(inv => {
         const isOverdue = String(inv.status || '').toUpperCase() === 'OVERDUE';
         return `
@@ -207,7 +208,7 @@ function renderUnpaid() {
           </div>
         `;
       }).join('')}
-    ` : `<div class="rp-empty">No outstanding invoices</div>`}
+    ` : `<div class="rp-empty">${tr("No outstanding invoices")}</div>`}
   `;
 
   const helpIcon = body.querySelector('#rpHelpIcon');
@@ -243,14 +244,14 @@ function renderExpiring() {
   body.innerHTML = `
     <div class="rp-summary">
       <div class="rp-summary-row">
-        <div class="rp-summary-label">Total Expiring</div>
-        <button class="rp-info-icon" id="rpHelpIcon" aria-label="Help">ⓘ</button>
+        <div class="rp-summary-label">${tr("Total Expiring")}</div>
+        <button class="rp-info-icon" id="rpHelpIcon" aria-label="${tr("Help")}">ⓘ</button>
       </div>
       <div class="rp-summary-value">${expiring.length}</div>
     </div>
 
     ${expiring.length ? `
-      <div class="rp-section-title">By Type</div>
+      <div class="rp-section-title">${tr("By Type")}</div>
       ${Object.entries(typeCounts).map(([type, n]) => `
         <div class="rp-status-row">
           <span class="rp-status-label">${escapeHtml(type)}</span>
@@ -258,17 +259,17 @@ function renderExpiring() {
         </div>
       `).join('')}
 
-      <div class="rp-section-title">By Boat</div>
+      <div class="rp-section-title">${tr("By Boat")}</div>
       ${Object.entries(byBoat).map(([boat, docs]) => `
         <div class="rp-boat-row">
           <div class="rp-boat-name">${escapeHtml(boat)}</div>
           <div class="rp-boat-summary">
-            ${docs.map(d => `• ${escapeHtml(d.name || '')} (${escapeHtml(d.type || '')})`).join('<br>')}
+            ${docs.map(d => `• ${escapeHtml(d.name || '')} (${escapeHtml(tr(d.type || ''))})`).join('<br>')}
           </div>
         </div>
       `).join('')}
 
-      <div class="rp-section-title">Details</div>
+      <div class="rp-section-title">${tr("Details")}</div>
       ${expiring.map(d => {
         const e = toMs(d.expiryDate);
         const expired = e < now;
@@ -277,9 +278,9 @@ function renderExpiring() {
             <div class="rp-detail-emoji">${expired ? '🔴' : '🟡'}</div>
             <div class="rp-detail-info">
               <div class="rp-detail-title">${escapeHtml(boatsCache[Number(d.boatId)] || 'Unknown boat')}</div>
-              <div class="rp-detail-desc">${escapeHtml(d.name || '')} (${escapeHtml(d.type || '')})</div>
+              <div class="rp-detail-desc">${escapeHtml(d.name || '')} (${escapeHtml(tr(d.type || ''))})</div>
             </div>
-            <div class="rp-detail-value">Expires ${escapeHtml(fmtDate(e))}</div>
+            <div class="rp-detail-value">${tr("Expires" )} ${escapeHtml(fmtDate(e))}</div>
           </div>
         `;
       }).join('')}
@@ -324,36 +325,36 @@ function renderOccupancy() {
   body.innerHTML = `
     <div class="rp-summary">
       <div class="rp-summary-row">
-        <div class="rp-summary-label">Occupancy Rate</div>
-        <button class="rp-info-icon" id="rpHelpIcon" aria-label="Help">ⓘ</button>
+        <div class="rp-summary-label">${tr("Occupancy Rate")}</div>
+        <button class="rp-info-icon" id="rpHelpIcon" aria-label="${tr("Help")}">ⓘ</button>
       </div>
       <div class="rp-summary-value">${rate.toFixed(1)}%</div>
     </div>
 
-    <div class="rp-section-title">By Status</div>
+    <div class="rp-section-title">${tr("By Status")}</div>
     <div class="rp-status-row">
-      <span class="rp-status-label">Total Berths</span>
+      <span class="rp-status-label">${tr("Total Berths")}</span>
       <span class="rp-status-amount">${total}</span>
     </div>
     <div class="rp-status-row">
-      <span class="rp-status-label">Occupied</span>
+      <span class="rp-status-label">${tr("Occupied")}</span>
       <span class="rp-status-amount" style="color:#FF4444;">${occupied}</span>
     </div>
     <div class="rp-status-row">
-      <span class="rp-status-label">Available</span>
+      <span class="rp-status-label">${tr("Available")}</span>
       <span class="rp-status-amount" style="color:#3DD68C;">${available}</span>
     </div>
     <div class="rp-status-row">
-      <span class="rp-status-label">Maintenance</span>
+      <span class="rp-status-label">${tr("Maintenance")}</span>
       <span class="rp-status-amount" style="color:#FF9800;">${maintenance}</span>
     </div>
     <div class="rp-status-row">
-      <span class="rp-status-label">Avg Stay</span>
+      <span class="rp-status-label">${tr("Avg Stay")}</span>
       <span class="rp-status-amount">${avgStay.toFixed(1)} days</span>
     </div>
 
     ${occupiedBerths.length ? `
-      <div class="rp-section-title">Occupied Berths</div>
+      <div class="rp-section-title">${tr("Occupied Berths")}</div>
       ${occupiedBerths.map(b => {
         const boatName = b.boatId ? (boatsCache[Number(b.boatId)] || 'Unknown') : 'Unknown';
         const since = b.assignedDate ? ` since ${fmtDate(b.assignedDate)}` : '';
@@ -364,7 +365,7 @@ function renderOccupancy() {
               <div class="rp-detail-title">${escapeHtml(b.berthNumber || '')}</div>
               <div class="rp-detail-desc">${escapeHtml(boatName)}${escapeHtml(since)}</div>
             </div>
-            <div class="rp-detail-value">Occupied</div>
+            <div class="rp-detail-value">${tr("Occupied")}</div>
           </div>
         `;
       }).join('')}
@@ -419,38 +420,38 @@ function renderRevenue() {
   body.innerHTML = `
     <div class="rp-filters">
       <select class="rp-filter-select" id="rpCatFilter">
-        <option value="ALL"${revenueFilters.category === 'ALL' ? ' selected' : ''}>All Categories</option>
-        <option value="BERTH"${revenueFilters.category === 'BERTH' ? ' selected' : ''}>Berth</option>
-        <option value="MAINTENANCE"${revenueFilters.category === 'MAINTENANCE' ? ' selected' : ''}>Maintenance</option>
-        <option value="EQUIPMENT"${revenueFilters.category === 'EQUIPMENT' ? ' selected' : ''}>Equipment</option>
-        <option value="CREW"${revenueFilters.category === 'CREW' ? ' selected' : ''}>Crew</option>
-        <option value="GENERAL"${revenueFilters.category === 'GENERAL' ? ' selected' : ''}>General</option>
+        <option value="ALL"${revenueFilters.category === 'ALL' ? ' selected' : ''}>${tr("All Categories")}</option>
+        <option value="BERTH"${revenueFilters.category === 'BERTH' ? ' selected' : ''}>${tr("Berth")}</option>
+        <option value="MAINTENANCE"${revenueFilters.category === 'MAINTENANCE' ? ' selected' : ''}>${tr("Maintenance")}</option>
+        <option value="EQUIPMENT"${revenueFilters.category === 'EQUIPMENT' ? ' selected' : ''}>${tr("Equipment")}</option>
+        <option value="CREW"${revenueFilters.category === 'CREW' ? ' selected' : ''}>${tr("Crew")}</option>
+        <option value="GENERAL"${revenueFilters.category === 'GENERAL' ? ' selected' : ''}>${tr("General")}</option>
       </select>
       <select class="rp-filter-select" id="rpDateFilter">
-        <option value="ALL"${revenueFilters.dateRange === 'ALL' ? ' selected' : ''}>All Time</option>
-        <option value="THIS_MONTH"${revenueFilters.dateRange === 'THIS_MONTH' ? ' selected' : ''}>This Month</option>
-        <option value="LAST_MONTH"${revenueFilters.dateRange === 'LAST_MONTH' ? ' selected' : ''}>Last Month</option>
-        <option value="THIS_YEAR"${revenueFilters.dateRange === 'THIS_YEAR' ? ' selected' : ''}>This Year</option>
-        <option value="LAST_30"${revenueFilters.dateRange === 'LAST_30' ? ' selected' : ''}>Last 30 Days</option>
+        <option value="ALL"${revenueFilters.dateRange === 'ALL' ? ' selected' : ''}>${tr("All Time")}</option>
+        <option value="THIS_MONTH"${revenueFilters.dateRange === 'THIS_MONTH' ? ' selected' : ''}>${tr("This Month")}</option>
+        <option value="LAST_MONTH"${revenueFilters.dateRange === 'LAST_MONTH' ? ' selected' : ''}>${tr("Last Month")}</option>
+        <option value="THIS_YEAR"${revenueFilters.dateRange === 'THIS_YEAR' ? ' selected' : ''}>${tr("This Year")}</option>
+        <option value="LAST_30"${revenueFilters.dateRange === 'LAST_30' ? ' selected' : ''}>${tr("Last 30 Days")}</option>
       </select>
     </div>
 
     <div class="rp-summary">
       <div class="rp-summary-row">
-        <div class="rp-summary-label">Total Revenue</div>
-        <button class="rp-info-icon" id="rpHelpIcon" aria-label="Help">ⓘ</button>
+        <div class="rp-summary-label">${tr("Total Revenue")}</div>
+        <button class="rp-info-icon" id="rpHelpIcon" aria-label="${tr("Help")}">ⓘ</button>
       </div>
       <div class="rp-summary-value">${fmtMoney(total)}</div>
     </div>
 
     ${filtered.length ? `
-      <div class="rp-section-title">By Status</div>
+      <div class="rp-section-title">${tr("By Status")}</div>
       <div class="rp-status-row">
         <span class="rp-status-emoji">📊</span>
         <span class="rp-status-label">${filtered.length} ${filtered.length === 1 ? 'invoice' : 'invoices'} · Avg ${fmtMoney(avg)}</span>
       </div>
 
-      <div class="rp-section-title">By Boat</div>
+      <div class="rp-section-title">${tr("By Boat")}</div>
       ${sortedBoats.map(([boat, amt]) => `
         <div class="rp-boat-row">
           <div class="rp-boat-name">${escapeHtml(boat)}</div>
@@ -458,18 +459,18 @@ function renderRevenue() {
         </div>
       `).join('')}
 
-      <div class="rp-section-title">Details</div>
+      <div class="rp-section-title">${tr("Details")}</div>
       ${sortedBoats.map(([boat, amt]) => `
         <div class="rp-detail-row">
           <div class="rp-detail-emoji">💰</div>
           <div class="rp-detail-info">
             <div class="rp-detail-title">${escapeHtml(boat)}</div>
-            <div class="rp-detail-desc">Total paid</div>
+            <div class="rp-detail-desc">${tr("Total paid")}</div>
           </div>
           <div class="rp-detail-value">${fmtMoney(amt)}</div>
         </div>
       `).join('')}
-    ` : `<div class="rp-empty">No revenue for this filter</div>`}
+    ` : `<div class="rp-empty">${tr("No revenue for this filter")}</div>`}
   `;
 
   const helpIcon = body.querySelector('#rpHelpIcon');
@@ -495,7 +496,7 @@ function fmtMoney(n) {
 function fmtDate(ms) {
   if (!ms) return '—';
   const d = new Date(Number(ms));
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(uiLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function toMs(v) {
@@ -546,7 +547,7 @@ async function exportReport(tab) {
   const { jsPDF } = window.jspdf;
   const titles = ['Unpaid Invoices', 'Expiring Documents', 'Occupancy', 'Revenue'];
   const title = titles[tab] || 'Report';
-  const generated = new Date().toLocaleString('en-GB');
+  const generated = new Date().toLocaleString(uiLocale());
 
   const doc = new jsPDF();
   doc.setFontSize(18);
@@ -571,7 +572,7 @@ async function exportReport(tab) {
   });
 
   doc.save(`report-${tab}-${Date.now()}.pdf`);
-  toast('Report exported', { kind: 'success' });
+  toast(tr('Report exported'), { kind: 'success' });
 }
 
 function getDetailRows(tab) {

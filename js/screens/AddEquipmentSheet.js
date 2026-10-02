@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddEquipmentSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -53,10 +54,10 @@ export function showAddEquipmentSheet(opts = {}) {
 
   <div class="sheet-title"
     style="flex:1;margin:0;padding:12px 48px;text-align:center;">
-    ${isEdit ? 'Edit Invoice' : 'Add Equipment'}
+    ${isEdit ? tr('Edit Invoice') : tr('Add Equipment')}
   </div>
 
-  <button type="button" id="iv-close" aria-label="Close invoice sheet"
+  <button type="button" id="iv-close" aria-label="${tr("Close invoice sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -69,47 +70,47 @@ export function showAddEquipmentSheet(opts = {}) {
     <form id="eqForm" class="add-form" novalidate autocomplete="off">
       <div class="add-scroll">
         ${boatName ? `
-          <label class="add-label">Boat</label>
+          <label class="add-label">${tr("Boat")}</label>
           <div class="add-input" style="padding-top:14px; padding-bottom:14px; color:var(--color-text-secondary);">
-            Boat: ${escapeHtml(boatName)}
+            ${tr("Boat:" )} ${escapeHtml(boatName)}
           </div>
         ` : ''}
 
-        <label class="add-label" for="eq-manufacturer">Manufacturer</label>
+        <label class="add-label" for="eq-manufacturer">${tr("Manufacturer")}</label>
         <select class="add-input add-select" id="eq-manufacturer">
-          <option value="">Select manufacturer…</option>
-          ${EQUIPMENT_MANUFACTURERS.map(m => `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`).join('')}
+          <option value="">${tr("Select manufacturer…")}</option>
+          ${EQUIPMENT_MANUFACTURERS.map(m => `<option value="${escapeAttr(m)}">${escapeHtml(tr(m))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="eq-model">Model</label>
-        <input class="add-input" id="eq-model" type="text" placeholder="e.g. Verado 300">
+        <label class="add-label" for="eq-model">${tr("Model")}</label>
+        <input class="add-input" id="eq-model" type="text" placeholder="${tr("e.g. Verado 300")}">
 
-        <label class="add-label" for="eq-type">Type</label>
+        <label class="add-label" for="eq-type">${tr("Type")}</label>
         <select class="add-input add-select" id="eq-type">
-          <option value="">Select type…</option>
-          ${EQUIPMENT_TYPES.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join('')}
+          <option value="">${tr("Select type…")}</option>
+          ${EQUIPMENT_TYPES.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(tr(t))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="eq-serial">Serial Number</label>
-        <input class="add-input" id="eq-serial" type="text" placeholder="Serial number">
+        <label class="add-label" for="eq-serial">${tr("Serial Number")}</label>
+        <input class="add-input" id="eq-serial" type="text" placeholder="${tr("Serial number")}">
 
-        <label class="add-label" for="eq-location">Location</label>
+        <label class="add-label" for="eq-location">${tr("Location")}</label>
         <select class="add-input add-select" id="eq-location">
-          <option value="">Select location…</option>
-          ${BOAT_LOCATIONS.map(l => `<option value="${escapeAttr(l)}">${escapeHtml(l)}</option>`).join('')}
+          <option value="">${tr("Select location…")}</option>
+          ${BOAT_LOCATIONS.map(l => `<option value="${escapeAttr(l)}">${escapeHtml(tr(l))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="eq-status">Status</label>
+        <label class="add-label" for="eq-status">${tr("Status")}</label>
         <select class="add-input add-select" id="eq-status">
-          ${EQUIPMENT_STATUS.map(s => `<option value="${s}">${s}</option>`).join('')}
+          ${EQUIPMENT_STATUS.map(s => `<option value="${s}">${escapeHtml(tr(s))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="eq-notes">Notes</label>
-        <textarea class="add-input" id="eq-notes" rows="3" placeholder="Notes"></textarea>
+        <label class="add-label" for="eq-notes">${tr("Notes")}</label>
+        <textarea class="add-input" id="eq-notes" rows="3" placeholder="${tr("Notes")}"></textarea>
       </div>
 
       <button type="submit" class="add-save" id="eq-save">
-        ${isEdit ? 'Update Equipment' : '+ Add Equipment'}
+        ${isEdit ? tr('Update Equipment') : tr('+ Add Equipment')}
       </button>
     </form>
   `;
@@ -153,32 +154,32 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     const status       = sheet.querySelector('#eq-status').value;
     const notes        = sheet.querySelector('#eq-notes').value.trim();
 
-    if (!manufacturer) { toast('Select a manufacturer', { kind: 'error' }); sheet.querySelector('#eq-manufacturer').focus(); return; }
-    if (!type)         { toast('Select a type', { kind: 'error' }); return; }
+    if (!manufacturer) { toast(tr('Select a manufacturer'), { kind: 'error' }); sheet.querySelector('#eq-manufacturer').focus(); return; }
+    if (!type)         { toast(tr('Select a type'), { kind: 'error' }); return; }
 
     save.disabled = true;
-    save.textContent = 'Saving…';
+    save.textContent = tr('Saving…');
 
     try {
       if (isEdit) {
         await updateEquipment(item, { manufacturer, model, type, serialNumber, location, status, notes });
       } else {
-        if (!boatId) throw new Error('No boat selected');
+        if (!boatId) throw new Error(tr('No boat selected'));
         await createEquipment({ boatId, manufacturer, model, type, serialNumber, location, status, notes });
       }
       close();
-      toast(isEdit ? 'Equipment updated' : 'Equipment added', { kind: 'success' });
+      toast(isEdit ? tr('Equipment updated') : tr('Equipment added'), { kind: 'success' });
     } catch (err) {
       console.error('[equipment save] failed', err);
       save.disabled = false;
-      save.textContent = isEdit ? 'Update Equipment' : '+ Add Equipment';
+      save.textContent = isEdit ? tr('Update Equipment') : tr('+ Add Equipment');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to save.';
+      errEl.textContent = err.message || tr('Failed to save.');
     }
   });
 }
@@ -200,7 +201,7 @@ function setSelectValue(select, value) {
 
 async function createEquipment(payload) {
   const clientId = Number(store.activeClientId);
-  if (!clientId) throw new Error('No active client');
+  if (!clientId) throw new Error(tr('No active client'));
 
   const snap = await getDocs(
     query(collection(db, 'equipment'), where('clientId', '==', clientId))

@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddTaskSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -27,10 +28,10 @@ export function showAddTaskSheet(opts = {}) {
 
   <div class="sheet-title"
     style="flex:1;margin:0;padding:12px 48px;text-align:center;">
-    ${isEdit ? 'Edit Task' : 'Add Task'}
+    ${isEdit ? tr('Edit Task') : tr('Add Task')}
   </div>
 
-  <button type="button" id="iv-close" aria-label="Close task sheet"
+  <button type="button" id="iv-close" aria-label="${tr("Close task sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -43,35 +44,35 @@ export function showAddTaskSheet(opts = {}) {
     <form id="tkForm" class="add-form" novalidate autocomplete="off">
       <div class="add-scroll">
         ${boatName ? `
-          <label class="add-label">Boat</label>
+          <label class="add-label">${tr("Boat")}</label>
           <div class="add-input" style="padding-top:14px; padding-bottom:14px; color:var(--color-text-secondary);">
-            Boat: ${escapeHtml(boatName)}
+            ${tr("Boat:" )} ${escapeHtml(boatName)}
           </div>
         ` : ''}
 
-        <label class="add-label" for="tk-title">Title</label>
-        <input class="add-input" id="tk-title" type="text" placeholder="e.g. Replace engine impeller">
+        <label class="add-label" for="tk-title">${tr("Title")}</label>
+        <input class="add-input" id="tk-title" type="text" placeholder="${tr("e.g. Replace engine impeller")}">
 
-        <label class="add-label" for="tk-category">Category</label>
+        <label class="add-label" for="tk-category">${tr("Category")}</label>
         <select class="add-input add-select" id="tk-category">
-          <option value="">Select category…</option>
-          ${TASK_CATEGORIES.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('')}
+          <option value="">${tr("Select category…")}</option>
+          ${TASK_CATEGORIES.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(tr(c))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="tk-priority">Priority</label>
+        <label class="add-label" for="tk-priority">${tr("Priority")}</label>
         <select class="add-input add-select" id="tk-priority">
-          ${TASK_PRIORITIES.map(p => `<option value="${p}">${p}</option>`).join('')}
+          ${TASK_PRIORITIES.map(p => `<option value="${p}">${escapeHtml(tr(p))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="tk-due">Due Date</label>
+        <label class="add-label" for="tk-due">${tr("Due Date")}</label>
         <input class="add-input" id="tk-due" type="date">
 
-        <label class="add-label" for="tk-notes">Notes</label>
-        <textarea class="add-input" id="tk-notes" rows="3" placeholder="Notes"></textarea>
+        <label class="add-label" for="tk-notes">${tr("Notes")}</label>
+        <textarea class="add-input" id="tk-notes" rows="3" placeholder="${tr("Notes")}"></textarea>
       </div>
 
       <button type="submit" class="add-save" id="tk-save">
-        ${isEdit ? 'Update Task' : '+ Add Task'}
+        ${isEdit ? tr('Update Task') : tr('+ Add Task')}
       </button>
     </form>
   `;
@@ -113,32 +114,32 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     const dueDate  = sheet.querySelector('#tk-due').value;
     const notes    = sheet.querySelector('#tk-notes').value.trim();
 
-    if (!title) { toast('Enter a title', { kind: 'error' }); sheet.querySelector('#tk-title').focus(); return; }
-    if (!category) { toast('Select a category', { kind: 'error' }); return; }
+    if (!title) { toast(tr('Enter a title'), { kind: 'error' }); sheet.querySelector('#tk-title').focus(); return; }
+    if (!category) { toast(tr('Select a category'), { kind: 'error' }); return; }
 
     save.disabled = true;
-    save.textContent = 'Saving…';
+    save.textContent = tr('Saving…');
 
     try {
       if (isEdit) {
         await updateTask(item, { title, category, priority, dueDate, notes });
       } else {
-        if (!boatId) throw new Error('No boat selected');
+        if (!boatId) throw new Error(tr('No boat selected'));
         await createTask({ boatId, title, category, priority, dueDate, notes });
       }
       close();
-      toast(isEdit ? 'Task updated' : 'Task added', { kind: 'success' });
+      toast(isEdit ? tr('Task updated') : tr('Task added'), { kind: 'success' });
     } catch (err) {
       console.error('[task save] failed', err);
       save.disabled = false;
-      save.textContent = isEdit ? 'Update Task' : '+ Add Task';
+      save.textContent = isEdit ? tr('Update Task') : tr('+ Add Task');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to save.';
+      errEl.textContent = err.message || tr('Failed to save.');
     }
   });
 }
@@ -158,7 +159,7 @@ function setSelectValue(select, value) {
 
 async function createTask(payload) {
   const clientId = Number(store.activeClientId);
-  if (!clientId) throw new Error('No active client');
+  if (!clientId) throw new Error(tr('No active client'));
 
   const now = Date.now();
   const nextId = now;

@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AssignDocumentOwnerSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -8,7 +9,7 @@ import { db } from '../firebase.js';
 
 export async function showAssignDocumentOwnerSheet(item) {
   const clientId = Number(store.activeClientId);
-  if (!clientId) { toast('No active client', { kind: 'error' }); return; }
+  if (!clientId) { toast(tr('No active client'), { kind: 'error' }); return; }
 
   const crewNames = await loadCrewNames(clientId, item.boatId);
   const current = item.assignedTo || '';
@@ -21,11 +22,11 @@ export async function showAssignDocumentOwnerSheet(item) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Assign Owner</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Assign Owner")}</div>
 
     <div class="ao-scroll">
       ${crewNames.length === 0
-        ? `<div class="assign-empty">No crew members found.<br>Add crew first.</div>`
+        ? `<div class="assign-empty">${tr("No crew members found.")}<br>${tr("Add crew first.")}</div>`
         : crewNames.map(name => `
             <button type="button" class="ao-row${name === current ? ' is-current' : ''}" data-name="${escapeAttr(name)}">
               <span class="ao-radio"></span>
@@ -36,9 +37,9 @@ export async function showAssignDocumentOwnerSheet(item) {
     </div>
 
     <div class="ao-actions">
-      <button type="button" class="csv-btn csv-btn--cancel" id="doCancel">Cancel</button>
-      ${current ? `<button type="button" class="csv-btn ao-unassign" id="doUnassign">Unassign</button>` : ''}
-      <button type="button" class="csv-btn csv-btn--choose" id="doAssign">Assign</button>
+      <button type="button" class="csv-btn csv-btn--cancel" id="doCancel">${tr("Cancel")}</button>
+      ${current ? `<button type="button" class="csv-btn ao-unassign" id="doUnassign">${tr("Unassign")}</button>` : ''}
+      <button type="button" class="csv-btn csv-btn--choose" id="doAssign">${tr("Assign")}</button>
     </div>
   `;
 
@@ -77,7 +78,7 @@ export async function showAssignDocumentOwnerSheet(item) {
   });
 
   sheet.querySelector('#doAssign').addEventListener('click', async () => {
-    if (!picked) { toast('Select a crew member', { kind: 'error' }); return; }
+    if (!picked) { toast(tr('Select a crew member'), { kind: 'error' }); return; }
     close();
     await setOwner(item, picked);
   });
@@ -123,10 +124,10 @@ async function setOwner(item, name) {
       lastModifiedBy: userId
     });
 
-    toast(name ? `Assigned to ${name}` : 'Unassigned', { kind: 'success' });
+    toast(name ? `Assigned to ${name}` : tr('Unassigned'), { kind: 'success' });
   } catch (err) {
     console.error('[assign doc owner] save failed', err);
-    toast('Failed to assign owner', { kind: 'error' });
+    toast(tr('Failed to assign owner'), { kind: 'error' });
   }
 }
 

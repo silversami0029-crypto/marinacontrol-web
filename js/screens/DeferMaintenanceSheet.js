@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DeferMaintenanceSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -16,38 +17,38 @@ export function showDeferMaintenanceSheet(item, { onChanged } = {}) {
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
     <div class="sheet-title" style="text-align:center;">
-      ${isEditing ? 'Update Deferral' : 'Defer Maintenance'}
+      ${isEditing ? tr('Update Deferral') : 'Defer Maintenance'}
     </div>
 
     <form id="dfForm" class="add-form" novalidate>
       <div class="add-scroll">
-        <label class="add-label" for="df-reason">Reason</label>
+        <label class="add-label" for="df-reason">${tr("Reason")}</label>
         <select class="add-input add-select" id="df-reason">
-          <option value="Awaiting Parts">Awaiting Parts</option>
-          <option value="Weather">Weather</option>
-          <option value="Budget">Budget</option>
-          <option value="Crew Availability">Crew Availability</option>
-          <option value="Berth Occupied">Berth Occupied</option>
-          <option value="Owner Request">Owner Request</option>
-          <option value="Other">Other</option>
+          <option value="Awaiting Parts">${tr("Awaiting Parts")}</option>
+          <option value="Weather">${tr("Weather")}</option>
+          <option value="Budget">${tr("Budget")}</option>
+          <option value="Crew Availability">${tr("Crew Availability")}</option>
+          <option value="Berth Occupied">${tr("Berth Occupied")}</option>
+          <option value="Owner Request">${tr("Owner Request")}</option>
+          <option value="Other">${tr("Other")}</option>
         </select>
 
-        <label class="add-label" for="df-risk">Risk Level</label>
+        <label class="add-label" for="df-risk">${tr("Risk Level")}</label>
         <select class="add-input add-select" id="df-risk">
-          <option value="Low">Low</option>
-          <option value="Medium" selected>Medium</option>
-          <option value="High">High</option>
+          <option value="Low">${tr("Low")}</option>
+          <option value="Medium" selected>${tr("Medium")}</option>
+          <option value="High">${tr("High")}</option>
         </select>
 
-        <label class="add-label" for="df-mitigation">Mitigation</label>
+        <label class="add-label" for="df-mitigation">${tr("Mitigation")}</label>
         <textarea class="add-input" id="df-mitigation" rows="3"
-                  placeholder="What is being done to manage the risk in the meantime?"></textarea>
+                  placeholder="${tr("What is being done to manage the risk in the meantime?")}"></textarea>
 
-        <label class="add-label" for="df-review">Review Date</label>
+        <label class="add-label" for="df-review">${tr("Review Date")}</label>
         <input class="add-input" id="df-review" type="date">
       </div>
 
-      <button type="submit" class="add-save" id="df-save">Defer Task</button>
+      <button type="submit" class="add-save" id="df-save">${tr("Defer Task")}</button>
     </form>
   `;
 
@@ -70,7 +71,7 @@ export function showDeferMaintenanceSheet(item, { onChanged } = {}) {
     sheet.querySelector('#df-risk').value = item.riskLevel || 'Medium';
     sheet.querySelector('#df-mitigation').value = item.mitigation || '';
     sheet.querySelector('#df-review').value = item.reviewDate || '';
-    sheet.querySelector('#df-save').textContent = 'Update Deferral';
+    sheet.querySelector('#df-save').textContent = tr('Update Deferral');
   } else {
     const d = new Date();
     d.setDate(d.getDate() + 7);
@@ -89,12 +90,12 @@ export function showDeferMaintenanceSheet(item, { onChanged } = {}) {
     const reviewDate = sheet.querySelector('#df-review').value;
 
     if (!reviewDate) {
-      toast('Select a review date', { kind: 'error' });
+      toast(tr('Select a review date'), { kind: 'error' });
       return;
     }
 
     save.disabled = true;
-    save.textContent = 'Saving…';
+    save.textContent = tr('Saving…');
 
     try {
       const now = Date.now();
@@ -120,8 +121,8 @@ export function showDeferMaintenanceSheet(item, { onChanged } = {}) {
     } catch (err) {
       console.error('[defer] failed', err);
       save.disabled = false;
-      save.textContent = isEditing ? 'Update Deferral' : 'Defer Task';
-      toast('Failed to defer', { kind: 'error' });
+      save.textContent = isEditing ? tr('Update Deferral') : tr('Defer Task');
+      toast(tr('Failed to defer'), { kind: 'error' });
     }
   });
 }

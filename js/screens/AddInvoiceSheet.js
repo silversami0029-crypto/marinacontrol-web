@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddInvoiceSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -87,10 +88,10 @@ export async function showAddInvoiceSheet(opts = {}) {
 
   <div class="sheet-title"
     style="flex:1;margin:0;padding:12px 48px;text-align:center;">
-    ${isEdit ? 'Edit Invoice' : 'Add Invoice'}
+    ${isEdit ? tr('Edit Invoice') : tr('Add Invoice')}
   </div>
 
-  <button type="button" id="iv-close" aria-label="Close invoice sheet"
+  <button type="button" id="iv-close" aria-label="${tr("Close invoice sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -103,9 +104,9 @@ export async function showAddInvoiceSheet(opts = {}) {
     <form id="ivForm" class="add-form" novalidate autocomplete="off">
       <div class="add-scroll">
 
-        <label class="add-label" for="iv-customer">Customer</label>
+        <label class="add-label" for="iv-customer">${tr("Customer")}</label>
         <select class="add-input add-select" id="iv-customer">
-          <option value="">Select customer¦</option>
+          <option value="">${tr("Select customer¦")}</option>
           ${customers.map(c => `
             <option value="${c.id}">
               ${escapeHtml(c.name)}
@@ -113,9 +114,9 @@ export async function showAddInvoiceSheet(opts = {}) {
           `).join('')}
         </select>
 
-        <label class="add-label" for="iv-boat">Boat</label>
+        <label class="add-label" for="iv-boat">${tr("Boat")}</label>
         <select class="add-input add-select" id="iv-boat">
-          <option value="">Select boat¦</option>
+          <option value="">${tr("Select boat¦")}</option>
           ${boats.map(b => `
             <option value="${b.id}" data-customer="${b.customerId}">
               ${escapeHtml(b.name)}
@@ -123,7 +124,7 @@ export async function showAddInvoiceSheet(opts = {}) {
           `).join('')}
         </select>
 
-        <label class="add-label" for="iv-number">Invoice Number</label>
+        <label class="add-label" for="iv-number">${tr("Invoice Number")}</label>
         <input
           class="add-input"
           id="iv-number"
@@ -131,15 +132,15 @@ export async function showAddInvoiceSheet(opts = {}) {
           placeholder="INV-..."
         >
 
-     <label class="add-label" for="iv-desc">Description</label>
+     <label class="add-label" for="iv-desc">${tr("Description")}</label>
 <textarea
   class="add-input"
   id="iv-desc"
   rows="4"
-  placeholder="Invoice description"
+  placeholder="${tr("Invoice description")}"
 ></textarea>
 
-        <label class="add-label" for="iv-category">Category</label>
+        <label class="add-label" for="iv-category">${tr("Category")}</label>
         <select class="add-input add-select" id="iv-category">
           ${CATEGORIES.map(c => `
             <option value="${c}">
@@ -148,7 +149,7 @@ export async function showAddInvoiceSheet(opts = {}) {
           `).join('')}
         </select>
 
-        <label class="add-label" for="iv-amount">Amount (£)</label>
+        <label class="add-label" for="iv-amount">${tr("Amount (£)")}</label>
         <input
           class="add-input"
           id="iv-amount"
@@ -159,23 +160,23 @@ export async function showAddInvoiceSheet(opts = {}) {
           placeholder="0.00"
         >
 
-        <label class="add-label" for="iv-issue">Issue Date</label>
+        <label class="add-label" for="iv-issue">${tr("Issue Date")}</label>
         <input class="add-input" id="iv-issue" type="date">
 
-        <label class="add-label" for="iv-due">Due Date</label>
+        <label class="add-label" for="iv-due">${tr("Due Date")}</label>
         <input class="add-input" id="iv-due" type="date">
 
-        <label class="add-label" for="iv-status">Status</label>
+        <label class="add-label" for="iv-status">${tr("Status")}</label>
         <select class="add-input add-select" id="iv-status">
           ${STATUSES.map(s => `
-            <option value="${s}">${s}</option>
+            <option value="${s}">${escapeHtml(tr(s))}</option>
           `).join('')}
         </select>
 
       </div>
 
       <button type="submit" class="add-save" id="iv-save">
-        ${isEdit ? 'Update Invoice' : '+ Add Invoice'}
+        ${isEdit ? tr('Update Invoice') : tr('+ Add Invoice')}
       </button>
     </form>
   `;
@@ -270,17 +271,17 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
       sheet.querySelector('#iv-status').value;
 
     if (!selectedCustomerId) {
-      toast('Select a customer', { kind: 'error' });
+      toast(tr('Select a customer'), { kind: 'error' });
       return;
     }
 
     if (!boatId) {
-      toast('Select a boat', { kind: 'error' });
+      toast(tr('Select a boat'), { kind: 'error' });
       return;
     }
 
     if (!amountStr) {
-      toast('Enter an amount', { kind: 'error' });
+      toast(tr('Enter an amount'), { kind: 'error' });
       return;
     }
 
@@ -296,7 +297,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
       boatSelect.selectedOptions[0]?.textContent.trim() || '';
 
     save.disabled = true;
-    save.textContent = 'Saving¦';
+    save.textContent = tr('Saving¦');
 
     try {
       if (isEdit) {
@@ -399,8 +400,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
 
       close();
 
-      toast(
-        isEdit ? 'Invoice updated' : 'Invoice added',
+      toast(isEdit ? tr('Invoice updated') : tr('Invoice added'),
         { kind: 'success' }
       );
     } catch (err) {
@@ -408,7 +408,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
 
       save.disabled = false;
       save.textContent =
-        isEdit ? 'Update Invoice' : '+ Add Invoice';
+        isEdit ? tr('Update Invoice') : tr('+ Add Invoice');
 
       let errEl = sheet.querySelector('.add-error');
 
@@ -419,7 +419,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
       }
 
       errEl.textContent =
-        err.message || 'Failed to save.';
+        err.message || tr('Failed to save.');
     }
   });
 }

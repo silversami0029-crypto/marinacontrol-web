@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DocumentScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -29,15 +30,15 @@ export function mountDocumentScreen() {
   screen.innerHTML = `
     <div class="doc-header" id="docHeader">
       <div class="doc-header-row">
-        <button class="doc-icon-btn" id="docBack" aria-label="Back">
+        <button class="doc-icon-btn" id="docBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="doc-pill" id="docPill">Documents</div>
-        <button class="doc-icon-btn" id="docHelp" aria-label="Help">
+        <div class="doc-pill" id="docPill">${tr("Documents")}</div>
+        <button class="doc-icon-btn" id="docHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -47,7 +48,7 @@ export function mountDocumentScreen() {
           </svg>
         </button>
         <div class="doc-header-spacer"></div>
-        <button class="doc-icon-btn" id="docSearchToggle" aria-label="Search">
+        <button class="doc-icon-btn" id="docSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -59,15 +60,15 @@ export function mountDocumentScreen() {
     </div>
 
     <div class="boats-search-bar" id="docSearchBar" hidden>
-      <input id="docSearchInput" type="text" placeholder="Search documents..." autocomplete="off">
-      <button type="button" class="search-cancel" id="docSearchCancel">Cancel</button>
+      <input id="docSearchInput" type="text" placeholder="${tr("Search documents...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="docSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="doc-list" id="docList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button class="cm-fab" id="docFabAdd" aria-label="Add document">
+    <button class="cm-fab" id="docFabAdd" aria-label="${tr("Add document")}">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
            stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -110,7 +111,7 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
     document.getElementById('docList').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -148,16 +149,16 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   if (!boatId) {
     document.getElementById('docList').innerHTML =
       `<div class="boats-empty">
-         <h2>No active boat</h2>
-         <p>Set a boat as active to see its documents.</p>
+         <h2>${tr("No active boat")}</h2>
+         <p>${tr("Set a boat as active to see its documents.")}</p>
        </div>`;
     return;
   }
 
   currentBoatId = boatId;
   document.getElementById('docPill').textContent = currentBoatName
-    ? `Documents · ${currentBoatName}`
-    : 'Documents';
+    ? `${tr('Documents')} · ${currentBoatName}`
+    : tr('Documents');
 
   subscribeToDocuments(clientId);
 }
@@ -194,7 +195,7 @@ function subscribeToDocuments(clientId) {
     console.error('[documents] listen failed', err);
     document.getElementById('docList').innerHTML =
       `<div class="boats-empty">
-         <h2>Couldn't load documents</h2>
+         <h2>${tr("Couldn't load documents")}</h2>
          <p>${escapeHtml(err.message || 'Permission denied.')}</p>
        </div>`;
   });
@@ -220,8 +221,8 @@ function renderList() {
   if (!items.length) {
     const q = (document.getElementById('docSearchInput')?.value || '').trim();
     listEl.innerHTML = q
-      ? `<div class="boats-empty"><h2>No matches</h2><p>No documents match "${escapeHtml(q)}"</p></div>`
-      : `<div class="boats-empty"><h2>No documents</h2><p>Tap + to add the first one.</p></div>`;
+      ? `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>${escapeHtml(tr("ui.noMatches", {query:q}))}</p></div>`
+      : `<div class="boats-empty"><h2>${tr("No documents")}</h2><p>${tr("Tap + to add the first one.")}</p></div>`;
     return;
   }
 
@@ -243,15 +244,15 @@ function renderList() {
 
         <div class="doc-info">
           <div class="doc-name">
-            ${hasFile ? '<span class="doc-clip">📎</span> ' : ''}${escapeHtml(d.name || 'Untitled')}
+            ${hasFile ? '<span class="doc-clip">📎</span> ' : ''}${escapeHtml(d.name || tr('Untitled'))}
           </div>
-          <div class="doc-type">${escapeHtml(d.type || '')}</div>
-          ${d.expiryDate ? `<div class="doc-expiry" style="color:${state.dateColor};">Expires: ${escapeHtml(formatDate(d.expiryDate))}</div>` : `<div class="doc-expiry doc-expiry-dim">No expiry</div>`}
+          <div class="doc-type">${escapeHtml(tr(d.type || ''))}</div>
+          ${d.expiryDate ? `<div class="doc-expiry" style="color:${state.dateColor};">${tr("Expires:" )} ${escapeHtml(formatDate(d.expiryDate))}</div>` : `<div class="doc-expiry doc-expiry-dim">${tr("No expiry")}</div>`}
           ${d.notes ? `<div class="doc-notes">${escapeHtml(d.notes)}</div>` : ''}
-          ${d.assignedTo ? `<div class="doc-assigned">Assigned: ${escapeHtml(d.assignedTo)}</div>` : ''}
+          ${d.assignedTo ? `<div class="doc-assigned">${tr("Assigned:" )} ${escapeHtml(d.assignedTo)}</div>` : ''}
         </div>
 
-        <button class="doc-kebab" data-doc-menu="${d.id}" aria-label="Menu">
+        <button class="doc-kebab" data-doc-menu="${d.id}" aria-label="${tr("Menu")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
@@ -303,7 +304,7 @@ function getExpiryState(d) {
 
 function formatDate(ts) {
   try {
-    return new Date(ts).toLocaleDateString('en-GB', {
+    return new Date(ts).toLocaleDateString(uiLocale(), {
       day: '2-digit', month: 'short', year: 'numeric'
     });
   } catch {
@@ -329,10 +330,8 @@ function showAddDocumentChooser({ boatId, boatName }) {
 
 sheet.innerHTML = `
   <div style="position:relative;min-height:48px;">
-    <div class="sheet-title" style="margin:0;padding:12px 48px;text-align:center;">
-      Add Document
-    </div>
-    <button type="button" id="documentSheetClose" aria-label="Close document sheet"
+    <div class="sheet-title" style="margin:0;padding:12px 48px;text-align:center;">${tr("Add Document")}</div>
+    <button type="button" id="documentSheetClose" aria-label="${tr("Close document sheet")}"
       style="position:absolute;right:8px;top:2px;width:44px;height:44px;padding:0;border:0;background:transparent;color:#F5F7F9;font-size:28px;cursor:pointer;">
       &times;
     </button>
@@ -351,8 +350,8 @@ sheet.innerHTML = `
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">Add Single Document</div>
-        <div class="sheet-item-subtitle">Add one document with all details</div>
+        <div class="sheet-item-title">${tr("Add Single Document")}</div>
+        <div class="sheet-item-subtitle">${tr("Add one document with all details")}</div>
       </div>
       <div class="sheet-chevron">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -376,8 +375,8 @@ sheet.innerHTML = `
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">Bulk Import</div>
-        <div class="sheet-item-subtitle">Import multiple documents from CSV</div>
+        <div class="sheet-item-title">${tr("Bulk Import")}</div>
+        <div class="sheet-item-subtitle">${tr("Import multiple documents from CSV")}</div>
       </div>
       <div class="sheet-chevron">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"

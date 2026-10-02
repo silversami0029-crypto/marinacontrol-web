@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/AssignCustomerSheet.js
 import { esc } from '../utils.js';
 
@@ -15,15 +16,11 @@ export function showAssignCustomerSheet(opts) {
       <div class="assign-handle"></div>
       <div class="assign-title">Assign Customer to ${esc(boat.name)}</div>
       <div class="assign-divider"></div>
-      <div class="assign-empty">No customers in this marina yet.</div>
+      <div class="assign-empty">${tr("No customers in this marina yet.")}</div>
       <button type="button" class="assign-cancel" id="assignDirectory"
-        style="background:#0A8EF7;color:#fff;margin-bottom:12px;">
-        Open Customer Directory
-      </button>
+        style="background:#0A8EF7;color:#fff;margin-bottom:12px;">${tr("Open Customer Directory")}</button>
       <div class="assign-divider"></div>
-      <button type="button" class="assign-cancel" id="assignCancel">
-        Cancel
-      </button>
+      <button type="button" class="assign-cancel" id="assignCancel">${tr("Cancel")}</button>
     `;
   } else {
     const currentId = Number(boat.customerId || 0);
@@ -43,9 +40,7 @@ export function showAssignCustomerSheet(opts) {
         `).join('')}
       </div>
       <div class="assign-divider"></div>
-      <button type="button" class="assign-cancel" id="assignCancel">
-        Cancel
-      </button>
+      <button type="button" class="assign-cancel" id="assignCancel">${tr("Cancel")}</button>
     `;
   }
 

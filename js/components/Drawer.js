@@ -1,3 +1,5 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
+import { t } from '../i18n.js';
 // js/components/Drawer.js
 
 import { showManageMarinasSheet } from '../screens/ManageMarinasSheet.js';
@@ -153,7 +155,7 @@ export function initDrawer() {
   const boat = await resolveActiveBoat();
 
   if (!boat) {
-    toast('Activate a boat first', { kind: 'error' });
+    toast(tr('Activate a boat first'), { kind: 'error' });
     return;
   }
 
@@ -232,7 +234,7 @@ function renderSection(section) {
     <div class="drawer-section is-collapsed" data-section="${section.id}">
       <button class="drawer-section-header" type="button">
         <span class="drawer-section-icon-wrap">${section.icon}</span>
-        <span class="drawer-section-title">${section.title}</span>
+        <span class="drawer-section-title">${escapeHtml(t(section.title))}</span>
         ${ICONS.chevron}
       </button>
       <div class="drawer-section-items">
@@ -245,7 +247,7 @@ function renderSection(section) {
             ${item.action ? `data-action="${item.action}"` : ''}
             ${item.toast ? `data-toast="${escapeAttr(item.toast)}"` : ''}>
             <span class="drawer-item-bullet">•</span>
-            <span class="drawer-item-label">${escapeHtml(item.label)}</span>
+            <span class="drawer-item-label">${escapeHtml(t(item.label))}</span>
           </button>
         `).join('')}
       </div>
@@ -259,7 +261,7 @@ function renderUserRow() {
   const email = profile.email || '';
   const role = store.activeRole || profile.role || '';
   const initials = computeInitials(name);
-  const subtitle = role || email;
+  const subtitle = role ? t(role) : email;
 
   return `
     <div class="drawer-user">
@@ -416,7 +418,7 @@ async function resolveActiveBoat() {
 async function openClient360FromDrawer() {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
-    toast('No client assigned', { kind: 'error' });
+    toast(tr('No client assigned'), { kind: 'error' });
     return;
   }
 
@@ -446,13 +448,13 @@ async function openClient360FromDrawer() {
     }
 
     if (!activeBoat) {
-      toast('No active boat. Set a boat as active first.', { kind: 'error', duration: 3000 });
+      toast(tr('No active boat. Set a boat as active first.'), { kind: 'error', duration: 3000 });
       return;
     }
 
     const customerId = Number(activeBoat.customerId || 0);
     if (!customerId) {
-      toast('No customer is assigned to this boat. Assign a customer first.', { kind: 'error', duration: 3000 });
+      toast(tr('No customer is assigned to this boat. Assign a customer first.'), { kind: 'error', duration: 3000 });
       return;
     }
 
@@ -465,13 +467,13 @@ async function openClient360FromDrawer() {
     );
 
     if (custSnap.empty) {
-      toast('Assigned customer no longer exists. Reassign a customer first.', { kind: 'error', duration: 3000 });
+      toast(tr('Assigned customer no longer exists. Reassign a customer first.'), { kind: 'error', duration: 3000 });
       return;
     }
 
     location.hash = `#/client-360?customerId=${customerId}`;
   } catch (err) {
     console.error('[drawer 360] check failed', err);
-    toast('Could not open 360° Client View', { kind: 'error' });
+    toast(tr('Could not open 360° Client View'), { kind: 'error' });
   }
 }

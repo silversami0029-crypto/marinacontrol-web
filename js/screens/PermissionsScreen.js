@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/PermissionsScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -24,15 +25,15 @@ export function mountPermissionsScreen() {
   screen.innerHTML = `
     <div class="cm-header" id="pmHeader">
       <div class="cm-header-row">
-        <button class="cm-icon-btn" id="pmBack" aria-label="Back">
+        <button class="cm-icon-btn" id="pmBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="cm-pill">Permissions & Roles</div>
-        <button class="cm-icon-btn" id="pmHelp" aria-label="Help">
+        <div class="cm-pill">${tr("Permissions & Roles")}</div>
+        <button class="cm-icon-btn" id="pmHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -42,7 +43,7 @@ export function mountPermissionsScreen() {
           </svg>
         </button>
         <div class="cm-header-spacer"></div>
-        <button class="cm-icon-btn" id="pmSearchToggle" aria-label="Search">
+        <button class="cm-icon-btn" id="pmSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -54,8 +55,8 @@ export function mountPermissionsScreen() {
     </div>
 
     <div class="boats-search-bar" id="pmSearchBar" hidden>
-      <input id="pmSearchInput" type="text" placeholder="Search crew..." autocomplete="off">
-      <button type="button" class="search-cancel" id="pmSearchCancel">Cancel</button>
+      <input id="pmSearchInput" type="text" placeholder="${tr("Search crew...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="pmSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="cm-list" id="pmList">
@@ -94,7 +95,7 @@ function subscribeToCrew() {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
     document.getElementById('pmList').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -127,7 +128,7 @@ function subscribeToCrew() {
     if (!el) return;
     el.innerHTML =
       `<div class="boats-empty">
-         <h2>Couldn't load crew</h2>
+         <h2>${tr("Couldn't load crew")}</h2>
          <p>${escapeHtml(err.message || 'Permission denied.')}</p>
        </div>`;
   });
@@ -152,8 +153,8 @@ function renderList() {
   if (!crew.length) {
     const q = (document.getElementById('pmSearchInput')?.value || '').trim();
     listEl.innerHTML = q
-      ? `<div class="boats-empty"><h2>No matches</h2><p>No crew match "${escapeHtml(q)}"</p></div>`
-      : `<div class="boats-empty"><h2>No crew yet</h2><p>Add crew members first.</p></div>`;
+      ? `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>${escapeHtml(tr("ui.noMatches", {query:q}))}</p></div>`
+      : `<div class="boats-empty"><h2>${tr("No crew yet")}</h2><p>${tr("Add crew members first.")}</p></div>`;
     return;
   }
 
@@ -166,7 +167,7 @@ function renderList() {
       </div>
       <div class="pm-role-cell">
         <select class="pm-role-select" data-role-for="${c._docId}">
-          ${ROLES.map(r => `<option value="${escapeAttr(r)}"${r === c.role ? ' selected' : ''}>${escapeHtml(r)}</option>`).join('')}
+          ${ROLES.map(r => `<option value="${escapeAttr(r)}"${r === c.role ? ' selected' : ''}>${escapeHtml(tr(r))}</option>`).join('')}
         </select>
       </div>
       <div class="cm-row-divider"></div>
@@ -189,10 +190,10 @@ function renderList() {
           role: newRole
         });
         member.role = newRole;
-        toast(`Role updated: ${newRole}`, { kind: 'success' });
+        toast(tr(`Role updated: ${newRole}`), { kind: 'success' });
       } catch (err) {
         console.error('[permissions] role update failed', err);
-        toast('Failed to update role', { kind: 'error' });
+        toast(tr('Failed to update role'), { kind: 'error' });
         sel.value = oldRole === 'None' ? '' : oldRole;
       }
     });

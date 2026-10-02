@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/TaskHistorySheet.js
 import { store } from '../store.js';
 import {
@@ -22,7 +23,7 @@ export async function showTaskHistory(item) {
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button type="button" class="md-close-btn" id="tkHistClose">Close</button>
+    <button type="button" class="md-close-btn" id="tkHistClose">${tr("Close")}</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -46,7 +47,7 @@ export async function showTaskHistory(item) {
   const listEl = sheet.querySelector('#tkHistList');
 
   if (!clientId || !itemId) {
-    listEl.innerHTML = `<div class="eq-hist-empty">No history recorded yet</div>`;
+    listEl.innerHTML = `<div class="eq-hist-empty">${tr("No history recorded yet")}</div>`;
     return;
   }
 
@@ -60,7 +61,7 @@ export async function showTaskHistory(item) {
     ));
 
     if (snap.empty) {
-      listEl.innerHTML = `<div class="eq-hist-empty">No history recorded yet</div>`;
+      listEl.innerHTML = `<div class="eq-hist-empty">${tr("No history recorded yet")}</div>`;
       return;
     }
 
@@ -90,7 +91,7 @@ export async function showTaskHistory(item) {
     `).join('');
   } catch (err) {
     console.warn('[task history] no history available', err?.code || err?.message || err);
-    listEl.innerHTML = `<div class="eq-hist-empty">No history recorded yet</div>`;
+    listEl.innerHTML = `<div class="eq-hist-empty">${tr("No history recorded yet")}</div>`;
   }
 }
 

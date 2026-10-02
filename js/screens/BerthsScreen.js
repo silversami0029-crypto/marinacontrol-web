@@ -1,3 +1,5 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
+import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/BerthsScreen.js
 // Berths grid ” mirrors fragment_berths.xml
 
@@ -27,8 +29,8 @@ export function mountBerthsScreen() {
   if (!store.activeClientId) {
     document.getElementById('screen').innerHTML =
       `<div class="boats-empty">
-         <h2>No client assigned</h2>
-         <p>Your user profile doesn't include a clientId.</p>
+         <h2>${t("No client assigned")}</h2>
+         <p>${t("Your user profile doesn't include a clientId.")}</p>
        </div>`;
     return;
   }
@@ -39,8 +41,8 @@ export function mountBerthsScreen() {
   screen.innerHTML = `
     <div class="berth-header">
       <div class="berth-header-row">
-        <div class="berth-pill">Marina Berths</div>
-        <button class="berth-info" id="berthHelp" aria-label="Help">
+        <div class="berth-pill">${t("Marina Berths")}</div>
+        <button class="berth-info" id="berthHelp" aria-label="${t("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -50,7 +52,7 @@ export function mountBerthsScreen() {
           </svg>
         </button>
         <div class="berth-header-spacer"></div>
-        <button class="berth-icon-btn" id="berthSearchToggle" aria-label="Search">
+        <button class="berth-icon-btn" id="berthSearchToggle" aria-label="${t("Search")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -58,7 +60,7 @@ export function mountBerthsScreen() {
             <line x1="16.5" y1="16.5" x2="21" y2="21"/>
           </svg>
         </button>
-        <button class="berth-icon-btn" id="berthMenuBtn" aria-label="Berth menu">
+        <button class="berth-icon-btn" id="berthMenuBtn" aria-label="${t("Berth menu")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <circle cx="12" cy="5"  r="1.6"/>
             <circle cx="12" cy="12" r="1.6"/>
@@ -67,13 +69,13 @@ export function mountBerthsScreen() {
         </button>
       </div>
 
-      <div class="berth-summary" id="berthSummary">Loading...</div>
+      <div class="berth-summary" id="berthSummary">${t("Loading...")}</div>
     </div>
 
     <div class="berth-search" id="berthSearch" hidden>
-      <input id="berthSearchInput" type="text" placeholder="Search berth or boat..."
+      <input id="berthSearchInput" type="text" placeholder="${t("Search berth or boat...")}"
              autocomplete="off">
-      <button type="button" class="search-cancel" id="berthSearchCancel">Cancel</button>
+      <button type="button" class="search-cancel" id="berthSearchCancel">${t("Cancel")}</button>
     </div>
 
     <div class="berth-grid" id="berthGrid">
@@ -91,7 +93,7 @@ export function mountBerthsScreen() {
     if (err) {
       document.getElementById('berthGrid').innerHTML =
         `<div class="boats-empty">
-           <h2>Couldn't load berths</h2>
+           <h2>${t("Couldn't load berths")}</h2>
            <p>${err.message || 'Permission denied.'}</p>
          </div>`;
       return;
@@ -155,8 +157,8 @@ function renderBerthGrid() {
   if (!berths.length) {
     grid.innerHTML = `
       <div class="boats-empty" style="grid-column: 1 / -1;">
-        <h2>${searchQuery ? 'No matches' : 'No berths yet'}</h2>
-        <p>${searchQuery ? `No berths match "${escapeHtml(searchQuery)}"` : 'Add berths from your Android app or via CSV.'}</p>
+        <h2>${searchQuery ? tr('No matches') : 'No berths yet'}</h2>
+        <p>${searchQuery ? `${escapeHtml(tr("ui.noMatches", {query:searchQuery}))}` : 'Add berths from your Android app or via CSV.'}</p>
       </div>`;
     return;
   }
@@ -200,9 +202,9 @@ function updateSummary() {
   const pct = total > 0 ? Math.round((occupied * 100) / total) : 0;
 
   el.innerHTML = `
-    <div>Occupied: <b>${occupied}</b> (${pct}%)    Total: <b>${total}</b></div>
-    <div>Booked: <b>${booked}</b>    Available: <b>${available}</b></div>
-    <div>Maintenance: <b>${maintenance}</b>    Alerts: <b>${alerts}</b></div>
+    <div>${t("Occupied:")} <b>${occupied}</b> (${pct}%)    Total: <b>${total}</b></div>
+    <div>${t("Booked:")} <b>${booked}</b>    ${t("Available:")} <b>${available}</b></div>
+    <div>${t("Maintenance:")} <b>${maintenance}</b>    ${t("Alerts:")} <b>${alerts}</b></div>
   `;
 }
 
@@ -217,7 +219,7 @@ function escapeHtml(s) {
    ============================================================ */
 function openToolbarMenu() {
   showBerthToolbarMenu({
-    onDockWalk:        () => toast('Dock Walk is available in the Android app'),
+    onDockWalk:        () => toast(tr('Dock Walk is available in the Android app')),
     onBookingRequests: () => { location.hash = '#/booking-requests'; },
     onImportCsv:       onImportCsv,
     onExportCsv:       onExportCsv,
@@ -242,13 +244,13 @@ function onImportCsv() {
       const text = await file.text();
       const rows = parseBerthCsv(text);
       if (!rows.length) {
-        toast('No valid rows found', { kind: 'error' });
+        toast(tr('No valid rows found'), { kind: 'error' });
         return;
       }
       await runBerthImport(rows);
     } catch (err) {
       console.error('[berth csv] failed', err);
-      toast('Failed to read file', { kind: 'error' });
+      toast(tr('Failed to read file'), { kind: 'error' });
     }
   });
 
@@ -308,8 +310,8 @@ async function runBerthImport(rows) {
   sheet.className = 'confirm-sheet is-open';
   sheet.innerHTML = `
     <div class="confirm-handle"></div>
-    <div class="confirm-title">Importing berths¦</div>
-    <div class="confirm-message" id="berthImportProgress">Starting¦</div>
+    <div class="confirm-title">${tr("Importing berths¦")}</div>
+    <div class="confirm-message" id="berthImportProgress">${tr("Starting¦")}</div>
     <div class="import-bar-wrap"><div class="import-bar" id="berthImportBar"></div></div>
   `;
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -329,19 +331,19 @@ async function runBerthImport(rows) {
       }
     );
 
-    progressEl.textContent = 'Done';
+    progressEl.textContent = tr('Done');
     barEl.style.width = '100%';
     await new Promise(r => setTimeout(r, 300));
     backdrop.remove();
     sheet.remove();
 
-    toast(`Imported ${result.success} Â· skipped ${result.skipped} Â· failed ${result.failed}`,
+    toast(tr(`Imported ${result.success} Â· skipped ${result.skipped} Â· failed ${result.failed}`),
           { kind: result.success > 0 ? 'success' : 'info' });
   } catch (err) {
     console.error('[berth import] failed', err);
     backdrop.remove();
     sheet.remove();
-    toast('Import failed', { kind: 'error' });
+    toast(tr('Import failed'), { kind: 'error' });
   }
 }
 
@@ -349,7 +351,7 @@ async function runBerthImport(rows) {
 function onExportCsv() {
   const berths = store.berthsFull || [];
   if (!berths.length) {
-    toast('No berths to export', { kind: 'error' });
+    toast(tr('No berths to export'), { kind: 'error' });
     return;
   }
 
@@ -384,7 +386,7 @@ function onExportCsv() {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-  toast(`Exported ${berths.length} berths`, { kind: 'success' });
+  toast(tr(`Exported ${berths.length} berths`), { kind: 'success' });
 }
 
 function escapeCsv(s) {
@@ -400,8 +402,8 @@ async function onRestoreDefaults() {
   const ok = await confirmSheet({
     title: 'Reset to Default',
     message: 'Delete all berths and create 10 default berths (A1-A10)?',
-    confirmText: 'Reset',
-    cancelText: 'Cancel'
+    confirmText: tr('Reset'),
+    cancelText: tr('Cancel')
   });
   if (!ok) return;
 
@@ -421,10 +423,10 @@ async function onRestoreDefaults() {
         status:       'AVAILABLE'
       });
     }
-    toast('Reset complete ” 10 berths created', { kind: 'success' });
+    toast(tr('Reset complete ” 10 berths created'), { kind: 'success' });
   } catch (err) {
     console.error('[restore defaults] failed', err);
-    toast('Reset failed', { kind: 'error' });
+    toast(tr('Reset failed'), { kind: 'error' });
   }
 }
 
@@ -433,17 +435,17 @@ async function onDeleteAll() {
   const ok = await confirmSheet({
     title: 'Delete All Berths',
     message: 'Delete ALL berths? This cannot be undone. All berths and their assignments will be removed.',
-    confirmText: 'Delete',
-    cancelText: 'Cancel'
+    confirmText: tr('Delete'),
+    cancelText: tr('Cancel')
   });
   if (!ok) return;
 
   try {
     const count = await deleteAllBerths(store.activeClientId);
-    toast(`Deleted ${count} berths`, { kind: 'success' });
+    toast(tr(`Deleted ${count} berths`), { kind: 'success' });
   } catch (err) {
     console.error('[delete all] failed', err);
-    toast('Failed to delete berths', { kind: 'error' });
+    toast(tr('Failed to delete berths'), { kind: 'error' });
   }
 }
 
@@ -455,8 +457,8 @@ function openBerthMenu(berth) {
     onSetAvailable:   onSetStatus('AVAILABLE'),
     onSetOccupied:    onSetStatus('OCCUPIED'),
     onSetMaintenance: onSetStatus('MAINTENANCE'),
-    onBookBerth:      () => toast('Booking coming soon'),
-    onViewBooking:    () => toast('View booking coming soon'),
+    onBookBerth:      () => toast(tr('Booking coming soon')),
+    onViewBooking:    () => toast(tr('View booking coming soon')),
     onAssignBoat:     onAssignBoat,
     onReleaseBoat:    onReleaseBoat,
     onViewBerth:      onViewBerth,
@@ -471,10 +473,10 @@ function onSetStatus(newStatus) {
     try {
       const userId = store.userProfile?.userId || 0;
       await updateBerthStatus(store.activeClientId, berth.id, newStatus, userId);
-      toast(`Berth ${berth.berthNumber} set to ${newStatus.toLowerCase()}`, { kind: 'success' });
+      toast(tr(`Berth ${berth.berthNumber} set to ${newStatus.toLowerCase()}`), { kind: 'success' });
     } catch (err) {
       console.error('[berth status]', err);
-      toast('Failed to update status', { kind: 'error' });
+      toast(tr('Failed to update status'), { kind: 'error' });
     }
   };
 }
@@ -495,33 +497,33 @@ function onViewBerth(berth) {
 
   sheet.innerHTML = `
     <div class="assign-handle"></div>
-    <div class="assign-title">Berth Details</div>
+    <div class="assign-title">${t("Berth Details")}</div>
     <div class="assign-divider"></div>
 
     <div class="bkr-detail-body">
-      <div class="bkr-detail-row"><span>Dock</span><b>${escapeHtml(berth.dockName || '”')}</b></div>
-      <div class="bkr-detail-row"><span>Berth</span><b>${escapeHtml(berth.berthNumber || '”')}</b></div>
-      <div class="bkr-detail-row"><span>Size</span><b>${berth.length}m x ${berth.width}m</b></div>
-      <div class="bkr-detail-row"><span>Depth</span><b>${berth.depth} m</b></div>
-      <div class="bkr-detail-row"><span>Electric</span><b>${berth.hasElectric ? 'Yes' : 'No'}</b></div>
-      <div class="bkr-detail-row"><span>Water</span><b>${berth.hasWater ? 'Yes' : 'No'}</b></div>
-      <div class="bkr-detail-row"><span>Status</span><b>${escapeHtml(status)}</b></div>
-      <div class="bkr-detail-row"><span>Boat</span><b>${escapeHtml(boat)}</b></div>
+      <div class="bkr-detail-row"><span>${t("Dock")}</span><b>${escapeHtml(berth.dockName || '”')}</b></div>
+      <div class="bkr-detail-row"><span>${t("Berth")}</span><b>${escapeHtml(berth.berthNumber || '”')}</b></div>
+      <div class="bkr-detail-row"><span>${t("Size")}</span><b>${berth.length}m x ${berth.width}m</b></div>
+      <div class="bkr-detail-row"><span>${t("Depth")}</span><b>${berth.depth} m</b></div>
+      <div class="bkr-detail-row"><span>${t("Electric")}</span><b>${berth.hasElectric ? tr('Yes') : tr('No')}</b></div>
+      <div class="bkr-detail-row"><span>${t("Water")}</span><b>${berth.hasWater ? tr('Yes') : tr('No')}</b></div>
+      <div class="bkr-detail-row"><span>${t("Status")}</span><b>${escapeHtml(status)}</b></div>
+      <div class="bkr-detail-row"><span>${t("Boat")}</span><b>${escapeHtml(boat)}</b></div>
     </div>
 
     <div class="assign-divider"></div>
     <div class="view-util-section">
-      <div class="view-util-heading">Utilities</div>
-      <div id="${utilsId}" class="view-util-body">Loading¦</div>
+      <div class="view-util-heading">${t("Utilities")}</div>
+      <div id="${utilsId}" class="view-util-body">${tr("Loading¦")}</div>
     </div>
 
     <div class="assign-divider"></div>
     <div class="view-berth-actions">
-      <button class="view-berth-btn" id="viewAddReading">+ Reading</button>
-      <button class="view-berth-btn" id="viewTariffs">£ Tariffs</button>
+      <button class="view-berth-btn" id="viewAddReading">${t("+ Reading")}</button>
+      <button class="view-berth-btn" id="viewTariffs">${t("£ Tariffs")}</button>
     </div>
-    <button class="view-berth-generate" id="viewGenerate">Generate Invoice</button>
-    <button class="assign-cancel" id="berthDetailClose">CLOSE</button>
+    <button class="view-berth-generate" id="viewGenerate">${t("Generate Invoice")}</button>
+    <button class="assign-cancel" id="berthDetailClose">${t("CLOSE")}</button>
   `;
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -585,7 +587,7 @@ async function renderViewUtilities(berth, containerId) {
       if (!container) return;
 
       if (err) {
-        container.innerHTML = `<div class="view-util-empty">Failed to load</div>`;
+        container.innerHTML = `<div class="view-util-empty">${t("Failed to load")}</div>`;
         return;
       }
 
@@ -614,8 +616,8 @@ function renderViewUtilBlock(label, { latest, previous }, tariff, unit) {
   if (!latest) {
     return `
       <div class="view-util-block">
-        <div class="view-util-label">${label}</div>
-        <div class="view-util-empty">No usage data available</div>
+        <div class="view-util-label">${tr(label)}</div>
+        <div class="view-util-empty">${t("No usage data available")}</div>
       </div>
     `;
   }
@@ -632,7 +634,7 @@ function renderViewUtilBlock(label, { latest, previous }, tariff, unit) {
 
   return `
     <div class="view-util-block">
-      <div class="view-util-label">${label}</div>
+      <div class="view-util-label">${tr(label)}</div>
       <div class="view-util-line">Latest: ${latest.value} ${unit}</div>
       ${consumption != null ? `<div class="view-util-line">Since last reading: ${consumption.toFixed(2)} ${unit}</div>` : ''}
       <div class="view-util-line">${tariffLine}</div>
@@ -645,7 +647,7 @@ function openAddReadingFromView(berth) {
   showAddReadingDialog(berth, async (fields) => {
     const userId = store.userProfile?.userId || 0;
     await createUtilityReading(store.activeClientId, userId, fields);
-    toast('Reading saved', { kind: 'success' });
+    toast(tr('Reading saved'), { kind: 'success' });
   });
 }
 
@@ -663,35 +665,35 @@ function onEditBerth(berth) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Edit Berth</div>
+    <div class="sheet-title" style="text-align:center;">${t("Edit Berth")}</div>
 
     <form id="editBerthForm" class="add-form" novalidate>
       <div class="add-scroll">
-        <input class="add-input" id="eb-dockName"    type="text"   placeholder="Dock Name *"    value="${escapeAttr(berth.dockName || '')}">
-        <input class="add-input" id="eb-berthNumber" type="text"   placeholder="Berth Number *" value="${escapeAttr(berth.berthNumber || '')}">
-        <input class="add-input" id="eb-length"      type="number" step="0.1" placeholder="Length (m)" value="${berth.length > 0 ? berth.length : ''}">
-        <input class="add-input" id="eb-width"       type="number" step="0.1" placeholder="Width (m)"  value="${berth.width  > 0 ? berth.width  : ''}">
-        <input class="add-input" id="eb-depth"       type="number" step="0.1" placeholder="Depth (m)"  value="${berth.depth  > 0 ? berth.depth  : ''}">
+        <input class="add-input" id="eb-dockName"    type="text"   placeholder="${t("Dock Name *")}"    value="${escapeAttr(berth.dockName || '')}">
+        <input class="add-input" id="eb-berthNumber" type="text"   placeholder="${t("Berth Number *")}" value="${escapeAttr(berth.berthNumber || '')}">
+        <input class="add-input" id="eb-length"      type="number" step="0.1" placeholder="${t("Length (m)")}" value="${berth.length > 0 ? berth.length : ''}">
+        <input class="add-input" id="eb-width"       type="number" step="0.1" placeholder="${t("Width (m)")}"  value="${berth.width  > 0 ? berth.width  : ''}">
+        <input class="add-input" id="eb-depth"       type="number" step="0.1" placeholder="${t("Depth (m)")}"  value="${berth.depth  > 0 ? berth.depth  : ''}">
 
         <label class="add-checkbox" style="margin-top:16px;">
           <input type="checkbox" id="eb-electric" ${berth.hasElectric ? 'checked' : ''}>
-          <span>Has electricity</span>
+          <span>${t("Has electricity")}</span>
         </label>
 
         <label class="add-checkbox">
           <input type="checkbox" id="eb-water" ${berth.hasWater ? 'checked' : ''}>
-          <span>Has water</span>
+          <span>${t("Has water")}</span>
         </label>
 
-        <div class="add-section-title" style="margin-top:16px;">Status</div>
+        <div class="add-section-title" style="margin-top:16px;">${t("Status")}</div>
         <select class="add-input add-select" id="eb-status">
-          <option value="AVAILABLE"   ${status === 'AVAILABLE'   ? 'selected' : ''}>AVAILABLE</option>
-          <option value="OCCUPIED"    ${status === 'OCCUPIED'    ? 'selected' : ''}>OCCUPIED</option>
-          <option value="MAINTENANCE" ${status === 'MAINTENANCE' ? 'selected' : ''}>MAINTENANCE</option>
+          <option value="AVAILABLE"   ${status === 'AVAILABLE'   ? 'selected' : ''}>${t("AVAILABLE")}</option>
+          <option value="OCCUPIED"    ${status === 'OCCUPIED'    ? 'selected' : ''}>${t("OCCUPIED")}</option>
+          <option value="MAINTENANCE" ${status === 'MAINTENANCE' ? 'selected' : ''}>${t("MAINTENANCE")}</option>
         </select>
       </div>
 
-      <button type="submit" class="add-save" id="eb-save">Update Berth</button>
+      <button type="submit" class="add-save" id="eb-save">${t("Update Berth")}</button>
     </form>
   `;
 
@@ -715,7 +717,7 @@ function onEditBerth(berth) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     save.disabled = true;
-    save.textContent = 'Updating¦';
+    save.textContent = tr('Updating¦');
 
     try {
       const fields = {
@@ -730,18 +732,18 @@ function onEditBerth(berth) {
       };
 
       if (!fields.dockName || !fields.berthNumber) {
-        throw new Error('Dock name and berth number are required.');
+        throw new Error(tr('Dock name and berth number are required.'));
       }
 
       const userId = store.userProfile?.userId || 0;
       await updateBerth(berth.id, userId, fields);
       close();
-      toast(`Berth ${fields.berthNumber} updated`, { kind: 'success' });
+      toast(tr(`Berth ${fields.berthNumber} updated`), { kind: 'success' });
 
     } catch (err) {
       console.error('[berth edit]', err);
       save.disabled = false;
-      save.textContent = 'Update Berth';
+      save.textContent = tr('Update Berth');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');
@@ -756,18 +758,18 @@ function onEditBerth(berth) {
 async function onDeleteBerth(berth) {
   const ok = await confirmSheet({
     title:   'Delete berth',
-    message: `Delete berth ${berth.berthNumber}? This cannot be undone.`,
-    confirmText: 'Delete',
-    cancelText:  'Cancel'
+    message: tr(`Delete berth ${berth.berthNumber}? This cannot be undone.`),
+    confirmText: tr('Delete'),
+    cancelText: tr('Cancel')
   });
   if (!ok) return;
 
   try {
     await deleteBerth(berth.id);
-    toast(`Berth ${berth.berthNumber} deleted`, { kind: 'success' });
+    toast(tr(`Berth ${berth.berthNumber} deleted`), { kind: 'success' });
   } catch (err) {
     console.error('[berth delete]', err);
-    toast('Failed to delete berth', { kind: 'error' });
+    toast(tr('Failed to delete berth'), { kind: 'error' });
   }
 }
 
@@ -810,17 +812,17 @@ async function onAssignBoat(berth) {
         try {
           const userId = store.userProfile?.userId || 0;
           await assignBoatToBerth(berth.id, boat, userId);
-          toast(`${boat.name} assigned to berth ${berth.berthNumber}`, { kind: 'success' });
+          toast(tr(`${boat.name} assigned to berth ${berth.berthNumber}`), { kind: 'success' });
         } catch (err) {
           console.error('[assign boat]', err);
-          toast('Failed to assign boat', { kind: 'error' });
+          toast(tr('Failed to assign boat'), { kind: 'error' });
         }
       }
     });
 
   } catch (err) {
     console.error('[assign boat] fetch failed', err);
-    toast('Failed to load boats', { kind: 'error' });
+    toast(tr('Failed to load boats'), { kind: 'error' });
   }
 }
 
@@ -828,19 +830,19 @@ async function onReleaseBoat(berth) {
   const boatName = berth.assignedBoatName || 'boat';
   const ok = await confirmSheet({
     title:   'Release boat',
-    message: `Release ${boatName} from berth ${berth.berthNumber}?`,
-    confirmText: 'Release',
-    cancelText:  'Cancel'
+    message: tr(`Release ${boatName} from berth ${berth.berthNumber}?`),
+    confirmText: tr('Release'),
+    cancelText: tr('Cancel')
   });
   if (!ok) return;
 
   try {
     const userId = store.userProfile?.userId || 0;
     await releaseBoatFromBerth(berth.id, userId);
-    toast(`${boatName} released from berth ${berth.berthNumber}`, { kind: 'success' });
+    toast(tr(`${boatName} released from berth ${berth.berthNumber}`), { kind: 'success' });
   } catch (err) {
     console.error('[release boat]', err);
-    toast('Failed to release boat', { kind: 'error' });
+    toast(tr('Failed to release boat'), { kind: 'error' });
   }
 }
 
@@ -873,31 +875,31 @@ async function openTariffsSheet(berth) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Utility Tariffs</div>
+    <div class="sheet-title" style="text-align:center;">${t("Utility Tariffs")}</div>
 
     <form id="tariffsForm" class="add-form" novalidate>
       <div class="add-scroll">
 
-        <div class="add-section-title">Electricity</div>
+        <div class="add-section-title">${t("Electricity")}</div>
         <input class="add-input" id="tf-elecPrice" type="number" step="0.01"
-               placeholder="Price per kWh" value="${elecPrice > 0 ? elecPrice : ''}">
+               placeholder="${t("Price per kWh")}" value="${elecPrice > 0 ? elecPrice : ''}">
         <input class="add-input" id="tf-elecDate" type="date" value="${today}">
-        <div class="add-section-sub">Effective from</div>
+        <div class="add-section-sub">${t("Effective from")}</div>
 
-        <div class="add-section-title" style="margin-top:20px;">Water</div>
+        <div class="add-section-title" style="margin-top:20px;">${t("Water")}</div>
         <select class="add-input add-select" id="tf-waterMode">
-          <option value="METERED"  ${!waterIncluded ? 'selected' : ''}>Metered</option>
-          <option value="INCLUDED" ${waterIncluded  ? 'selected' : ''}>Included</option>
+          <option value="METERED"  ${!waterIncluded ? 'selected' : ''}>${t("Metered")}</option>
+          <option value="INCLUDED" ${waterIncluded  ? 'selected' : ''}>${t("Included")}</option>
         </select>
         <input class="add-input" id="tf-waterPrice" type="number" step="0.0001"
-               placeholder="Price per L" value="${waterPrice > 0 ? waterPrice : ''}"
+               placeholder="${t("Price per L")}" value="${waterPrice > 0 ? waterPrice : ''}"
                ${waterIncluded ? 'disabled' : ''}>
         <input class="add-input" id="tf-waterDate" type="date" value="${today}">
-        <div class="add-section-sub">Effective from</div>
+        <div class="add-section-sub">${t("Effective from")}</div>
 
       </div>
 
-      <button type="submit" class="add-save" id="tf-save">Save Tariffs</button>
+      <button type="submit" class="add-save" id="tf-save">${t("Save Tariffs")}</button>
     </form>
   `;
 
@@ -930,17 +932,17 @@ async function openTariffsSheet(berth) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     save.disabled = true;
-    save.textContent = 'Saving¦';
+    save.textContent = tr('Saving¦');
 
     try {
       const elecVal = parseFloat(sheet.querySelector('#tf-elecPrice').value);
-      if (isNaN(elecVal)) throw new Error('Enter electricity price');
+      if (isNaN(elecVal)) throw new Error(tr('Enter electricity price'));
 
       const waterMode = modeEl.value;
       let waterVal = 0;
       if (waterMode === 'METERED') {
         waterVal = parseFloat(waterPriceEl.value);
-        if (isNaN(waterVal)) throw new Error('Enter water price');
+        if (isNaN(waterVal)) throw new Error(tr('Enter water price'));
       }
 
       const elecDate = new Date(sheet.querySelector('#tf-elecDate').value).getTime() || Date.now();
@@ -968,12 +970,12 @@ async function openTariffsSheet(berth) {
       if (store._tariffCache) delete store._tariffCache;
 
       close();
-      toast('Tariffs saved', { kind: 'success' });
+      toast(tr('Tariffs saved'), { kind: 'success' });
 
     } catch (err) {
       console.error('[tariffs] save failed', err);
       save.disabled = false;
-      save.textContent = 'Save Tariffs';
+      save.textContent = tr('Save Tariffs');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');

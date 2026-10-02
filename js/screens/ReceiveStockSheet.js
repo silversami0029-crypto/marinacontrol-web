@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ReceiveStockSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -14,25 +15,25 @@ export function showReceiveStockSheet(item) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Receive Stock</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Receive Stock")}</div>
 
     <form id="rsForm" class="add-form" novalidate>
       <div class="add-scroll">
-        <label class="add-label">Item</label>
+        <label class="add-label">${tr("Item")}</label>
         <div class="add-input" style="padding-top:14px; padding-bottom:14px; color:var(--color-text-secondary);">
           ${escapeHtml(item.name || 'Item')} — current Qty: ${item.quantity}${item.unit ? ' ' + escapeHtml(item.unit) : ''}
         </div>
 
-        <label class="add-label" for="rs-qty">Quantity Received</label>
+        <label class="add-label" for="rs-qty">${tr("Quantity Received")}</label>
         <input class="add-input" id="rs-qty" type="number" inputmode="numeric" min="1" step="1" placeholder="0">
 
-        <label class="add-label" for="rs-reason">Reason (optional)</label>
-        <input class="add-input" id="rs-reason" type="text" placeholder="e.g. Supplier delivery">
+        <label class="add-label" for="rs-reason">${tr("Reason (optional)")}</label>
+        <input class="add-input" id="rs-reason" type="text" placeholder="${tr("e.g. Supplier delivery")}">
 
-        <label class="add-label" for="rs-ref">Reference (optional)</label>
-        <input class="add-input" id="rs-ref" type="text" placeholder="e.g. PO-1024">
+        <label class="add-label" for="rs-ref">${tr("Reference (optional)")}</label>
+        <input class="add-input" id="rs-ref" type="text" placeholder="${tr("e.g. PO-1024")}">
       </div>
-      <button type="submit" class="add-save" id="rs-save">Receive Stock</button>
+      <button type="submit" class="add-save" id="rs-save">${tr("Receive Stock")}</button>
     </form>
   `;
 
@@ -56,13 +57,13 @@ export function showReceiveStockSheet(item) {
     const reason = sheet.querySelector('#rs-reason').value.trim();
     const reference = sheet.querySelector('#rs-ref').value.trim();
 
-    if (!qtyStr) { toast('Enter a quantity', { kind: 'error' }); return; }
+    if (!qtyStr) { toast(tr('Enter a quantity'), { kind: 'error' }); return; }
     const add = parseInt(qtyStr, 10);
-    if (!Number.isFinite(add) || add <= 0) { toast('Quantity must be greater than zero', { kind: 'error' }); return; }
+    if (!Number.isFinite(add) || add <= 0) { toast(tr('Quantity must be greater than zero'), { kind: 'error' }); return; }
 
     const btn = sheet.querySelector('#rs-save');
     btn.disabled = true;
-    btn.textContent = 'Saving…';
+    btn.textContent = tr('Saving…');
 
     try {
       const now = Date.now();
@@ -91,12 +92,12 @@ export function showReceiveStockSheet(item) {
       });
 
       close();
-      toast(`Received ${add} item${add === 1 ? '' : 's'}`, { kind: 'success' });
+      toast(tr(`Received ${add} item${add === 1 ? '' : 's'}`), { kind: 'success' });
     } catch (err) {
       console.error('[inventory receive] failed', err);
       btn.disabled = false;
-      btn.textContent = 'Receive Stock';
-      toast('Failed to receive stock', { kind: 'error' });
+      btn.textContent = tr('Receive Stock');
+      toast(tr('Failed to receive stock'), { kind: 'error' });
     }
   });
 }

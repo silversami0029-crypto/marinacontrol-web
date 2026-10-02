@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/Client360Screen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -24,15 +25,15 @@ let currentInvoices = [];
 const HEADER_HTML = `
   <div class="c360-header" id="c360Header">
     <div class="c360-header-row">
-      <button class="c360-icon-btn" id="c360Back" aria-label="Back">
+      <button class="c360-icon-btn" id="c360Back" aria-label="${tr("Back")}">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
              stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
-      <div class="c360-pill">360° Client View</div>
-      <button class="c360-icon-btn" id="c360Help" aria-label="Help">
+      <div class="c360-pill">${tr("360° Client View")}</div>
+      <button class="c360-icon-btn" id="c360Help" aria-label="${tr("Help")}">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
              stroke="currentColor" stroke-width="1.8"
              stroke-linecap="round" stroke-linejoin="round">
@@ -42,7 +43,7 @@ const HEADER_HTML = `
         </svg>
       </button>
       <div class="c360-header-spacer"></div>
-      <button class="c360-icon-btn" id="c360SearchToggle" aria-label="Search">
+      <button class="c360-icon-btn" id="c360SearchToggle" aria-label="${tr("Search")}">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
              stroke="currentColor" stroke-width="1.8"
              stroke-linecap="round" stroke-linejoin="round">
@@ -54,8 +55,8 @@ const HEADER_HTML = `
   </div>
 
   <div class="boats-search-bar" id="c360SearchBar" hidden>
-    <input id="c360SearchInput" type="text" placeholder="Search activity..." autocomplete="off">
-    <button type="button" class="search-cancel" id="c360SearchCancel">Cancel</button>
+    <input id="c360SearchInput" type="text" placeholder="${tr("Search activity...")}" autocomplete="off">
+    <button type="button" class="search-cancel" id="c360SearchCancel">${tr("Cancel")}</button>
   </div>
 `;
 
@@ -69,7 +70,7 @@ export async function mountClient360Screen() {
 
   const clientId = Number(store.activeClientId);
   if (!clientId) {
-    screen.innerHTML = `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+    screen.innerHTML = `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -115,11 +116,9 @@ export async function mountClient360Screen() {
         screen.innerHTML = `
           <div class="c360-empty">
             <div class="c360-empty-inner">
-              <h2>No active boat</h2>
-              <p>Set a boat as active to view its customer.</p>
-              <button type="button" class="c360-empty-btn" id="c360OpenBoats">
-                Open Boats
-              </button>
+              <h2>${tr("No active boat")}</h2>
+              <p>${tr("Set a boat as active to view its customer.")}</p>
+              <button type="button" class="c360-empty-btn" id="c360OpenBoats">${tr("Open Boats")}</button>
             </div>
           </div>
         `;
@@ -132,7 +131,7 @@ export async function mountClient360Screen() {
       customerId = Number(activeBoat.customerId || 0);
     } catch (err) {
       console.error('[360] active boat lookup failed', err);
-      screen.innerHTML = `<div class="boats-empty"><h2>Couldn't resolve active boat</h2></div>`;
+      screen.innerHTML = `<div class="boats-empty"><h2>${tr("Couldn't resolve active boat")}</h2></div>`;
       return;
     }
 
@@ -150,11 +149,9 @@ export async function mountClient360Screen() {
       screen.innerHTML = `
         <div class="c360-empty">
           <div class="c360-empty-inner">
-            <h2>No customer linked</h2>
-            <p>The active boat has no customer assigned.</p>
-            <button type="button" class="c360-empty-btn" id="c360AssignCustomer">
-              Assign Customer
-            </button>
+            <h2>${tr("No customer linked")}</h2>
+            <p>${tr("The active boat has no customer assigned.")}</p>
+            <button type="button" class="c360-empty-btn" id="c360AssignCustomer">${tr("Assign Customer")}</button>
           </div>
         </div>
       `;
@@ -175,12 +172,12 @@ export async function mountClient360Screen() {
             try {
               const userId = store.userProfile?.userId || 0;
               await assignCustomerToBoat(String(fullBoat.id), pickedCustomerId, userId);
-              toast('Customer assigned', { kind: 'success' });
+              toast(tr('Customer assigned'), { kind: 'success' });
               location.hash = `#/client-360?customerId=${pickedCustomerId}`;
               setTimeout(() => mountClient360Screen(), 50);
             } catch (err) {
               console.error('[360 assign] failed', err);
-              toast('Failed to assign customer', { kind: 'error' });
+              toast(tr('Failed to assign customer'), { kind: 'error' });
             }
           }
         });
@@ -213,7 +210,7 @@ export async function mountClient360Screen() {
     console.error('[360] load failed', err);
     document.getElementById('c360Body').innerHTML = `
       <div class="boats-empty">
-        <h2>Couldn't load client view</h2>
+        <h2>${tr("Couldn't load client view")}</h2>
         <p>${escapeHtml(err.message || 'Unknown error')}</p>
       </div>
     `;
@@ -492,7 +489,7 @@ function render() {
   if (!c) {
     body.innerHTML = `
       <div class="boats-empty">
-        <h2>Customer not found</h2>
+        <h2>${tr("Customer not found")}</h2>
       </div>
     `;
     return;
@@ -534,7 +531,7 @@ function render() {
         return;
       }
 
-      toast(`${el.dataset.label || action} coming next`);
+      toast(tr(`${el.dataset.label || action} coming next`));
     });
   });
 
@@ -655,7 +652,7 @@ function buildAlerts() {
     if (prio === 'OVERDUE' || prio === 'CRITICAL') {
       alerts.push({
         kind: 'critical',
-        text: `${t.title} — ${prio === 'OVERDUE' ? 'overdue' : 'critical priority'}`,
+        text: `${t.title} — ${prio === 'OVERDUE' ? tr('overdue') : 'critical priority'}`,
         boat: t.boatName
       });
       continue;
@@ -683,7 +680,7 @@ function buildAlerts() {
    ============================================================ */
 function renderClientCard(c) {
   const since = c.createdDate
-    ? new Date(Number(c.createdDate)).toLocaleDateString('en-GB', {
+    ? new Date(Number(c.createdDate)).toLocaleDateString(uiLocale(), {
         month: 'short', year: 'numeric'
       })
     : '';
@@ -691,7 +688,7 @@ function renderClientCard(c) {
   return `
     <div class="c360-card">
       <div class="c360-client-head">
-        <div class="c360-client-name">${escapeHtml(c.name || 'Unnamed')}</div>
+        <div class="c360-client-name">${escapeHtml(c.name || tr('Unnamed'))}</div>
         ${c.isPreferred ? '<span class="c360-star">★</span>' : ''}
       </div>
       ${c.email ? `<div class="c360-line">${escapeHtml(c.email)}</div>` : ''}
@@ -708,24 +705,24 @@ function renderBoatsCard() {
   if (!currentBoats.length) {
     return `
       <div class="c360-card">
-        <div class="c360-card-title">Boats</div>
-        <div class="c360-line c360-line-dim">No boats assigned</div>
+        <div class="c360-card-title">${tr("Boats")}</div>
+        <div class="c360-line c360-line-dim">${tr("No boats assigned")}</div>
       </div>
     `;
   }
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">Boats</div>
+      <div class="c360-card-title">${tr("Boats")}</div>
       ${currentBoats.map(b => `
         <div class="c360-boat-row">
           <div class="c360-boat-head">
-            <span class="c360-boat-name">${escapeHtml(b.name || 'Unnamed')}</span>
-            ${b.isActive ? '<span class="c360-active-badge">ACTIVE</span>' : ''}
+            <span class="c360-boat-name">${escapeHtml(b.name || tr('Unnamed'))}</span>
+            ${b.isActive ? `<span class="c360-active-badge">${tr("ACTIVE")}</span>` : ''}
           </div>
           <div class="c360-line">HIN: ${escapeHtml(b.hin || '—')}</div>
           <div class="c360-line c360-status-${statusClass(b.status)}">
-            Status: ${escapeHtml(b.status || 'Unknown')}
+            ${tr("Status:" )} ${escapeHtml(b.status || 'Unknown')}
           </div>
         </div>
       `).join('')}
@@ -748,27 +745,27 @@ function renderBerthCard() {
   if (!currentBerth) {
     return `
       <div class="c360-card">
-        <div class="c360-card-title">📍 Berth & Booking</div>
-        <div class="c360-line c360-line-dim">No berth assigned</div>
+        <div class="c360-card-title">${tr("📍 Berth & Booking")}</div>
+        <div class="c360-line c360-line-dim">${tr("No berth assigned")}</div>
       </div>
     `;
   }
 
   const b = currentBerth;
   const arrived = b.assignedDate
-    ? new Date(Number(b.assignedDate)).toLocaleDateString('en-GB', {
+    ? new Date(Number(b.assignedDate)).toLocaleDateString(uiLocale(), {
         day: '2-digit', month: 'short', year: 'numeric'
       })
     : null;
   const departure = b.expectedEndDate
-    ? new Date(Number(b.expectedEndDate)).toLocaleDateString('en-GB', {
+    ? new Date(Number(b.expectedEndDate)).toLocaleDateString(uiLocale(), {
         day: '2-digit', month: 'short', year: 'numeric'
       })
     : null;
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">📍 Berth & Booking</div>
+      <div class="c360-card-title">${tr("📍 Berth & Booking")}</div>
       <div class="c360-line">Berth: ${escapeHtml((b.dockName || '') + ' ' + (b.berthNumber || ''))}</div>
       ${arrived ? `<div class="c360-line">Arrived: ${escapeHtml(arrived)}</div>` : ''}
       ${departure ? `<div class="c360-line">Departure: ${escapeHtml(departure)}</div>` : ''}
@@ -784,8 +781,8 @@ function renderFinancialCard() {
   if (!invoices.length) {
     return `
       <div class="c360-card c360-card-disabled" data-coming-next="No invoices">
-        <div class="c360-card-title">£ Financial Snapshot</div>
-        <div class="c360-line c360-line-dim">No invoices recorded</div>
+        <div class="c360-card-title">${tr("£ Financial Snapshot")}</div>
+        <div class="c360-line c360-line-dim">${tr("No invoices recorded")}</div>
       </div>
     `;
   }
@@ -804,18 +801,18 @@ function renderFinancialCard() {
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">£ Financial Snapshot</div>
+      <div class="c360-card-title">${tr("£ Financial Snapshot")}</div>
       <div class="c360-fin-grid">
         <div class="c360-fin-col">
-          <div class="c360-fin-label">Total</div>
+          <div class="c360-fin-label">${tr("Total")}</div>
           <div class="c360-fin-value">${fmt(total)}</div>
         </div>
         <div class="c360-fin-col">
-          <div class="c360-fin-label">Outstanding</div>
+          <div class="c360-fin-label">${tr("Outstanding")}</div>
           <div class="c360-fin-value" style="color:#FF4444;">${fmt(outstanding)}</div>
         </div>
         <div class="c360-fin-col">
-          <div class="c360-fin-label">Paid</div>
+          <div class="c360-fin-label">${tr("Paid")}</div>
           <div class="c360-fin-value" style="color:#4CAF50;">${fmt(paid)}</div>
         </div>
       </div>
@@ -842,7 +839,7 @@ function renderActivityCard() {
     events.push({
       timestamp: t,
       kind: completed ? 'ok' : 'warn',
-      title: completed ? `Maintenance completed: ${m.type}` : `Maintenance outstanding: ${m.type}`,
+      title: completed ? tr(`Maintenance completed: ${m.type}`) : tr(`Maintenance outstanding: ${m.type}`),
       detail: completed ? '' : 'Action required',
       boat: m.boatName
     });
@@ -855,8 +852,8 @@ function renderActivityCard() {
     events.push({
       timestamp: d.expiryDate,
       kind: expired ? 'err' : 'info',
-      title: `Document: ${d.name}`,
-      detail: expired ? 'Expired' : `Expires ${formatShortDate(new Date(d.expiryDate).toISOString().slice(0,10))}`,
+      title: tr(`Document: ${d.name}`),
+      detail: expired ? 'Expired' : tr(`Expires ${formatShortDate(new Date(d.expiryDate).toISOString().slice(0,10))}`),
       boat: d.boatName
     });
   }
@@ -868,8 +865,8 @@ function renderActivityCard() {
     events.push({
       timestamp: s.expiryDate,
       kind: expired ? 'err' : 'info',
-      title: `Safety: ${s.title}`,
-      detail: expired ? 'Expired' : `Expires ${formatShortDate(new Date(s.expiryDate).toISOString().slice(0,10))}`,
+      title: tr(`Safety: ${s.title}`),
+      detail: expired ? 'Expired' : tr(`Expires ${formatShortDate(new Date(s.expiryDate).toISOString().slice(0,10))}`),
       boat: s.boatName
     });
   }
@@ -879,7 +876,7 @@ function renderActivityCard() {
     events.push({
       timestamp: Number(currentBerth.assignedDate),
       kind: 'info',
-      title: `Assigned to berth ${currentBerth.dockName || ''} ${currentBerth.berthNumber || ''}`.trim(),
+      title: tr(`Assigned to berth ${currentBerth.dockName || ''} ${currentBerth.berthNumber || ''}`).trim(),
       detail: '',
       boat: ''
     });
@@ -895,10 +892,10 @@ function renderActivityCard() {
     : events;
 
   if (!filtered.length) {
-    const msg = q ? `No activity matches "${q}"` : 'No activity recorded';
+    const msg = q ? tr(`No activity matches "${q}"`) : 'No activity recorded';
     return `
       <div class="c360-card">
-        <div class="c360-card-title">📋 Recent Activity</div>
+        <div class="c360-card-title">${tr("📋 Recent Activity")}</div>
         <div class="c360-line c360-line-dim">${escapeHtml(msg)}</div>
       </div>
     `;
@@ -910,7 +907,7 @@ function renderActivityCard() {
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">📋 Recent Activity</div>
+      <div class="c360-card-title">${tr("📋 Recent Activity")}</div>
       ${sorted.map(e => `
         <div class="c360-activity-row">
           <div class="c360-activity-dot c360-dot-${e.kind}"></div>
@@ -938,10 +935,10 @@ function renderActivityCard() {
     : currentMaintenance;
 
   if (!filtered.length) {
-    const msg = q ? `No activity matches "${q}"` : 'No maintenance recorded';
+    const msg = q ? tr(`No activity matches "${q}"`) : 'No maintenance recorded';
     return `
       <div class="c360-card">
-        <div class="c360-card-title">📋 Recent Activity</div>
+        <div class="c360-card-title">${tr("📋 Recent Activity")}</div>
         <div class="c360-line c360-line-dim">${escapeHtml(msg)}</div>
       </div>
     `;
@@ -953,7 +950,7 @@ function renderActivityCard() {
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">📋 Recent Activity</div>
+      <div class="c360-card-title">${tr("📋 Recent Activity")}</div>
       ${sorted.map(m => {
         const cls = m.completed || m.status === 'COMPLETED'
           ? 'ok'
@@ -968,14 +965,14 @@ function renderActivityCard() {
             ? 'Deferred'
             : m.status === 'ESCALATED'
               ? 'Escalated'
-              : m.date ? `Due ${formatShortDate(m.date)}` : 'Active';
+              : m.date ? tr(`Due ${formatShortDate(m.date)}`) : 'Active';
 
         return `
           <div class="c360-activity-row">
             <div class="c360-activity-dot c360-dot-${cls}"></div>
             <div class="c360-activity-info">
               <div class="c360-activity-title">${escapeHtml(m.type || 'Maintenance')}</div>
-              <div class="c360-activity-meta">${escapeHtml(m.boatName)} · ${escapeHtml(label)}</div>
+              <div class="c360-activity-meta">${escapeHtml(m.boatName)} · ${escapeHtml(tr(label))}</div>
             </div>
           </div>
         `;
@@ -988,7 +985,7 @@ function formatShortDate(s) {
   try {
     const d = new Date(s + 'T00:00:00');
     if (isNaN(d.getTime())) return s;
-    return d.toLocaleDateString('en-GB', {
+    return d.toLocaleDateString(uiLocale(), {
       day: '2-digit', month: 'short', year: 'numeric'
     });
   } catch {
@@ -1014,18 +1011,10 @@ function renderComingNextCard(title, message) {
 function renderQuickActions() {
   return `
     <div class="c360-actions">
-      <button type="button" class="c360-action" data-action="maintenance" data-label="Maintenance">
-        🔧 Maintenance
-      </button>
-      <button type="button" class="c360-action" data-action="notes" data-label="Notes">
-        📝 Notes
-      </button>
-      <button type="button" class="c360-action" data-action="invoice" data-label="Invoice">
-        💷 Invoice
-      </button>
-      <button type="button" class="c360-action" data-action="berth" data-label="Berth">
-        ⚓ Berth
-      </button>
+      <button type="button" class="c360-action" data-action="maintenance" data-label="Maintenance">${tr("🔧 Maintenance")}</button>
+      <button type="button" class="c360-action" data-action="notes" data-label="Notes">${tr("📝 Notes")}</button>
+      <button type="button" class="c360-action" data-action="invoice" data-label="Invoice">${tr("💷 Invoice")}</button>
+      <button type="button" class="c360-action" data-action="berth" data-label="Berth">${tr("⚓ Berth")}</button>
     </div>
   `;
 }
@@ -1047,8 +1036,8 @@ function renderSafetyCard() {
   if (!currentSafety || !currentSafety.length) {
     return `
       <div class="c360-card c360-card-disabled" data-coming-next="No safety items">
-        <div class="c360-card-title">🛟 Safety</div>
-        <div class="c360-line c360-line-dim">No safety items recorded</div>
+        <div class="c360-card-title">${tr("🛟 Safety")}</div>
+        <div class="c360-line c360-line-dim">${tr("No safety items recorded")}</div>
       </div>
     `;
   }
@@ -1069,7 +1058,7 @@ function renderSafetyCard() {
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">🛟 Safety</div>
+      <div class="c360-card-title">${tr("🛟 Safety")}</div>
       ${sorted.slice(0, 5).map(s => {
         const cls = !s.expiryDate ? 'info'
           : s.expiryDate < now ? 'err'
@@ -1100,8 +1089,8 @@ function renderDocumentsCard() {
   if (!currentDocuments || !currentDocuments.length) {
     return `
       <div class="c360-card c360-card-disabled" data-coming-next="No documents">
-        <div class="c360-card-title">📄 Documents</div>
-        <div class="c360-line c360-line-dim">No documents recorded</div>
+        <div class="c360-card-title">${tr("📄 Documents")}</div>
+        <div class="c360-line c360-line-dim">${tr("No documents recorded")}</div>
       </div>
     `;
   }
@@ -1122,7 +1111,7 @@ function renderDocumentsCard() {
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">📄 Documents</div>
+      <div class="c360-card-title">${tr("📄 Documents")}</div>
       ${sorted.slice(0, 5).map(d => {
         const cls = !d.expiryDate ? 'info'
           : d.expiryDate < now ? 'err'
@@ -1137,7 +1126,7 @@ function renderDocumentsCard() {
             <div class="c360-activity-dot c360-dot-${cls}"></div>
             <div class="c360-activity-info">
               <div class="c360-activity-title">${escapeHtml(d.name || 'Document')}</div>
-              <div class="c360-activity-meta">${escapeHtml(d.type)} · ${escapeHtml(d.boatName)} · ${label}</div>
+              <div class="c360-activity-meta">${escapeHtml(tr(d.type))} · ${escapeHtml(d.boatName)} · ${label}</div>
             </div>
           </div>
         `;
@@ -1172,14 +1161,14 @@ function renderEquipmentCard() {
   if (!currentEquipment || !currentEquipment.length) {
     return `
       <div class="c360-card c360-card-disabled" data-coming-next="No equipment">
-        <div class="c360-card-title">⚙️ Equipment</div>
-        <div class="c360-line c360-line-dim">No equipment recorded</div>
+        <div class="c360-card-title">${tr("⚙️ Equipment")}</div>
+        <div class="c360-line c360-line-dim">${tr("No equipment recorded")}</div>
       </div>
     `;
   }
   return `
     <div class="c360-card">
-      <div class="c360-card-title">⚙️ Equipment</div>
+      <div class="c360-card-title">${tr("⚙️ Equipment")}</div>
       ${currentEquipment.slice(0, 5).map(e => {
         const v = String(e.status || '').toUpperCase();
         const cls = v.includes('FAULT') || v.includes('BROKEN') || v.includes('OUT') ? 'err'
@@ -1190,7 +1179,7 @@ function renderEquipmentCard() {
             <div class="c360-activity-dot c360-dot-${cls}"></div>
             <div class="c360-activity-info">
               <div class="c360-activity-title">${escapeHtml(e.manufacturer || 'Equipment')} ${e.model ? escapeHtml(e.model) : ''}</div>
-              <div class="c360-activity-meta">${escapeHtml(e.type)} · ${escapeHtml(e.boatName)}</div>
+              <div class="c360-activity-meta">${escapeHtml(tr(e.type))} · ${escapeHtml(e.boatName)}</div>
             </div>
           </div>
         `;
@@ -1218,8 +1207,8 @@ function renderTasksCard() {
   if (!open.length) {
     return `
       <div class="c360-card c360-card-disabled" data-coming-next="No open tasks">
-        <div class="c360-card-title">✅ Tasks</div>
-        <div class="c360-line c360-line-dim">No open tasks</div>
+        <div class="c360-card-title">${tr("✅ Tasks")}</div>
+        <div class="c360-line c360-line-dim">${tr("No open tasks")}</div>
       </div>
     `;
   }
@@ -1235,7 +1224,7 @@ function renderTasksCard() {
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">✅ Tasks <span style="color:var(--color-text-secondary);font-weight:400;font-size:13px;">(${open.length} open)</span></div>
+      <div class="c360-card-title">${tr("✅ Tasks")}<span style="color:var(--color-text-secondary);font-weight:400;font-size:13px;">(${open.length} open)</span></div>
       ${ranked.slice(0, 5).map(t => {
         const cls = taskPriorityClass(t.priority);
         const due = t.dueDate ? formatShortDate(t.dueDate) : '';
@@ -1269,8 +1258,8 @@ function renderInventoryCard() {
   if (!currentInventory || !currentInventory.length) {
     return `
       <div class="c360-card c360-card-disabled" data-coming-next="No inventory">
-        <div class="c360-card-title">📦 Inventory</div>
-        <div class="c360-line c360-line-dim">No inventory recorded</div>
+        <div class="c360-card-title">${tr("📦 Inventory")}</div>
+        <div class="c360-line c360-line-dim">${tr("No inventory recorded")}</div>
       </div>
     `;
   }
@@ -1287,7 +1276,7 @@ function renderInventoryCard() {
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">📦 Inventory</div>
+      <div class="c360-card-title">${tr("📦 Inventory")}</div>
       ${ranked.slice(0, 5).map(e => {
         const st = computeInvStatus(e.quantity);
         return `
@@ -1295,7 +1284,7 @@ function renderInventoryCard() {
             <div class="c360-activity-dot c360-dot-${st.cls}"></div>
             <div class="c360-activity-info">
               <div class="c360-activity-title">${escapeHtml(e.name || 'Item')}</div>
-              <div class="c360-activity-meta">${escapeHtml(e.category || '—')} · ${escapeHtml(e.boatName)} · Qty ${e.quantity}${e.unit ? ' ' + escapeHtml(e.unit) : ''} (${st.label})</div>
+              <div class="c360-activity-meta">${escapeHtml(tr(e.category || '—'))} · ${escapeHtml(e.boatName)} · Qty ${e.quantity}${e.unit ? ' ' + escapeHtml(e.unit) : ''} (${st.label})</div>
             </div>
           </div>
         `;

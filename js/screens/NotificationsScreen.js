@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/NotificationsScreen.js
 import { store } from '../store.js';
 import { doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -13,20 +14,20 @@ export function mountNotificationsScreen() {
 
   document.getElementById('screen').innerHTML = `
     <div class="nt-head">
-      <button id="ntBack" class="nt-back" aria-label="Back">&#8249;</button>
-      <div class="nt-title">Notifications</div>
-      <button id="ntMarkAll" class="nt-action">Mark all read</button>
+      <button id="ntBack" class="nt-back" aria-label="${tr("Back")}">&#8249;</button>
+      <div class="nt-title">${tr("Notifications")}</div>
+      <button id="ntMarkAll" class="nt-action">${tr("Mark all read")}</button>
     </div>
     <div class="nt-filters">
-      <button class="nt-chip is-active" data-filter="ALL">All</button>
-      <button class="nt-chip" data-filter="TASK">Tasks</button>
-      <button class="nt-chip" data-filter="INVENTORY">Stock</button>
-      <button class="nt-chip" data-filter="EQUIPMENT">Equipment</button>
-      <button class="nt-chip" data-filter="DOCUMENT">Documents</button>
-      <button class="nt-chip" data-filter="DOCK_WALK">Dock Walk</button>
+      <button class="nt-chip is-active" data-filter="ALL">${tr("All")}</button>
+      <button class="nt-chip" data-filter="TASK">${tr("Tasks")}</button>
+      <button class="nt-chip" data-filter="INVENTORY">${tr("Stock")}</button>
+      <button class="nt-chip" data-filter="EQUIPMENT">${tr("Equipment")}</button>
+      <button class="nt-chip" data-filter="DOCUMENT">${tr("Documents")}</button>
+      <button class="nt-chip" data-filter="DOCK_WALK">${tr("Dock Walk")}</button>
     </div>
     <div id="ntList" class="nt-list"></div>
-    <button id="ntClear" class="nt-clear">Clear read</button>`;
+    <button id="ntClear" class="nt-clear">${tr("Clear read")}</button>`;
 
   document.getElementById('ntBack').onclick = () => history.back();
   document.getElementById('ntMarkAll').onclick = markAllRead;
@@ -51,7 +52,7 @@ function render() {
     filter === 'ALL' || String(n.type || '').startsWith(filter));
 
   if (!items.length) {
-    listEl.innerHTML = '<div class="nt-empty">No notifications</div>';
+    listEl.innerHTML = `<div class="nt-empty">${tr("No notifications")}</div>`;
     return;
   }
 

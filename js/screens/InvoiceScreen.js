@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InvoiceScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -48,17 +49,17 @@ export function mountInvoiceScreen() {
   screen.innerHTML = `
     <div class="eq-header" id="ivHeader">
       <div class="eq-header-row">
-        <button class="eq-icon-btn" id="ivBack" aria-label="Back">
+        <button class="eq-icon-btn" id="ivBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="eq-pill">Invoices</div>
+        <div class="eq-pill">${tr("Invoices")}</div>
     
         <div class="eq-header-spacer"></div>
-        <button class="eq-icon-btn" id="ivSearchToggle" aria-label="Search">
+        <button class="eq-icon-btn" id="ivSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -70,31 +71,31 @@ export function mountInvoiceScreen() {
     </div>
 
     <div class="boats-search-bar" id="ivSearchBar" hidden>
-      <input id="ivSearchInput" type="text" placeholder="Search invoices..." autocomplete="off">
-      <button type="button" class="search-cancel" id="ivSearchCancel">Cancel</button>
+      <input id="ivSearchInput" type="text" placeholder="${tr("Search invoices...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="ivSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="iv-summary" id="ivSummary">
       <div class="iv-summary-col">
-        <div class="iv-summary-label">Total</div>
+        <div class="iv-summary-label">${tr("Total")}</div>
         <div class="iv-summary-value" id="ivTotal">£0.00</div>
       </div>
       <div class="iv-summary-divider"></div>
       <div class="iv-summary-col">
-        <div class="iv-summary-label">Outstanding</div>
+        <div class="iv-summary-label">${tr("Outstanding")}</div>
         <div class="iv-summary-value iv-outstanding" id="ivOutstanding">£0.00</div>
       </div>
       <div class="iv-summary-divider"></div>
       <div class="iv-summary-col">
-        <div class="iv-summary-label">Paid</div>
+        <div class="iv-summary-label">${tr("Paid")}</div>
         <div class="iv-summary-value iv-paid" id="ivPaid">£0.00</div>
       </div>
     </div>
 
     <div class="iv-filters" id="ivFilters">
-      <button type="button" class="iv-month-btn" id="ivMonthBtn">Select month</button>
+      <button type="button" class="iv-month-btn" id="ivMonthBtn">${tr("Select month")}</button>
       <select class="iv-status-select" id="ivStatusSelect">
-        ${STATUSES.map(s => `<option value="${s}">${s === 'All' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}</option>`).join('')}
+        ${STATUSES.map(s => `<option value="${s}">${escapeHtml(tr(s === 'All' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()))}</option>`).join('')}
       </select>
     </div>
 
@@ -102,7 +103,7 @@ export function mountInvoiceScreen() {
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button class="cm-fab" id="ivFabAdd" aria-label="Add invoice">
+    <button class="cm-fab" id="ivFabAdd" aria-label="${tr("Add invoice")}">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
            stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -165,7 +166,7 @@ async function showMonthPicker() {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Select Month</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Select Month")}</div>
 
     <div class="iv-month-picker" id="ivMonthPicker">
       ${years.map(y => `
@@ -173,15 +174,15 @@ async function showMonthPicker() {
         <div class="iv-month-grid">
           ${months.map((m, i) => `
             <button type="button" class="iv-month-cell${selectedYear === y && selectedMonth === i ? ' is-active' : ''}"
-                    data-year="${y}" data-month="${i}">${m}</button>
+                    data-year="${y}" data-month="${i}">${tr(m)}</button>
           `).join('')}
         </div>
       `).join('')}
     </div>
 
     <div class="ao-actions" style="margin-top:16px;">
-      <button type="button" class="csv-btn csv-btn--cancel" id="ivMonthClear">Clear</button>
-      <button type="button" class="csv-btn csv-btn--cancel" id="ivMonthClose">Close</button>
+      <button type="button" class="csv-btn csv-btn--cancel" id="ivMonthClear">${tr("Clear")}</button>
+      <button type="button" class="csv-btn csv-btn--cancel" id="ivMonthClose">${tr("Close")}</button>
     </div>
   `;
 
@@ -203,7 +204,7 @@ async function showMonthPicker() {
     cell.addEventListener('click', () => {
       selectedYear = Number(cell.dataset.year);
       selectedMonth = Number(cell.dataset.month);
-      const label = `${months[selectedMonth]} ${selectedYear}`;
+      const label = `${tr(months[selectedMonth])} ${selectedYear}`;
       document.getElementById('ivMonthBtn').textContent = label;
       document.getElementById('ivMonthBtn').classList.add('is-active');
       close();
@@ -214,7 +215,7 @@ async function showMonthPicker() {
   sheet.querySelector('#ivMonthClear').addEventListener('click', () => {
     selectedYear = -1;
     selectedMonth = -1;
-    document.getElementById('ivMonthBtn').textContent = 'Select month';
+    document.getElementById('ivMonthBtn').textContent = tr('Select month');
     document.getElementById('ivMonthBtn').classList.remove('is-active');
     close();
     renderList();
@@ -227,7 +228,7 @@ function subscribeToInvoices(urlCustomerId) {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
     document.getElementById('ivList').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -266,7 +267,7 @@ function subscribeToInvoices(urlCustomerId) {
     console.error('[invoice] listen failed', err);
     document.getElementById('ivList').innerHTML =
       `<div class="boats-empty">
-         <h2>Couldn't load invoices</h2>
+         <h2>${tr("Couldn't load invoices")}</h2>
          <p>${escapeHtml(err.message || 'Permission denied.')}</p>
        </div>`;
   });
@@ -327,7 +328,7 @@ function computeInitials(name) {
 function formatDate(ts) {
   if (!ts) return '';
   const d = new Date(Number(ts));
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(uiLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function renderList() {
@@ -339,8 +340,8 @@ function renderList() {
   if (!items.length) {
     const q = (document.getElementById('ivSearchInput')?.value || '').trim();
     listEl.innerHTML = q
-      ? `<div class="boats-empty"><h2>No matches</h2><p>No invoices match "${escapeHtml(q)}"</p></div>`
-      : `<div class="boats-empty"><h2>No invoices</h2><p>Tap + to add the first invoice.</p></div>`;
+      ? `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>${escapeHtml(tr("ui.noMatches", {query:q}))}</p></div>`
+      : `<div class="boats-empty"><h2>${tr("No invoices")}</h2><p>${tr("Tap + to add the first invoice.")}</p></div>`;
     return;
   }
 
@@ -354,8 +355,8 @@ function renderList() {
 
         <div class="iv-info">
           <div class="iv-line-1">
-            <div class="iv-customer">${escapeHtml(inv.clientName || 'Unnamed')}</div>
-            <div class="iv-status-badge" style="background:${statusColor};">${escapeHtml(inv.status)}</div>
+            <div class="iv-customer">${escapeHtml(inv.clientName || tr('Unnamed'))}</div>
+            <div class="iv-status-badge" style="background:${statusColor};">${escapeHtml(tr(inv.status))}</div>
           </div>
 
           <div class="iv-line-2">
@@ -368,8 +369,8 @@ function renderList() {
           <div class="iv-line-3">
             <div class="iv-amount">${formatMoney(inv.amount)}</div>
             ${isPayable
-              ? `<button type="button" class="iv-pay-btn" data-pay="${inv._docId}">Pay Now</button>`
-              : `<div class="iv-due">Due ${escapeHtml(formatDate(inv.dueDate))}</div>`}
+              ? `<button type="button" class="iv-pay-btn" data-pay="${inv._docId}">${tr("Pay Now")}</button>`
+              : `<div class="iv-due">${tr("Due" )} ${escapeHtml(formatDate(inv.dueDate))}</div>`}
           </div>
         </div>
         <div class="eq-row-divider"></div>

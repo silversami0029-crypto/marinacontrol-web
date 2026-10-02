@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ImportSafetySheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -19,33 +20,30 @@ export function showImportSafetySheet({ boatId, boatName }) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Import Safety Items from CSV</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Import Safety Items from CSV")}</div>
 
     <div class="csv-info-scroll">
-      <p class="csv-info-intro">
-        Your CSV file should have a <b>header row</b> and
-        <b>comma-separated columns</b> in this order:
-      </p>
+      <p class="csv-info-intro">${tr("Your CSV file should have a")}<b>${tr("header row")}</b>${tr("and")}<b>${tr("comma-separated columns")}</b>${tr("in this order:")}</p>
 
       <ul class="csv-info-list">
-        <li><b>Title</b> — e.g. SOLAS Red Parachute Flare <span class="csv-req">(required)</span></li>
-        <li><b>Category</b> — e.g. Pyrotechnics <span class="csv-req">(required)</span></li>
-        <li><b>Location</b> — e.g. Waterproof cockpit locker</li>
-        <li><b>Importance</b> — CRITICAL / HIGH / MEDIUM / LOW</li>
-        <li><b>Validity Years</b> — number</li>
-        <li><b>Validity Months</b> — number</li>
-        <li><b>Notes</b> — free text</li>
+        <li><b>${tr("Title")}</b>${tr("— e.g. SOLAS Red Parachute Flare")}<span class="csv-req">${tr("(required)")}</span></li>
+        <li><b>${tr("Category")}</b>${tr("— e.g. Pyrotechnics")}<span class="csv-req">${tr("(required)")}</span></li>
+        <li><b>${tr("Location")}</b>${tr("— e.g. Waterproof cockpit locker")}</li>
+        <li><b>${tr("Importance")}</b>${tr("— CRITICAL / HIGH / MEDIUM / LOW")}</li>
+        <li><b>${tr("Validity Years")}</b>${tr("— number")}</li>
+        <li><b>${tr("Validity Months")}</b>${tr("— number")}</li>
+        <li><b>${tr("Notes")}</b>${tr("— free text")}</li>
       </ul>
 
-      <div class="csv-info-example-label">Example:</div>
+      <div class="csv-info-example-label">${tr("Example:")}</div>
       <pre class="csv-info-example">Title,Category,Location,Importance,Validity Years,Validity Months,Notes
 SOLAS Red Parachute Flare,Pyrotechnics,Waterproof cockpit locker,CRITICAL,3,0,Check corrosion
 Life Jacket Adult,Life Saving,Cabin locker,MEDIUM,0,60,Inflatable type</pre>
     </div>
 
     <div class="csv-info-actions">
-      <button type="button" class="csv-btn csv-btn--cancel" id="isCancel">Cancel</button>
-      <button type="button" class="csv-btn csv-btn--choose" id="isChoose">Choose File</button>
+      <button type="button" class="csv-btn csv-btn--cancel" id="isCancel">${tr("Cancel")}</button>
+      <button type="button" class="csv-btn csv-btn--choose" id="isChoose">${tr("Choose File")}</button>
     </div>
   `;
 
@@ -150,8 +148,8 @@ async function runImportWithProgress({ boatId, boatName, rows }) {
   sheet.className = 'confirm-sheet is-open';
   sheet.innerHTML = `
     <div class="confirm-handle"></div>
-    <div class="confirm-title">Importing safety items…</div>
-    <div class="confirm-message" id="importProgress">Starting…</div>
+    <div class="confirm-title">${tr("Importing safety items…")}</div>
+    <div class="confirm-message" id="importProgress">${tr("Starting…")}</div>
     <div class="import-bar-wrap">
       <div class="import-bar" id="importBar"></div>
     </div>
@@ -281,7 +279,7 @@ async function runImportWithProgress({ boatId, boatName, rows }) {
       onProgress(success, skipped, rows.length, progressEl, barEl);
     }
 
-    progressEl.textContent = 'Done';
+    progressEl.textContent = tr('Done');
     barEl.style.width = '100%';
     await new Promise(r => setTimeout(r, 300));
 
@@ -291,7 +289,7 @@ async function runImportWithProgress({ boatId, boatName, rows }) {
     showResultModal({ success, skipped, failed: errors.length, errors });
 
     if (success > 0) {
-      toast(`Imported ${success} safety item${success === 1 ? '' : 's'}`, { kind: 'success' });
+      toast(tr(`Imported ${success} safety item${success === 1 ? '' : 's'}`), { kind: 'success' });
     }
   } catch (err) {
     console.error('[import safety] failed', err);
@@ -316,35 +314,33 @@ function showResultModal({ success, skipped, failed, errors = [] }) {
   sheet.className = 'confirm-sheet';
   sheet.innerHTML = `
     <div class="confirm-handle"></div>
-    <div class="confirm-title">Import complete</div>
+    <div class="confirm-title">${tr("Import complete")}</div>
 
     <div class="import-stats">
       <div class="import-stat">
         <div class="import-stat-value ok">${success}</div>
-        <div class="import-stat-label">Added</div>
+        <div class="import-stat-label">${tr("Added")}</div>
       </div>
       <div class="import-stat">
         <div class="import-stat-value skip">${skipped}</div>
-        <div class="import-stat-label">Skipped</div>
+        <div class="import-stat-label">${tr("Skipped")}</div>
       </div>
       <div class="import-stat">
         <div class="import-stat-value fail">${failed}</div>
-        <div class="import-stat-label">Failed</div>
+        <div class="import-stat-label">${tr("Failed")}</div>
       </div>
     </div>
 
     ${errors.length ? `
       <div class="import-errors">
-        <div class="import-errors-title">Errors</div>
+        <div class="import-errors-title">${tr("Errors")}</div>
         ${errors.slice(0, 10).map(e => `<div class="import-error-line">• ${escapeHtml(e)}</div>`).join('')}
         ${errors.length > 10 ? `<div class="import-error-line">…and ${errors.length - 10} more</div>` : ''}
       </div>
     ` : ''}
 
     <div class="confirm-actions">
-      <button class="confirm-btn confirm-btn--cancel" id="closeImportResult" style="flex:1;">
-        Close
-      </button>
+      <button class="confirm-btn confirm-btn--cancel" id="closeImportResult" style="flex:1;">${tr("Close")}</button>
     </div>
   `;
 

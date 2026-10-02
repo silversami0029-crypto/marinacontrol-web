@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddSafetySheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -30,10 +31,10 @@ export function showAddSafetySheet(opts = {}) {
 
   <div class="sheet-title"
     style="flex:1;margin:0;padding:12px 48px;text-align:center;">
-    ${isEdit ? 'Edit Safety' : 'Add Safety'}
+    ${isEdit ? tr('Edit Safety') : tr('Add Safety')}
   </div>
 
-  <button type="button" id="iv-close" aria-label="Close safety sheet"
+  <button type="button" id="iv-close" aria-label="${tr("Close safety sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -46,47 +47,47 @@ export function showAddSafetySheet(opts = {}) {
     <form id="sfForm" class="add-form" novalidate autocomplete="off">
       <div class="add-scroll">
         ${boatName ? `
-          <label class="add-label">Boat</label>
+          <label class="add-label">${tr("Boat")}</label>
           <div class="add-input" style="padding-top:14px; padding-bottom:14px; color:var(--color-text-secondary);">
-            Boat: ${escapeHtml(boatName)}
+            ${tr("Boat:" )} ${escapeHtml(boatName)}
           </div>
         ` : ''}
 
-        <label class="add-label" for="sf-title">Title</label>
-        <input class="add-input" id="sf-title" type="text" placeholder="e.g. SOLAS Red Parachute Flare">
+        <label class="add-label" for="sf-title">${tr("Title")}</label>
+        <input class="add-input" id="sf-title" type="text" placeholder="${tr("e.g. SOLAS Red Parachute Flare")}">
 
-        <label class="add-label" for="sf-category">Category</label>
+        <label class="add-label" for="sf-category">${tr("Category")}</label>
         <select class="add-input add-select" id="sf-category">
-          <option value="">Select category…</option>
-          ${CATEGORIES.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('')}
+          <option value="">${tr("Select category…")}</option>
+          ${CATEGORIES.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(tr(c))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="sf-location">Location</label>
-        <input class="add-input" id="sf-location" type="text" placeholder="e.g. Waterproof cockpit locker">
+        <label class="add-label" for="sf-location">${tr("Location")}</label>
+        <input class="add-input" id="sf-location" type="text" placeholder="${tr("e.g. Waterproof cockpit locker")}">
 
-        <label class="add-label" for="sf-importance">Importance</label>
+        <label class="add-label" for="sf-importance">${tr("Importance")}</label>
         <select class="add-input add-select" id="sf-importance">
-          ${IMPORTANCE.map(i => `<option value="${i}" ${i === 'MEDIUM' ? 'selected' : ''}>${i}</option>`).join('')}
+          ${IMPORTANCE.map(i => `<option value="${i}" ${i === 'MEDIUM' ? 'selected' : ''}>${escapeHtml(tr(i))}</option>`).join('')}
         </select>
 
-        <label class="add-label" for="sf-purchase">Purchase Date</label>
+        <label class="add-label" for="sf-purchase">${tr("Purchase Date")}</label>
         <input class="add-input" id="sf-purchase" type="date">
 
-        <label class="add-label" for="sf-validity-years">Validity (Years)</label>
+        <label class="add-label" for="sf-validity-years">${tr("Validity (Years)")}</label>
         <input class="add-input" id="sf-validity-years" type="number" min="0" value="0">
 
-        <label class="add-label" for="sf-validity-months">Validity (Months)</label>
+        <label class="add-label" for="sf-validity-months">${tr("Validity (Months)")}</label>
         <input class="add-input" id="sf-validity-months" type="number" min="0" value="0">
 
-        <label class="add-label" for="sf-expiry">Expiry Date (manual override)</label>
+        <label class="add-label" for="sf-expiry">${tr("Expiry Date (manual override)")}</label>
         <input class="add-input" id="sf-expiry" type="date">
 
-        <label class="add-label" for="sf-notes">Notes</label>
-        <textarea class="add-input" id="sf-notes" rows="3" placeholder="Notes"></textarea>
+        <label class="add-label" for="sf-notes">${tr("Notes")}</label>
+        <textarea class="add-input" id="sf-notes" rows="3" placeholder="${tr("Notes")}"></textarea>
       </div>
 
       <button type="submit" class="add-save" id="sf-save">
-        ${isEdit ? 'Update Safety Item' : '+ Add Safety Item'}
+        ${isEdit ? tr('Update Safety Item') : tr('+ Add Safety Item')}
       </button>
     </form>
   `;
@@ -135,7 +136,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     const notes = sheet.querySelector('#sf-notes').value.trim();
 
     if (!title)    { sheet.querySelector('#sf-title').focus(); return; }
-    if (!category) { toast('Select a category', { kind: 'error' }); return; }
+    if (!category) { toast(tr('Select a category'), { kind: 'error' }); return; }
 
     const purchaseMs = purchaseRaw ? new Date(purchaseRaw + 'T00:00:00').getTime() : 0;
     const validityYears = Math.max(0, Number(yearsRaw) || 0);
@@ -157,7 +158,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
       : 0;
 
     save.disabled = true;
-    save.textContent = 'Saving…';
+    save.textContent = tr('Saving…');
 
     try {
       if (isEdit) {
@@ -167,7 +168,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
           expiryMs, nextInspectionMs, alertDays, notes
         });
       } else {
-        if (!boatId) throw new Error('No boat selected');
+        if (!boatId) throw new Error(tr('No boat selected'));
         await createSafety({
           boatId, boatName,
           title, category, location, importance,
@@ -176,25 +177,25 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
         });
       }
       close();
-      toast(isEdit ? 'Safety item updated' : 'Safety item added', { kind: 'success' });
+      toast(isEdit ? tr('Safety item updated') : tr('Safety item added'), { kind: 'success' });
     } catch (err) {
       console.error('[safety save] failed', err);
       save.disabled = false;
-      save.textContent = isEdit ? 'Update Safety Item' : '+ Add Safety Item';
+      save.textContent = isEdit ? tr('Update Safety Item') : tr('+ Add Safety Item');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to save.';
+      errEl.textContent = err.message || tr('Failed to save.');
     }
   });
 }
 
 async function createSafety(payload) {
   const clientId = Number(store.activeClientId);
-  if (!clientId) throw new Error('No active client');
+  if (!clientId) throw new Error(tr('No active client'));
 
   const snap = await getDocs(
     query(collection(db, 'safety_items'), where('clientId', '==', clientId))

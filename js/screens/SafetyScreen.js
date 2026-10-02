@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/SafetyScreen.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -31,15 +32,15 @@ export function mountSafetyScreen() {
   screen.innerHTML = `
     <div class="sf-header" id="sfHeader">
       <div class="sf-header-row">
-        <button class="sf-icon-btn" id="sfBack" aria-label="Back">
+        <button class="sf-icon-btn" id="sfBack" aria-label="${tr("Back")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="sf-pill" id="sfPill">Safety</div>
-        <button class="sf-icon-btn" id="sfHelp" aria-label="Help">
+        <div class="sf-pill" id="sfPill">${tr("Safety")}</div>
+        <button class="sf-icon-btn" id="sfHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -49,7 +50,7 @@ export function mountSafetyScreen() {
           </svg>
         </button>
         <div class="sf-header-spacer"></div>
-        <button class="sf-icon-btn" id="sfSearchToggle" aria-label="Search">
+        <button class="sf-icon-btn" id="sfSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
                stroke="currentColor" stroke-width="1.8"
                stroke-linecap="round" stroke-linejoin="round">
@@ -61,25 +62,25 @@ export function mountSafetyScreen() {
     </div>
 
     <div class="boats-search-bar" id="sfSearchBar" hidden>
-      <input id="sfSearchInput" type="text" placeholder="Search safety items..." autocomplete="off">
-      <button type="button" class="search-cancel" id="sfSearchCancel">Cancel</button>
+      <input id="sfSearchInput" type="text" placeholder="${tr("Search safety items...")}" autocomplete="off">
+      <button type="button" class="search-cancel" id="sfSearchCancel">${tr("Cancel")}</button>
     </div>
 
     <div class="sf-cards" id="sfCards">
       <button class="sf-card" data-filter="ALL">
-        <div class="sf-card-label">All</div>
+        <div class="sf-card-label">${tr("All")}</div>
         <div class="sf-card-count" id="sfCountAll">—</div>
       </button>
       <button class="sf-card sf-card-expired" data-filter="EXPIRED">
-        <div class="sf-card-label">Expired</div>
+        <div class="sf-card-label">${tr("Expired")}</div>
         <div class="sf-card-count" id="sfCountExpired">—</div>
       </button>
       <button class="sf-card sf-card-soon" data-filter="EXPIRING_SOON">
-        <div class="sf-card-label">Expiring</div>
+        <div class="sf-card-label">${tr("Expiring")}</div>
         <div class="sf-card-count" id="sfCountSoon">—</div>
       </button>
       <button class="sf-card sf-card-dates" data-filter="NEEDS_DATES">
-        <div class="sf-card-label">Needs Dates</div>
+        <div class="sf-card-label">${tr("Needs Dates")}</div>
         <div class="sf-card-count" id="sfCountDates">—</div>
       </button>
     </div>
@@ -88,7 +89,7 @@ export function mountSafetyScreen() {
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
 
-    <button class="cm-fab" id="sfFabAdd" aria-label="Add safety item">
+    <button class="cm-fab" id="sfFabAdd" aria-label="${tr("Add safety item")}">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
            stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -144,7 +145,7 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   const clientId = Number(store.activeClientId);
   if (!clientId) {
     document.getElementById('sfList').innerHTML =
-      `<div class="boats-empty"><h2>No client assigned</h2></div>`;
+      `<div class="boats-empty"><h2>${tr("No client assigned")}</h2></div>`;
     return;
   }
 
@@ -179,16 +180,16 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   if (!boatId) {
     document.getElementById('sfList').innerHTML =
       `<div class="boats-empty">
-         <h2>No active boat</h2>
-         <p>Set a boat as active to see its safety items.</p>
+         <h2>${tr("No active boat")}</h2>
+         <p>${tr("Set a boat as active to see its safety items.")}</p>
        </div>`;
     return;
   }
 
   currentBoatId = boatId;
   document.getElementById('sfPill').textContent = currentBoatName
-    ? `Safety · ${currentBoatName}`
-    : 'Safety';
+    ? `${tr('Safety')} · ${currentBoatName}`
+    : tr('Safety');
 
   updateCardState();
   subscribeToSafety(clientId);
@@ -239,7 +240,7 @@ function subscribeToSafety(clientId) {
     console.error('[safety] listen failed', err);
     document.getElementById('sfList').innerHTML =
       `<div class="boats-empty">
-         <h2>Couldn't load safety items</h2>
+         <h2>${tr("Couldn't load safety items")}</h2>
          <p>${escapeHtml(err.message || 'Permission denied.')}</p>
        </div>`;
   });
@@ -299,11 +300,11 @@ function renderList() {
   if (!items.length) {
     const q = (document.getElementById('sfSearchInput')?.value || '').trim();
     let msg;
-    if (q) msg = `<h2>No matches</h2><p>No safety items match "${escapeHtml(q)}"</p>`;
-    else if (filter === 'EXPIRED') msg = `<h2>Nothing expired</h2>`;
-    else if (filter === 'EXPIRING_SOON') msg = `<h2>Nothing expiring soon</h2>`;
-    else if (filter === 'NEEDS_DATES') msg = `<h2>All items have dates</h2>`;
-    else msg = `<h2>No safety items</h2><p>Tap + to add the first one.</p>`;
+    if (q) msg = `<h2>${tr("No matches")}</h2><p>${escapeHtml(tr("ui.noMatches", {query:q}))}</p>`;
+    else if (filter === 'EXPIRED') msg = `<h2>${tr("Nothing expired")}</h2>`;
+    else if (filter === 'EXPIRING_SOON') msg = `<h2>${tr("Nothing expiring soon")}</h2>`;
+    else if (filter === 'NEEDS_DATES') msg = `<h2>${tr("All items have dates")}</h2>`;
+    else msg = `<h2>${tr("No safety items")}</h2><p>${tr("Tap + to add the first one.")}</p>`;
     listEl.innerHTML = `<div class="boats-empty">${msg}</div>`;
     return;
   }
@@ -332,16 +333,16 @@ function renderList() {
         </div>
 
         <div class="sf-info">
-          <div class="sf-title">${escapeHtml(item.title || 'Untitled')}</div>
-          <div class="sf-category">${escapeHtml(item.category || '')}${item.location ? ' · ' + escapeHtml(item.location) : ''}</div>
+          <div class="sf-title">${escapeHtml(item.title || tr('Untitled'))}</div>
+          <div class="sf-category">${escapeHtml(tr(item.category || ''))}${item.location ? ' · ' + escapeHtml(item.location) : ''}</div>
           ${item.expiryDate > 0
-            ? `<div class="sf-expiry" style="color:${state.dateColor};">Expires: ${escapeHtml(formatDate(item.expiryDate))}</div>`
-            : `<div class="sf-expiry sf-expiry-dim">No expiry date set</div>`}
+            ? `<div class="sf-expiry" style="color:${state.dateColor};">${tr("Expires:" )} ${escapeHtml(formatDate(item.expiryDate))}</div>`
+            : `<div class="sf-expiry sf-expiry-dim">${tr("No expiry date set")}</div>`}
           <div class="sf-importance sf-imp-${String(item.importance || '').toLowerCase()}">${escapeHtml(item.importance || 'MEDIUM')}</div>
           ${item.notes ? `<div class="sf-notes">${escapeHtml(item.notes)}</div>` : ''}
         </div>
 
-        <button class="sf-kebab" data-safety-menu="${item.id}" aria-label="Menu">
+        <button class="sf-kebab" data-safety-menu="${item.id}" aria-label="${tr("Menu")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round">
@@ -402,7 +403,7 @@ function updateCardState() {
 
 function formatDate(ts) {
   try {
-    return new Date(ts).toLocaleDateString('en-GB', {
+    return new Date(ts).toLocaleDateString(uiLocale(), {
       day: '2-digit', month: 'short', year: 'numeric'
     });
   } catch { return '—'; }
@@ -419,10 +420,8 @@ function showAddSafetyChooser({ boatId, boatName }) {
   sheet.className = 'sheet';
 sheet.innerHTML = `
   <div style="position:relative;min-height:48px;">
-    <div class="sheet-title" style="margin:0;padding:12px 48px;text-align:center;">
-      Add Safety Item
-    </div>
-    <button type="button" id="safetySheetClose" aria-label="Close safety sheet"
+    <div class="sheet-title" style="margin:0;padding:12px 48px;text-align:center;">${tr("Add Safety Item")}</div>
+    <button type="button" id="safetySheetClose" aria-label="${tr("Close safety sheet")}"
       style="position:absolute;right:8px;top:2px;width:44px;height:44px;padding:0;border:0;background:transparent;color:#F5F7F9;font-size:28px;cursor:pointer;">
       &times;
     </button>
@@ -439,8 +438,8 @@ sheet.innerHTML = `
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">Add Single Item</div>
-        <div class="sheet-item-subtitle">Add one safety item manually</div>
+        <div class="sheet-item-title">${tr("Add Single Item")}</div>
+        <div class="sheet-item-subtitle">${tr("Add one safety item manually")}</div>
       </div>
     </div>
 
@@ -457,8 +456,8 @@ sheet.innerHTML = `
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">Bulk Import</div>
-        <div class="sheet-item-subtitle">Import safety items from CSV</div>
+        <div class="sheet-item-title">${tr("Bulk Import")}</div>
+        <div class="sheet-item-subtitle">${tr("Import safety items from CSV")}</div>
       </div>
     </div>
   `;

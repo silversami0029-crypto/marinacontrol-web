@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/BookingRequestDetailSheet.js
 import { toast } from '../ui/toast.js';
 import {
@@ -31,30 +32,30 @@ export function showBookingRequestDetail(request, berth) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Booking Request</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Booking Request")}</div>
 
     <div class="bkr-detail-body">
-      <div class="bkr-detail-row"><span>Vessel</span><b>${escapeHtml(vessel)}</b></div>
-      <div class="bkr-detail-row"><span>From</span><b>${escapeHtml(sender)}</b></div>
-      <div class="bkr-detail-row"><span>Phone</span><b>${escapeHtml(phone)}</b></div>
-      <div class="bkr-detail-row"><span>Arrival</span><b>${escapeHtml(arrival)}</b></div>
-      <div class="bkr-detail-row"><span>Departure</span><b>${escapeHtml(departure)}</b></div>
-      <div class="bkr-detail-row"><span>Berth</span><b>${escapeHtml(berthText)}</b></div>
-      <div class="bkr-detail-row"><span>Source</span><b>${escapeHtml(source)}</b></div>
-      <div class="bkr-detail-row"><span>Status</span><b>${escapeHtml(status)}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Vessel")}</span><b>${escapeHtml(vessel)}</b></div>
+      <div class="bkr-detail-row"><span>${tr("From")}</span><b>${escapeHtml(sender)}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Phone")}</span><b>${escapeHtml(phone)}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Arrival")}</span><b>${escapeHtml(arrival)}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Departure")}</span><b>${escapeHtml(departure)}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Berth")}</span><b>${escapeHtml(berthText)}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Source")}</span><b>${escapeHtml(source)}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Status")}</span><b>${escapeHtml(status)}</b></div>
 
-      <div class="bkr-detail-message-label">Message</div>
+      <div class="bkr-detail-message-label">${tr("Message")}</div>
       <div class="bkr-detail-message">${escapeHtml(message)}</div>
     </div>
 
     ${isActionable ? `
-      <button type="button" class="add-save" id="bkrDetailApprove">Approve</button>
+      <button type="button" class="add-save" id="bkrDetailApprove">${tr("Approve")}</button>
     ` : ''}
 
     <div class="ao-actions" style="margin-top:8px;">
-      <button type="button" class="csv-btn csv-btn--cancel" id="bkrDetailClose">Close</button>
+      <button type="button" class="csv-btn csv-btn--cancel" id="bkrDetailClose">${tr("Close")}</button>
       ${isActionable ? `
-        <button type="button" class="csv-btn csv-btn--choose" id="bkrDetailMore" style="background:transparent;border:1px solid var(--color-divider);color:var(--color-text-primary);">More</button>
+        <button type="button" class="csv-btn csv-btn--choose" id="bkrDetailMore" style="background:transparent;border:1px solid var(--color-divider);color:var(--color-text-primary);">${tr("More")}</button>
       ` : ''}
     </div>
   `;
@@ -78,7 +79,7 @@ export function showBookingRequestDetail(request, berth) {
   if (approveBtn) {
     approveBtn.addEventListener('click', () => {
       close();
-      toast('Approval flow coming soon');
+      toast(tr('Approval flow coming soon'));
     });
   }
 
@@ -108,7 +109,7 @@ function showRequestActions(request) {
           <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>
         </svg>
       </div>
-      <div class="sheet-item-text"><div class="sheet-item-title">Edit Dates</div></div>
+      <div class="sheet-item-text"><div class="sheet-item-title">${tr("Edit Dates")}</div></div>
     </div>
     <div class="sheet-gap-8"></div>
 
@@ -118,7 +119,7 @@ function showRequestActions(request) {
           <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
       </div>
-      <div class="sheet-item-text"><div class="sheet-item-title">Decline Request</div></div>
+      <div class="sheet-item-text"><div class="sheet-item-title">${tr("Decline Request")}</div></div>
     </div>
   `;
 
@@ -138,7 +139,7 @@ function showRequestActions(request) {
 
   sheet.querySelector('#bkrActEdit').addEventListener('click', () => {
     close();
-    toast('Date editing coming soon');
+    toast(tr('Date editing coming soon'));
   });
 
   sheet.querySelector('#bkrActDecline').addEventListener('click', async () => {
@@ -153,17 +154,17 @@ async function declineRequest(request) {
       status: 'DECLINED',
       lastModified: Date.now()
     });
-    toast('Booking request declined', { kind: 'success' });
+    toast(tr('Booking request declined'), { kind: 'success' });
   } catch (err) {
     console.error('[booking request decline] failed', err);
-    toast('Failed to decline request', { kind: 'error' });
+    toast(tr('Failed to decline request'), { kind: 'error' });
   }
 }
 
 function formatDate(ts) {
   if (!ts) return '';
   const d = new Date(Number(ts));
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(uiLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function escapeHtml(s) {

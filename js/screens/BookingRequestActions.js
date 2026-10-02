@@ -1,3 +1,5 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
+import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/BookingRequestActions.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -13,11 +15,11 @@ import { db } from '../firebase.js';
 
 export async function approveBookingRequest(request) {
   if (!request.vesselName || !request.vesselName.trim()) {
-    toast('No vessel name on this request', { kind: 'error' });
+    toast(tr('No vessel name on this request'), { kind: 'error' });
     return;
   }
   if (!request.arrivalDate || !request.departureDate) {
-    toast('Request has no dates — edit them first', { kind: 'error' });
+    toast(tr('Request has no dates — edit them first'), { kind: 'error' });
     return;
   }
 
@@ -27,9 +29,9 @@ export async function approveBookingRequest(request) {
   if (!matchedBoat) {
     const confirmed = await confirmSheet({
       title: 'Vessel not registered',
-      message: `${request.vesselName} is not registered in MarinaControl.\n\nCreate this vessel from the request?`,
-      confirmText: 'Create',
-      cancelText: 'Cancel'
+      message: tr(`${request.vesselName} is not registered in MarinaControl.\n\nCreate this vessel from the request?`),
+      confirmText: tr('Create'),
+      cancelText: tr('Cancel')
     });
     if (!confirmed) return;
     matchedBoat = await createBoatFromRequest(clientId, request);
@@ -37,7 +39,7 @@ export async function approveBookingRequest(request) {
     if (!confirmed) return;
     matchedBoat = await createBoatFromRequest(clientId, request);
     if (!matchedBoat) {
-      toast('Could not create vessel', { kind: 'error' });
+      toast(tr('Could not create vessel'), { kind: 'error' });
       return;
     }
   }
@@ -45,7 +47,7 @@ export async function approveBookingRequest(request) {
   const suitable = await findSuitableBerths(clientId, matchedBoat, request.arrivalDate, request.departureDate);
 
   if (!suitable.length) {
-    toast('No compatible berths available for those dates', { kind: 'error', duration: 4000 });
+    toast(tr('No compatible berths available for those dates'), { kind: 'error', duration: 4000 });
     return;
   }
 
@@ -94,7 +96,7 @@ async function createBoatFromRequest(clientId, request) {
       syncedAt: 0
     });
 
-    toast(`${request.vesselName} added to MarinaControl`, { kind: 'success' });
+    toast(tr(`${request.vesselName} added to MarinaControl`), { kind: 'success' });
     return await findBoatByName(clientId, request.vesselName);
   } catch (err) {
     console.error('[approve] boat create failed', err);
@@ -176,7 +178,7 @@ function showBerthPicker(berths, boat, request) {
     </div>
 
     <div class="ao-actions">
-      <button type="button" class="csv-btn csv-btn--cancel" id="bkrBerthCancel">Cancel</button>
+      <button type="button" class="csv-btn csv-btn--cancel" id="bkrBerthCancel">${t("Cancel")}</button>
     </div>
   `;
 
@@ -258,10 +260,10 @@ async function createBooking(request, boat, berth) {
       detail: `Berth ${berth.berthNumber || ''} · ${formatDate(request.arrivalDate)} → ${formatDate(request.departureDate)}`
     });
 
-    toast(`Booking confirmed for ${boat.name} at berth ${berth.berthNumber || ''}`, { kind: 'success', duration: 4000 });
+    toast(tr(`Booking confirmed for ${boat.name} at berth ${berth.berthNumber || ''}`), { kind: 'success', duration: 4000 });
   } catch (err) {
     console.error('[approve] booking creation failed', err);
-    toast('Failed to create booking', { kind: 'error' });
+    toast(tr('Failed to create booking'), { kind: 'error' });
   }
 }
 
@@ -284,7 +286,7 @@ export function showRequestMoreMenu(request) {
           <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>
         </svg>
       </div>
-      <div class="sheet-item-text"><div class="sheet-item-title">Edit Dates</div></div>
+      <div class="sheet-item-text"><div class="sheet-item-title">${t("Edit Dates")}</div></div>
     </div>
     <div class="sheet-gap-8"></div>
 
@@ -294,7 +296,7 @@ export function showRequestMoreMenu(request) {
           <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
       </div>
-      <div class="sheet-item-text"><div class="sheet-item-title">Decline Request</div></div>
+      <div class="sheet-item-text"><div class="sheet-item-title">${t("Decline Request")}</div></div>
     </div>
   `;
 
@@ -321,9 +323,9 @@ export function showRequestMoreMenu(request) {
     close();
     const ok = await confirmSheet({
       title: 'Decline request?',
-      message: `Decline the berth request for ${request.vesselName || 'this vessel'}?`,
-      confirmText: 'Decline',
-      cancelText: 'Cancel'
+      message: tr(`Decline the berth request for ${request.vesselName || 'this vessel'}?`),
+      confirmText: tr('Decline'),
+      cancelText: tr('Cancel')
     });
     if (!ok) return;
     await declineRequest(request);
@@ -342,17 +344,17 @@ function showEditDates(request) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Edit Dates</div>
+    <div class="sheet-title" style="text-align:center;">${t("Edit Dates")}</div>
 
     <form id="bkrDatesForm" class="add-form">
       <div class="add-scroll">
-        <label class="add-label" for="bkrArrival">Arrival</label>
+        <label class="add-label" for="bkrArrival">${t("Arrival")}</label>
         <input class="add-input" id="bkrArrival" type="date" value="${arrivalStr}">
 
-        <label class="add-label" for="bkrDeparture">Departure</label>
+        <label class="add-label" for="bkrDeparture">${t("Departure")}</label>
         <input class="add-input" id="bkrDeparture" type="date" value="${departureStr}">
       </div>
-      <button type="submit" class="add-save" id="bkrDatesSave">Save Dates</button>
+      <button type="submit" class="add-save" id="bkrDatesSave">${t("Save Dates")}</button>
     </form>
   `;
 
@@ -376,12 +378,12 @@ function showEditDates(request) {
     const aStr = sheet.querySelector('#bkrArrival').value;
     const dStr = sheet.querySelector('#bkrDeparture').value;
 
-    if (!aStr || !dStr) { toast('Both dates required', { kind: 'error' }); return; }
+    if (!aStr || !dStr) { toast(tr('Both dates required'), { kind: 'error' }); return; }
 
     const arrival   = new Date(aStr + 'T12:00:00').getTime();
     const departure = new Date(dStr + 'T12:00:00').getTime();
 
-    if (departure <= arrival) { toast('Departure must be after arrival', { kind: 'error' }); return; }
+    if (departure <= arrival) { toast(tr('Departure must be after arrival'), { kind: 'error' }); return; }
 
     try {
       await updateDoc(doc(db, 'berth_booking_requests', String(request._docId)), {
@@ -390,10 +392,10 @@ function showEditDates(request) {
         lastModified: Date.now()
       });
       close();
-      toast('Dates updated', { kind: 'success' });
+      toast(tr('Dates updated'), { kind: 'success' });
     } catch (err) {
       console.error('[edit dates] failed', err);
-      toast('Failed to update dates', { kind: 'error' });
+      toast(tr('Failed to update dates'), { kind: 'error' });
     }
   });
 }
@@ -404,10 +406,10 @@ async function declineRequest(request) {
       status: 'DECLINED',
       lastModified: Date.now()
     });
-    toast('Booking request declined', { kind: 'success' });
+    toast(tr('Booking request declined'), { kind: 'success' });
   } catch (err) {
     console.error('[decline] failed', err);
-    toast('Failed to decline request', { kind: 'error' });
+    toast(tr('Failed to decline request'), { kind: 'error' });
   }
 }
 
@@ -422,7 +424,7 @@ function toInputDate(ms) {
 function formatDate(ms) {
   if (!ms) return '';
   const d = new Date(Number(ms));
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(getLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function escapeHtml(s) {

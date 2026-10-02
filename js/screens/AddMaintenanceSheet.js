@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import {
@@ -39,7 +40,7 @@ export async function showAddMaintenanceSheet(opts = {}) {
   );
 
   if (!boat || !boat.id) {
-    toast('Set a boat as active first', {
+    toast(tr('Set a boat as active first'), {
       kind: 'error'
     });
     return;
@@ -59,10 +60,10 @@ export async function showAddMaintenanceSheet(opts = {}) {
 
   <div class="sheet-title"
     style="flex:1;margin:0;padding:12px 48px;text-align:center;">
-    ${isEdit ? 'Edit Maintenance' : 'Add Maintenance'}
+    ${isEdit ? tr('Edit Maintenance') : tr('Add Maintenance')}
   </div>
 
-  <button type="button" id="iv-close" aria-label="Close maintenance sheet"
+  <button type="button" id="iv-close" aria-label="${tr("Close maintenance sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -78,9 +79,7 @@ export async function showAddMaintenanceSheet(opts = {}) {
 
       <div class="add-scroll">
 
-        <label class="add-label">
-          Boat
-        </label>
+        <label class="add-label">${tr("Boat")}</label>
 
         <div class="add-input"
              style="
@@ -88,16 +87,14 @@ export async function showAddMaintenanceSheet(opts = {}) {
                padding-bottom:14px;
                color:var(--color-text-secondary);
              ">
-          Boat:
+          ${tr("Boat:" )}
           ${escapeHtml(
-            boat.name || 'Unnamed'
+            boat.name || tr('Unnamed')
           )}
         </div>
 
         <label class="add-label"
-               for="am-type">
-          Type
-        </label>
+               for="am-type">${tr("Type")}</label>
 
         <select class="add-input add-select"
                 id="am-type">
@@ -116,24 +113,20 @@ export async function showAddMaintenanceSheet(opts = {}) {
         </select>
 
         <label class="add-label"
-               for="am-date">
-          Date
-        </label>
+               for="am-date">${tr("Date")}</label>
 
         <input class="add-input"
                id="am-date"
                type="date">
 
         <label class="add-label"
-               for="am-notes">
-          Notes
-        </label>
+               for="am-notes">${tr("Notes")}</label>
 
         <textarea
           class="add-input"
           id="am-notes"
           rows="3"
-          placeholder="Describe the work or issue"
+          placeholder="${tr("Describe the work or issue")}"
         ></textarea>
 
       </div>
@@ -210,21 +203,21 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
           .trim();
 
       if (!type) {
-        toast('Select a type', {
+        toast(tr('Select a type'), {
           kind: 'error'
         });
         return;
       }
 
       if (!date) {
-        toast('Select a date', {
+        toast(tr('Select a date'), {
           kind: 'error'
         });
         return;
       }
 
       save.disabled = true;
-      save.textContent = 'Saving…';
+      save.textContent = tr('Saving…');
 
       try {
         if (isEdit) {
@@ -265,8 +258,8 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
         save.disabled = false;
 
         save.textContent = isEdit
-          ? 'Update Maintenance'
-          : 'Add Maintenance';
+          ? tr('Update Maintenance')
+          : tr('Add Maintenance');
 
         let errorElement =
           sheet.querySelector('.add-error');
@@ -286,7 +279,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
 
         errorElement.textContent =
           error.message ||
-          'Failed to save.';
+          tr('Failed to save.');
       }
     }
   );
@@ -416,7 +409,7 @@ async function createMaintenance({
     Number(store.activeClientId);
 
   if (!clientId) {
-    throw new Error('No active client');
+    throw new Error(tr('No active client'));
   }
 
   const now = Date.now();

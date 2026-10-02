@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/BerthCard.js
 // Renders one berth card — mirrors item_berth.xml
 
@@ -18,7 +19,7 @@ export function renderBerthCard(berth) {
   return `
     <div class="berth-card berth-card--${statusClass}" data-berth-id="${esc(berth.id)}">
       <div class="berth-card-num">${esc(berth.berthNumber || '?')}</div>
-      <button class="berth-card-kebab" data-action="kebab" aria-label="Berth menu">
+      <button class="berth-card-kebab" data-action="kebab" aria-label="${tr("Berth menu")}">
         ${KE_BAB}
       </button>
       ${showBoat ? `

@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ShiftHelp.js
 
 export function showShiftHelp() {
@@ -9,34 +10,32 @@ export function showShiftHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">🕒 Shift Schedule</div>
+      <div class="help-pill">${tr("🕒 Shift Schedule")}</div>
 
-      <p class="help-desc">
-        Manage staff shifts and assignments across your marina. Keep track of who is working, when, and where.
-      </p>
+      <p class="help-desc">${tr("Manage staff shifts and assignments across your marina. Keep track of who is working, when, and where.")}</p>
 
-      <div class="help-section-title">Shift Types</div>
+      <div class="help-section-title">${tr("Shift Types")}</div>
       <div class="help-cat-grid">
-        <div class="help-cat">🌅 Morning</div>
-        <div class="help-cat">☀️ Afternoon</div>
-        <div class="help-cat">🌙 Night</div>
+        <div class="help-cat">${tr("🌅 Morning")}</div>
+        <div class="help-cat">${tr("☀️ Afternoon")}</div>
+        <div class="help-cat">${tr("🌙 Night")}</div>
       </div>
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">Staff Roles</div>
+      <div class="help-section-title">${tr("Staff Roles")}</div>
       <div class="help-cat-grid">
-        <div class="help-cat">🪝 Dockhand</div>
-        <div class="help-cat">📋 Office</div>
-        <div class="help-cat">⛽ Fuel Dock</div>
-        <div class="help-cat">🔧 Maintenance</div>
-        <div class="help-cat">🛡️ Security</div>
-        <div class="help-cat">👔 Manager</div>
+        <div class="help-cat">${tr("🪝 Dockhand")}</div>
+        <div class="help-cat">${tr("📋 Office")}</div>
+        <div class="help-cat">${tr("⛽ Fuel Dock")}</div>
+        <div class="help-cat">${tr("🔧 Maintenance")}</div>
+        <div class="help-cat">${tr("🛡️ Security")}</div>
+        <div class="help-cat">${tr("👔 Manager")}</div>
       </div>
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">How to schedule a shift?</div>
+      <div class="help-section-title">${tr("How to schedule a shift?")}</div>
 
       ${step('1', 'Select crew', 'Select a crew member from your list')}
       ${step('2', 'Shift type', 'Choose shift type (Morning / Afternoon / Night)')}
@@ -46,22 +45,14 @@ export function showShiftHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">💡 Pro Tips</div>
-      <div class="help-tips">• Schedule morning shifts the day before
+      <div class="help-section-title">${tr("💡 Pro Tips")}</div>
+      <div class="help-tips">${tr("• Schedule morning shifts the day before • Ensure night shifts have at least 2 staff members • Use notes for specific boat assignments • Review weekly schedule every Friday • Keep a backup contact for each shift")}</div>
 
-• Ensure night shifts have at least 2 staff members
-
-• Use notes for specific boat assignments
-
-• Review weekly schedule every Friday
-
-• Keep a backup contact for each shift</div>
-
-      <div class="help-footer">Need help? support@marinacontrol.com</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
     </div>
 
     <div class="help-actions">
-      <button type="button" class="help-gotit" id="shHelpGotIt">Got it</button>
+      <button type="button" class="help-gotit" id="shHelpGotIt">${tr("Got it")}</button>
     </div>
   `;
 

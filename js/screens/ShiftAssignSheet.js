@@ -1,3 +1,4 @@
+import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ShiftAssignSheet.js
 
 import { store } from '../store.js';
@@ -35,7 +36,7 @@ export function showShiftAssignSheet({
   sheet.className = 'sheet';
 
   const dateLabel = new Date(date)
-    .toLocaleDateString('en-GB', {
+    .toLocaleDateString(uiLocale(), {
       weekday: 'long',
       day: '2-digit',
       month: 'short'
@@ -45,9 +46,7 @@ export function showShiftAssignSheet({
     <div class="sheet-handle"></div>
 
     <div class="sheet-title"
-         style="text-align:center;">
-      Assign Shift
-    </div>
+         style="text-align:center;">${tr("Assign Shift")}</div>
 
     <div class="sh-assign-meta">
       ${escapeHtml(shiftType)} ·
@@ -58,9 +57,7 @@ export function showShiftAssignSheet({
          id="shStepRole">
 
       <div class="help-section-title"
-           style="margin:12px 0 8px;">
-        1. Select Role
-      </div>
+           style="margin:12px 0 8px;">${tr("1. Select Role")}</div>
 
       <div class="sh-role-grid">
         ${ROLES.map(role => `
@@ -84,18 +81,13 @@ export function showShiftAssignSheet({
          hidden>
 
       <div class="help-section-title"
-           style="margin:16px 0 8px;">
-        2. Select Crew
-      </div>
+           style="margin:16px 0 8px;">${tr("2. Select Crew")}</div>
 
       <div class="sh-crew-list">
         ${
           crewList.length === 0
             ? `
-              <div class="assign-empty">
-                No crew members found.<br>
-                Add crew first.
-              </div>
+              <div class="assign-empty">${tr("No crew members found.")}<br>${tr("Add crew first.")}</div>
             `
             : crewList.map(crew => `
               <button
@@ -146,17 +138,13 @@ export function showShiftAssignSheet({
       <button
         type="button"
         class="csv-btn csv-btn--cancel"
-        id="shAssignCancel">
-        Cancel
-      </button>
+        id="shAssignCancel">${tr("Cancel")}</button>
 
       <button
         type="button"
         class="csv-btn csv-btn--choose"
         id="shAssignSave"
-        disabled>
-        Assign
-      </button>
+        disabled>${tr("Assign")}</button>
     </div>
   `;
 
@@ -288,7 +276,7 @@ export function showShiftAssignSheet({
       }
 
       saveBtn.disabled = true;
-      saveBtn.textContent = 'Saving…';
+      saveBtn.textContent = tr('Saving…');
 
       const clientId =
         Number(store.activeClientId);
@@ -395,10 +383,10 @@ export function showShiftAssignSheet({
         );
 
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Assign';
+        saveBtn.textContent = tr('Assign');
 
         toast(
-          'Failed to save assignment',
+          tr('Failed to save assignment'),
           { kind: 'error' }
         );
       }
