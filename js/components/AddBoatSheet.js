@@ -46,10 +46,14 @@ export function showAddBoatSheet(opts = {}) {
 
   const sheet = document.createElement('div');
   sheet.className = 'sheet';
-  sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div id="addBoatBody"></div>
-  `;
+sheet.innerHTML = `
+  <button type="button" id="boatSheetClose" aria-label="Close boat sheet"
+    style="position:absolute;right:8px;top:8px;z-index:3;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;font-size:28px;cursor:pointer;">
+    &times;
+  </button>
+  <div id="addBoatBody"></div>
+`;
+sheet.style.position = 'fixed';
 
   document.getElementById('modalRoot').append(backdrop, sheet);
   requestAnimationFrame(() => {
@@ -64,6 +68,7 @@ export function showAddBoatSheet(opts = {}) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('#boatSheetClose').addEventListener('click', close);
 
   const body = sheet.querySelector('#addBoatBody');
 

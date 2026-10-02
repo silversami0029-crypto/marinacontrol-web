@@ -327,9 +327,17 @@ function showAddDocumentChooser({ boatId, boatName }) {
   const sheet = document.createElement('div');
   sheet.className = 'sheet';
 
-  sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Add Document</div>
+sheet.innerHTML = `
+  <div style="position:relative;min-height:48px;">
+    <div class="sheet-title" style="margin:0;padding:12px 48px;text-align:center;">
+      Add Document
+    </div>
+    <button type="button" id="documentSheetClose" aria-label="Close document sheet"
+      style="position:absolute;right:8px;top:2px;width:44px;height:44px;padding:0;border:0;background:transparent;color:#F5F7F9;font-size:28px;cursor:pointer;">
+      &times;
+    </button>
+  </div>
+
 
     <div class="sheet-gap-8"></div>
 
@@ -394,6 +402,7 @@ function showAddDocumentChooser({ boatId, boatName }) {
   };
 
   backdrop.addEventListener('click', close);
+sheet.querySelector('#documentSheetClose').addEventListener('click', close);
 
   sheet.querySelector('#adcSingle').addEventListener('click', async () => {
     close();

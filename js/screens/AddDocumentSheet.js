@@ -38,12 +38,12 @@ export function showAddDocumentSheet(opts = {}) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-  <div class="invoice-sheet-header"
+  <div class="document-sheet-header"
   style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface, #1C222A);">
 
   <div class="sheet-title"
     style="flex:1;margin:0;padding:12px 48px;text-align:center;">
-    ${isEdit ? 'Edit Invoice' : 'Add Invoice'}
+    ${isEdit ? 'Edit Document' : 'Add Document'}
   </div>
 
   <button type="button" id="iv-close" aria-label="Close invoice sheet"

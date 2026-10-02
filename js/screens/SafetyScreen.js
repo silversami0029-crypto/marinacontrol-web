@@ -417,11 +417,16 @@ function showAddSafetyChooser({ boatId, boatName }) {
 
   const sheet = document.createElement('div');
   sheet.className = 'sheet';
-
-  sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Add Safety Item</div>
-
+sheet.innerHTML = `
+  <div style="position:relative;min-height:48px;">
+    <div class="sheet-title" style="margin:0;padding:12px 48px;text-align:center;">
+      Add Safety Item
+    </div>
+    <button type="button" id="safetySheetClose" aria-label="Close safety sheet"
+      style="position:absolute;right:8px;top:2px;width:44px;height:44px;padding:0;border:0;background:transparent;color:#F5F7F9;font-size:28px;cursor:pointer;">
+      &times;
+    </button>
+  </div>
     <div class="sheet-gap-8"></div>
 
     <div class="sheet-item" id="ascSingle">
@@ -471,6 +476,7 @@ function showAddSafetyChooser({ boatId, boatName }) {
   };
 
   backdrop.addEventListener('click', close);
+sheet.querySelector('#safetySheetClose').addEventListener('click', close);
 
   sheet.querySelector('#ascSingle').addEventListener('click', async () => {
     close();
