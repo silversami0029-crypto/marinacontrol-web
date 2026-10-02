@@ -1,0 +1,47 @@
+.topbar-brand,
+.topbar-brand-text {
+  min-width: 0;
+}
+
+.topbar-brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* The selector already displays the marina name. */
+.topbar-brand-text:has(.marina-selector:not([hidden])) .topbar-title {
+  display: none;
+}
+
+.marina-selector {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  min-width: 0;
+  height: 32px;
+  margin: 0;
+  padding: 4px 8px;
+  border: 1px solid #AEB6C1;
+  border-radius: 6px;
+  background: #1C222A;
+  color: #F5F7F9;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.marina-selector[hidden] {
+  display: none;
+}
+
+.marina-selector:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.marina-selector:focus-visible {
+  outline: 2px solid #0A8EF7;
+  outline-offset: 2px;
+}

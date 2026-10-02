@@ -1,4 +1,4 @@
-﻿// js/components/TopBar.js
+// js/components/TopBar.js
 import { store } from '../store.js';
 import { formatSyncTime } from '../utils.js';
 import { toggleDrawer } from './Drawer.js';
@@ -21,8 +21,9 @@ const TITLES = {
 
 export function renderTopBar(route) {
   const titleEl = document.getElementById('topbarTitle');
-  if (titleEl) titleEl.textContent = TITLES[route] || 'MarinaControl';
+  if (titleEl) titleEl.textContent = store.activeMarina?.name || TITLES[route] || 'MarinaControl';
 
+  renderMarinaSelector();
   const syncEl = document.getElementById('topbarSync');
   if (!syncEl) return;
 
@@ -45,17 +46,22 @@ function wireBell() {
 function listenForNotifications() {
   const clientId = Number(store.activeClientId || 0);
   const recipient = (store.userProfile?.name || '').trim();
-  const key = `${clientId}:${recipient}`;
-  if (!clientId || !recipient || key === notificationKey) return;
+  const key = store.authUser && clientId && recipient ? `${store.authUser.uid}:${clientId}:${recipient}` : '';
+  if (key === notificationKey) return;
 
   if (notificationUnsubscribe) notificationUnsubscribe();
   notificationKey = key;
+  notificationUnsubscribe = null;
+  store.notifications = [];
+  updateBadge();
+  if (!key) return;
 
   notificationUnsubscribe = onSnapshot(query(
     collection(db, 'notifications'),
     where('clientId', '==', clientId),
     where('recipient', '==', recipient)
   ), snap => {
+    if (key !== notificationKey || clientId !== Number(store.activeClientId)) return;
     store.notifications = snap.docs.map(d => ({ _docId: d.id, ...d.data() }))
       .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
     updateBadge();
@@ -96,4 +102,40 @@ if (document.readyState !== 'loading') {
   wireDrawerButton();
 } else {
   document.addEventListener('DOMContentLoaded', wireDrawerButton);
+}
+
+function renderMarinaSelector() {
+  const title = document.getElementById('topbarTitle');
+  if (!title) return;
+  let button = document.getElementById('marinaSelector');
+  if (button && button.tagName !== 'BUTTON') { button.remove(); button = null; }
+  if (!button) {
+    button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'marinaSelector';
+    button.className = 'marina-selector';
+    button.setAttribute('aria-label', 'Manage and switch marinas');
+    button.setAttribute('aria-haspopup', 'dialog');
+    button.style.cssText = 'display:block;max-width:260px;width:100%;min-width:0;height:32px;padding:4px 8px;border:1px solid #AEB6C1;border-radius:6px;background:#1C222A;color:#F5F7F9;font:inherit;font-size:14px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;';
+    title.after(button);
+    button.addEventListener('click', async () => {
+      try {
+        const { showManageMarinasSheet } = await import('../screens/ManageMarinasSheet.js');
+        showManageMarinasSheet();
+      } catch (error) { console.error('Marina sheet failed', error); alert('Unable to open marina management. Please refresh and try again.'); }
+    });
+  }
+  title.hidden = !!store.activeMarina;
+  button.textContent = `${store.activeMarina?.name || 'Marinas'} · ${store.activeRole || 'staff'} ▾`;
+  button.hidden = !store.activeMarina;
+  button.style.display = button.hidden ? 'none' : 'block';
+  button.disabled = store.marinaSwitching;
+}
+
+export function resetTopBarNotifications() {
+  notificationUnsubscribe?.();
+  notificationUnsubscribe = null;
+  notificationKey = '';
+  store.notifications = [];
+  updateBadge();
 }

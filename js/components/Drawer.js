@@ -1,5 +1,6 @@
 // js/components/Drawer.js
 
+import { showManageMarinasSheet } from '../screens/ManageMarinasSheet.js';
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { showAboutSheet } from '../screens/AboutSheet.js';
@@ -95,6 +96,7 @@ const SECTIONS = [
     items: [
      // Future feature:
       //{ id: 'billing', label: 'Billing History', toast: 'Billing History is coming to the web app' }, 
+           { id: 'manage-marinas', label: 'Manage Marinas', action: 'manage-marinas' },
            { id: 'about', label: 'About', action: 'about' }
     ]
   }
@@ -167,6 +169,11 @@ export function initDrawer() {
 
       if (action === 'log-inspection') {
         location.hash = '#/safety';
+        return;
+      }
+
+      if (action === 'manage-marinas') {
+        showManageMarinasSheet();
         return;
       }
 
@@ -250,7 +257,7 @@ function renderUserRow() {
   const profile = store.userProfile || {};
   const name = profile.name || 'User';
   const email = profile.email || '';
-  const role = profile.role || '';
+  const role = store.activeRole || profile.role || '';
   const initials = computeInitials(name);
   const subtitle = role || email;
 

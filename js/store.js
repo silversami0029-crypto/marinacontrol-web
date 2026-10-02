@@ -1,8 +1,13 @@
-﻿// js/store.js
+// js/store.js
 export const store = {
   // Auth
   authUser:       null,   // Firebase user object
   userProfile:    null,   // { userId, name, email, role, clientId, firebaseUid }
+
+  marinas: [],
+  activeMarina: null,
+  activeRole: "",
+  marinaSwitching: false,
 
   // Data
   boats:          [],

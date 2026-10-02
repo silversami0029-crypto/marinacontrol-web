@@ -126,7 +126,7 @@ export async function createBoat(clientId, userId, fields) {
     lastModifiedBy: String(userId ?? ''),
     syncedAt: Date.now(), syncTime: new Date()
   };
-  await setDoc(doc(db, 'boats', String(newId)), boatData);
+  await setDoc(doc(db, 'boats', `${clientId}_${newId}`), boatData);
   return newId;
 }
 
@@ -195,7 +195,7 @@ export async function importBoatsFromRows(clientId, userId, rows, onProgress) {
       }
       const model = String(row.model || '').trim();
       const name = model ? `${String(row.name).trim()} ${model}` : String(row.name).trim();
-      await setDoc(doc(db, 'boats', String(nextId)), {
+      await setDoc(doc(db, 'boats', `${clientId}_${nextId}`), {
         id: nextId, clientId: clientId, name: name, mmsi: mmsi,
         isSample: false, hin: String(row.hin || 'TBC').trim(),
         port: String(row.port || 'TBC').trim(),
@@ -1056,7 +1056,7 @@ export async function importCustomersFromRows(clientId, userId, rows, onProgress
       }
 
       const now = Date.now();
-      const docRef = doc(db, 'customers', String(nextId));
+      const docRef = doc(db, 'customers', `${cid}_${nextId}`);
 
       await setDoc(docRef, {
         id: nextId,

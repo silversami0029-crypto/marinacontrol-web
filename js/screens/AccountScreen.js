@@ -1,6 +1,7 @@
 // js/screens/AccountScreen.js
 // Account — mirrors activity_account.xml + AccountFragment.java
 
+import { showManageMarinasSheet } from './ManageMarinasSheet.js';
 import { store } from '../store.js';
 import { auth } from '../firebase.js';
 import { signOut } from '../firebase.js';
@@ -77,6 +78,12 @@ export function mountAccountScreen() {
           <span class="account-item-chevron">${ICONS.chevron}</span>
         </button>
 
+        <button type="button" class="account-item" id="btnManageMarinas">
+          <span class="account-item-icon">${ICONS.person}</span>
+          <span class="account-item-text">Manage Marinas</span>
+          <span class="account-item-chevron">${ICONS.chevron}</span>
+        </button>
+
         <button class="account-item account-item--danger" id="btnDeleteAccount">
           <span class="account-item-icon">${ICONS.delete}</span>
           <span class="account-item-text">Delete Account</span>
@@ -97,6 +104,7 @@ export function mountAccountScreen() {
     toast('Edit Profile coming soon');
   });
 
+  document.getElementById('btnManageMarinas').addEventListener('click', showManageMarinasSheet);
   document.getElementById('btnDeleteAccount').addEventListener('click', onDeleteAccount);
   document.getElementById('btnLogout').addEventListener('click', onLogout);
 }

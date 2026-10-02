@@ -349,7 +349,9 @@ async function confirmBulkDelete() {
 
   for (const customerId of ids) {
     try {
-      const docRef = doc(db, 'customers', String(customerId));
+      const customer = currentCustomers.find(c => c.id === customerId);
+if (!customer?._docId) throw new Error('Customer document ID is missing');
+const docRef = doc(db, 'customers', customer._docId);
       await updateDoc(docRef, {
         isActive: 0,
         removedAt: serverTimestamp(),
