@@ -12,8 +12,10 @@ export function mountLoginScreen() {
   const screen = document.getElementById('screen');
 
   // Hide topbar + bottomnav on login
-  document.getElementById('topbar').style.display = 'none';
-  document.getElementById('bottomnav').style.display = 'none';
+ for (const id of ['topbar', 'bottomnav']) {
+  const element = document.getElementById(id);
+  if (element) element.style.display = 'none';
+}
 
   screen.innerHTML = `
     <div class="login-wrap">
