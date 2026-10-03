@@ -1,3 +1,4 @@
+import { doc, getDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 // js/auth.js
 // Wraps Firebase Auth + secure MarinaControl session bootstrap
 
@@ -92,17 +93,19 @@ export async function loadUserProfile(firebaseUser) {
 
     const snap2 = await getDocs(q2);
     if (snap2.empty) return null;
-    return normalizeProfile(snap2.docs[0].data());
+    return normalizeProfile(snap2.docs[0].data(), snap2.docs[0].id, firebaseUser);
   }
 
-  return normalizeProfile(snap.docs[0].data());
+  return normalizeProfile(snap.docs[0].data(), snap.docs[0].id, firebaseUser);
 }
 
-function normalizeProfile(data) {
+function normalizeProfile(data, docId, firebaseUser) {
   return {
     userId: Number(data.userId ?? data.id ?? 0),
-    name: data.name ?? '',
-    email: data.email ?? '',
+    _docId: docId,
+    name: String(data.name || data.fullName || firebaseUser?.displayName || '').trim(),
+    phone: data.phone || '',
+    email: data.email || firebaseUser?.email || '',
     role: data.role ?? 'staff',
     clientId: Number(data.clientId ?? 0),
     firebaseUid: data.firebaseUid ?? null
@@ -125,4 +128,23 @@ export function friendlyError(err) {
     case 'functions/permission-denied': return err.message || 'Account access was denied.';
     default: return 'Unable to sign in. Please try again.';
   }
+}
+/** Update only the signed-in user's personal fields in their base marina. */
+export async function saveOwnProfile({ name, phone }) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('No authenticated user');
+  name = String(name || '').trim();
+  phone = String(phone || '').trim();
+  if (!name || name.length > 100 || phone.length > 40) throw new Error('Invalid profile');
+  const profile = await loadUserProfile(user);
+  if (!profile?._docId) throw new Error('User profile not found');
+  const ref = doc(db, 'users', profile._docId);
+  const snapshot = await getDoc(ref);
+  const data = snapshot.data();
+  if (!snapshot.exists() || Number(data.clientId) !== profile.clientId ||
+      (data.firebaseUid ? data.firebaseUid !== user.uid : String(data.email || '').toLowerCase() !== String(user.email || '').toLowerCase())) {
+    throw new Error('Account access was denied');
+  }
+  await updateDoc(ref, { name, phone, lastModified: Date.now(), syncTime: serverTimestamp() });
+  return { ...profile, name, phone };
 }

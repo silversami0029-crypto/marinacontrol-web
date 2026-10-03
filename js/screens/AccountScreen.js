@@ -1,3 +1,4 @@
+import { showEditProfileSheet } from './EditProfileSheet.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/AccountScreen.js
@@ -49,8 +50,8 @@ export function mountAccountScreen() {
   const screen = document.getElementById('screen');
   const profile = store.userProfile || {};
 
-  const name  = profile.name  || '';
-  const email = profile.email || '';
+  const name  = profile.name || store.authUser?.displayName || profile.email || store.authUser?.email || t('User');
+  const email = profile.email || store.authUser?.email || '';
   const initials = computeInitials(name);
 
   screen.innerHTML = `
@@ -66,8 +67,8 @@ export function mountAccountScreen() {
         <div class="account-user-row">
           <div class="account-avatar">${escapeHtml(initials)}</div>
           <div class="account-user-info">
-            <div class="account-user-name">${escapeHtml(name || 'Client Name')}</div>
-            <div class="account-user-email">${escapeHtml(email || 'client@example.com')}</div>
+            <div class="account-user-name">${escapeHtml(name)}</div>
+            <div class="account-user-email">${escapeHtml(email)}</div>
           </div>
         </div>
       </div>
@@ -104,7 +105,7 @@ export function mountAccountScreen() {
   `;
 
   document.getElementById('btnEditProfile').addEventListener('click', () => {
-    toast(tr('Edit Profile coming soon'));
+    showEditProfileSheet(() => { if (location.hash.split('?')[0] === '#/account') mountAccountScreen(); });
   });
 
   document.getElementById('btnManageMarinas').addEventListener('click', showManageMarinasSheet);

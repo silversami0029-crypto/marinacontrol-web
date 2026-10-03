@@ -106,6 +106,7 @@ const SECTIONS = [
 
 let drawerOpen = false;
 let lastSelectedId = null;
+let userRowSubscribed = false;
 
 export function initDrawer() {
   const backdrop = document.getElementById('drawerBackdrop');
@@ -199,6 +200,16 @@ export function initDrawer() {
     location.hash = '#/account';
   });
 
+  if (!userRowSubscribed) {
+    userRowSubscribed = true;
+    store.subscribe(() => {
+      const row = document.querySelector('#appDrawer .drawer-user');
+      if (!row) return;
+      const template = document.createElement('template');
+      template.innerHTML = renderUserRow();
+      row.innerHTML = template.content.firstElementChild.innerHTML;
+    });
+  }
   backdrop.onclick = closeDrawer;
 
   if (document.body.dataset.drawerEscapeWired !== '1') {
@@ -257,7 +268,7 @@ function renderSection(section) {
 
 function renderUserRow() {
   const profile = store.userProfile || {};
-  const name = profile.name || 'User';
+  const name = String(profile.name || store.authUser?.displayName || profile.email || store.authUser?.email || t('User')).trim();
   const email = profile.email || '';
   const role = store.activeRole || profile.role || '';
   const initials = computeInitials(name);
