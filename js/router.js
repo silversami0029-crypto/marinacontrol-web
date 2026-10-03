@@ -1,3 +1,4 @@
+import { mountOperationsTrendsScreen } from './screens/OperationsTrendsScreen.js';
 import { initLanguage } from './i18n.js';
 // js/router.js
 import { store } from './store.js';
@@ -49,6 +50,7 @@ const routes = {
   '/client-360': mountClient360Screen,
  '/crew': mountCrewManagementScreen,
   '/reports': mountReportsScreen,
+  '/operations-trends': mountOperationsTrendsScreen,
   '/checklists': mountChecklistScreen,
   '/invoices': mountInvoiceScreen,
   '/shift-schedule': mountShiftScheduleScreen,
