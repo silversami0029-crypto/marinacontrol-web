@@ -265,7 +265,7 @@
 .drawer-item.is-active .drawer-item-bullet { color: var(--color-water-blue); }
 
 /* ============================================================
-   DRAWER — BOTTOM USER ROW
+   DRAWER   BOTTOM USER ROW
    ============================================================ */
 .drawer-user {
   display: flex;
@@ -318,7 +318,7 @@
   text-overflow: ellipsis;
 }
 
-/* Drawer item — pill shape, snug fit */
+/* Drawer item   pill shape, snug fit */
 .drawer-item {
   display: flex;
   align-items: center;
@@ -351,7 +351,7 @@
 }
 
 /* ============================================================
-   PINNED DRAWER — DESKTOP
+   PINNED DRAWER   DESKTOP
    ============================================================ */
 
 @media (min-width: 768px) {
@@ -472,4 +472,7 @@
   .confirm-sheet.is-open {
     transform: translate(-50%, 0);
   }
+}
+#topbarLogo {
+  display: none !important;
 }

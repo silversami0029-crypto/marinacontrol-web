@@ -25,6 +25,7 @@ export function renderTopBar(route) {
   const titleEl = document.getElementById('topbarTitle');
   if (titleEl) titleEl.textContent = store.activeMarina?.name || TITLES[route] || 'MarinaControl';
 
+  wireDrawerButton();
   renderMarinaSelector();
   const syncEl = document.getElementById('topbarSync');
   if (!syncEl) return;
@@ -94,6 +95,33 @@ function updateBadge() {
 function wireDrawerButton() {
   const btn = document.getElementById('btnTopMenu');
   if (!btn) return;
+  if (!document.getElementById('topbarLogoStyles')) {
+    const style = document.createElement('style');
+    style.id = 'topbarLogoStyles';
+    style.textContent = `
+      #btnTopMenu .topbar-desktop-logo { display:none; }
+      @media (min-width:768px) {
+        #btnTopMenu { display:grid !important;place-items:center;flex-shrink:0;width:44px;height:44px; }
+        #btnTopMenu > svg, #btnTopMenu .topbar-mobile-menu { display:none !important; }
+        #btnTopMenu .topbar-desktop-logo { display:block;width:36px;height:36px;object-fit:contain; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  if (!btn.querySelector('.topbar-desktop-logo')) {
+    Array.from(btn.children).forEach(child => child.classList.add('topbar-mobile-menu'));
+    const logo = document.createElement('img');
+    logo.className = 'topbar-desktop-logo';
+    logo.src = new URL('../../assets/icons/marina_logo.png', import.meta.url).href;
+    logo.alt = '';
+    logo.setAttribute('aria-hidden', 'true');
+    logo.addEventListener('error', () => {
+      logo.remove();
+      document.getElementById('topbarLogoStyles')?.remove();
+    }, { once:true });
+    btn.appendChild(logo);
+  }
+  btn.setAttribute('aria-label', t('Menu'));
   if (btn.dataset.drawerWired === '1') return;
   btn.dataset.drawerWired = '1';
   btn.addEventListener('click', toggleDrawer);

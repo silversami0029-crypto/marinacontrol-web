@@ -1,3 +1,6 @@
+import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { db } from '../firebase.js';
+import { getLanguage } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/BookingRequestsScreen.js
 // Berth Booking Requests — mirrors fragment_berth_booking_requests.xml
@@ -167,7 +170,7 @@ function renderList() {
 }
 
 function renderRequestCard(r) {
-  const status = r.status || 'NEW';
+  const status = requestStatusLabel(r);
   const source = r.source || 'UNKNOWN';
   const vessel = r.vesselName || t("Unknown vessel");
   const sender = r.senderName || t("Unknown sender");
@@ -195,13 +198,17 @@ function renderRequestCard(r) {
       <div class="bkr-status">${esc(t(status))} · ${esc(t(source))}</div>
       <div class="bkr-vessel">${esc(vessel)}</div>
       <div class="bkr-sender">${esc(senderLine)}</div>
+      ${r.assignedBerthNumber || r.berthNumber ? `<div class="bkr-sender">${esc(t("Berth"))}: ${esc([r.assignedDockName, r.assignedBerthNumber || r.berthNumber].filter(Boolean).join(" "))}</div>` : ''}
       <div class="bkr-dates">${esc(arrival)} → ${esc(departure)}</div>
       <div class="bkr-message">"${esc(message)}"</div>
     </div>
   `;
 }
 /* ---------- Detail sheet ---------- */
-function showDetail(r) {
+async function showDetail(r) {
+  const clientId = Number(store.activeClientId);
+  const resolvedBerth = await resolveRequestBerth(r, clientId);
+  if (Number(store.activeClientId) !== clientId || !document.getElementById('bkrList')) return;
 
  openRequestDocId = r._docId;
   renderList();   // re-render so the selected class applies
@@ -219,17 +226,18 @@ function showDetail(r) {
   const phone     = r.senderPhone || t("Not provided");
   const source    = r.source || 'UNKNOWN';
   const status    = r.status || 'NEW';
+  const isActionable = !r.approvedBookingUuid && ['NEW', 'REVIEWING'].includes(String(status).toUpperCase());
   const message   = r.message || t("No message");
 
-  let berthText = t("Not assigned");
-  if (r.requestedBerthId) {
-    const b = (store.berthsFull || []).find(x => x.id === r.requestedBerthId);
-    if (b) berthText = `${b.dockName || ''} ${b.berthNumber || ''}`.trim();
-  }
+  const berthText = resolvedBerth;
 
   sheet.innerHTML = `
-    <div class="assign-handle"></div>
-    <div class="assign-title">${t("Booking Request")}</div>
+    <div style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface,#1C222A);">
+      <div class="sheet-title" style="flex:1;margin:0;padding:12px 48px;text-align:center;">${t("Booking Request")}</div>
+      <button type="button" data-sheet-close aria-label="${t('Close')}" style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
     <div class="assign-divider"></div>
 
     <div class="bkr-detail-body">
@@ -240,17 +248,17 @@ function showDetail(r) {
       <div class="bkr-detail-row"><span>${t("Departure")}</span><b>${esc(departure)}</b></div>
       <div class="bkr-detail-row"><span>${t("Berth")}</span><b>${esc(berthText)}</b></div>
       <div class="bkr-detail-row"><span>${t("Source")}</span><b>${esc(t(source))}</b></div>
-      <div class="bkr-detail-row"><span>${t("Status")}</span><b>${esc(t(status))}</b></div>
+      <div class="bkr-detail-row"><span>${t("Status")}</span><b>${esc(requestStatusLabel(r))}</b></div>
 
       <div class="bkr-detail-message-label">${t("Message")}</div>
       <div class="bkr-detail-message">${esc(message)}</div>
     </div>
 
-    <button type="button" class="add-save" id="bkrApprove" style="margin-top:12px;">${t("Approve")}</button>
+    ${isActionable ? `<button type="button" class="add-save" id="bkrApprove" style="margin-top:12px;">${t("Approve")}</button>` : ''}
 
     <div class="ao-actions" style="margin-top:8px;">
       <button type="button" class="csv-btn csv-btn--cancel" id="bkrClose">${t("Close")}</button>
-      <button type="button" class="csv-btn csv-btn--cancel" id="bkrMore">${t("More")}</button>
+      ${isActionable ? `<button type="button" class="csv-btn csv-btn--cancel" id="bkrMore">${t("More")}</button>` : ''}
     </div>
   `;
 
@@ -267,14 +275,15 @@ function showDetail(r) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#bkrClose').addEventListener('click', close);
 
-  sheet.querySelector('#bkrApprove').addEventListener('click', () => {
+  sheet.querySelector('#bkrApprove')?.addEventListener('click', () => {
     close();
     approveBookingRequest(r);
   });
 
-  sheet.querySelector('#bkrMore').addEventListener('click', () => {
+  sheet.querySelector('#bkrMore')?.addEventListener('click', () => {
     close();
     showRequestMoreMenu(r);
   });
@@ -293,4 +302,23 @@ function escapeHtml(s) {
 
 function esc(s) {
   return escapeHtml(s);
+}
+async function resolveRequestBerth(request, clientId) {
+  const saved = [request.assignedDockName, request.assignedBerthNumber || request.berthNumber].filter(Boolean).join(' ');
+  if (request.requestedBerthId == null) return saved || t('Not assigned');
+  const matches = b => Number(b.id) === Number(request.requestedBerthId) && Number(b.clientId) === clientId;
+  let berth = (store.berthsFull || []).find(matches);
+  if (!berth) {
+    try {
+      const snap = await getDocs(query(collection(db, 'berths'), where('clientId', '==', clientId), where('id', '==', Number(request.requestedBerthId))));
+      berth = snap.docs.map(d => d.data()).find(matches);
+    } catch (err) { console.warn('[booking request] berth lookup failed', err?.code); }
+  }
+  return berth ? [berth.dockName, berth.berthNumber].filter(Boolean).join(' ') || saved || String(request.requestedBerthId) : saved || String(request.requestedBerthId);
+}
+
+function requestStatusLabel(request) {
+  const status = String(request.status || 'NEW').toUpperCase();
+  if (status === 'APPROVED' && request.approvedBookingUuid) return getLanguage() === 'ar' ? 'تم الحجز' : 'Booked';
+  return t(status);
 }

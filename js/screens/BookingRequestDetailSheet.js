@@ -1,5 +1,7 @@
-import { t as tr, getLocale as uiLocale } from '../i18n.js';
+import { getLanguage } from '../i18n.js';
+import { t, t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/BookingRequestDetailSheet.js
+import { approveBookingRequest, showRequestMoreMenu } from './BookingRequestActions.js';
 import { toast } from '../ui/toast.js';
 import {
   doc, updateDoc
@@ -22,17 +24,21 @@ export function showBookingRequestDetail(request, berth) {
   const status    = request.status || 'NEW';
   const message   = request.message || 'No message';
 
-  let berthText = 'Not assigned';
+  let berthText = [request.assignedDockName, request.assignedBerthNumber || request.berthNumber].filter(Boolean).join(' ') || (request.requestedBerthId != null ? String(request.requestedBerthId) : tr('Not assigned'));
   if (berth) {
     const dock = berth.dockName ? berth.dockName + ' ' : '';
     berthText = dock + (berth.berthNumber || '');
   }
 
-  const isActionable = status === 'NEW' || status === 'REVIEWING';
+  const isActionable = !request.approvedBookingUuid && ['NEW', 'REVIEWING'].includes(String(status).toUpperCase());
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">${tr("Booking Request")}</div>
+    <div style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface,#1C222A);">
+      <div class="sheet-title" style="flex:1;margin:0;padding:12px 48px;text-align:center;">${tr("Booking Request")}</div>
+      <button type="button" data-sheet-close aria-label="${t('Close')}" style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
 
     <div class="bkr-detail-body">
       <div class="bkr-detail-row"><span>${tr("Vessel")}</span><b>${escapeHtml(vessel)}</b></div>
@@ -42,7 +48,7 @@ export function showBookingRequestDetail(request, berth) {
       <div class="bkr-detail-row"><span>${tr("Departure")}</span><b>${escapeHtml(departure)}</b></div>
       <div class="bkr-detail-row"><span>${tr("Berth")}</span><b>${escapeHtml(berthText)}</b></div>
       <div class="bkr-detail-row"><span>${tr("Source")}</span><b>${escapeHtml(source)}</b></div>
-      <div class="bkr-detail-row"><span>${tr("Status")}</span><b>${escapeHtml(status)}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Status")}</span><b>${escapeHtml(requestStatusLabel(request))}</b></div>
 
       <div class="bkr-detail-message-label">${tr("Message")}</div>
       <div class="bkr-detail-message">${escapeHtml(message)}</div>
@@ -73,13 +79,14 @@ export function showBookingRequestDetail(request, berth) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#bkrDetailClose').addEventListener('click', close);
 
   const approveBtn = sheet.querySelector('#bkrDetailApprove');
   if (approveBtn) {
     approveBtn.addEventListener('click', () => {
       close();
-      toast(tr('Approval flow coming soon'));
+      approveBookingRequest(request);
     });
   }
 
@@ -87,7 +94,7 @@ export function showBookingRequestDetail(request, berth) {
   if (moreBtn) {
     moreBtn.addEventListener('click', () => {
       close();
-      showRequestActions(request);
+      showRequestMoreMenu(request);
     });
   }
 }
@@ -100,8 +107,12 @@ function showRequestActions(request) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">${escapeHtml(request.vesselName || 'Request')}</div>
+    <div style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface,#1C222A);">
+      <div class="sheet-title" style="flex:1;margin:0;padding:12px 48px;text-align:center;">${escapeHtml(request.vesselName || 'Request')}</div>
+      <button type="button" data-sheet-close aria-label="${t('Close')}" style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
 
     <div class="sheet-item" id="bkrActEdit">
       <div class="sheet-item-icon">
@@ -136,6 +147,7 @@ function showRequestActions(request) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   sheet.querySelector('#bkrActEdit').addEventListener('click', () => {
     close();
@@ -171,4 +183,9 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
+}
+function requestStatusLabel(request) {
+  const status = String(request.status || 'NEW').toUpperCase();
+  if (status === 'APPROVED' && request.approvedBookingUuid) return getLanguage() === 'ar' ? 'تم الحجز' : 'Booked';
+  return tr(status);
 }

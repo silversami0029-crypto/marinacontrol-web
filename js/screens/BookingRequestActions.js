@@ -7,13 +7,24 @@ import { logHistory } from '../util/history.js';
 import { confirmSheet } from '../ui/confirm.js';
 import { checkFit } from '../util/BerthFitChecker.js';
 import {
-  collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp
+  collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, getDoc, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
+const approvalInProgress = new Set();
+function actionable(request) {
+  return !request.approvedBookingUuid && ['NEW', 'REVIEWING'].includes(String(request.status || 'NEW').toUpperCase());
+}
 /* ---------- APPROVE ---------- */
 
 export async function approveBookingRequest(request) {
+  const key = String(request._docId || '');
+  if (!key || !actionable(request) || approvalInProgress.has(key)) return;
+  approvalInProgress.add(key);
+  try {
+  const current = await getDoc(doc(db, 'berth_booking_requests', key));
+  if (!current.exists() || !actionable(current.data()) || Number(current.data().clientId) !== Number(store.activeClientId)) return;
+  request = { ...current.data(), _docId: key };
   if (!request.vesselName || !request.vesselName.trim()) {
     toast(tr('No vessel name on this request'), { kind: 'error' });
     return;
@@ -35,9 +46,6 @@ export async function approveBookingRequest(request) {
     });
     if (!confirmed) return;
     matchedBoat = await createBoatFromRequest(clientId, request);
-
-    if (!confirmed) return;
-    matchedBoat = await createBoatFromRequest(clientId, request);
     if (!matchedBoat) {
       toast(tr('Could not create vessel'), { kind: 'error' });
       return;
@@ -51,7 +59,14 @@ export async function approveBookingRequest(request) {
     return;
   }
 
+  if (Number(store.activeClientId) !== clientId) return;
   showBerthPicker(suitable, matchedBoat, request);
+  } catch (err) {
+    console.error('[approve] failed', err);
+    toast(tr('Failed to create booking'), { kind: 'error' });
+  } finally {
+    approvalInProgress.delete(key);
+  }
 }
 
 async function findBoatByName(clientId, vesselName) {
@@ -162,9 +177,12 @@ function showBerthPicker(berths, boat, request) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">Suitable Berths for ${escapeHtml(boat.name)}</div>
-
+<div style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface,#1C222A);">
+      <div class="sheet-title" style="flex:1;margin:0;padding:12px 48px;text-align:center;">${t("Suitable Berths for")} ${escapeHtml(boat.name)}</div>
+      <button type="button" data-sheet-close aria-label="${t('Close')}" style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
     <div class="ao-scroll">
       ${berths.map(b => `
         <button type="button" class="ao-row" data-berth-docid="${b._docId}">
@@ -195,13 +213,17 @@ function showBerthPicker(berths, boat, request) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#bkrBerthCancel').addEventListener('click', close);
 
+  let selected = false;
   sheet.querySelectorAll('[data-berth-docid]').forEach(row => {
     row.addEventListener('click', async () => {
+      if (selected) return;
       const berthDocId = row.dataset.berthDocid;
       const berth = berths.find(b => b._docId === berthDocId);
       if (!berth) return;
+      selected = true;
       close();
       await createBooking(request, boat, berth);
     });
@@ -215,7 +237,9 @@ async function createBooking(request, boat, berth) {
     const userId = String(store.userProfile?.userId || 0);
     const bookingUuid = crypto.randomUUID ? crypto.randomUUID() : `bkg-${now}`;
 
-    await addDoc(collection(db, 'berth_bookings'), {
+    const bookingRef = doc(collection(db, 'berth_bookings'));
+    const requestRef = doc(db, 'berth_booking_requests', String(request._docId));
+    const bookingData = {
       id: now,
       bookingUuid,
       clientId,
@@ -242,12 +266,19 @@ async function createBooking(request, boat, berth) {
       lastModifiedBy: userId,
       syncTime: serverTimestamp(),
       syncedAt: 0
-    });
-
-    await updateDoc(doc(db, 'berth_booking_requests', String(request._docId)), {
-      status: 'APPROVED',
-      requestedBerthId: berth.id,
-      lastModified: now
+    };
+    await runTransaction(db, async transaction => {
+      const snapshot = await transaction.get(requestRef);
+      if (!snapshot.exists() || !actionable(snapshot.data())) throw new Error('Request already processed');
+      if (Number(snapshot.data().clientId) !== clientId || Number(store.activeClientId) !== clientId) throw new Error('Marina changed');
+      transaction.set(bookingRef, bookingData);
+      transaction.update(requestRef, {
+        status: 'APPROVED', requestedBerthId: berth.id,
+        approvedBookingUuid: bookingUuid, approvedBookingDocId: bookingRef.id,
+        assignedBerthNumber: berth.berthNumber || '', berthNumber: berth.berthNumber || '',
+        assignedDockName: berth.dockName || '',
+        lastModified: now
+      });
     });
 
     await logHistory({
@@ -270,6 +301,7 @@ async function createBooking(request, boat, berth) {
 /* ---------- MORE MENU ---------- */
 
 export function showRequestMoreMenu(request) {
+  if (!actionable(request)) return;
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
 
@@ -277,8 +309,12 @@ export function showRequestMoreMenu(request) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">${escapeHtml(request.vesselName || 'Request')}</div>
+    <div style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface,#1C222A);">
+      <div class="sheet-title" style="flex:1;margin:0;padding:12px 48px;text-align:center;">${escapeHtml(request.vesselName || 'Request')}</div>
+      <button type="button" data-sheet-close aria-label="${t('Close')}" style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
 
     <div class="sheet-item" id="bkrActEdit">
       <div class="sheet-item-icon">
@@ -313,6 +349,7 @@ export function showRequestMoreMenu(request) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   sheet.querySelector('#bkrActEdit').addEventListener('click', () => {
     close();
@@ -343,8 +380,12 @@ function showEditDates(request) {
   const departureStr = toInputDate(request.departureDate);
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">${t("Edit Dates")}</div>
+    <div style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface,#1C222A);">
+      <div class="sheet-title" style="flex:1;margin:0;padding:12px 48px;text-align:center;">${t("Edit Dates")}</div>
+      <button type="button" data-sheet-close aria-label="${t('Close')}" style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
 
     <form id="bkrDatesForm" class="add-form">
       <div class="add-scroll">
@@ -371,6 +412,7 @@ function showEditDates(request) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   sheet.querySelector('#bkrDatesForm').addEventListener('submit', async (e) => {
     e.preventDefault();

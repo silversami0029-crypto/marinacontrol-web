@@ -21,6 +21,12 @@ export class BerthBookingRequest {
     this.departureDate      = raw.departureDate != null ? Number(raw.departureDate) : null;
     this.requestedBerthId   = raw.requestedBerthId != null ? Number(raw.requestedBerthId) : null;
 
+    this.approvedBookingUuid = raw.approvedBookingUuid || '';
+    this.approvedBookingDocId = raw.approvedBookingDocId || '';
+    this.assignedBerthNumber = raw.assignedBerthNumber || '';
+    this.berthNumber = raw.berthNumber || '';
+    this.assignedDockName = raw.assignedDockName || '';
+
     this.message            = raw.message       || '';
     this.status             = (raw.status || 'NEW').toUpperCase();
     this.externalMessageId  = raw.externalMessageId || '';
