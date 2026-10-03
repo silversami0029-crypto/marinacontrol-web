@@ -13,6 +13,14 @@ import { toast } from '../ui/toast.js';
 import { db, doc, getDoc, deleteDoc } from '../firebase.js';
 
 const ICONS = {
+  anchor: `
+   <svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 960 960" width="20" height="20"
+     fill="currentColor" style="color:#AEB6C1;"
+     aria-hidden="true">
+      <path d="M355,858Q291,836 239,798Q187,760 153.5,709Q120,658 120,600L120,480L280,600L218,662Q247,713 310,750Q373,787 440,797L440,440L320,440L320,360L440,360L440,313Q405,300 382.5,269.5Q360,239 360,200Q360,150 395,115Q430,80 480,80Q530,80 565,115Q600,150 600,200Q600,239 577.5,269.5Q555,300 520,313L520,360L640,360L640,440L520,440L520,797Q587,787 650,750Q713,713 742,662L680,600L840,480L840,600Q840,658 806.5,709Q773,760 721,798Q669,836 605,858Q541,880 480,880Q419,880 355,858ZM480,240Q497,240 508.5,228.5Q520,217 520,200Q520,183 508.5,171.5Q497,160 480,160Q463,160 451.5,171.5Q440,183 440,200Q440,217 451.5,228.5Q463,240 480,240Z"/>
+    </svg>`,
+
   person: `
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
          stroke="currentColor" stroke-width="1.8"
@@ -45,6 +53,7 @@ const ICONS = {
       <polyline points="9 6 15 12 9 18"/>
     </svg>`
 };
+
 
 export function mountAccountScreen() {
   const screen = document.getElementById('screen');
@@ -83,7 +92,7 @@ export function mountAccountScreen() {
         </button>
 
         <button type="button" class="account-item" id="btnManageMarinas">
-          <span class="account-item-icon">${ICONS.person}</span>
+          <span class="account-item-icon">${ICONS.anchor}</span>
           <span class="account-item-text">${t("Manage Marinas")}</span>
           <span class="account-item-chevron">${ICONS.chevron}</span>
         </button>
