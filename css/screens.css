@@ -5463,3 +5463,63 @@ body {
 body:not(.drawer-page-hidden) .bottomnav {
   bottom: 32px !important;
 }
+
+/* Centre the marina selector and sync status on desktop */
+@media (min-width: 768px) {
+  body:not(.drawer-page-hidden) .topbar {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  body:not(.drawer-page-hidden) .topbar-menu {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  body:not(.drawer-page-hidden) .topbar-brand {
+    grid-column: 2;
+    grid-row: 1;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  body:not(.drawer-page-hidden) .topbar-brand-text {
+    align-items: center;
+    text-align: center;
+    max-width: 100%;
+  }
+
+  body:not(.drawer-page-hidden) .topbar-subtitle {
+    justify-content: center;
+  }
+
+  body:not(.drawer-page-hidden) .topbar-bell {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+}
+
+/* Desktop name beside the app logo */
+.topbar-app-name {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  body:not(.drawer-page-hidden) .topbar-app-name {
+    display: block;
+    position: absolute;
+    inset-inline-start: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-primary, #F5F7F9);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+}
+

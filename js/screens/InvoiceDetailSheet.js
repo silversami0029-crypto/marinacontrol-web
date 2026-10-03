@@ -1,3 +1,4 @@
+import { showInvoicePaymentFoundation } from './InvoicePaymentFoundationSheet.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InvoiceDetailSheet.js
 import { store } from '../store.js';
@@ -32,8 +33,20 @@ export function showInvoiceDetail(inv) {
   const isPaid = inv.status === 'PAID';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">${escapeHtml(inv.invoiceNumber || 'Invoice')}</div>
+<div style="position:relative;display:flex;align-items:center;min-height:48px;">
+  <div class="sheet-title"
+       style="flex:1;margin:0;padding:12px 48px;text-align:center;">
+    ${tr("Confirm Payment")}
+  </div>
+  <button type="button" id="ivPayClose" aria-label="${tr("Close")}"
+          style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#F5F7F9;cursor:pointer;">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round"
+         aria-hidden="true">
+      <path d="M6 6l12 12M18 6L6 18"/>
+    </svg>
+  </button>
+</div>
 
     <div class="md-body">
       <div class="md-line"><span class="md-label">${tr("Customer:")}</span> <span class="md-value">${escapeHtml(inv.clientName || '—')}</span></div>
@@ -47,6 +60,7 @@ export function showInvoiceDetail(inv) {
     </div>
 
     ${!isPaid ? `<button type="button" class="add-save" id="ivMarkPaid" style="margin-top:16px;">${tr("Mark as Paid")}</button>` : ''}
+    <button type="button" class="md-close-btn" id="ivPaymentSetup" style="margin-top:12px;width:100%;min-height:48px;height:auto;padding:12px 16px;box-sizing:border-box;white-space:normal;line-height:1.3;">${uiLocale().startsWith('ar') ? 'إعداد الدفع الإلكتروني' : 'Online Payment Setup'}</button>
     <button type="button" class="md-close-btn" id="ivDetailClose" style="margin-top:8px;">${tr("Close")}</button>
   `;
 
@@ -64,6 +78,12 @@ export function showInvoiceDetail(inv) {
 
   backdrop.addEventListener('click', close);
   sheet.querySelector('#ivDetailClose').addEventListener('click', close);
+sheet.querySelector('#ivPayClose').addEventListener('click', close);
+
+  sheet.querySelector('#ivPaymentSetup').addEventListener('click', () => {
+    close();
+    showInvoicePaymentFoundation(inv);
+  });
 
   const markBtn = sheet.querySelector('#ivMarkPaid');
   if (markBtn) {

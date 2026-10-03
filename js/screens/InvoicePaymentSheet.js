@@ -13,8 +13,20 @@ export function showInvoicePaymentSheet(inv) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">${tr("Confirm Payment")}</div>
+  <div style="position:relative;display:flex;align-items:center;min-height:48px;">
+  <div class="sheet-title"
+       style="flex:1;margin:0;padding:12px 48px;text-align:center;">
+    ${tr("Confirm Payment")}
+  </div>
+  <button type="button" id="ivPayClose" aria-label="${tr("Close")}"
+          style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#F5F7F9;cursor:pointer;">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round"
+         aria-hidden="true">
+      <path d="M6 6l12 12M18 6L6 18"/>
+    </svg>
+  </button>
+</div>
 
     <div class="md-body" style="margin-top:8px;">
       <div class="md-line"><span class="md-label">${tr("Invoice:")}</span> <span class="md-value">${escapeHtml(inv.invoiceNumber || '')}</span></div>
@@ -43,6 +55,7 @@ export function showInvoicePaymentSheet(inv) {
 
   backdrop.addEventListener('click', close);
   sheet.querySelector('#ivPayCancel').addEventListener('click', close);
+sheet.querySelector('#ivPayClose').addEventListener('click', close);
 
   sheet.querySelector('#ivPayConfirm').addEventListener('click', async () => {
     const btn = sheet.querySelector('#ivPayConfirm');
