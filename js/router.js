@@ -1,3 +1,4 @@
+import { mountPedestalFoundationScreen } from './screens/PedestalFoundationScreen.js';
 import { mountOperationsTrendsScreen } from './screens/OperationsTrendsScreen.js';
 import { initLanguage } from './i18n.js';
 // js/router.js
@@ -51,6 +52,7 @@ const routes = {
  '/crew': mountCrewManagementScreen,
   '/reports': mountReportsScreen,
   '/operations-trends': mountOperationsTrendsScreen,
+  '/pedestal-simulator': mountPedestalFoundationScreen,
   '/checklists': mountChecklistScreen,
   '/invoices': mountInvoiceScreen,
   '/shift-schedule': mountShiftScheduleScreen,
