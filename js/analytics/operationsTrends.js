@@ -15,20 +15,25 @@ export function monthStart(time, offset = 0) {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + offset, 1);
 }
 const day = n => { const d = new Date(n); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); };
-export function calculateTrends(clientId, start, records) {
-  const r = { months: Array.from({length:6}, (_,i) => monthStart(start,i)),
-    booked: Array(6).fill(0), electricity: Array(6).fill(0), water: Array(6).fill(0),
-    maintenance: Array(6).fill(0), paid: {}, electricityPairs: Array(6).fill(0), waterPairs: Array(6).fill(0),
+export function calculateTrends(clientId, start, records, options = {}) {
+  const from = day(options.from ?? start), end = day(options.end ?? monthStart(start,6));
+  start = monthStart(from);
+  const last = new Date(end-1), first = new Date(start);
+  const count = (last.getUTCFullYear()-first.getUTCFullYear())*12 + last.getUTCMonth()-first.getUTCMonth()+1;
+  if (!Number.isFinite(from) || from <= 0 || !Number.isFinite(end) || end <= from || count > 60) throw new Error('Invalid date range');
+  const r = { months: Array.from({length:count}, (_,i) => monthStart(start,i)),
+    booked: Array(count).fill(0), electricity: Array(count).fill(0), water: Array(count).fill(0),
+    maintenance: Array(count).fill(0), paid: {}, electricityPairs: Array(count).fill(0), waterPairs: Array(count).fill(0),
     excludedBookings:0, excludedReadings:0, meterDrops:0, crossMonthPairs:0, excludedMaintenance:0, excludedInvoices:0 };
-  const end = monthStart(start,6), tenant = list => (list || []).filter(x => Number(x.clientId) === clientId);
-  const idx = n => r.months.findIndex((m,i) => n >= m && n < monthStart(start,i+1));
+  const tenant = list => (list || []).filter(x => Number(x.clientId) === clientId);
+  const idx = n => r.months.findIndex((m,i) => n >= from && n < end && n >= m && n < monthStart(start,i+1));
   const validBerths = new Set(tenant(records.berths).map(x => Number(x.id)));
   const occupied = new Set();
   for (const b of tenant(records.berth_bookings)) {
     if (!['CONFIRMED','CHECKED_IN','CHECKED_OUT'].includes(String(b.status).trim().toUpperCase())) continue;
     const a = toMs(b.arrivalDate), z = toMs(b.departureDate);
     if (a <= 0 || z <= a || !validBerths.has(Number(b.berthId))) { r.excludedBookings++; continue; }
-    for (let t = Math.max(day(a), start), limit = Math.min(day(z), end); t < limit; t += DAY) {
+    for (let t = Math.max(day(a), from), limit = Math.min(day(z), end); t < limit; t += DAY) {
       const key = b.berthId + ':' + t;
       if (!occupied.has(key)) { occupied.add(key); r.booked[idx(t)]++; }
     }
@@ -56,6 +61,8 @@ export function calculateTrends(clientId, start, records) {
     r[metric+'Pairs'][i]++;
   }
   for (const v of tenant(records.maintenance)) {
+    const state = v.completed === true || String(v.status).toUpperCase() === 'COMPLETED' ? 'COMPLETED' : String(v.status).toUpperCase() === 'DEFERRED' ? 'DEFERRED' : 'OPEN';
+    if (options.status && options.status !== 'ALL' && state !== options.status) continue;
     // Android stores the scheduled maintenance date as yyyy-MM-dd.
     const time = typeof v.date === 'string' ? toMs(v.date) : 0;
     if (time <= 0) { r.excludedMaintenance++; continue; }
@@ -68,7 +75,7 @@ export function calculateTrends(clientId, start, records) {
     const i = idx(time); if (i < 0) continue;
     const raw = String(v.currency || '').trim().toUpperCase();
     const currency = /^[A-Z]{3}$/.test(raw) ? raw : 'UNSPECIFIED';
-    if (!r.paid[currency]) r.paid[currency] = Array(6).fill(0);
+    if (!r.paid[currency]) r.paid[currency] = Array(count).fill(0);
     r.paid[currency][i] += amount;
   }
   return r;

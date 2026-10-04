@@ -1,5 +1,22 @@
 // UI translations only. Stored values and user content are never translated.
 const ar = {
+  "Previous month":"الشهر السابق",
+  "Next month":"الشهر التالي",
+  "Next 3 months": "الأشهر الثلاثة القادمة",
+  "Next 6 months": "الأشهر الستة القادمة",
+  "Next 12 months": "الأشهر الاثنا عشر القادمة",
+  "Past 12 months": "آخر اثني عشر شهراً",
+  "Custom dates": "تواريخ مخصصة",
+  "Start date": "تاريخ البداية",
+  "End date": "تاريخ النهاية",
+  "Apply": "تطبيق",
+  "Maintenance status": "حالة الصيانة",
+  "All statuses": "جميع الحالات",
+  "Choose valid dates, with the end on or after the start and at most 60 calendar months.": "اختر تواريخ صحيحة بحيث لا تسبق النهاية البداية، وبحد أقصى 60 شهراً تقويمياً.",
+  "Custom dates include both selected days. First and last monthly bars may cover only part of a month. Consumption is included when the later reading falls inside the range; its earlier baseline may be outside it.": "تشمل الفترة يومي البداية والنهاية. قد يمثل العمود الأول والأخير جزءاً من الشهر فقط. يُحتسب الاستهلاك عندما تقع القراءة الأحدث ضمن الفترة، حتى لو كانت القراءة السابقة خارجها.",
+  "Open includes tasks not completed or deferred. Deferred tasks use their scheduled date, not their review date.": "تشمل المهام المفتوحة المهام غير المكتملة وغير المؤجلة. تُجمع المهام المؤجلة حسب تاريخها المجدول وليس تاريخ المراجعة.",
+  "Maintenance tasks are grouped by scheduled date using the selected status filter. These are not creation or completion dates. Repair duration is not available.": "تُجمع مهام الصيانة حسب تاريخها المجدول ومرشح الحالة المحدد. هذه ليست تواريخ الإنشاء أو الإنجاز. مدة الإصلاح غير متاحة.",
+
   "Operations Trends": "اتجاهات العمليات",
   "Metric": "المؤشر",
   "Period": "الفترة",
