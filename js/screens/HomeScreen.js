@@ -1,13 +1,20 @@
+import { startHomeBanner } from './HomeBanner.js';
 import { store } from '../store.js';
-import { t } from '../i18n.js';
+import { t, getLocale } from '../i18n.js';
 import { db } from '../firebase.js';
 import { collection, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { liveRecord, pendingBooking, openMaintenance, safetyAttention } from './HomeMetrics.js';
 
 let stops = [];
 let generation = 0;
+let clockTimer = null;
+let clockVisibilityHandler = null;
 export function unmountHomeScreen() {
   generation++;
+  clearTimeout(clockTimer);
+  clockTimer = null;
+  if (clockVisibilityHandler) document.removeEventListener('visibilitychange', clockVisibilityHandler);
+  clockVisibilityHandler = null;
   stops.forEach(stop => stop());
   stops = [];
 }
@@ -32,7 +39,7 @@ export function mountHomeScreen() {
     document.head.appendChild(link);
   }
   screen.innerHTML = `<section class="mc-home">
-    <header class="mc-home-heading"><span class="mc-home-eyebrow">${esc(t('Home'))}</span>
+    <header class="mc-home-heading"><time class="mc-home-clock" dir="auto"></time><span class="mc-home-eyebrow">${esc(t('Home'))}</span>
       <h1>${esc(store.activeMarina?.name || 'MarinaControl')}</h1>
       <p>${esc(t('Your marina at a glance'))}</p></header>
     <div class="mc-home-grid" aria-label="${esc(t('Marina overview'))}">
@@ -47,6 +54,20 @@ export function mountHomeScreen() {
     </div></section>
   </section>`;
   const root = screen.querySelector('.mc-home');
+  stops.push(startHomeBanner(root.querySelector('.mc-home-heading')));
+  const clock = root.querySelector('.mc-home-clock');
+  function updateClock() {
+    clearTimeout(clockTimer);
+    if (token !== generation || !root.isConnected) return;
+    const now = new Date();
+    const locale = getLocale();
+    clock.dateTime = now.toISOString();
+    clock.textContent = `${new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now)} · ${new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now)}`;
+    clockTimer = setTimeout(updateClock, 60000 - (Date.now() % 60000));
+  }
+  clockVisibilityHandler = () => { if (!document.hidden) updateClock(); };
+  document.addEventListener('visibilitychange', clockVisibilityHandler);
+  updateClock();
   const rows = {}, errors = {};
   let expanded = null;
   const configs = {

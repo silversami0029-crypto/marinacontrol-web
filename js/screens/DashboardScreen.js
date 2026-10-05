@@ -268,7 +268,7 @@ function showMenu(items, onPick) {
     .addEventListener('click', close);
 
   sheet.querySelectorAll('.assign-row').forEach((row) => {
-    row.addEventListener('click', () => {
+    row.addEventListener('click', async () => {
       const index = Number(row.dataset.index);
       const item = items[index];
 
@@ -422,15 +422,24 @@ async function renderComparison() {
   listElement
     .querySelectorAll('.pf-row')
     .forEach((row) => {
-      row.addEventListener('click', () => {
+      row.addEventListener('click', async () => {
         const id = Number(row.dataset.marinaId);
 
         const marina = visible.find(
-          (item) => item.id === id
+          (item) => Number(item.id) === id
         );
 
         if (marina) {
-          toast(tr(`${marina.name} — dashboard coming soon`));
+          row.disabled = true;
+          try {
+            const { switchMarina } = await import('../router.js');
+            await switchMarina(id, '/home');
+          } catch (error) {
+            console.error('[portfolio] marina navigation failed', error);
+            toast(tr(error.message || 'Could not open marina'), { kind: 'error' });
+          } finally {
+            row.disabled = false;
+          }
         }
       });
     });

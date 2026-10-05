@@ -157,7 +157,7 @@ function applyMarina(marina) {
   });
 }
 
-export async function switchMarina(clientId) {
+export async function switchMarina(clientId, destinationRoute = null) {
   if (!authReady || !store.authUser || store.marinaSwitching) return;
   store.marinaSwitching = true;
   renderTopBar(currentRoute());
@@ -171,15 +171,20 @@ export async function switchMarina(clientId) {
     const selected = marinas.find(m => Number(m.id) === Number(clientId));
     const current = marinas.find(m => Number(m.id) === store.activeClientId);
     const fallback = marinas.find(m => Number(m.id) === Number(baseProfile?.clientId));
+    if (destinationRoute && !selected) throw new Error('This marina is no longer accessible. Please refresh the portfolio.');
     const target = selected || current || fallback;
     if (!target) throw new Error('No accessible marina is available. Please sign in again.');
     // Persist before any state change. A storage error leaves the current session intact.
     localStorage.setItem(selectionKey(uid), String(target.id));
-    if (Number(target.id) === store.activeClientId && target.role === store.activeRole) return;
+    if (Number(target.id) === store.activeClientId && target.role === store.activeRole) {
+      if (destinationRoute && routes[destinationRoute]) location.hash = `#${destinationRoute}`;
+      return;
+    }
     stopCustomers();
     // Reload tears down every screen listener, pending view and module-local cache.
     // Strip record IDs that belong to the old marina.
-    const route = currentRoute() === '/boat-dashboard' ? '/boats' : currentRoute();
+    const route = destinationRoute && routes[destinationRoute] ? destinationRoute
+      : currentRoute() === '/boat-dashboard' ? '/boats' : currentRoute();
     history.replaceState(null, '', `${location.pathname}${location.search}#${route}`);
     location.reload();
   } finally {

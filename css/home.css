@@ -23,10 +23,35 @@
   box-sizing:border-box;min-height:200px;padding:28px 24px;
   display:flex;flex-direction:column;justify-content:flex-end;
   border-radius:18px;overflow:hidden;background-color:#1c222a;
-  background-image:linear-gradient(90deg,rgba(9,18,29,.83),rgba(9,18,29,.30)),url('../assets/images/home-marina_2.png');
+  background-image:linear-gradient(90deg,rgba(9,18,29,.83),rgba(9,18,29,.30)),url('../assets/images/home-marina.png');
   background-size:cover;background-position:center 55%;
   border:1px solid rgba(150,170,190,.18);color:#fff;
 }
 .mc-home .mc-home-heading h1{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
 .mc-home .mc-home-heading p,.mc-home .mc-home-heading .mc-home-eyebrow{color:#edf2f7}
 @media(max-width:720px){.mc-home .mc-home-heading{min-height:180px;padding:22px 18px;background-position:58% center}}
+
+.mc-home .mc-home-clock{display:block;font-size:12px;line-height:1.6;color:#edf2f7;margin-bottom:12px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+@media(max-width:720px){.mc-home .mc-home-clock{font-size:11px;margin-bottom:10px}}
+
+/* Reserve a separate top row for the clock, including narrow screens. */
+.mc-home .mc-home-heading{position:relative;padding-top:64px}
+.mc-home .mc-home-clock{
+  position:absolute;top:18px;right:24px;left:24px;text-align:right;
+  margin:0;text-shadow:0 1px 4px rgba(0,0,0,.8);line-height:1.6;
+}
+@media(max-width:720px){
+  .mc-home .mc-home-heading{padding-top:64px}
+  .mc-home .mc-home-clock{top:16px;right:18px;left:18px;margin:0}
+}
+
+/* Decorative crossfade layers stay inside Home's banner. */
+.mc-home .mc-home-heading{isolation:isolate;padding-bottom:44px}
+.mc-home .mc-home-photo{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center 55%;opacity:0;transition:opacity 1.8s ease;pointer-events:none}
+.mc-home .mc-home-photo.is-visible{opacity:1}
+.mc-home .mc-home-heading::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(9,18,29,.83),rgba(9,18,29,.42));pointer-events:none}
+.mc-home .mc-home-photo-toggle{position:absolute;right:18px;bottom:10px;min-height:28px;padding:4px 8px;border:1px solid rgba(255,255,255,.25);border-radius:7px;background:rgba(9,18,29,.55);color:#edf2f7;font:inherit;font-size:10px;cursor:pointer}
+.mc-home .mc-home-photo-toggle[hidden]{display:none}
+.mc-home .mc-home-photo-toggle:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media(max-width:720px){.mc-home .mc-home-photo{background-position:58% center}.mc-home .mc-home-heading{padding-bottom:44px}}
+@media(prefers-reduced-motion:reduce){.mc-home .mc-home-photo{transition:none}}
