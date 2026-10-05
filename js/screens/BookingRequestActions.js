@@ -1,3 +1,4 @@
+import { wireBookingDatePicker } from '../ui/BookingDatePicker.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/BookingRequestActions.js
@@ -10,6 +11,8 @@ import {
   collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, getDoc, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
+const manageDates = httpsCallable(getFunctions(undefined, 'us-central1'), 'manageBookingDates');
 
 const approvalInProgress = new Set();
 function actionable(request) {
@@ -269,7 +272,8 @@ async function createBooking(request, boat, berth) {
     };
     await runTransaction(db, async transaction => {
       const snapshot = await transaction.get(requestRef);
-      if (!snapshot.exists() || !actionable(snapshot.data())) throw new Error('Request already processed');
+      if (!snapshot.exists() || !actionable(snapshot.data())) throw new Error('Request already processed or awaiting owner agreement');
+      if (Number(snapshot.data().arrivalDate) !== Number(request.arrivalDate) || Number(snapshot.data().departureDate) !== Number(request.departureDate)) throw new Error('Dates changed. Refresh and check berth availability again.');
       if (Number(snapshot.data().clientId) !== clientId || Number(store.activeClientId) !== clientId) throw new Error('Marina changed');
       transaction.set(bookingRef, bookingData);
       transaction.update(requestRef, {
@@ -301,7 +305,7 @@ async function createBooking(request, boat, berth) {
 /* ---------- MORE MENU ---------- */
 
 export function showRequestMoreMenu(request) {
-  if (!actionable(request)) return;
+  if (request.approvedBookingUuid || !['NEW', 'REVIEWING', 'AWAITING_OWNER'].includes(request.status)) return;
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
 
@@ -322,9 +326,11 @@ export function showRequestMoreMenu(request) {
           <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>
         </svg>
       </div>
-      <div class="sheet-item-text"><div class="sheet-item-title">${t("Edit Dates")}</div></div>
+      <div class="sheet-item-text"><div class="sheet-item-title">${t(request.dateProposal?.state === 'PENDING' ? 'Review date proposal' : 'Edit Dates')}</div></div>
     </div>
     <div class="sheet-gap-8"></div>
+
+
 
     <div class="sheet-item sheet-item--danger" id="bkrActDecline">
       <div class="sheet-item-icon">
@@ -353,8 +359,10 @@ export function showRequestMoreMenu(request) {
 
   sheet.querySelector('#bkrActEdit').addEventListener('click', () => {
     close();
-    showEditDates(request);
+    if (String(request.source).toUpperCase() === 'WHATSAPP') showDateProposal(request);
+    else showEditDates(request);
   });
+
 
   sheet.querySelector('#bkrActDecline').addEventListener('click', async () => {
     close();
@@ -370,6 +378,7 @@ export function showRequestMoreMenu(request) {
 }
 
 function showEditDates(request) {
+  if (request.dateProposal?.state === 'PENDING') { toast(tr('Resolve or withdraw the current proposal first'), {kind:'error'}); return; }
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
 
@@ -399,6 +408,11 @@ function showEditDates(request) {
     </form>
   `;
 
+  const calendars = [];
+  for (const [id, label] of [['dpArrival','Proposed arrival'],['dpDeparture','Proposed departure'],['bkrArrival','Arrival'],['bkrDeparture','Departure']]) {
+    const input = sheet.querySelector('#' + id);
+    if (input) calendars.push(wireBookingDatePicker(input, {label:tr(label),locale:getLocale()}));
+  }
   document.getElementById('modalRoot').append(backdrop, sheet);
   requestAnimationFrame(() => {
     backdrop.classList.add('is-open');
@@ -406,6 +420,7 @@ function showEditDates(request) {
   });
 
   const close = () => {
+    calendars.forEach(c => c.close());
     backdrop.classList.remove('is-open');
     sheet.classList.remove('is-open');
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
@@ -428,11 +443,7 @@ function showEditDates(request) {
     if (departure <= arrival) { toast(tr('Departure must be after arrival'), { kind: 'error' }); return; }
 
     try {
-      await updateDoc(doc(db, 'berth_booking_requests', String(request._docId)), {
-        arrivalDate: arrival,
-        departureDate: departure,
-        lastModified: Date.now()
-      });
+      await manageDates({clientId: Number(store.activeClientId), requestId: request._docId, action: 'CORRECT', arrival: aStr, departure: dStr});
       close();
       toast(tr('Dates updated'), { kind: 'success' });
     } catch (err) {
@@ -443,6 +454,7 @@ function showEditDates(request) {
 }
 
 async function declineRequest(request) {
+  if (request.dateProposal?.state === 'PENDING') { toast(tr('Resolve or withdraw the proposal before declining'), {kind:'error'}); return; }
   try {
     await updateDoc(doc(db, 'berth_booking_requests', String(request._docId)), {
       status: 'DECLINED',
@@ -473,4 +485,68 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
+}
+function showDateProposal(request) {
+  const clientId = Number(store.activeClientId);
+  const pending = request.dateProposal?.state === 'PENDING';
+  const p = request.dateProposal;
+  const backdrop = document.createElement('div'); backdrop.className = 'sheet-backdrop';
+  const sheet = document.createElement('div'); sheet.className = 'sheet';
+  sheet.innerHTML = `
+    <div style="display:flex;align-items:center;min-height:48px;">
+      <div class="sheet-title" style="flex:1;margin:0;">${tr(pending ? 'Review date proposal' : 'Edit Dates')}</div>
+      <button type="button" id="dpClose" aria-label="${tr('Close')}" style="background:transparent;border:0;color:inherit;font-size:26px;width:44px;height:44px;">×</button>
+    </div>
+    <form class="add-form" id="dpForm"><div class="add-scroll">
+      <p style="font-size:13px;color:var(--color-text-secondary,#AAB5C2);">${tr('Send alternative dates to the owner for agreement. The booking remains unconfirmed.')}</p>
+      ${pending ? `<p><b>${tr('Awaiting owner agreement')}</b><br>${escapeHtml(toInputDate(p.arrivalDate))} → ${escapeHtml(toInputDate(p.departureDate))}</p>
+        <p>${tr('WhatsApp submission')}: ${escapeHtml(p.delivery || 'UNKNOWN')}</p>
+        ${p.error ? `<p>${escapeHtml(p.error)}</p>` : ''}
+        <label class="add-label" for="dpReply">${tr("Owner's reply / reference")}</label>
+        <textarea class="add-input" id="dpReply" maxlength="1000" placeholder="${tr('Record the reply you received. Do not assume consent.')}" rows="3"></textarea>
+        <button type="button" class="csv-btn" data-action="ACCEPT" ${p.delivery !== 'SENT' ? 'disabled' : ''}>${tr('Record owner acceptance')}</button>
+        <button type="button" class="csv-btn" data-action="REJECT" ${p.delivery !== 'SENT' ? 'disabled' : ''}>${tr('Record owner rejection')}</button>
+        <button type="button" class="csv-btn" data-action="WITHDRAW">${tr('Withdraw proposal')}</button>
+        <p>${tr('Withdrawal is internal only. Contact the owner if they received the proposal. A failed or unknown send may still have reached them.')}</p>` : `
+        <label class="add-label" for="dpArrival">${tr('Proposed arrival')}</label>
+        <input class="add-input" id="dpArrival" type="date" required value="${toInputDate(request.arrivalDate)}">
+        <label class="add-label" for="dpDeparture">${tr('Proposed departure')}</label>
+        <input class="add-input" id="dpDeparture" type="date" required value="${toInputDate(request.departureDate)}">
+        <p style="font-size:12px;color:var(--color-text-secondary,#AAB5C2);">${tr('Original dates stay unchanged until the owner agrees.')}</p>
+        <button type="submit" class="add-save">${tr('Send proposed dates')}</button>`}
+    </div></form>`;
+  const calendars = [];
+  for (const [id, label] of [['dpArrival','Proposed arrival'],['dpDeparture','Proposed departure'],['bkrArrival','Arrival'],['bkrDeparture','Departure']]) {
+    const input = sheet.querySelector('#' + id);
+    if (input) calendars.push(wireBookingDatePicker(input, {label:tr(label),locale:getLocale()}));
+  }
+  document.getElementById('modalRoot').append(backdrop, sheet);
+  requestAnimationFrame(() => { backdrop.classList.add('is-open'); sheet.classList.add('is-open'); });
+  let busy = false;
+  const close = () => { if (busy) return; calendars.forEach(c => c.close()); backdrop.remove(); sheet.remove(); };
+  backdrop.onclick = close; sheet.querySelector('#dpClose').onclick = close;
+  const send = async (action) => {
+    if (busy || Number(store.activeClientId) !== clientId) return;
+    const responseNote = sheet.querySelector('#dpReply')?.value.trim() || '';
+    if (['ACCEPT', 'REJECT'].includes(action) && !responseNote) { toast(tr("Record the owner's reply first"), {kind:'error'}); return; }
+    if (action !== 'PROPOSE') {
+      const ok = await confirmSheet({title: tr('Confirm date action'), message: tr(action === 'ACCEPT' ? 'Record the owner’s agreement to these exact dates? Staff must still approve the booking.' : action === 'REJECT' ? 'Record the owner’s rejection of these dates?' : 'Withdraw this proposal internally? Contact the owner separately if needed.'), confirmText:tr('Confirm'), cancelText:tr('Cancel')});
+      if (!ok || busy) return;
+    }
+    busy = true; sheet.querySelectorAll('button,input,textarea').forEach(el => el.disabled = true);
+    try {
+      const result = await manageDates({clientId, requestId:request._docId, action,
+        proposalId:p?.id, responseNote,
+        arrival:sheet.querySelector('#dpArrival')?.value,
+        departure:sheet.querySelector('#dpDeparture')?.value});
+      busy = false; close();
+      toast(tr(result.data.ok ? (action === 'PROPOSE' ? 'Proposal submitted to WhatsApp. Awaiting owner agreement.' : 'Date response recorded. Booking is not yet confirmed.') : 'Sending failed or is uncertain. Review the proposal before sending again.'), {kind:result.data.ok ? 'success' : 'error',duration:6000});
+    } catch (error) {
+      busy = false; sheet.querySelectorAll('button,input,textarea').forEach(el => el.disabled = false);
+      if (pending && p.delivery !== 'SENT') sheet.querySelectorAll('[data-action="ACCEPT"],[data-action="REJECT"]').forEach(el => el.disabled = true);
+      toast(error.message || tr('Could not update date proposal'), {kind:'error',duration:6000});
+    }
+  };
+  sheet.querySelector('#dpForm').onsubmit = e => { e.preventDefault(); send('PROPOSE'); };
+  sheet.querySelectorAll('[data-action]').forEach(button => button.onclick = () => send(button.dataset.action));
 }

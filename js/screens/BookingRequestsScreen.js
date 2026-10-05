@@ -226,7 +226,7 @@ async function showDetail(r) {
   const phone     = r.senderPhone || t("Not provided");
   const source    = r.source || 'UNKNOWN';
   const status    = r.status || 'NEW';
-  const isActionable = !r.approvedBookingUuid && ['NEW', 'REVIEWING'].includes(String(status).toUpperCase());
+  const isActionable = !r.approvedBookingUuid && ['NEW', 'REVIEWING', 'AWAITING_OWNER'].includes(String(status).toUpperCase());
   const message   = r.message || t("No message");
 
   const berthText = resolvedBerth;
@@ -254,7 +254,7 @@ async function showDetail(r) {
       <div class="bkr-detail-message">${esc(message)}</div>
     </div>
 
-    ${isActionable ? `<button type="button" class="add-save" id="bkrApprove" style="margin-top:12px;">${t("Approve")}</button>` : ''}
+    ${isActionable && status !== 'AWAITING_OWNER' ? `<button type="button" class="add-save" id="bkrApprove" style="margin-top:12px;">${t("Approve")}</button>` : ''}
 
     <div class="ao-actions" style="margin-top:8px;">
       <button type="button" class="csv-btn csv-btn--cancel" id="bkrClose">${t("Close")}</button>
@@ -320,5 +320,6 @@ async function resolveRequestBerth(request, clientId) {
 function requestStatusLabel(request) {
   const status = String(request.status || 'NEW').toUpperCase();
   if (status === 'APPROVED' && request.approvedBookingUuid) return getLanguage() === 'ar' ? 'تم الحجز' : 'Booked';
+  if (status === 'AWAITING_OWNER') return t('Awaiting owner agreement');
   return t(status);
 }

@@ -30,7 +30,7 @@ export function showBookingRequestDetail(request, berth) {
     berthText = dock + (berth.berthNumber || '');
   }
 
-  const isActionable = !request.approvedBookingUuid && ['NEW', 'REVIEWING'].includes(String(status).toUpperCase());
+  const isActionable = !request.approvedBookingUuid && ['NEW', 'REVIEWING', 'AWAITING_OWNER'].includes(String(status).toUpperCase());
 
   sheet.innerHTML = `
     <div style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface,#1C222A);">
@@ -41,6 +41,7 @@ export function showBookingRequestDetail(request, berth) {
     </div>
 
     <div class="bkr-detail-body">
+      ${request.dateProposal ? `<div class="bkr-detail-row"><span>${tr('Date proposal')}</span><b>${escapeHtml(request.dateProposal.state)} · ${escapeHtml(request.dateProposal.delivery)}</b></div>` : ''}
       <div class="bkr-detail-row"><span>${tr("Vessel")}</span><b>${escapeHtml(vessel)}</b></div>
       <div class="bkr-detail-row"><span>${tr("From")}</span><b>${escapeHtml(sender)}</b></div>
       <div class="bkr-detail-row"><span>${tr("Phone")}</span><b>${escapeHtml(phone)}</b></div>
@@ -54,7 +55,7 @@ export function showBookingRequestDetail(request, berth) {
       <div class="bkr-detail-message">${escapeHtml(message)}</div>
     </div>
 
-    ${isActionable ? `
+    ${isActionable && status !== 'AWAITING_OWNER' ? `
       <button type="button" class="add-save" id="bkrDetailApprove">${tr("Approve")}</button>
     ` : ''}
 
@@ -187,5 +188,6 @@ function escapeHtml(s) {
 function requestStatusLabel(request) {
   const status = String(request.status || 'NEW').toUpperCase();
   if (status === 'APPROVED' && request.approvedBookingUuid) return getLanguage() === 'ar' ? 'تم الحجز' : 'Booked';
+  if (status === 'AWAITING_OWNER') return tr('Awaiting owner agreement');
   return tr(status);
 }
