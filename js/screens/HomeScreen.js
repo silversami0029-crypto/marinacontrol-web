@@ -35,7 +35,7 @@ export function mountHomeScreen() {
   const cssId = 'homeOverviewCss';
   if (!document.getElementById(cssId)) {
     const link = document.createElement('link');
-    link.id = cssId; link.rel = 'stylesheet'; link.href = 'css/home.css';
+    link.id = cssId; link.rel = 'stylesheet'; link.href = 'css/home.css?v=20261005-rotation-2';
     document.head.appendChild(link);
   }
   screen.innerHTML = `<section class="mc-home">
