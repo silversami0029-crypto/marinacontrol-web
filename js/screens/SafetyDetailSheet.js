@@ -20,10 +20,13 @@ export function showSafetyDetail(item) {
   }
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">${escapeHtml(item.title || 'Safety Item')}</div>
+    <div style="position:relative;min-height:48px;">
+      <div class="sheet-title" style="margin:0;padding:12px 48px;text-align:center;">${escapeHtml(item.title || tr('Safety Item'))}</div>
+      <button type="button" id="sfDetailX" aria-label="${tr('Close')}" style="position:absolute;right:0;top:2px;width:44px;height:44px;border:0;background:transparent;color:#F5F7F9;font-size:28px;cursor:pointer;">&times;</button>
+    </div>
 
     <div class="md-body">
+      ${item.boatName ? `<div class="md-line"><span class="md-label">${tr("Boat:")}</span> <span class="md-value">${escapeHtml(item.boatName)}</span></div>` : ''}
       <div class="md-line"><span class="md-label">${tr("Category:")}</span> <span class="md-value">${escapeHtml(tr(item.category || '—'))}</span></div>
       ${item.location ? `<div class="md-line"><span class="md-label">${tr("Location:")}</span> <span class="md-value">${escapeHtml(item.location)}</span></div>` : ''}
       <div class="md-line"><span class="md-label">${tr("Importance:")}</span> <span class="md-value">${escapeHtml(tr(item.importance || '—'))}</span></div>
@@ -51,6 +54,7 @@ export function showSafetyDetail(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('#sfDetailX').addEventListener('click', close);
   sheet.querySelector('#sfDetailClose').addEventListener('click', close);
 }
 

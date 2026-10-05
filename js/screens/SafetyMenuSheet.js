@@ -3,6 +3,7 @@ import { t } from '../i18n.js';
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { confirmSheet } from '../ui/confirm.js';
+import { showSafetyDates } from './SafetyDateSheet.js';
 import { showAddSafetySheet } from './AddSafetySheet.js';
 import { doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
@@ -124,7 +125,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
 
   sheet.querySelector('#smSetDate')?.addEventListener('click', () => {
     close();
-    setTimeout(() => showAddSafetySheet({ item }), 250);
+    setTimeout(() => showSafetyDates(item), 250);
   });
 
   sheet.querySelector('#smInspect').addEventListener('click', () => {

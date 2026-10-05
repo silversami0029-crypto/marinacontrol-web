@@ -3,6 +3,7 @@ import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { showSafetyMenu } from './SafetyMenuSheet.js';
+import { showSafetyDates } from './SafetyDateSheet.js';
 import { showSafetyDetail } from './SafetyDetailSheet.js';
 import { showSafetyHelp } from './SafetyHelp.js';
 import {
@@ -27,6 +28,8 @@ export function mountSafetyScreen() {
 
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
   currentItems = [];
+  currentBoatName = '';
+  currentBoatId = 0;
   isSearchOpen = false;
 
   screen.innerHTML = `
@@ -213,7 +216,7 @@ function subscribeToSafety(clientId) {
           _docId: d.id,
           clientId: Number(data.clientId || 0),
           boatId: Number(data.boatId || 0),
-          boatName: data.boatName || '',
+          boatName: currentBoatName || data.boatName || '',
           title: data.title || '',
           category: data.category || '',
           location: data.location || '',
@@ -223,7 +226,7 @@ function subscribeToSafety(clientId) {
           nextInspectionDate: Number(data.nextInspectionDate || 0),
           lastInspectedDate: Number(data.lastInspectedDate || 0),
           purchaseDate: Number(data.purchaseDate || 0),
-          alertDaysBefore: Number(data.alertDaysBefore || 30),
+          alertDaysBefore: Number(data.alertDaysBefore ?? 30),
           validityYears: Number(data.validityYears || 0),
           validityMonths: Number(data.validityMonths || 0),
           notes: data.notes || '',
@@ -334,6 +337,7 @@ function renderList() {
 
         <div class="sf-info">
           <div class="sf-title">${escapeHtml(item.title || tr('Untitled'))}</div>
+          ${item.boatName ? `<div class="sf-boat" style="color:var(--color-text-secondary,#AAB5C2);font-size:14px;font-weight:600;margin-top:4px;">${escapeHtml(tr("Boat:"))} ${escapeHtml(item.boatName)}</div>` : ''}
           <div class="sf-category">${escapeHtml(tr(item.category || ''))}${item.location ? ' · ' + escapeHtml(item.location) : ''}</div>
           ${item.expiryDate > 0
             ? `<div class="sf-expiry" style="color:${state.dateColor};">${tr("Expires:" )} ${escapeHtml(formatDate(item.expiryDate))}</div>`
@@ -363,7 +367,8 @@ function renderList() {
 
     row.addEventListener('click', (e) => {
       if (e.target.closest('[data-safety-menu]')) return;
-      showSafetyDetail(item);
+      if (!(item.expiryDate > 0)) showSafetyDates(item);
+      else showSafetyDetail(item);
     });
   });
 
