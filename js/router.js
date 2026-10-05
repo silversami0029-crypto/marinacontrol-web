@@ -1,3 +1,4 @@
+import { mountHomeScreen, unmountHomeScreen } from './screens/HomeScreen.js';
 import { mountPedestalFoundationScreen } from './screens/PedestalFoundationScreen.js';
 import { mountOperationsTrendsScreen } from './screens/OperationsTrendsScreen.js';
 import { initLanguage } from './i18n.js';
@@ -35,9 +36,10 @@ import { mountNotificationsScreen } from './screens/NotificationsScreen.js';
 
 initLanguage();
 
-const PROTECTED = ['/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/client-360','/notifications'];
+const PROTECTED = ['/home', '/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/client-360','/notifications'];
 
 const routes = {
+  '/home':             mountHomeScreen,
   '/login':            mountLoginScreen,
   '/boats':            mountBoatsScreen,
   '/dashboard':        mountDashboardScreen,
@@ -82,7 +84,7 @@ function showChrome(on) {
 function currentRoute() {
   const hash = location.hash.replace(/^#/, '');
   const path = hash.split('?')[0];
-  return routes[path] ? path : '/boats';
+  return routes[path] ? path : '/home';
 }
 
 function navigate() {
@@ -95,10 +97,11 @@ function navigate() {
     return;
   }
   if (authed && route === '/login') {
-    location.hash = '#/boats';
+    location.hash = '#/home';
     return;
   }
 
+  unmountHomeScreen();
   showChrome(route !== '/login');
 
   const isBoatDashboard = route === '/dashboard' && location.hash.includes('boatId=');
@@ -190,6 +193,7 @@ export async function switchMarina(clientId) {
 async function bootstrapUser(firebaseUser) {
   const generation = ++sessionGeneration;
   authReady = false;
+  unmountHomeScreen();
   resetTopBarNotifications();
   stopCustomers();
   baseProfile = null;

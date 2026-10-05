@@ -1,0 +1,32 @@
+.mc-home{max-width:980px;margin:0 auto;padding:24px 20px 32px;color:var(--color-text-primary,#f5f7f9)}
+.mc-home-heading{margin-bottom:24px}.mc-home-eyebrow{font-size:12px;color:var(--color-text-secondary,#aab5c2)}
+.mc-home-heading h1{font-size:25px;line-height:1.25;margin:6px 0 8px;font-weight:650;overflow-wrap:anywhere}
+.mc-home-heading p{font-size:14px;color:var(--color-text-secondary,#aab5c2);margin:0}
+.mc-home-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.mc-home-card{font:inherit;text-align:start;color:inherit;cursor:pointer;border:1px solid rgba(150,170,190,.18);border-radius:16px;background:var(--color-surface,#1c222a);padding:16px;display:flex;flex-direction:column;align-items:flex-start;min-height:168px;transition:border-color .15s}
+.mc-home-card:hover,.mc-home-card[aria-expanded=true]{border-color:var(--color-accent,#2e9bff)}
+.mc-home-card:focus-visible,.mc-home a:focus-visible{outline:2px solid var(--color-accent,#2e9bff);outline-offset:3px}
+.mc-home-icon{color:var(--color-accent,#2e9bff);margin-bottom:10px}.mc-home-icon svg{display:block;width:24px;height:24px}
+.mc-home-label{font-size:13px;line-height:1.4}.mc-home-count{font-size:30px;line-height:1.2;margin:8px 0}
+.mc-home-note{font-size:11px;line-height:1.5;color:var(--color-text-secondary,#aab5c2)}
+.mc-home-quick{margin-top:28px}.mc-home h2{font-size:15px;font-weight:600;margin:0 0 12px}
+.mc-home-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mc-home a{display:flex;justify-content:space-between;align-items:center;gap:12px;color:inherit;text-decoration:none;font-size:14px;padding:14px 16px;background:var(--color-surface,#1c222a);border:1px solid rgba(150,170,190,.18);border-radius:12px}
+.mc-home a span{color:var(--color-text-secondary,#aab5c2)}.mc-home a:hover{border-color:var(--color-accent,#2e9bff)}
+.mc-home-detail{margin-top:16px;padding:16px;background:var(--color-surface,#1c222a);border-radius:14px;border:1px solid rgba(150,170,190,.18)}
+.mc-home-detail[hidden]{display:none}.mc-home-detail a{margin-top:8px}.mc-home-detail p{font-size:13px;color:var(--color-text-secondary,#aab5c2)}
+@media(max-width:720px){.mc-home-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mc-home{padding:20px 14px}.mc-home-card{min-height:156px}}
+@media(max-width:350px){.mc-home-links{grid-template-columns:1fr}.mc-home-card{padding:12px}}
+
+/* Home-only marina photo banner */
+.mc-home .mc-home-heading{
+  box-sizing:border-box;min-height:200px;padding:28px 24px;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  border-radius:18px;overflow:hidden;background-color:#1c222a;
+  background-image:linear-gradient(90deg,rgba(9,18,29,.83),rgba(9,18,29,.30)),url('../assets/images/home-marina_2.png');
+  background-size:cover;background-position:center 55%;
+  border:1px solid rgba(150,170,190,.18);color:#fff;
+}
+.mc-home .mc-home-heading h1{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}
+.mc-home .mc-home-heading p,.mc-home .mc-home-heading .mc-home-eyebrow{color:#edf2f7}
+@media(max-width:720px){.mc-home .mc-home-heading{min-height:180px;padding:22px 18px;background-position:58% center}}

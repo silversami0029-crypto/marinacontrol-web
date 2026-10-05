@@ -3,7 +3,7 @@ import { t } from '../i18n.js';
 // js/components/TopBar.js
 import { store } from '../store.js';
 import { formatSyncTime } from '../utils.js';
-import { toggleDrawer } from './Drawer.js';
+import { toggleDrawer, goHome } from './Drawer.js';
 import {
   collection, onSnapshot, query, where
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -26,6 +26,7 @@ export function renderTopBar(route) {
   if (titleEl) titleEl.textContent = store.activeMarina?.name || TITLES[route] || 'MarinaControl';
 
   wireDrawerButton();
+  wireHomeLinks();
   renderMarinaSelector();
   const syncEl = document.getElementById('topbarSync');
   if (!syncEl) return;
@@ -121,10 +122,16 @@ function wireDrawerButton() {
     }, { once:true });
     btn.appendChild(logo);
   }
-  btn.setAttribute('aria-label', t('Menu'));
+  const desktopHome = window.matchMedia('(min-width:768px)').matches
+    && !!btn.querySelector('.topbar-desktop-logo');
+  btn.setAttribute('aria-label', t(desktopHome ? 'Home' : 'Menu'));
   if (btn.dataset.drawerWired === '1') return;
   btn.dataset.drawerWired = '1';
-  btn.addEventListener('click', toggleDrawer);
+  btn.addEventListener('click', () => {
+    if (window.matchMedia('(min-width:768px)').matches
+        && btn.querySelector('.topbar-desktop-logo')) goHome();
+    else toggleDrawer();
+  });
 }
 
 // Wire now if DOM is ready, otherwise wait
@@ -168,4 +175,25 @@ export function resetTopBarNotifications() {
   notificationKey = '';
   store.notifications = [];
   updateBadge();
+}
+
+// Branding returns to Boats; the marina selector keeps its own action.
+function wireHomeLinks() {
+  document.querySelectorAll('#topbarLogo, #topbarTitle, .topbar-app-name')
+    .forEach(element => {
+      element.setAttribute('role', 'link');
+      element.setAttribute('tabindex', '0');
+      element.setAttribute('aria-label', t('Home'));
+      element.setAttribute('title', t('Home'));
+      element.style.cursor = 'pointer';
+      if (element.dataset.homeWired === '1') return;
+      element.dataset.homeWired = '1';
+      element.addEventListener('click', goHome);
+      element.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          goHome();
+        }
+      });
+    });
 }

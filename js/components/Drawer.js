@@ -121,7 +121,15 @@ export function initDrawer() {
   if (!scroll) return;
 
   scroll.innerHTML =
-    SECTIONS.map(renderSection).join('') + renderUserRow();
+    `<button class="drawer-item" type="button" data-item-id="home"
+      data-route="#/home" style="min-height:44px;margin-bottom:8px;">
+      <svg class="drawer-section-icon" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 10l9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/>
+      </svg>
+      <span class="drawer-item-label">${escapeHtml(t('Home'))}</span>
+    </button>` + SECTIONS.map(renderSection).join('') + renderUserRow();
 
   drawer.querySelectorAll('.drawer-section-header').forEach(header => {
     header.addEventListener('click', () => {
@@ -132,6 +140,7 @@ export function initDrawer() {
 
   drawer.querySelectorAll('.drawer-item').forEach(item => {
     item.addEventListener('click', async () => {
+      if (item.dataset.itemId === 'home') { goHome(); return; }
       const route = item.dataset.route;
       const action = item.dataset.action;
       const toastMessage = item.dataset.toast;
@@ -227,12 +236,16 @@ export function initDrawer() {
   const menuButton = document.getElementById('btnTopMenu');
   if (menuButton && menuButton.dataset.drawerWired !== '1') {
     menuButton.dataset.drawerWired = '1';
-    menuButton.addEventListener('click', toggleDrawer);
+    menuButton.addEventListener('click', () => {
+      if (isDesktopDrawer() && menuButton.querySelector('.topbar-desktop-logo')) goHome();
+      else toggleDrawer();
+    });
   }
 
   if (drawer.dataset.routeWired !== '1') {
     drawer.dataset.routeWired = '1';
     window.addEventListener('hashchange', () => {
+      lastSelectedId = null;
       syncDrawerLayout();
       applySelection();
     });
@@ -322,6 +335,14 @@ export function applySelection() {
 
   target.classList.add('is-active');
   target.closest('.drawer-section')?.classList.remove('is-collapsed');
+}
+
+// Navigation only: preserves active marina, role and active boat.
+export function goHome() {
+  lastSelectedId = 'home';
+  if (!isDesktopDrawer()) closeDrawer();
+  location.hash = '#/home';
+  applySelection();
 }
 
 export function toggleDrawer() {

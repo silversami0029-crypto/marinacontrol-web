@@ -476,3 +476,8 @@
 #topbarLogo {
   display: none !important;
 }
+
+#appDrawer .drawer-item[data-item-id="home"].is-active svg {
+  color: #000;
+  stroke: #000;
+}
