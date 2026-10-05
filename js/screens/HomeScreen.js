@@ -39,8 +39,8 @@ export function mountHomeScreen() {
     document.head.appendChild(link);
   }
   screen.innerHTML = `<section class="mc-home">
-    <header class="mc-home-heading"><time class="mc-home-clock" dir="auto"></time><span class="mc-home-eyebrow">${esc(t('Home'))}</span>
-      <h1>${esc(store.activeMarina?.name || 'MarinaControl')}</h1>
+    <header class="mc-home-heading"><time class="mc-home-clock" dir="auto"></time><span class="mc-home-eyebrow">${esc(t('MarinaControl'))}</span>
+     <!-- <h1>${esc(store.activeMarina?.name || 'MarinaControl')}</h1> -->
       <p>${esc(t('Your marina at a glance'))}</p></header>
     <div class="mc-home-grid" aria-label="${esc(t('Marina overview'))}">
       ${['bookings','maintenance','safety','berths'].map(key => `<button type="button" class="mc-home-card" data-home-card="${key}">
