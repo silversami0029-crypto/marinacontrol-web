@@ -23,7 +23,7 @@
   box-sizing:border-box;min-height:200px;padding:28px 24px;
   display:flex;flex-direction:column;justify-content:flex-end;
   border-radius:18px;overflow:hidden;background-color:#1c222a;
-  background-image:linear-gradient(90deg,rgba(9,18,29,.83),rgba(9,18,29,.30)),url('../assets/images/home-marina.png');
+  background-image:linear-gradient(90deg,rgba(9,18,29,.83),rgba(9,18,29,.30)),url('../assets/images/home-marina_1.png');
   background-size:cover;background-position:center 55%;
   border:1px solid rgba(150,170,190,.18);color:#fff;
 }

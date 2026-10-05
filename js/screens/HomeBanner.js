@@ -2,7 +2,11 @@ import { t } from '../i18n.js';
 
 // Decorative photos only; the heading and clock remain stationary.
 export function startHomeBanner(header) {
-  const sources = ['assets/images/home-marina.png', 'assets/images/home-marina-alternate.png'];
+  const sources = [
+  'assets/images/home-marina_1.png',
+  'assets/images/home-marina_2.png',
+  'assets/images/home-marina-alternate.png'
+];
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let disposed = false, paused = false, timer = null, index = 0, ready = [];
   const layers = sources.map(() => {
