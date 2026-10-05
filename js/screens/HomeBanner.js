@@ -5,6 +5,7 @@ export function startHomeBanner(header) {
   const sources = [
   'assets/images/home-marina_1.png',
   'assets/images/home-marina_2.png',
+  'assets/images/home-marina_3.png',
   'assets/images/home-marina-alternate.png'
 ];
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -21,10 +22,10 @@ export function startHomeBanner(header) {
   header.appendChild(button);
   function schedule() {
     clearTimeout(timer); timer = null;
-    button.hidden = motion.matches || ready.length < 2;
+    button.hidden = motion.matches || ready.length < 3;
     button.textContent = paused ? t('Resume photos') : t('Pause photos');
     button.setAttribute('aria-label', paused ? t('Resume background photos') : t('Pause background photos'));
-    if (disposed || paused || document.hidden || motion.matches || ready.length < 2) return;
+    if (disposed || paused || document.hidden || motion.matches || ready.length < 3) return;
     timer = setTimeout(() => {
       if (disposed || !header.isConnected) return;
       index = (index + 1) % ready.length;

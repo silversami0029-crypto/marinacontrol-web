@@ -55,3 +55,27 @@
 .mc-home .mc-home-photo-toggle:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @media(max-width:720px){.mc-home .mc-home-photo{background-position:58% center}.mc-home .mc-home-heading{padding-bottom:44px}}
 @media(prefers-reduced-motion:reduce){.mc-home .mc-home-photo{transition:none}}
+
+
+.mc-home .mc-home-heading {
+  background-image: none;
+  background-color: #1c222a;
+  border: 1px solid #2b323b;
+}
+
+.mc-home .mc-home-photo,
+.mc-home .mc-home-heading::before {
+  border-radius: inherit;
+}
+
+#appDrawer .drawer-item[data-item-id="home"] {
+  min-height: 32px !important;
+  padding: 5px 12px;
+  gap: 6px;
+  font-size: 13px;
+}
+
+#appDrawer .drawer-item[data-item-id="home"] svg {
+  width: 16px;
+  height: 16px;
+}
