@@ -57,16 +57,6 @@
 @media(prefers-reduced-motion:reduce){.mc-home .mc-home-photo{transition:none}}
 
 
-.mc-home .mc-home-heading {
-  background-image: none;
-  background-color: #1c222a;
-  border: 1px solid #2b323b;
-}
-
-.mc-home .mc-home-photo,
-.mc-home .mc-home-heading::before {
-  border-radius: inherit;
-}
 
 #appDrawer .drawer-item[data-item-id="home"] {
   min-height: 32px !important;
@@ -78,4 +68,15 @@
 #appDrawer .drawer-item[data-item-id="home"] svg {
   width: 16px;
   height: 16px;
+}
+
+.mc-home .mc-home-heading {
+  background-image: none;
+  background-color: #1c222a;
+  border: 1px solid #2b323b;
+}
+
+.mc-home .mc-home-photo,
+.mc-home .mc-home-heading::before {
+  border-radius: inherit;
 }
