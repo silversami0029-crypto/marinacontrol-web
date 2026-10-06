@@ -49,6 +49,7 @@ export async function mountOperationsTrendsScreen() {
       <div class="help-pill" id="otHelpTitle">${t('Operations Trends')}</div>
       <div class="help-section-title">${t(metrics[metric])}</div>
       <p class="help-desc">${t(notes[metric])}</p>
+      ${metric===0?`<p class="help-desc">${t('HOW BOOKED BERTH-DAYS ARE CALCULATED\nOne berth reserved for one day contributes one berth-day. For example, 18–21 November contributes 3 berth-days: the 18th, 19th and 20th. Two different berths booked for those dates contribute 6 berth-days.')}</p><p class="help-desc">${t('Each day is counted in its own month. A 30 November–2 December booking contributes 1 berth-day to November and 1 to December. Only dates inside the selected reporting period count. Overlapping bookings for the same berth and day count once.')}</p><p class="help-desc">${t('Included: bookings linked to a known berth with status CONFIRMED, CHECKED_IN or CHECKED_OUT. Enquiries awaiting approval, cancelled bookings, invalid dates and missing berth links do not contribute.')}</p><p class="help-desc">${t('WHAT THIS TELLS YOU\nThis measures booked demand from recorded reservations. It is not a prediction of new bookings, proof of actual occupancy or an occupancy percentage. A percentage would also require the available berth-days for the same period. Several berths can be reserved on the same day, so a monthly total can exceed the days in that month.')}</p>`:''}
       <p>${t('Custom dates include both selected days. First and last monthly bars may cover only part of a month. Consumption is included when the later reading falls inside the range; its earlier baseline may be outside it.')}</p>
       ${metric===3?`<p>${t('Maintenance status')}: ${t(root.querySelector('[data-status]').selectedOptions[0].textContent)}. ${t('Open includes tasks not completed or deferred. Deferred tasks use their scheduled date, not their review date.')}</p>`:''}
       <p>${t('Current month is incomplete. Missing records do not prove zero activity. Future consumption and income are recorded data, not forecasts.')}</p>
@@ -145,9 +146,11 @@ export async function mountOperationsTrendsScreen() {
         <text x="${x+23}" y="270" text-anchor="middle" fill="#aeb6c1" font-size="12">${esc(monthLabel(result.months[i]))}</text>`;
     }).join('');
     const ticks=Array.from({length:5},(_,i)=>{const n=scale*i/4,y=240-i*52.5;return `<line x1="68" x2="${80+values.length*85}" y1="${y}" y2="${y}" stroke="#37414d"/><text x="60" y="${y+4}" text-anchor="end" fill="#aeb6c1" font-size="11">${esc(format(n,metric))}</text>`;}).join('');
-    root.querySelector('.ot-result').innerHTML=`<div class="ot-total"><span>${t('Recorded total')}</span><strong>${esc(value(values.reduce((a,b)=>a+b,0)))}</strong></div>
+    root.querySelector('.ot-result').innerHTML=`<div class="ot-total"><span>${t(metric===0?'Booked total':'Recorded total')}</span><strong>${esc(value(values.reduce((a,b)=>a+b,0)))}</strong></div>
       ${metric===4&&currency==='UNSPECIFIED'?`<p class="ot-caption">${t('Invoice currency not specified')}</p>`:''}
-      <p class="ot-caption">${esc(dateText(selectedFrom))} – ${esc(dateText(selectedEnd-86400000))}</p><div class="ot-chart"><svg viewBox="0 0 ${100+values.length*85} 300" style="min-width:${Math.max(440,100+values.length*70)}px" role="img" aria-label="${esc(t(metrics[metric]))}" direction="ltr">${ticks}${bars}</svg></div>
+      <p class="ot-caption">${esc(dateText(selectedFrom))} – ${esc(dateText(selectedEnd-86400000))}</p>
+      ${metric===0?`<p class="ot-caption" style="font-size:13px;line-height:1.5;max-width:680px;margin:12px 0 18px;">${t('One berth booked for one day = one berth-day. Totals combine booked days across berths, so a month can exceed 30 or 31. Arrival counts; departure does not. Tap ⓘ for calculation details.')}</p>`:''}
+      <div class="ot-chart"><svg viewBox="0 0 ${100+values.length*85} 300" style="min-width:${Math.max(440,100+values.length*70)}px" role="img" aria-label="${esc(t(metrics[metric]))}" direction="ltr">${ticks}${bars}</svg></div>
       <table class="ot-table"><thead><tr><th>${t('Month')}</th><th>${t('Recorded value')}</th></tr></thead><tbody>${values.map((v,i)=>`<tr><td>${esc(monthLabel(result.months[i]))}</td><td>${esc(missing(i)?t('No comparable readings'):value(v))}</td></tr>`).join('')}</tbody></table>`;
   }
   let records;
