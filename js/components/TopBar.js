@@ -49,28 +49,37 @@ function wireBell() {
 
 function listenForNotifications() {
   const clientId = Number(store.activeClientId || 0);
+  const uid = store.authUser?.uid || '';
   const recipient = (store.userProfile?.name || '').trim();
-  const key = store.authUser && clientId && recipient ? `${store.authUser.uid}:${clientId}:${recipient}` : '';
+  const key = uid && clientId ? `${uid}:${clientId}:${recipient}` : '';
   if (key === notificationKey) return;
-
-  if (notificationUnsubscribe) notificationUnsubscribe();
+  notificationUnsubscribe?.();
   notificationKey = key;
   notificationUnsubscribe = null;
   store.notifications = [];
   updateBadge();
   if (!key) return;
-
-  notificationUnsubscribe = onSnapshot(query(
-    collection(db, 'notifications'),
-    where('clientId', '==', clientId),
-    where('recipient', '==', recipient)
-  ), snap => {
+  const results = new Map();
+  const stops = [];
+  const publish = () => {
     if (key !== notificationKey || clientId !== Number(store.activeClientId)) return;
-    store.notifications = snap.docs.map(d => ({ _docId: d.id, ...d.data() }))
-      .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
+    const merged = new Map();
+    results.forEach(items => items.forEach(n => merged.set(n._docId, n)));
+    store.notifications = [...merged.values()].sort((a,b) => Number(b.createdAt || 0)-Number(a.createdAt || 0));
     updateBadge();
     store.emit();
-  }, err => console.error('[notifications] listen failed', err));
+  };
+  const listen = (field, value) => {
+    stops.push(onSnapshot(query(collection(db, 'notifications'), where('clientId', '==', clientId), where(field, '==', value)), snap => {
+      if (key !== notificationKey) return;
+      results.set(field, snap.docs.map(d => ({...d.data(),_docId:d.id})).filter(n => !n.recipientUid || n.recipientUid === uid));
+      publish();
+    }, err => console.error('[notifications] listen failed', field, err)));
+  };
+  // Stable identity for booking alerts; keep legacy name-based alerts.
+  listen('recipientUid', uid);
+  if (recipient) listen('recipient', recipient);
+  notificationUnsubscribe = () => stops.forEach(stop => stop());
 }
 
 function updateBadge() {

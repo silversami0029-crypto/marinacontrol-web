@@ -20,6 +20,7 @@ export function mountNotificationsScreen() {
     </div>
     <div class="nt-filters">
       <button class="nt-chip is-active" data-filter="ALL">${tr("All")}</button>
+      <button class="nt-chip" data-filter="BOOKING">${tr("Bookings")}</button>
       <button class="nt-chip" data-filter="TASK">${tr("Tasks")}</button>
       <button class="nt-chip" data-filter="INVENTORY">${tr("Stock")}</button>
       <button class="nt-chip" data-filter="EQUIPMENT">${tr("Equipment")}</button>
@@ -75,7 +76,10 @@ async function openNotification(item) {
   if (!item) return;
   if (!item.read) await updateDoc(doc(db, 'notifications', item._docId), { read: true });
   const type = String(item.type || '');
-  if (type.startsWith('INVENTORY')) location.hash = '#/inventory';
+  if (type.startsWith('BOOKING')) {
+    location.hash = '#/booking-requests';
+  }
+  else if (type.startsWith('INVENTORY')) location.hash = '#/inventory';
   else if (type.startsWith('EQUIPMENT')) location.hash = '#/equipment';
   else if (type.startsWith('DOCUMENT')) location.hash = '#/documents';
   else if (type.startsWith('DOCK_WALK')) location.hash = '#/berths';
