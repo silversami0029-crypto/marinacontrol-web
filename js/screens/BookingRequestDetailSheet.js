@@ -51,6 +51,7 @@ export function showBookingRequestDetail(request, berth) {
       <div class="bkr-detail-row"><span>${tr("Source")}</span><b>${escapeHtml(source)}</b></div>
       <div class="bkr-detail-row"><span>${tr("Status")}</span><b>${escapeHtml(requestStatusLabel(request))}</b></div>
 
+      ${request.latestOwnerReply?.text ? `<div class="bkr-detail-message-label">${tr("Owner reply — review before recording acceptance")}</div><div class="bkr-detail-message">${escapeHtml(request.latestOwnerReply.text)}</div>` : ''}
       <div class="bkr-detail-message-label">${tr("Message")}</div>
       <div class="bkr-detail-message">${escapeHtml(message)}</div>
     </div>

@@ -3,6 +3,7 @@ export class BerthBookingRequest {
   constructor(raw = {}) {
     this._docId             = raw._docId ?? null;
     this.dateProposal = raw.dateProposal || null;
+    this.latestOwnerReply = raw.latestOwnerReply || null;
 
     this.id                 = Number(raw.id ?? 0);
     this.requestUuid        = raw.requestUuid   || '';
