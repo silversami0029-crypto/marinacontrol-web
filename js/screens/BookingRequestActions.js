@@ -491,7 +491,7 @@ function showDateProposal(request) {
   const pending = request.dateProposal?.state === 'PENDING';
   const p = request.dateProposal;
   const reply = request.latestOwnerReply;
-  const matchingReply = reply?.proposalId === p?.id ? String(reply.text || '') : '';
+  const matchingReply = p?.id && reply?.proposalId === p.id ? String(reply?.text || '') : '';
   const backdrop = document.createElement('div'); backdrop.className = 'sheet-backdrop';
   const sheet = document.createElement('div'); sheet.className = 'sheet dp-sheet';
   sheet.innerHTML = `
