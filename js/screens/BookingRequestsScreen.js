@@ -250,6 +250,8 @@ async function showDetail(r) {
       <div class="bkr-detail-row"><span>${t("Source")}</span><b>${esc(t(source))}</b></div>
       <div class="bkr-detail-row"><span>${t("Status")}</span><b>${esc(requestStatusLabel(r))}</b></div>
 
+      ${r.dateProposal ? `<div class="bkr-detail-row"><span>${t("Date proposal")}</span><b>${esc(r.dateProposal.state)} · ${esc(r.dateProposal.delivery)}</b></div>` : ''}
+      ${r.latestOwnerReply?.text ? `<div class="bkr-detail-message-label">${t("Owner reply — review before recording acceptance")}</div><div class="bkr-detail-message">${esc(r.latestOwnerReply.text)}</div>` : ''}
       <div class="bkr-detail-message-label">${t("Message")}</div>
       <div class="bkr-detail-message">${esc(message)}</div>
     </div>
