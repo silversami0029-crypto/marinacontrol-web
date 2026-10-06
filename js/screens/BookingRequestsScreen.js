@@ -1,3 +1,4 @@
+import { mountWhatsAppReplyReview } from './WhatsAppReplyReview.js';
 import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 import { getLanguage } from '../i18n.js';
@@ -60,6 +61,7 @@ export function mountBookingRequestsScreen() {
       <button type="button" class="search-cancel" id="bkrSearchCancel">${t("Cancel")}</button>
     </div>
 
+    <div id="bkrReplyReview"></div>
     <div class="bkr-list" id="bkrList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
@@ -68,6 +70,7 @@ export function mountBookingRequestsScreen() {
 
 
   setupSearch();
+  const refreshReplyReview = mountWhatsAppReplyReview(screen.querySelector("#bkrReplyReview"));
 
   if (unsubscribe) unsubscribe();
   unsubscribe = listenForBookingRequests(store.activeClientId, (requests, err) => {
@@ -82,6 +85,7 @@ export function mountBookingRequestsScreen() {
 
     store.bookingRequests = requests;
     renderList();
+    refreshReplyReview();
   });
 }
 
