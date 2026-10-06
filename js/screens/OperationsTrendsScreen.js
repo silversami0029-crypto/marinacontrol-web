@@ -15,17 +15,12 @@ const notes = [
   'Currently paid invoices are grouped by issue date, not payment date. Currencies are kept separate. Legacy invoices without currency show amounts without a currency symbol. This is not profit or a cash-receipts report.'
 ];
 const labels = ['booked','electricity','water','maintenance','paid'];
-
 function step(num, title, body) {
-  return `
-    <div class="help-step">
-      <div class="help-step-num">${esc(num)}</div>
-      <div class="help-step-text">
-        <b>${esc(t(title))}</b> — ${esc(t(body))}
-      </div>
-    </div>`;
+  return `<div class="help-step">
+    <div class="help-step-num">${esc(num)}</div>
+    <div class="help-step-text"><b>${esc(t(title))}</b><span>${esc(t(body))}</span></div>
+  </div>`;
 }
-
 export async function mountOperationsTrendsScreen() {
   const styleURL = new URL('../../css/operations-trends.css', import.meta.url).href;
   if (![...document.querySelectorAll('link[rel="stylesheet"]')].some(link => link.href === styleURL)) {
@@ -55,127 +50,32 @@ export async function mountOperationsTrendsScreen() {
     if (helpClose || !current()) return;
     const metric = Number(root.querySelector('[data-metric]').value);
     const backdrop = document.createElement('div'); backdrop.className = 'help-backdrop';
-    const overlay = document.createElement('div'); overlay.className='help-dialog';
-overlay.innerHTML = `
-  <div class="help-scroll"
-       role="dialog"
-       aria-modal="true"
-       aria-labelledby="otHelpTitle">
-
-    <div class="help-pill" id="otHelpTitle">
-      ${t('Operations Trends')}
-    </div>
-
-    <p class="help-desc">
-      ${t('Understand how your marina records contribute to each monthly total.')}
-    </p>
-
-    <div class="help-section-title">
-      ${t(metrics[metric])}
-    </div>
-
-    ${metric === 0 ? [
-      step(
-        '1',
-        'One berth-day',
-        'One berth booked for one day contributes one berth-day. Several berths booked on the same day each contribute, so a monthly total can exceed 30 or 31.'
-      ),
-      step(
-        '2',
-        'Arrival and departure',
-        'Arrival is included; departure is excluded. A booking from 18–21 November contributes 3 berth-days: the 18th, 19th and 20th. Two different berths booked for those dates contribute 6.'
-      ),
-      step(
-        '3',
-        'Monthly allocation',
-        'Each booked day belongs to its own month. A 30 November–2 December booking contributes 1 berth-day to November and 1 to December. Only days inside the selected reporting period count.'
-      ),
-      step(
-        '4',
-        'Included bookings',
-        'Bookings must link to a known berth and have status CONFIRMED, CHECKED_IN or CHECKED_OUT. Pending enquiries, cancelled bookings, invalid dates and missing berth links do not contribute.'
-      ),
-      step(
-        '5',
-        'Overlapping bookings',
-        'Overlapping bookings for the same berth on the same day count once.'
-      ),
-      step(
-        '6',
-        'What the total means',
-        'This shows booked demand from recorded reservations. It is not a prediction of new bookings, proof of actual occupancy or an occupancy percentage. A percentage would also require available berth-days for the same period.'
-      )
-    ].join('') : step(
-      '1',
-      'How this metric is calculated',
-      notes[metric]
-    )}
-
-    <div class="help-divider"></div>
-
-    <div class="help-section-title">
-      ${t('Reporting notes')}
-    </div>
-
-    ${step(
-      '•',
-      'Selected period',
-      metric === 1 || metric === 2
+    const overlay = document.createElement('div'); overlay.className='help-dialog ot-help-dialog';
+    overlay.innerHTML = `<div class="help-scroll" role="dialog" aria-modal="true" aria-labelledby="otHelpTitle">
+      <div class="help-pill" id="otHelpTitle">${t('Operations Trends')}</div>
+      <div class="help-section-title">${t(metrics[metric])}</div>
+      <p class="help-desc">${t('Understand how your marina records contribute to each monthly total.')}</p>
+      ${metric===0 ? [
+        step('1','One berth-day','One berth booked for one day contributes one berth-day. Several berths booked on the same day each contribute, so a monthly total can exceed 30 or 31.'),
+        step('2','Arrival and departure','Arrival is included; departure is excluded. A booking from 18–21 November contributes 3 berth-days: the 18th, 19th and 20th. Two different berths booked for those dates contribute 6.'),
+        step('3','Monthly allocation','Each booked day belongs to its own month. A 30 November–2 December booking contributes 1 berth-day to November and 1 to December. Only days inside the selected reporting period count.'),
+        step('4','Included bookings','Bookings must link to a known berth and have status CONFIRMED, CHECKED_IN or CHECKED_OUT. Pending enquiries, cancelled bookings, invalid dates and missing berth links do not contribute.'),
+        step('5','Overlapping bookings','Overlapping bookings for the same berth on the same day count once.'),
+        step('6','What the total means','This shows booked demand from recorded reservations. It is not a prediction of new bookings, proof of actual occupancy or an occupancy percentage. A percentage would also require available berth-days for the same period.')
+      ].join('') : step('1','How this metric is calculated',notes[metric])}
+      <div class="help-divider"></div>
+      <div class="help-section-title">${t('Reporting notes')}</div>
+      ${step('•','Selected period',metric===1||metric===2
         ? 'Custom dates include both selected days. First and last monthly bars may cover only part of a month. Consumption counts when the later reading falls inside the range; the earlier baseline may be outside it.'
-        : 'Custom dates include both selected days. First and last monthly bars may cover only part of a month.'
-    )}
-
-    ${metric === 3 ? step(
-      '•',
-      'Maintenance status',
-      root.querySelector('[data-status]')
-        .selectedOptions[0].textContent +
-      '. Open includes tasks not completed or deferred. Deferred tasks use their scheduled date, not their review date.'
-    ) : ''}
-
-    ${step(
-      '•',
-      'Incomplete records',
-      'The current month is incomplete. Missing records do not prove zero activity. Future consumption and income are recorded data, not forecasts.'
-    )}
-
-    ${result ? step(
-      '•',
-      'Records excluded',
-      format(
-        metric === 0 ? result.excludedBookings :
-        metric === 3 ? result.excludedMaintenance :
-        metric === 4 ? result.excludedInvoices :
-        result.excludedReadings,
-        0
-      )
-    ) : ''}
-
-    ${result && (metric === 1 || metric === 2) ? step(
-      '•',
-      'Reading checks',
-      t('Meter drops skipped') + ': ' +
-      result.meterDrops + '. ' +
-      t('Cross-month reading pairs') + ': ' +
-      result.crossMonthPairs + '.'
-    ) : ''}
-
-    <div class="help-divider"></div>
-
-    <div class="help-section-title">
-      ${t('Tips')}
-    </div>
-
-    <div class="help-tips">
-      ${t('• Reporting dates use UTC. • Only records for the selected marina are included. • Reopen this screen to refresh the data.')}
-    </div>
-  </div>
-
-  <div class="help-actions">
-    <button type="button" class="help-gotit" data-close>
-      ${t('Got it')}
-    </button>
-  </div>`;
+        : 'Custom dates include both selected days. First and last monthly bars may cover only part of a month.')}
+      ${metric===3 ? step('•','Maintenance status',t(root.querySelector('[data-status]').selectedOptions[0].textContent)+'. '+t('Open includes tasks not completed or deferred. Deferred tasks use their scheduled date, not their review date.')) : ''}
+      ${step('•','Incomplete records','The current month is incomplete. Missing records do not prove zero activity. Future consumption and income are recorded data, not forecasts.')}
+      ${result ? step('•','Records excluded',format(metric===0?result.excludedBookings:metric===3?result.excludedMaintenance:metric===4?result.excludedInvoices:result.excludedReadings,0)) : ''}
+      ${result&&(metric===1||metric===2) ? step('•','Reading checks',t('Meter drops skipped')+': '+result.meterDrops+'. '+t('Cross-month reading pairs')+': '+result.crossMonthPairs+'.') : ''}
+      <div class="help-divider"></div>
+      <div class="help-section-title">${t('Tips')}</div>
+      <div class="help-tips">${t('• Reporting dates use UTC. • Only records for the selected marina are included. • Reopen this screen to refresh the data.')}</div>
+      </div><div class="help-actions"><button type="button" class="help-gotit" data-close>${t('Got it')}</button></div>`;
     const opener = document.activeElement;
     helpClose = () => { overlay.remove(); backdrop.remove(); document.removeEventListener('keydown',key); window.removeEventListener('hashchange',helpClose); helpClose=null; if(root.isConnected) opener?.focus(); };
     const key = e => {

@@ -66,8 +66,8 @@ function render() {
         <span class="nt-type">${escapeHtml(formatType(n.type))}</span>
         <span class="nt-time">${relativeTime(Number(n.createdAt || 0))}</span>
       </div>
-      <div class="nt-card-title">${escapeHtml(n.title || '')}</div>
-      <div class="nt-message">${escapeHtml(n.message || '')}</div>
+      <div class="nt-card-title">${escapeHtml(tr(n.title || ''))}</div>
+      <div class="nt-message">${notificationMessage(n)}</div>
     </button>`).join('');
 
   listEl.querySelectorAll('.nt-card').forEach(card => {
@@ -100,18 +100,35 @@ async function clearRead() {
 }
 
 function formatType(type) {
-  return String(type || 'NOTIFICATION').replaceAll('_', ' ');
+  const names = { BOOKING_REQUEST:'Booking request', BOOKING_REPLY:'Owner reply',
+    BOOKING_REPLY_REVIEW:'Reply needs review' };
+  return tr(names[type] || String(type || 'Notification').replaceAll('_', ' '));
+}
+
+function notificationMessage(item) {
+  const raw = String(item.message || '');
+  // Translate generated labels only; isolate vessel names and references.
+  if (!String(item.type || '').startsWith('BOOKING')) {
+    return `<bdi dir="auto">${escapeHtml(raw)}</bdi>`;
+  }
+  return raw.split(' · ').map(part => {
+    if (part.startsWith('Reference: ')) {
+      return escapeHtml(tr('Reference')) + ': <bdi dir="ltr">' +
+        escapeHtml(part.slice(11)) + '</bdi>';
+    }
+    return `<bdi dir="auto">${escapeHtml(tr(part))}</bdi>`;
+  }).join(' · ');
 }
 
 function relativeTime(ts) {
   if (!ts) return '';
   const mins = Math.max(0, Math.floor((Date.now() - ts) / 60000));
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
+  const formatter = new Intl.RelativeTimeFormat(uiLocale(), {numeric:'auto'});
+  if (mins < 1) return escapeHtml(tr('ui.justNow'));
+  if (mins < 60) return escapeHtml(formatter.format(-mins, 'minute'));
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return days === 1 ? 'Yesterday' : `${days}d ago`;
+  if (hours < 24) return escapeHtml(formatter.format(-hours, 'hour'));
+  return escapeHtml(formatter.format(-Math.floor(hours / 24), 'day'));
 }
 
 function escapeHtml(s) {
@@ -165,11 +182,11 @@ function ensureStyles() {
   padding: 10px 16px;
 }
 
-    .nt-card{display:block;width:100%;margin:0 0 10px;padding:14px;text-align:left;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:10px;color:var(--color-text-primary)}
-    .nt-card.is-unread{border-left:4px solid var(--color-accent)}.nt-card-top{display:flex;justify-content:space-between;gap:10px}.nt-type{font-size:11px;font-weight:700;color:var(--color-accent)}
-    .nt-time{font-size:11px;color:var(--color-text-muted)}.nt-card-title{font-size:14px;font-weight:700;margin-top:8px}.nt-message{font-size:13px;color:var(--color-text-secondary);margin-top:5px;line-height:1.35}
+    .nt-card{display:block;width:100%;margin:0 0 10px;padding:14px;text-align:start;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:10px;color:var(--color-text-primary)}
+    .nt-card.is-unread{border-inline-start:4px solid var(--color-accent)}.nt-card-top{display:flex;justify-content:space-between;gap:10px}.nt-type{font-size:11px;font-weight:700;color:var(--color-accent)}
+    .nt-time{font-size:11px;color:var(--color-text-muted)}.nt-card-title{font-size:14px;font-weight:700;margin-top:8px}.nt-message{overflow-wrap:anywhere;font-size:13px;color:var(--color-text-secondary);margin-top:5px;line-height:1.35}
     .nt-empty{text-align:center;color:var(--color-text-secondary);padding:70px 10px}
-    .nt-clear{position:static;display:block;margin:16px 18px 32px auto;padding:10px 16px;border:1px solid var(--color-divider,#394654);border-radius:8px;background:transparent;cursor:pointer}
+    .nt-clear{position:static;display:block;margin-block:16px 32px;margin-inline: auto 18px;padding:10px 16px;border:1px solid var(--color-divider,#394654);border-radius:8px;background:transparent;cursor:pointer}
     .nt-clear:disabled{opacity:.4;cursor:default}`;
   document.head.appendChild(style);
 }

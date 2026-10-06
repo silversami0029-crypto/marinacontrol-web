@@ -1563,6 +1563,48 @@ const ar = {
   "Failed to save reading.": "تعذّر حفظ القراءة.",
   "Add Berth Reading": "إضافة قراءة للرصيف {berth}"
 };
+Object.assign(ar, {
+  "Booked total": "إجمالي الحجز",
+  "Bookings": "الحجوزات",
+  "Remove read notifications": "حذف الإشعارات المقروءة",
+  "One berth-day": "يوم رصيف واحد",
+  "Arrival and departure": "الوصول والمغادرة",
+  "Monthly allocation": "التوزيع الشهري",
+  "Included bookings": "الحجوزات المشمولة",
+  "Overlapping bookings": "الحجوزات المتداخلة",
+  "What the total means": "ماذا يعني الإجمالي؟",
+  "Reporting notes": "ملاحظات التقرير",
+  "Selected period": "الفترة المحددة",
+  "Incomplete records": "السجلات غير المكتملة",
+  "Reading checks": "فحص القراءات",
+  "How this metric is calculated": "كيفية حساب هذا المؤشر",
+  "Understand how your marina records contribute to each monthly total.": "تعرّف على كيفية احتساب سجلات المارينا ضمن إجمالي كل شهر.",
+  "One berth booked for one day contributes one berth-day. Several berths booked on the same day each contribute, so a monthly total can exceed 30 or 31.": "حجز رصيف واحد ليوم واحد يساوي يوم رصيف واحد. تُحتسب الأرصفة المختلفة المحجوزة في اليوم نفسه كلٌّ على حدة، لذلك قد يتجاوز الإجمالي الشهري 30 أو 31.",
+  "Arrival is included; departure is excluded. A booking from 18–21 November contributes 3 berth-days: the 18th, 19th and 20th. Two different berths booked for those dates contribute 6.": "يُحتسب يوم الوصول ولا يُحتسب يوم المغادرة. الحجز من 18 إلى 21 نوفمبر يساوي 3 أيام رصيف: 18 و19 و20. وحجز رصيفين مختلفين للفترة نفسها يساوي 6 أيام رصيف.",
+  "Each booked day belongs to its own month. A 30 November–2 December booking contributes 1 berth-day to November and 1 to December. Only days inside the selected reporting period count.": "يُحتسب كل يوم حجز ضمن شهره. الحجز من 30 نوفمبر إلى 2 ديسمبر يضيف يوم رصيف واحداً إلى نوفمبر ويوماً واحداً إلى ديسمبر. تُحتسب الأيام الواقعة ضمن فترة التقرير المحددة فقط.",
+  "Bookings must link to a known berth and have status CONFIRMED, CHECKED_IN or CHECKED_OUT. Pending enquiries, cancelled bookings, invalid dates and missing berth links do not contribute.": "يجب أن يرتبط الحجز برصيف معروف وأن تكون حالته مؤكداً أو تم تسجيل الوصول أو تم تسجيل المغادرة. تُستبعد الطلبات المعلقة والحجوزات الملغاة والتواريخ غير الصحيحة والحجوزات غير المرتبطة برصيف.",
+  "Overlapping bookings for the same berth on the same day count once.": "تُحتسب الحجوزات المتداخلة للرصيف نفسه في اليوم نفسه مرة واحدة فقط.",
+  "This shows booked demand from recorded reservations. It is not a prediction of new bookings, proof of actual occupancy or an occupancy percentage. A percentage would also require available berth-days for the same period.": "يعرض هذا المؤشر الطلب المحجوز وفق الحجوزات المسجلة. وهو ليس توقعاً لحجوزات جديدة أو إثباتاً للإشغال الفعلي أو نسبة إشغال. يتطلب حساب نسبة الإشغال معرفة أيام الأرصفة المتاحة للفترة نفسها أيضاً.",
+  "Custom dates include both selected days. First and last monthly bars may cover only part of a month.": "تشمل الفترة يومي البداية والنهاية. قد يمثل العمود الأول والأخير جزءاً من الشهر فقط.",
+  "Custom dates include both selected days. First and last monthly bars may cover only part of a month. Consumption counts when the later reading falls inside the range; the earlier baseline may be outside it.": "تشمل الفترة يومي البداية والنهاية. قد يمثل العمود الأول والأخير جزءاً من الشهر فقط. يُحتسب الاستهلاك عندما تقع القراءة الأحدث ضمن الفترة، حتى لو كانت القراءة السابقة خارجها.",
+  "The current month is incomplete. Missing records do not prove zero activity. Future consumption and income are recorded data, not forecasts.": "الشهر الحالي غير مكتمل. غياب السجلات لا يعني عدم وجود نشاط. الاستهلاك والدخل في الفترات القادمة بيانات مسجلة وليست توقعات.",
+  "• Reporting dates use UTC. • Only records for the selected marina are included. • Reopen this screen to refresh the data.": "• تستخدم تواريخ التقارير التوقيت العالمي UTC.\n• تُعرض سجلات المارينا المحددة فقط.\n• أعد فتح الشاشة لتحديث البيانات.",
+  "One berth booked for one day = one berth-day. Totals combine booked days across berths, so a month can exceed 30 or 31. Arrival counts; departure does not. Tap ⓘ for calculation details.": "حجز رصيف واحد ليوم واحد = يوم رصيف واحد. يجمع الإجمالي أيام الحجز لجميع الأرصفة، لذا قد يتجاوز 30 أو 31 في الشهر. يُحتسب يوم الوصول دون يوم المغادرة. اضغط على ⓘ لعرض تفاصيل الحساب.",
+  "New berth booking request": "طلب حجز رصيف جديد",
+  "Owner replied to date proposal": "رد المالك على التواريخ المقترحة",
+  "WhatsApp reply needs review": "رد واتساب يحتاج إلى مراجعة",
+  "Booking request": "طلب حجز",
+  "Owner reply": "رد المالك",
+  "Reply needs review": "رد يحتاج إلى مراجعة",
+  "Notification": "إشعار",
+  "Vessel details awaiting review": "بيانات القارب بانتظار المراجعة",
+  "Booking enquiry": "استفسار حجز",
+  "Enquiry": "استفسار",
+  "Reference": "المرجع",
+  "Review the owner’s response": "راجع رد المالك",
+  "Open Booking Requests to match this reply.": "افتح طلبات الحجز لربط هذا الرد بالطلب الصحيح.",
+  "Unknown sender": "مرسل غير معروف"
+});
 const uiPatterns = [["^Overdue by (\\d+) days?$", "متأخر منذ {1} يوم"], ["^Due in (\\d+) days$", "مستحق خلال {1} يوم"], ["^(\\d+) days? ago$", "قبل {1} يوم"], ["^(\\d+) hours? ago$", "قبل {1} ساعة"], ["^(\\d+) minutes? ago$", "قبل {1} دقيقة"], ["^Overdue for review \\((.*)\\)$", "متأخر عن المراجعة ({1})"], ["^Today \\((.*)\\)$", "اليوم ({1})"], ["^Tomorrow \\((.*)\\)$", "غداً ({1})"], ["^In (\\d+) days \\((.*)\\)$", "خلال {1} يوم ({2})"], ["^Quantity updated to (.*)$", "تم تحديث الكمية إلى {1}"], ["^Customer added: (.*)$", "تمت إضافة العميل: {1}"], ["^Crew added: (.*)$", "تمت إضافة فرد الطاقم: {1}"], ["^Received (\\d+) items?$", "تم استلام {1} عنصر"], ["^Imported (\\d+) documents?$", "تم استيراد {1} مستند"], ["^Imported (\\d+) safety items?$", "تم استيراد {1} عنصر سلامة"], ["^Imported (\\d+) crew members?$", "تم استيراد {1} فرد طاقم"], ["^Imported (\\d+) customers?$", "تم استيراد {1} عميل"], ["^Assigned to (.*)$", "تم التعيين إلى {1}"], ["^Delete (\\d+) customers?\\?$", "حذف {1} عميل؟"], ["^Delete (\\d+) users?\\?$", "حذف {1} مستخدم؟"], ["^Delete (\\d+) boats?\\?$", "حذف {1} قارب؟"], ["^Deleted (\\d+) boats?$", "تم حذف {1} قارب"], ["^Deleted (\\d+) berths$", "تم حذف {1} رصيف"], ["^Deleted (.*)$", "تم الحذف: {1}"], ["^Exported (\\d+) berths$", "تم تصدير {1} رصيف"], ["^Berth (.*) set to (.*)$", "تم تغيير حالة الرصيف {1} إلى {2}"], ["^Berth (.*) updated$", "تم تحديث الرصيف {1}"], ["^Berth (.*) deleted$", "تم حذف الرصيف {1}"], ["^Delete berth (.*)\\? This cannot be undone\\.$", "حذف الرصيف {1}؟ لا يمكن التراجع عن هذا الإجراء."], ["^Release (.*) from berth (.*)\\?$", "إخلاء {1} من الرصيف {2}؟"], ["^Role updated(?: to|:) (.*)$", "تم تحديث الدور إلى {1}"], ["^Booking confirmed for (.*) at berth (.*)$", "تم تأكيد حجز {1} في الرصيف {2}"], ["^Decline the berth request for (.*)\\?$", "رفض طلب الرصيف للقارب {1}؟"], ["^This will permanently remove (.*)\\. This cannot be undone\\.$", "سيتم حذف {1} نهائياً. لا يمكن التراجع عن هذا الإجراء."], ["^Are you sure you want to delete \"(.*)\"\\? This action cannot be undone\\.$", "هل تريد حذف «{1}»؟ لا يمكن التراجع عن هذا الإجراء."], ["^Imported (\\d+) Â· skipped (\\d+) Â· failed (\\d+)$", "تم استيراد {1} · تجاوز {2} · فشل {3}"], ["^(.*) • Individual marina$", "{1} • مارينا واحدة"], ["^(.*) • (\\d+) marinas?$", "{1} • {2} مارينا"], ["^(\\d+)% portfolio occupancy$", "إشغال المحفظة {1}%"], ["^Expires (.*)$", "ينتهي في {1}"], ["^No activity matches \"(.*)\"$", "لا يوجد نشاط مطابق لـ «{1}»"], ["^Maintenance completed: (.*)$", "صيانة مكتملة: {1}"], ["^Maintenance outstanding: (.*)$", "صيانة مستحقة: {1}"], ["^Document: (.*)$", "المستند: {1}"], ["^Safety: (.*)$", "السلامة: {1}"], ["^Assigned to berth (.*)$", "معيّن إلى الرصيف {1}"], ["^Due (.*)$", "الاستحقاق: {1}"]];
 let language = 'en';
 try { language = localStorage.getItem('marinacontrol.language') === 'ar' ? 'ar' : 'en'; } catch {}

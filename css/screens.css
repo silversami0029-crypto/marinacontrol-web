@@ -5523,3 +5523,12 @@ body:not(.drawer-page-hidden) .bottomnav {
   }
 }
 
+
+/* Operations Trends help: readable headings in both interface languages. */
+.ot-help-dialog{max-width:520px}
+.ot-help-dialog .help-scroll{min-height:0;text-align:start;scrollbar-width:thin;scrollbar-color:#596675 transparent}
+.ot-help-dialog .help-step-text{min-width:0;font-weight:400;line-height:1.65}
+.ot-help-dialog .help-step-text b{display:block;margin-bottom:4px;font-weight:650}
+.ot-help-dialog .help-step-text span{display:block;font-weight:400}
+.ot-help-dialog .help-step-num{margin-top:2px}
+.ot-help-dialog .help-tips{text-align:start}
