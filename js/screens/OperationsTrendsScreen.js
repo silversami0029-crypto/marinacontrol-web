@@ -1,3 +1,6 @@
+import { calculateBookingDemand, DECLINE_REASONS, SIZE_BANDS } from '../analytics/bookingDemand.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
+import { confirmSheet } from '../ui/confirm.js';
 import { store } from '../store.js';
 import { t, getLocale } from '../i18n.js';
 import { db, collection, query, where, getDocs } from '../firebase.js';
@@ -6,13 +9,14 @@ import { calculateTrends, monthStart, toMs } from '../analytics/operationsTrends
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const info = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7" r=".8" fill="currentColor"/></svg>';
 const unusedCross = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-const metrics = ['Booked berth-days','Electricity consumption (kWh)','Water consumption (L)','Maintenance by scheduled month','Paid invoices by issue month'];
+const metrics = ['Booked berth-days','Electricity consumption (kWh)','Water consumption (L)','Maintenance by scheduled month','Paid invoices by issue month','Declined booking demand'];
 const notes = [
   'Assigned confirmed, checked-in and checked-out bookings. Arrival is included; departure is excluded. Overlapping stays at the same berth count once. Booked dates are not proof of actual occupancy. Unassigned or unknown berths are excluded.',
   'Consumption is the difference between cumulative readings, assigned to the later reading’s month. Electricity uses kWh meters. Meter identity includes berth, asset, reading type and unit. Interval and instantaneous readings are excluded; meter resets or replacements need review.',
   'Consumption is the difference between cumulative readings, assigned to the later reading’s month. Water readings in m³ are converted to litres. Meter identity includes berth, asset, reading type and unit. Interval and instantaneous readings are excluded; meter resets or replacements need review.',
   'Maintenance tasks are grouped by scheduled date using the selected status filter. These are not creation or completion dates. Repair duration is not available.',
-  'Currently paid invoices are grouped by issue date, not payment date. Currencies are kept separate. Legacy invoices without currency show amounts without a currency symbol. This is not profit or a cash-receipts report.'
+  'Currently paid invoices are grouped by issue date, not payment date. Currencies are kept separate. Legacy invoices without currency show amounts without a currency symbol. This is not profit or a cash-receipts report.',
+  'Declined enquiries are grouped by requested arrival month, reason and vessel length. Repeated enquiries can come from the same vessel. Counts show recorded enquiries, not proven lost revenue or a forecast.'
 ];
 const labels = ['booked','electricity','water','maintenance','paid'];
 function step(num, title, body) {
@@ -41,6 +45,12 @@ export async function mountOperationsTrendsScreen() {
     <label data-status-label hidden>${t('Maintenance status')}<select data-status><option value="OPEN">${t('Open')}</option><option value="COMPLETED">${t('Completed')}</option><option value="DEFERRED">${t('Deferred')}</option><option value="ALL">${t('All statuses')}</option></select></label>
     <div class="ot-dates" data-dates hidden><label>${t('Start date')}<input type="date" data-start></label><label>${t('End date')}<input type="date" data-end></label><button type="button" class="ot-apply" data-apply>${t('Apply')}</button></div>
     <label data-currency-label hidden>${t('Currency')}<select data-currency></select></label></div>
+    <div data-demand-controls hidden style="margin:12px 0;">
+      <label>${t('Data source')} <select data-demand-source><option value="ALL">${t('All records')}</option><option value="REAL">${t('Real enquiries only')}</option><option value="TEST">${t('Simulated enquiries only')}</option></select></label>
+      <label>${t('Test mode')} <select data-test-mode><option value="NEW">${t('100 new enquiries')}</option><option value="HISTORY">${t('60 sample declines + 40 new enquiries')}</option></select></label>
+      <button type="button" class="ot-apply" data-test>${t('Create 100 test enquiries')}</button>
+      <span data-test-message role="status"></span>
+    </div>
     <div class="ot-result" aria-live="polite">${t('Loading marina records…')}</div>`;
   let result, helpClose = null, calendarClose = null;
   const current = () => root.isConnected && Number(store.activeClientId) === clientId && location.hash.split('?')[0] === '#/operations-trends';
@@ -63,6 +73,7 @@ export async function mountOperationsTrendsScreen() {
         step('5','Overlapping bookings','Overlapping bookings for the same berth on the same day count once.'),
         step('6','What the total means','This shows booked demand from recorded reservations. It is not a prediction of new bookings, proof of actual occupancy or an occupancy percentage. A percentage would also require available berth-days for the same period.')
       ].join('') : step('1','How this metric is calculated',notes[metric])}
+      ${metric===5?step('2','How to interpret demand','Each declined enquiry counts once by its reference. The reporting period uses its requested arrival date, not its decline date. Vessel length bands are indicative. Missing reasons remain visible as Reason not recorded. Unique vessels are estimates from identifiers or vessel name plus sender; requests without identity are counted separately. No prices or revenue estimates are inferred.'):''}
       <div class="help-divider"></div>
       <div class="help-section-title">${t('Reporting notes')}</div>
       ${step('•','Selected period',metric===1||metric===2
@@ -70,7 +81,7 @@ export async function mountOperationsTrendsScreen() {
         : 'Custom dates include both selected days. First and last monthly bars may cover only part of a month.')}
       ${metric===3 ? step('•','Maintenance status',t(root.querySelector('[data-status]').selectedOptions[0].textContent)+'. '+t('Open includes tasks not completed or deferred. Deferred tasks use their scheduled date, not their review date.')) : ''}
       ${step('•','Incomplete records','The current month is incomplete. Missing records do not prove zero activity. Future consumption and income are recorded data, not forecasts.')}
-      ${result ? step('•','Records excluded',format(metric===0?result.excludedBookings:metric===3?result.excludedMaintenance:metric===4?result.excludedInvoices:result.excludedReadings,0)) : ''}
+      ${result ? step('•','Records excluded',format(metric===0?result.excludedBookings:metric===3?result.excludedMaintenance:metric===4?result.excludedInvoices:metric===5?demandResult().excluded:result.excludedReadings,0)) : ''}
       ${result&&(metric===1||metric===2) ? step('•','Reading checks',t('Meter drops skipped')+': '+result.meterDrops+'. '+t('Cross-month reading pairs')+': '+result.crossMonthPairs+'.') : ''}
       <div class="help-divider"></div>
       <div class="help-section-title">${t('Tips')}</div>
@@ -150,6 +161,8 @@ export async function mountOperationsTrendsScreen() {
   function render() {
     if(!result || !current()) return;
     const metric = Number(root.querySelector('[data-metric]').value);
+    root.querySelector('[data-demand-controls]').hidden=metric!==5;
+    if(metric===5){renderDemand();return;}
     const currency = root.querySelector('[data-currency]').value || 'UNSPECIFIED';
     root.querySelector('[data-currency-label]').hidden=metric!==4;
     root.querySelector('[data-status-label]').hidden=metric!==3;
@@ -172,9 +185,39 @@ export async function mountOperationsTrendsScreen() {
       <div class="ot-chart"><svg viewBox="0 0 ${100+values.length*85} 300" style="min-width:${Math.max(440,100+values.length*70)}px" role="img" aria-label="${esc(t(metrics[metric]))}" direction="ltr">${ticks}${bars}</svg></div>
       <table class="ot-table"><thead><tr><th>${t('Month')}</th><th>${t('Recorded value')}</th></tr></thead><tbody>${values.map((v,i)=>`<tr><td>${esc(monthLabel(result.months[i]))}</td><td>${esc(missing(i)?t('No comparable readings'):value(v))}</td></tr>`).join('')}</tbody></table>`;
   }
+  function demandResult() {
+    const source=root.querySelector('[data-demand-source]').value;
+    const requests=(records?.berth_booking_requests||[]).filter(r=>{
+      const test=r.isSimulation===true||r.source==='SIMULATION';
+      return source==='ALL'||(source==='TEST'?test:!test);
+    });
+    return calculateBookingDemand(clientId,selectedFrom,selectedEnd,requests);
+  }
+  function renderDemand() {
+    const d=demandResult(),reasonName=code=>t(DECLINE_REASONS[code]||'Reason not recorded');
+    const chart=(pairs)=>{
+      const max=Math.max(1,...pairs.map(([,n])=>n));
+      return pairs.map(([label,n])=>`<div style="margin:12px 0;"><div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;"><span>${esc(label)}</span><b>${format(n,0)}</b></div><div style="height:8px;margin-top:6px;background:#2b3541;border-radius:5px;"><div style="width:${n/max*100}%;height:100%;background:#2196f3;border-radius:5px;"></div></div></div>`).join('');
+    };
+    const reasons=Object.entries(d.reasons).sort((a,b)=>b[1]-a[1]);
+    const demandLabel=t('Declined enquiries');
+    root.querySelector('.ot-result').innerHTML=`
+      <div class="ot-total"><span>${demandLabel}</span><strong>${format(d.total,0)}</strong></div>
+      <p class="ot-caption"><bdi dir="ltr">${esc(dateText(selectedFrom))} – ${esc(dateText(selectedEnd-86400000))}</bdi></p>
+      <p class="ot-caption">${t('Grouped by requested arrival month. Enquiries are not guaranteed lost bookings or revenue.')}</p>
+      <p class="ot-caption">${t('Simulated enquiries')}: ${format(d.simulated,0)} · ${t('Estimated unique vessels')}: ${format(d.uniqueVessels,0)} · ${t('Requests without vessel identity')}: ${format(d.unidentifiedRequests,0)}</p>
+      <p class="ot-caption">${t('Estimated unique vessels are not a verified fleet count. Repeated enquiries may refer to the same demand.')}</p>
+      <h3>${t('Decline reasons')}</h3>${chart(reasons.map(([key,n])=>[reasonName(key),n]))}
+      ${!d.total?`<p class="ot-caption">${t('No declined enquiries in this period. Decline requests with a reason or load sample history.')}</p>`:''}
+      <h3>${t('Requested arrival month')}</h3>${chart(d.months.map((m,i)=>[monthLabel(m),d.monthly[i]]))}
+      <h3>${t('Vessel length')}</h3>${chart(SIZE_BANDS.map(band=>[t(band),d.sizes[band]||0]))}
+      <h3>${t('Reason by vessel length')}</h3>
+      <div style="overflow-x:auto;"><table class="ot-table"><thead><tr><th>${t('Decline reason')}</th>${SIZE_BANDS.map(band=>`<th>${esc(t(band))}</th>`).join('')}</tr></thead><tbody>${reasons.map(([reason])=>`<tr><td>${esc(reasonName(reason))}</td>${SIZE_BANDS.map(band=>`<td>${format(d.matrix[reason]?.[band]||0,0)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <p class="ot-caption">${t('Records excluded')}: ${format(d.excluded,0)} · ${t('Reason not recorded')}: ${format(d.missingReason,0)}</p>`;
+  }
   let records;
   async function refresh() {
-    const snaps = await Promise.allSettled(['berths','berth_bookings','utility_readings','maintenance','invoices'].map(async name => {
+    const snaps = await Promise.allSettled(['berths','berth_bookings','utility_readings','maintenance','invoices','berth_booking_requests'].map(async name => {
       const snap=await getDocs(query(collection(db,name),where('clientId','==',clientId)));
       return [name,snap.docs.map(d=>({...d.data(),_docId:d.id}))];
     }));
@@ -214,9 +257,23 @@ export async function mountOperationsTrendsScreen() {
     if(currencies.includes(prior)) picker.value=prior;
     render();
   }
+  root.querySelector('[data-demand-source]').onchange=render;
+  root.querySelector('[data-test]').onclick=async()=>{
+    const mode=root.querySelector('[data-test-mode]').value;
+    const ok=await confirmSheet({title:t('Create 100 test enquiries'),message:t('This adds labelled simulation records to the selected marina. No WhatsApp messages or staff notifications are sent. Requires marina admin access. One batch per mode per month; repeating does not duplicate it.'),confirmText:t('Create'),cancelText:t('Cancel')});
+    if(!ok||!current())return;
+    const button=root.querySelector('[data-test]'),message=root.querySelector('[data-test-message]');button.disabled=true;
+    try {
+      const response=await httpsCallable(getFunctions(undefined,'us-central1'),'createBookingDemandTest')({clientId,mode});
+      if(!current())return;
+      message.textContent=t(response.data.created?'100 test enquiries created':'This test batch already exists');
+      await refresh();if(current())recalculate();
+    } catch(error) {if(current())message.textContent=error.message;}
+    finally{if(current())button.disabled=false;}
+  };
   root.querySelector('[data-metric]').onchange=()=>{
     const metric=Number(root.querySelector('[data-metric]').value), period=root.querySelector('[data-period]');
-    if(period.value!=='custom') period.value=metric===0||metric===3?'6':'past';
+    if(period.value!=='custom') period.value=metric===0||metric===3||metric===5?'6':'past';
     root.querySelector('[data-status-label]').hidden=metric!==3;
     root.querySelector('[data-currency-label]').hidden=metric!==4;
     recalculate();

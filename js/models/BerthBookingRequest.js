@@ -2,6 +2,11 @@
 export class BerthBookingRequest {
   constructor(raw = {}) {
     this._docId             = raw._docId ?? null;
+    this.declineReasonCode = raw.declineReasonCode || '';
+    this.declineNote = raw.declineNote || '';
+    this.declinedAt = Number(raw.declinedAt || 0);
+    this.isSimulation = raw.isSimulation === true;
+    this.simulationVesselId = raw.simulationVesselId || '';
     this.dateProposal = raw.dateProposal || null;
     this.latestOwnerReply = raw.latestOwnerReply || null;
 

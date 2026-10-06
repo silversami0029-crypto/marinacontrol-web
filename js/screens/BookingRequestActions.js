@@ -1,3 +1,4 @@
+import { DECLINE_REASONS } from '../analytics/bookingDemand.js';
 import { wireBookingDatePicker } from '../ui/BookingDatePicker.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
@@ -12,6 +13,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
+const declineBooking = httpsCallable(getFunctions(undefined, 'us-central1'), 'declineBookingRequest');
 const manageDates = httpsCallable(getFunctions(undefined, 'us-central1'), 'manageBookingDates');
 
 const approvalInProgress = new Set();
@@ -364,16 +366,9 @@ export function showRequestMoreMenu(request) {
   });
 
 
-  sheet.querySelector('#bkrActDecline').addEventListener('click', async () => {
+  sheet.querySelector('#bkrActDecline').addEventListener('click', () => {
     close();
-    const ok = await confirmSheet({
-      title: 'Decline request?',
-      message: tr(`Decline the berth request for ${request.vesselName || 'this vessel'}?`),
-      confirmText: tr('Decline'),
-      cancelText: tr('Cancel')
-    });
-    if (!ok) return;
-    await declineRequest(request);
+    showDeclineReason(request);
   });
 }
 
@@ -453,18 +448,49 @@ function showEditDates(request) {
   });
 }
 
-async function declineRequest(request) {
-  if (request.dateProposal?.state === 'PENDING') { toast(tr('Resolve or withdraw the proposal before declining'), {kind:'error'}); return; }
-  try {
-    await updateDoc(doc(db, 'berth_booking_requests', String(request._docId)), {
-      status: 'DECLINED',
-      lastModified: Date.now()
-    });
-    toast(tr('Booking request declined'), { kind: 'success' });
-  } catch (err) {
-    console.error('[decline] failed', err);
-    toast(tr('Failed to decline request'), { kind: 'error' });
+function showDeclineReason(request) {
+  if(request.dateProposal?.state==='PENDING') {
+    toast(tr('Resolve or withdraw the proposal before declining'),{kind:'error'});return;
   }
+  const clientId=Number(store.activeClientId);
+  const backdrop=document.createElement('div');backdrop.className='sheet-backdrop';
+  const sheet=document.createElement('div');sheet.className='sheet';
+  sheet.innerHTML=`<div class="sheet-title">${tr('Decline Request')}</div>
+    <form class="add-form"><div class="add-scroll">
+    <p>${escapeHtml(request.vesselName||tr('Unknown vessel'))}</p>
+    <label class="add-label" for="declineReason">${tr('Decline reason')}</label>
+    <select id="declineReason" required style="width:100%;min-height:44px;padding:10px;background:#17212c;color:#f5f7f9;border:1px solid #657587;border-radius:8px;font:inherit;">
+      <option value="">${tr('Choose a reason')}</option>
+      ${Object.entries(DECLINE_REASONS).map(([key,label])=>`<option value="${key}">${escapeHtml(tr(label))}</option>`).join('')}
+    </select>
+    <label class="add-label" for="declineNote" style="display:block;margin-top:16px;">${tr('Internal note')}</label>
+    <textarea id="declineNote" maxlength="1000" rows="3" placeholder="${tr('Required for Other; optional for other reasons')}" style="box-sizing:border-box;width:100%;padding:12px;background:#17212c;color:#f5f7f9;border:1px solid #657587;border-radius:8px;font:inherit;"></textarea>
+    <p style="font-size:13px;line-height:1.5;color:#aab5c2;">${tr('This reason is internal. The owner receives the existing polite decline message.')}</p>
+    <div role="alert" data-error style="color:#ffb4b4;"></div>
+    </div><div class="ao-actions"><button type="button" class="csv-btn csv-btn--cancel" data-cancel>${tr('Cancel')}</button>
+    <button type="submit" class="add-save" data-save disabled style="min-height:44px;">${tr('Decline')}</button></div></form>`;
+  const opener=document.activeElement;let busy=false;
+  const reason=sheet.querySelector('#declineReason'),note=sheet.querySelector('#declineNote'),save=sheet.querySelector('[data-save]');
+  const valid=()=>Object.hasOwn(DECLINE_REASONS,reason.value)&&(reason.value!=='OTHER'||note.value.trim().length>0);
+  const update=()=>{save.disabled=busy||!valid();save.style.opacity=save.disabled?'.45':'1';note.required=reason.value==='OTHER';};
+  const key=e=>{if(e.key==='Escape')close();};
+  const close=()=>{if(busy)return;sheet.remove();backdrop.remove();document.removeEventListener('keydown',key);window.removeEventListener('hashchange',close);opener?.focus();};
+  reason.onchange=update;note.oninput=update;
+  backdrop.onclick=close;sheet.querySelector('[data-cancel]').onclick=close;
+  sheet.querySelector('form').onsubmit=async e=>{
+    e.preventDefault();if(busy||!valid())return;
+    if(Number(store.activeClientId)!==clientId){close();return;}
+    busy=true;update();
+    try {
+      await declineBooking({clientId,requestId:String(request._docId),reasonCode:reason.value,note:note.value.trim()});
+      busy=false;close();toast(tr('Booking request declined'),{kind:'success'});
+    } catch(error) {
+      busy=false;update();sheet.querySelector('[data-error]').textContent=tr(error.message||'Failed to decline request');
+    }
+  };
+  document.addEventListener('keydown',key);window.addEventListener('hashchange',close);
+  document.getElementById('modalRoot').append(backdrop,sheet);
+  requestAnimationFrame(()=>{backdrop.classList.add('is-open');sheet.classList.add('is-open');reason.focus();});update();
 }
 
 /* ---------- Helpers ---------- */

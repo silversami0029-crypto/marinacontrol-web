@@ -1,3 +1,4 @@
+import { DECLINE_REASONS } from '../analytics/bookingDemand.js';
 import { mountWhatsAppReplyReview } from './WhatsAppReplyReview.js';
 import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
@@ -205,6 +206,7 @@ function renderRequestCard(r) {
       <div class="bkr-sender">${esc(senderLine)}</div>
       ${r.assignedBerthNumber || r.berthNumber ? `<div class="bkr-sender">${esc(t("Berth"))}: ${esc([r.assignedDockName, r.assignedBerthNumber || r.berthNumber].filter(Boolean).join(" "))}</div>` : ''}
       <div class="bkr-dates">${esc(arrival)} → ${esc(departure)}</div>
+      ${r.status==='DECLINED'?`<div class="bkr-sender">${esc(t('Decline reason'))}: ${esc(t(DECLINE_REASONS[r.declineReasonCode]||'Reason not recorded'))}</div>`:''}
       <div class="bkr-message">"${esc(message)}"</div>
     </div>
   `;
@@ -256,6 +258,7 @@ async function showDetail(r) {
       <div class="bkr-detail-row"><span>${t("Source")}</span><b>${esc(t(source))}</b></div>
       <div class="bkr-detail-row"><span>${t("Status")}</span><b>${esc(requestStatusLabel(r))}</b></div>
 
+      ${r.status==='DECLINED'?`<div class="bkr-detail-row"><span>${t('Decline reason')}</span><b>${esc(t(DECLINE_REASONS[r.declineReasonCode]||'Reason not recorded'))}</b></div>${r.declineNote?`<div class="bkr-detail-message-label">${t('Internal note')}</div><div class="bkr-detail-message">${esc(r.declineNote)}</div>`:''}`:''}
       ${r.dateProposal ? `<div class="bkr-detail-row"><span>${t("Date proposal")}</span><b>${esc(r.dateProposal.state)} · ${esc(r.dateProposal.delivery)}</b></div>` : ''}
       ${r.latestOwnerReply?.text ? `<div class="bkr-detail-message-label">${t("Owner reply — review before recording acceptance")}</div><div class="bkr-detail-message">${esc(r.latestOwnerReply.text)}</div>` : ''}
       <div class="bkr-detail-message-label">${t("Message")}</div>
