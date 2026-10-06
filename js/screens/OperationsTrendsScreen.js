@@ -195,9 +195,10 @@ export async function mountOperationsTrendsScreen() {
   }
   function renderDemand() {
     const d=demandResult(),reasonName=code=>t(DECLINE_REASONS[code]||'Reason not recorded');
-    const chart=(pairs)=>{
+    const percent=n=>new Intl.NumberFormat(getLocale(),{style:'percent',maximumFractionDigits:1}).format(d.total?n/d.total:0);
+    const chart=(pairs,shares=false)=>{
       const max=Math.max(1,...pairs.map(([,n])=>n));
-      return pairs.map(([label,n])=>`<div style="margin:12px 0;"><div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;"><span>${esc(label)}</span><b>${format(n,0)}</b></div><div style="height:8px;margin-top:6px;background:#2b3541;border-radius:5px;"><div style="width:${n/max*100}%;height:100%;background:#2196f3;border-radius:5px;"></div></div></div>`).join('');
+      return pairs.map(([label,n])=>`<div style="margin:12px 0;"><div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;"><span>${esc(label)}</span><b style="white-space:nowrap;">${format(n,0)}${shares?` · ${esc(percent(n))}`:''}</b></div><div style="height:8px;margin-top:6px;background:#2b3541;border-radius:5px;"><div style="width:${shares?(d.total?n/d.total*100:0):n/max*100}%;height:100%;background:#2196f3;border-radius:5px;"></div></div></div>`).join('');
     };
     const reasons=Object.entries(d.reasons).sort((a,b)=>b[1]-a[1]);
     const demandLabel=t('Declined enquiries');
@@ -207,10 +208,10 @@ export async function mountOperationsTrendsScreen() {
       <p class="ot-caption">${t('Grouped by requested arrival month. Enquiries are not guaranteed lost bookings or revenue.')}</p>
       <p class="ot-caption">${t('Simulated enquiries')}: ${format(d.simulated,0)} · ${t('Estimated unique vessels')}: ${format(d.uniqueVessels,0)} · ${t('Requests without vessel identity')}: ${format(d.unidentifiedRequests,0)}</p>
       <p class="ot-caption">${t('Estimated unique vessels are not a verified fleet count. Repeated enquiries may refer to the same demand.')}</p>
-      <h3>${t('Decline reasons')}</h3>${chart(reasons.map(([key,n])=>[reasonName(key),n]))}
+      <h3>${t('Decline reasons')}</h3><p class="ot-caption">${t('Percentages show the share of declined enquiries in the selected period and data source, including unknown reasons. They are not an overall rejection rate or a revenue percentage.')}</p>${chart(reasons.map(([key,n])=>[reasonName(key),n]),true)}
       ${!d.total?`<p class="ot-caption">${t('No declined enquiries in this period. Decline requests with a reason or load sample history.')}</p>`:''}
       <h3>${t('Requested arrival month')}</h3>${chart(d.months.map((m,i)=>[monthLabel(m),d.monthly[i]]))}
-      <h3>${t('Vessel length')}</h3>${chart(SIZE_BANDS.map(band=>[t(band),d.sizes[band]||0]))}
+      <h3>${t('Vessel length')}</h3>${chart(SIZE_BANDS.map(band=>[t(band),d.sizes[band]||0]),true)}
       <h3>${t('Reason by vessel length')}</h3>
       <div style="overflow-x:auto;"><table class="ot-table"><thead><tr><th>${t('Decline reason')}</th>${SIZE_BANDS.map(band=>`<th>${esc(t(band))}</th>`).join('')}</tr></thead><tbody>${reasons.map(([reason])=>`<tr><td>${esc(reasonName(reason))}</td>${SIZE_BANDS.map(band=>`<td>${format(d.matrix[reason]?.[band]||0,0)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
       <p class="ot-caption">${t('Records excluded')}: ${format(d.excluded,0)} · ${t('Reason not recorded')}: ${format(d.missingReason,0)}</p>`;
