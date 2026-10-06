@@ -490,24 +490,44 @@ function showDateProposal(request) {
   const clientId = Number(store.activeClientId);
   const pending = request.dateProposal?.state === 'PENDING';
   const p = request.dateProposal;
+  const reply = request.latestOwnerReply;
+  const matchingReply = reply?.proposalId === p?.id ? String(reply.text || '') : '';
   const backdrop = document.createElement('div'); backdrop.className = 'sheet-backdrop';
-  const sheet = document.createElement('div'); sheet.className = 'sheet';
+  const sheet = document.createElement('div'); sheet.className = 'sheet dp-sheet';
   sheet.innerHTML = `
+    <style>
+      .dp-sheet .dp-summary{padding:14px;margin:12px 0 18px;border:1px solid #394654;border-radius:12px;background:#151c24;line-height:1.6}
+      .dp-sheet .dp-summary strong{display:block;font-size:17px;color:#f5f7f9}
+      .dp-sheet .dp-hint{font-size:13px;line-height:1.5;color:#aab5c2;margin:8px 0 12px}
+      .dp-sheet #dpReply{display:block;box-sizing:border-box;width:100%;min-height:120px;padding:12px;border:1px solid #657587;border-radius:10px;background:#111923;color:#f5f7f9;font:inherit;font-size:14px;line-height:1.5;resize:vertical;margin:8px 0}
+      .dp-sheet #dpReply::placeholder{color:#aab5c2;opacity:1}
+      .dp-sheet #dpReply:focus{outline:2px solid #2e9bff;outline-offset:2px}
+      .dp-sheet .dp-actions{display:grid;gap:10px;margin:18px 0}
+      .dp-sheet .dp-action{appearance:none;box-sizing:border-box;width:100%;min-height:44px;padding:11px 14px;border:1px solid #596979;border-radius:10px;background:#283442;color:#f5f7f9;font:inherit;font-weight:600;cursor:pointer;text-align:center}
+      .dp-sheet .dp-action[data-action=ACCEPT]{background:#258be0;border-color:#258be0;color:#fff}
+      .dp-sheet .dp-action[data-action=REJECT]{border-color:#dd8383;color:#ffd4d4}
+      .dp-sheet .dp-action[data-action=WITHDRAW]{background:transparent;color:#c4ced8}
+      .dp-sheet .dp-action:focus-visible{outline:2px solid #fff;outline-offset:2px}
+      .dp-sheet .dp-action:disabled{opacity:.45;cursor:not-allowed}
+    </style>
     <div style="display:flex;align-items:center;min-height:48px;">
       <div class="sheet-title" style="flex:1;margin:0;">${tr(pending ? 'Review date proposal' : 'Edit Dates')}</div>
       <button type="button" id="dpClose" aria-label="${tr('Close')}" style="background:transparent;border:0;color:inherit;font-size:26px;width:44px;height:44px;">×</button>
     </div>
     <form class="add-form" id="dpForm"><div class="add-scroll">
       <p style="font-size:13px;color:var(--color-text-secondary,#AAB5C2);">${tr('Send alternative dates to the owner for agreement. The booking remains unconfirmed.')}</p>
-      ${pending ? `<p><b>${tr('Awaiting owner agreement')}</b><br>${escapeHtml(toInputDate(p.arrivalDate))} → ${escapeHtml(toInputDate(p.departureDate))}</p>
-        <p>${tr('WhatsApp submission')}: ${escapeHtml(p.delivery || 'UNKNOWN')}</p>
+      ${pending ? `<div class="dp-summary"><span>${tr('Awaiting owner agreement')}</span><strong>${escapeHtml(formatDate(p.arrivalDate))} → ${escapeHtml(formatDate(p.departureDate))}</strong><span>${tr('WhatsApp submission')}: ${escapeHtml(p.delivery || 'UNKNOWN')}</span></div>
         ${p.error ? `<p>${escapeHtml(p.error)}</p>` : ''}
-        <label class="add-label" for="dpReply">${tr("Owner's reply / reference")}</label>
-        <textarea class="add-input" id="dpReply" maxlength="1000" placeholder="${tr('Record the reply you received. Do not assume consent.')}" rows="3"></textarea>
-        <button type="button" class="csv-btn" data-action="ACCEPT" ${p.delivery !== 'SENT' ? 'disabled' : ''}>${tr('Record owner acceptance')}</button>
-        <button type="button" class="csv-btn" data-action="REJECT" ${p.delivery !== 'SENT' ? 'disabled' : ''}>${tr('Record owner rejection')}</button>
-        <button type="button" class="csv-btn" data-action="WITHDRAW">${tr('Withdraw proposal')}</button>
-        <p>${tr('Withdrawal is internal only. Contact the owner if they received the proposal. A failed or unknown send may still have reached them.')}</p>` : `
+        <label class="add-label" for="dpReply">${tr("Owner's response")}</label>
+        <textarea class="add-input" id="dpReply" aria-describedby="dpReplyHint" maxlength="1000" placeholder="${tr('Type or paste the owner’s response here…')}" rows="4">${escapeHtml(matchingReply)}</textarea>
+        <p class="dp-hint" id="dpReplyHint">${tr(matchingReply ? 'WhatsApp reply filled in. Review it, then choose an action below.' : 'Enter the response you received, then choose an action below.')}</p>
+        <p class="dp-hint">${tr('Record acceptance only if the owner agreed to these exact dates. Staff must still approve the booking.')}</p>
+        <div class="dp-actions">
+          <button type="button" class="dp-action" data-action="ACCEPT" ${p.delivery !== 'SENT' ? 'disabled' : ''}>${tr('Record owner acceptance')}</button>
+          <button type="button" class="dp-action" data-action="REJECT" ${p.delivery !== 'SENT' ? 'disabled' : ''}>${tr('Record owner rejection')}</button>
+          <button type="button" class="dp-action" data-action="WITHDRAW">${tr('Withdraw proposal')}</button>
+        </div>
+        <p class="dp-hint">${tr('Withdrawal is internal only. Contact the owner if they received the proposal. A failed or unknown send may still have reached them.')}</p>` : `
         <label class="add-label" for="dpArrival">${tr('Proposed arrival')}</label>
         <input class="add-input" id="dpArrival" type="date" required value="${toInputDate(request.arrivalDate)}">
         <label class="add-label" for="dpDeparture">${tr('Proposed departure')}</label>
@@ -528,7 +548,7 @@ function showDateProposal(request) {
   const send = async (action) => {
     if (busy || Number(store.activeClientId) !== clientId) return;
     const responseNote = sheet.querySelector('#dpReply')?.value.trim() || '';
-    if (['ACCEPT', 'REJECT'].includes(action) && !responseNote) { toast(tr("Record the owner's reply first"), {kind:'error'}); return; }
+    if (['ACCEPT', 'REJECT'].includes(action) && !responseNote) { toast(tr("Record the owner's reply first"), {kind:'error'}); sheet.querySelector("#dpReply")?.focus(); return; }
     if (action !== 'PROPOSE') {
       const ok = await confirmSheet({title: tr('Confirm date action'), message: tr(action === 'ACCEPT' ? 'Record the owner’s agreement to these exact dates? Staff must still approve the booking.' : action === 'REJECT' ? 'Record the owner’s rejection of these dates?' : 'Withdraw this proposal internally? Contact the owner separately if needed.'), confirmText:tr('Confirm'), cancelText:tr('Cancel')});
       if (!ok || busy) return;
