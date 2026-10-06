@@ -122,11 +122,11 @@ function setupSearch() {
 
 function applySearch(requests) {
   if (!searchQuery) return requests;
-  const q = searchQuery.toLowerCase();
+  const q = searchQuery.trim().toLowerCase();
   return requests.filter((r) => {
     const hay = [
       r.vesselName, r.senderName, r.senderPhone, r.message,
-      r.status, r.source
+      r.status, r.source, r.requestUuid || r._docId
     ].filter(Boolean).join(' ').toLowerCase();
     return hay.includes(q);
   });
@@ -201,6 +201,7 @@ function renderRequestCard(r) {
          data-request-doc-id="${esc(r._docId)}">
       <div class="bkr-status">${esc(t(status))} · ${esc(t(source))}</div>
       <div class="bkr-vessel">${esc(vessel)}</div>
+      <div class="bkr-reference" style="font-size:12px;line-height:1.5;margin:5px 0 8px;color:var(--color-text-secondary,#aab5c2);overflow-wrap:anywhere;">${esc(t("Enquiry reference"))}: <span dir="ltr" style="unicode-bidi:isolate;">${esc(r.requestUuid || r._docId)}</span></div>
       <div class="bkr-sender">${esc(senderLine)}</div>
       ${r.assignedBerthNumber || r.berthNumber ? `<div class="bkr-sender">${esc(t("Berth"))}: ${esc([r.assignedDockName, r.assignedBerthNumber || r.berthNumber].filter(Boolean).join(" "))}</div>` : ''}
       <div class="bkr-dates">${esc(arrival)} → ${esc(departure)}</div>
@@ -246,6 +247,7 @@ async function showDetail(r) {
 
     <div class="bkr-detail-body">
       <div class="bkr-detail-row"><span>${t("Vessel")}</span><b>${esc(vessel)}</b></div>
+      <div class="bkr-detail-row"><span>${t("Enquiry reference")}</span><b dir="ltr" style="font-size:12px;overflow-wrap:anywhere;max-width:70%;">${esc(r.requestUuid || r._docId)}</b></div>
       <div class="bkr-detail-row"><span>${t("From")}</span><b>${esc(sender)}</b></div>
       <div class="bkr-detail-row"><span>${t("Phone")}</span><b>${esc(phone)}</b></div>
       <div class="bkr-detail-row"><span>${t("Arrival")}</span><b>${esc(arrival)}</b></div>
