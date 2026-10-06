@@ -28,7 +28,7 @@ export function mountNotificationsScreen() {
       <button class="nt-chip" data-filter="DOCK_WALK">${tr("Dock Walk")}</button>
     </div>
     <div id="ntList" class="nt-list"></div>
-    <button id="ntClear" class="nt-clear">${tr("Clear read")}</button>`;
+    <button id="ntClear" class="nt-clear">${tr("Remove read notifications")}</button>`;
 
   document.getElementById('ntBack').onclick = () => history.back();
   document.getElementById('ntMarkAll').onclick = markAllRead;
@@ -51,6 +51,9 @@ function render() {
   if (!listEl) return;
   const items = store.notifications.filter(n =>
     filter === 'ALL' || String(n.type || '').startsWith(filter));
+
+  const clearButton = document.getElementById('ntClear');
+  if (clearButton) clearButton.disabled = !store.notifications.some(n => n.read);
 
   if (!items.length) {
     listEl.innerHTML = `<div class="nt-empty">${tr("No notifications")}</div>`;
@@ -165,6 +168,8 @@ function ensureStyles() {
     .nt-card{display:block;width:100%;margin:0 0 10px;padding:14px;text-align:left;background:var(--color-surface);border:1px solid var(--color-divider);border-radius:10px;color:var(--color-text-primary)}
     .nt-card.is-unread{border-left:4px solid var(--color-accent)}.nt-card-top{display:flex;justify-content:space-between;gap:10px}.nt-type{font-size:11px;font-weight:700;color:var(--color-accent)}
     .nt-time{font-size:11px;color:var(--color-text-muted)}.nt-card-title{font-size:14px;font-weight:700;margin-top:8px}.nt-message{font-size:13px;color:var(--color-text-secondary);margin-top:5px;line-height:1.35}
-    .nt-empty{text-align:center;color:var(--color-text-secondary);padding:70px 10px}.nt-clear{display:block;margin:-72px auto 90px;padding:10px 16px}`;
+    .nt-empty{text-align:center;color:var(--color-text-secondary);padding:70px 10px}
+    .nt-clear{position:static;display:block;margin:16px 18px 32px auto;padding:10px 16px;border:1px solid var(--color-divider,#394654);border-radius:8px;background:transparent;cursor:pointer}
+    .nt-clear:disabled{opacity:.4;cursor:default}`;
   document.head.appendChild(style);
 }
