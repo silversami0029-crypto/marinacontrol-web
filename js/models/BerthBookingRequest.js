@@ -7,6 +7,10 @@ export class BerthBookingRequest {
     this.declinedAt = Number(raw.declinedAt || 0);
     this.isSimulation = raw.isSimulation === true;
     this.simulationVesselId = raw.simulationVesselId || '';
+    for (const key of ['whatsappConfirmationStatus', 'whatsappConfirmationSentAt',
+      'whatsappConfirmationUpdatedAt', 'whatsappConfirmationAttemptedAt', 'approvedAt']) {
+      this[key] = raw[key] ?? null;
+    }
     this.dateProposal = raw.dateProposal || null;
     this.latestOwnerReply = raw.latestOwnerReply || null;
 

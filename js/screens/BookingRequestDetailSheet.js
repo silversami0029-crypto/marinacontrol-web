@@ -1,3 +1,4 @@
+import { renderBookingTimeline } from './BookingRequestTimeline.js';
 import { getLanguage } from '../i18n.js';
 import { t, t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/BookingRequestDetailSheet.js
@@ -51,6 +52,7 @@ export function showBookingRequestDetail(request, berth) {
       <div class="bkr-detail-row"><span>${tr("Source")}</span><b>${escapeHtml(source)}</b></div>
       <div class="bkr-detail-row"><span>${tr("Status")}</span><b>${escapeHtml(requestStatusLabel(request))}</b></div>
 
+      ${renderBookingTimeline(request)}
       ${request.latestOwnerReply?.text ? `<div class="bkr-detail-message-label">${tr("Owner reply — review before recording acceptance")}</div><div class="bkr-detail-message">${escapeHtml(request.latestOwnerReply.text)}</div>` : ''}
       <div class="bkr-detail-message-label">${tr("Message")}</div>
       <div class="bkr-detail-message">${escapeHtml(message)}</div>

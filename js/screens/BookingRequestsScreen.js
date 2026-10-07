@@ -1,3 +1,4 @@
+import { renderBookingTimeline } from './BookingRequestTimeline.js';
 import { DECLINE_REASONS } from '../analytics/bookingDemand.js';
 import { mountWhatsAppReplyReview } from './WhatsAppReplyReview.js';
 import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -14,6 +15,8 @@ import { showBookingRequestsHelp } from './BookingRequestsHelp.js';
 let unsubscribe = null;
 let searchQuery = '';
 let openRequestDocId = null;
+let detailVersion = 0;
+let reviewObserver = null;
 
 
 export function mountBookingRequestsScreen() {
@@ -28,6 +31,8 @@ export function mountBookingRequestsScreen() {
 
   searchQuery = '';
   openRequestDocId = null;
+  detailVersion++;
+  reviewObserver?.disconnect();
 
   const screen = document.getElementById('screen');
 
@@ -62,24 +67,31 @@ export function mountBookingRequestsScreen() {
       <button type="button" class="search-cancel" id="bkrSearchCancel">${t("Cancel")}</button>
     </div>
 
-    <div id="bkrReplyReview"></div>
+    <details class="bkr-review-summary" id="bkrReviewDisclosure"><summary><span id="bkrReviewCount">${t("Replies needing review")}</span></summary><div id="bkrReplyReview"></div></details>
+    <div class="bkr-workspace">
     <div class="bkr-list" id="bkrList">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
+    <section class="bkr-workspace-detail" id="bkrWorkspaceDetail" aria-label="${t("Booking Request")}"><p>${t("Select a request to view its details")}</p></section>
+    </div>
   `;
-
-
 
   setupSearch();
   const refreshReplyReview = mountWhatsAppReplyReview(screen.querySelector("#bkrReplyReview"));
 
+  const reviewRoot = screen.querySelector('#bkrReplyReview');
+  reviewObserver = new MutationObserver(() => {
+    const heading = reviewRoot.querySelector('h2,h3,h4,strong,b');
+    screen.querySelector('#bkrReviewCount').textContent = heading?.textContent || t('Replies needing review');
+  });
+  reviewObserver.observe(reviewRoot, {childList:true, subtree:true, characterData:true});
   if (unsubscribe) unsubscribe();
   unsubscribe = listenForBookingRequests(store.activeClientId, (requests, err) => {
     if (err) {
       document.getElementById('bkrList').innerHTML =
         `<div class="boats-empty">
            <h2>${t("Couldn't load requests")}</h2>
-           <p>${err.message || 'Permission denied.'}</p>
+           <p>${esc(err.message || 'Permission denied.')}</p>
          </div>`;
       return;
     }
@@ -87,6 +99,9 @@ export function mountBookingRequestsScreen() {
     store.bookingRequests = requests;
     renderList();
     refreshReplyReview();
+    const selected = requests.find(r => String(r._docId) === String(openRequestDocId));
+    if (selected && window.matchMedia("(min-width: 1100px)").matches) showDetail(selected);
+    else if (!selected) { openRequestDocId = null; const panel = document.getElementById("bkrWorkspaceDetail"); if (panel) panel.innerHTML = `<p>${t("Select a request to view its details")}</p>`; }
   });
 }
 
@@ -160,7 +175,9 @@ function renderList() {
     (a, b) => (b.receivedAt || 0) - (a.receivedAt || 0)
   );
 
+  const scrollTop = listEl.scrollTop;
   listEl.innerHTML = sorted.map(renderRequestCard).join('');
+  listEl.scrollTop = scrollTop;
 
   listEl.querySelectorAll('.bkr-card').forEach((card) => {
     const docId = card.dataset.requestDocId;
@@ -171,6 +188,7 @@ function renderList() {
     if (!request) return;
 
     card.addEventListener('click', () => showDetail(request));
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showDetail(request); } });
   });
 }
 
@@ -199,7 +217,7 @@ function renderRequestCard(r) {
 
   return `
     <div class="bkr-card${isSelected ? ' is-selected' : ''}"
-         data-request-doc-id="${esc(r._docId)}">
+         data-request-doc-id="${esc(r._docId)}" role="button" tabindex="0" aria-pressed="${isSelected}">
       <div class="bkr-status">${esc(t(status))} · ${esc(t(source))}</div>
       <div class="bkr-vessel">${esc(vessel)}</div>
       <div class="bkr-reference" style="font-size:12px;line-height:1.5;margin:5px 0 8px;color:var(--color-text-secondary,#aab5c2);overflow-wrap:anywhere;">${esc(t("Enquiry reference"))}: <span dir="ltr" style="unicode-bidi:isolate;">${esc(r.requestUuid || r._docId)}</span></div>
@@ -213,9 +231,10 @@ function renderRequestCard(r) {
 }
 /* ---------- Detail sheet ---------- */
 async function showDetail(r) {
+  const version = ++detailVersion;
   const clientId = Number(store.activeClientId);
   const resolvedBerth = await resolveRequestBerth(r, clientId);
-  if (Number(store.activeClientId) !== clientId || !document.getElementById('bkrList')) return;
+  if (version !== detailVersion || Number(store.activeClientId) !== clientId || !document.getElementById('bkrList')) return;
 
  openRequestDocId = r._docId;
   renderList();   // re-render so the selected class applies
@@ -224,7 +243,8 @@ async function showDetail(r) {
 
 
   const sheet = document.createElement('div');
-  sheet.className = 'sheet assign-sheet';
+  const inline = window.matchMedia('(min-width: 1100px)').matches;
+  sheet.className = inline ? 'bkr-inline-detail' : 'sheet assign-sheet';
 
   const arrival   = r.arrivalDate   ? formatDate(r.arrivalDate)   : t("Not specified");
   const departure = r.departureDate ? formatDate(r.departureDate) : t("Not specified");
@@ -259,6 +279,8 @@ async function showDetail(r) {
       <div class="bkr-detail-row"><span>${t("Status")}</span><b>${esc(requestStatusLabel(r))}</b></div>
 
       ${r.status==='DECLINED'?`<div class="bkr-detail-row"><span>${t('Decline reason')}</span><b>${esc(t(DECLINE_REASONS[r.declineReasonCode]||'Reason not recorded'))}</b></div>${r.declineNote?`<div class="bkr-detail-message-label">${t('Internal note')}</div><div class="bkr-detail-message">${esc(r.declineNote)}</div>`:''}`:''}
+      <div class="bkr-detail-row"><span>${t('Vessel dimensions')}</span><b>${esc([r.vesselLength != null ? `${t('Length')}: ${r.vesselLength} m` : '', r.vesselBeam != null ? `${t('Beam')}: ${r.vesselBeam} m` : '', r.vesselDraft != null ? `${t('Draft')}: ${r.vesselDraft} m` : ''].filter(Boolean).join(' · ') || t('Not provided'))}</b></div>
+      ${renderBookingTimeline(r)}
       ${r.dateProposal ? `<div class="bkr-detail-row"><span>${t("Date proposal")}</span><b>${esc(r.dateProposal.state)} · ${esc(r.dateProposal.delivery)}</b></div>` : ''}
       ${r.latestOwnerReply?.text ? `<div class="bkr-detail-message-label">${t("Owner reply — review before recording acceptance")}</div><div class="bkr-detail-message">${esc(r.latestOwnerReply.text)}</div>` : ''}
       <div class="bkr-detail-message-label">${t("Message")}</div>
@@ -273,18 +295,21 @@ async function showDetail(r) {
     </div>
   `;
 
-  document.getElementById('modalRoot').append(backdrop, sheet);
+  if (inline) document.getElementById('bkrWorkspaceDetail').replaceChildren(sheet);
+  else document.getElementById('modalRoot').append(backdrop, sheet);
   requestAnimationFrame(() => {
     backdrop.classList.add('is-open');
     sheet.classList.add('is-open');
   });
 
   const close = () => {
+    if (inline) return;
     backdrop.classList.remove('is-open');
     sheet.classList.remove('is-open');
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
   };
 
+  if (inline) { sheet.querySelector('[data-sheet-close]').hidden = true; sheet.querySelector('#bkrClose').hidden = true; }
   backdrop.addEventListener('click', close);
   sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#bkrClose').addEventListener('click', close);
