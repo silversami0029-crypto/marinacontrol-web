@@ -1,0 +1,13 @@
+/* Uses the existing Operations Trends surface, colors and button conventions. */
+.ot-screen .ot-insight{display:block;box-sizing:border-box;width:100%;font:inherit;text-align:start;color:var(--color-text-primary,#f5f7f9);background:var(--color-surface,#1c222a);border:1px solid #37414d;border-radius:14px;padding:16px;margin:10px 0;cursor:pointer}
+.ot-screen .ot-insight strong,.ot-screen .ot-insight span{display:block}
+.ot-screen .ot-insight strong{font-size:16px}
+.ot-screen .ot-insight-facts{font-size:14px;color:var(--color-text-secondary,#aeb6c1);line-height:1.6;margin-top:6px;white-space:pre-line}
+.ot-screen .ot-insight-action{color:var(--color-accent,#2196f3);font-weight:600;margin-top:8px;font-size:14px}
+.ot-screen .ot-insight:hover,.ot-screen .ot-insight:focus-visible{border-color:var(--color-accent,#2196f3)}
+.ot-screen .ot-insight:focus-visible{outline:2px solid var(--color-accent,#2196f3);outline-offset:2px}
+.ot-screen .ot-insight-group{margin:12px 0;border-bottom:1px solid #37414d;padding-bottom:10px}
+.ot-screen .ot-insight-group>summary{cursor:pointer;min-height:44px;line-height:1.6;padding:8px 0}
+.ot-screen .ot-insight-bar{height:8px;border-radius:5px;background:#2b3541;margin:8px 0 12px;overflow:hidden}
+.ot-screen .ot-insight-bar span{display:block;height:100%;background:var(--color-accent,#2196f3)}
+.ot-screen .ot-insight-age{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid #37414d}

@@ -1,3 +1,5 @@
+import {mt} from './maintenanceInsightsText.js';
+import {renderMaintenanceInsights, maintenanceHelpSteps} from './MaintenanceInsightsView.js';
 import { calculateBookingDemand, DECLINE_REASONS, SIZE_BANDS } from '../analytics/bookingDemand.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
 import { confirmSheet } from '../ui/confirm.js';
@@ -9,7 +11,7 @@ import { calculateTrends, monthStart, toMs } from '../analytics/operationsTrends
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const info = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7" r=".8" fill="currentColor"/></svg>';
 const unusedCross = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-const metrics = ['Booked berth-days','Electricity consumption (kWh)','Water consumption (L)','Maintenance by scheduled month','Paid invoices by issue month','Declined booking demand'];
+const metrics = ['Booked berth-days','Electricity consumption (kWh)','Water consumption (L)','Maintenance insights','Paid invoices by issue month','Declined booking demand'];
 const notes = [
   'Assigned confirmed, checked-in and checked-out bookings. Arrival is included; departure is excluded. Overlapping stays at the same berth count once. Booked dates are not proof of actual occupancy. Unassigned or unknown berths are excluded.',
   'Consumption is the difference between cumulative readings, assigned to the later reading’s month. Electricity uses kWh meters. Meter identity includes berth, asset, reading type and unit. Interval and instantaneous readings are excluded; meter resets or replacements need review.',
@@ -40,7 +42,7 @@ export async function mountOperationsTrendsScreen() {
     <div class="c360-pill">${t('Operations Trends')}</div>
     <button type="button" class="c360-icon-btn" data-help aria-label="${t('Help')}">${info}</button>
     <div class="c360-header-spacer"></div></div></div>
-    <div class="ot-filters"><label>${t('Metric')}<select data-metric>${metrics.map((m,i)=>`<option value="${i}">${t(m)}</option>`).join('')}</select></label>
+    <div class="ot-filters"><label>${t('Metric')}<select data-metric>${metrics.map((m,i)=>`<option value="${i}">${i===3?mt(m):t(m)}</option>`).join('')}</select></label>
     <label>${t('Period')}<select data-period><option value="3">${t('Next 3 months')}</option><option value="6" selected>${t('Next 6 months')}</option><option value="12">${t('Next 12 months')}</option><option value="past">${t('Past 12 months')}</option><option value="custom">${t('Custom dates')}</option></select></label>
     <label data-status-label hidden>${t('Maintenance status')}<select data-status><option value="OPEN">${t('Open')}</option><option value="COMPLETED">${t('Completed')}</option><option value="DEFERRED">${t('Deferred')}</option><option value="ALL">${t('All statuses')}</option></select></label>
     <div class="ot-dates" data-dates hidden><label>${t('Start date')}<input type="date" data-start></label><label>${t('End date')}<input type="date" data-end></label><button type="button" class="ot-apply" data-apply>${t('Apply')}</button></div>
@@ -63,9 +65,9 @@ export async function mountOperationsTrendsScreen() {
     const overlay = document.createElement('div'); overlay.className='help-dialog ot-help-dialog';
     overlay.innerHTML = `<div class="help-scroll" role="dialog" aria-modal="true" aria-labelledby="otHelpTitle">
       <div class="help-pill" id="otHelpTitle">${t('Operations Trends')}</div>
-      <div class="help-section-title">${t(metrics[metric])}</div>
-      <p class="help-desc">${t('Understand how your marina records contribute to each monthly total.')}</p>
-      ${metric===0 ? [
+      <div class="help-section-title">${metric===3?mt(metrics[metric]):t(metrics[metric])}</div>
+      <p class="help-desc">${metric===3?mt('Understand what needs action, what holds work up and where records repeat.'):t('Understand how your marina records contribute to each monthly total.')}</p>
+      ${metric===3 ? maintenanceHelpSteps().map(([title,body],i)=>step(String(i+1),title,body)).join('') : metric===0 ? [
         step('1','One berth-day','One berth booked for one day contributes one berth-day. Several berths booked on the same day each contribute, so a monthly total can exceed 30 or 31.'),
         step('2','Arrival and departure','Arrival is included; departure is excluded. A booking from 18–21 November contributes 3 berth-days: the 18th, 19th and 20th. Two different berths booked for those dates contribute 6.'),
         step('3','Monthly allocation','Each booked day belongs to its own month. A 30 November–2 December booking contributes 1 berth-day to November and 1 to December. Only days inside the selected reporting period count.'),
@@ -163,6 +165,16 @@ export async function mountOperationsTrendsScreen() {
     const metric = Number(root.querySelector('[data-metric]').value);
     root.querySelector('[data-demand-controls]').hidden=metric!==5;
     if(metric===5){renderDemand();return;}
+    if(metric===3){
+      root.querySelector('[data-currency-label]').hidden=true;
+      root.querySelector('[data-status-label]').hidden=false;
+      renderMaintenanceInsights(root.querySelector('.ot-result'), {
+        clientId,from:selectedFrom,end:selectedEnd,now:Date.now(),
+        tasks:records?.maintenance||[],berths:records?.berths||[],
+        status:root.querySelector('[data-status]').value
+      });
+      return;
+    }
     const currency = root.querySelector('[data-currency]').value || 'UNSPECIFIED';
     root.querySelector('[data-currency-label]').hidden=metric!==4;
     root.querySelector('[data-status-label]').hidden=metric!==3;
