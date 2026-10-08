@@ -1,4 +1,5 @@
-﻿// js/db.js
+import { utilitySegments } from './analytics/utilityConsumption.js';
+// js/db.js
 import {
   db,
   collection, query, where, onSnapshot,
@@ -731,6 +732,7 @@ export function listenForUtilityReadings(clientId, berthId, callback) {
         id:          Number(data.id ?? d.id),
         clientId:    Number(data.clientId ?? clientId),
         berthId:     Number(data.berthId ?? berthId),
+        assetId:     data.assetId == null ? null : Number(data.assetId),
         utilityType: data.utilityType || '',
         readingMode: data.readingMode || 'CUMULATIVE',
         readingType: data.readingType || '',
@@ -739,6 +741,10 @@ export function listenForUtilityReadings(clientId, berthId, callback) {
         notes:       data.notes || '',
         recordedAt:  Number(data.recordedAt ?? 0),
         source:      data.source || 'MANUAL'
+        ,voidedAt:    Number(data.voidedAt || 0)
+        ,voidedBy:    data.voidedBy || ''
+        ,voidReason:  data.voidReason || ''
+        ,correctionOf:data.correctionOf || null
       };
     });
     callback(readings, null);
@@ -760,6 +766,15 @@ export async function nextUtilityReadingId(clientId) {
 }
 
 export async function createUtilityReading(clientId, userId, fields) {
+  const unit = String(fields.unit || '').trim().toUpperCase();
+  const mode = String(fields.readingMode || '').trim().toUpperCase();
+  const type = String(fields.utilityType || '').trim().toUpperCase();
+  const amount = fields.value == null || fields.value === '' ? NaN : Number(fields.value);
+  const validUnit = mode==='INSTANTANEOUS'
+    ? type==='ELECTRICITY' && unit==='KW' || type==='WATER' && unit==='L/MIN'
+    : type==='ELECTRICITY' && unit==='KWH' || type==='WATER' && ['L','M3','M³'].includes(unit);
+  if (!Number.isFinite(amount) || amount<0 || !validUnit || !['CUMULATIVE','INTERVAL','INSTANTANEOUS'].includes(mode))
+    throw new Error('Invalid utility reading value, mode or unit');
   const newId = await nextUtilityReadingId(clientId);
 
   const data = {
@@ -777,10 +792,51 @@ export async function createUtilityReading(clientId, userId, fields) {
     recordedAt:    Date.now(),
     lastModified:  Date.now(),
     lastModifiedBy: String(userId ?? '')
+    ,correctionOf: fields.correctionOf || null
   };
 
   await setDoc(doc(db, 'utility_readings', String(newId)), data);
   console.log('[db] Utility reading created', newId);
+  return newId;
+}
+
+export async function voidUtilityReading(clientId, reading, userId, reason = '') {
+  if (Number(reading?.clientId) !== Number(clientId) || !reading?._docId) throw new Error('Invalid utility reading');
+  await updateDoc(doc(db, 'utility_readings', String(reading._docId)), {
+    voidedAt: Date.now(),
+    voidedBy: String(userId ?? ''),
+    voidReason: String(reason || '').trim(),
+    lastModified: Date.now(),
+    lastModifiedBy: String(userId ?? '')
+  });
+}
+
+export async function correctUtilityReading(clientId, reading, userId, fields) {
+  if (Number(reading?.clientId) !== Number(clientId) || !reading?._docId) throw new Error('Invalid utility reading');
+  const unit = String(fields.unit || '').trim().toUpperCase();
+  const mode = String(fields.readingMode || '').trim().toUpperCase();
+  const type = String(fields.utilityType || '').trim().toUpperCase();
+  const amount = Number(fields.value);
+  const validUnit = mode === 'INSTANTANEOUS'
+    ? type === 'ELECTRICITY' && unit === 'KW' || type === 'WATER' && unit === 'L/MIN'
+    : type === 'ELECTRICITY' && unit === 'KWH' || type === 'WATER' && ['L','M3','M³'].includes(unit);
+  if (!Number.isFinite(amount) || amount < 0 || !validUnit || !['CUMULATIVE','INTERVAL','INSTANTANEOUS'].includes(mode))
+    throw new Error('Invalid utility reading value, mode or unit');
+  const newId = await nextUtilityReadingId(clientId);
+  const now = Date.now();
+  const replacement = {
+    id:newId, clientId:Number(clientId), berthId:Number(fields.berthId), assetId:reading.assetId ?? null,
+    utilityType:type, readingType:fields.readingType, readingMode:mode, value:amount,
+    unit:fields.unit, notes:fields.notes || '', source:'MANUAL', recordedAt:Number(reading.recordedAt || now),
+    correctionOf:reading._docId, createdAt:now, lastModified:now, lastModifiedBy:String(userId ?? '')
+  };
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'utility_readings', String(newId)), replacement);
+  batch.update(doc(db, 'utility_readings', String(reading._docId)), {
+    voidedAt:now, voidedBy:String(userId ?? ''), voidReason:'Corrected', correctedBy:String(newId),
+    lastModified:now, lastModifiedBy:String(userId ?? '')
+  });
+  await batch.commit();
   return newId;
 }
 
@@ -848,56 +904,39 @@ export async function prepareUtilityInvoice(clientId, berth) {
   }]));
   const charges = [];
 
-  for (const spec of [
-    { type: 'ELECTRICITY', readingType: 'ENERGY', unit: 'kWh', label: 'Electricity' },
-    { type: 'WATER', readingType: 'WATER_VOLUME', unit: 'L', label: 'Water' }
-  ]) {
-    const pair = readings
-      .filter(r => r.utilityType === spec.type &&
-        r.readingMode === 'CUMULATIVE' && r.readingType === spec.readingType)
-      .sort((a, b) => b.recordedAt - a.recordedAt)
-      .slice(0, 2);
-
-    if (pair.length < 2) continue;
-
-    const [latest, previous] = pair;
-    const quantity = latest.value - previous.value;
-    if (quantity < 0) throw new Error(`Invalid ${spec.label.toLowerCase()} meter readings`);
-
-    const tariff = await getActiveTariff(clientId, spec.type);
-    if (!tariff) throw new Error(`No ${spec.label.toLowerCase()} tariff is configured`);
-    if (tariff.pricingMode === 'INCLUDED' || quantity === 0) continue;
-
-    const chargeKey = `${clientId}_${berthId}_${spec.type}_${previous.id}_${latest.id}`;
+  const consumption = utilitySegments(clientId, readings);
+  if (consumption.issues.some(issue => !issue.informational)) throw new Error('Utility readings need review: duplicate times, invalid units or meter drops.');
+  const candidates = consumption.segments.filter(segment => segment.mode==='INTERVAL' ||
+    !consumption.segments.some(other => other.key===segment.key && other.at>segment.at));
+  for (const segment of candidates) {
+    const {type, quantity, unit, from:previous, to:latest} = segment;
+    if (quantity===0) continue;
+    const tariff = await getActiveTariff(clientId, type);
+    if (!tariff) throw new Error(`No ${type.toLowerCase()} tariff is configured`);
+    if (tariff.pricingMode === 'INCLUDED') continue;
+    if (tariff.pricingMode !== 'METERED') throw new Error('Unsupported utility pricing mode');
+    const tariffUnit = String(tariff.unit).trim().toUpperCase();
+    const factor = type==='WATER' && ['M3','M³'].includes(tariffUnit) ? 1000 : 1;
+    if (!(type==='ELECTRICITY' && tariffUnit==='KWH' || type==='WATER' && ['L','M3','M³'].includes(tariffUnit)) ||
+        !Number.isFinite(tariff.pricePerUnit) || tariff.pricePerUnit<0) throw new Error('Invalid utility tariff unit or rate');
+    const rate = tariff.pricePerUnit/factor;
+    // Preserve existing cumulative charge keys so previously billed pairs remain billed.
+    const chargeKey = segment.mode==='CUMULATIVE'
+      ? `${clientId}_${berthId}_${type}_${previous.id}_${latest.id}`
+      : `${clientId}_${berthId}_${type}_INTERVAL_${encodeURIComponent(latest._docId || latest.id)}`;
     let charge = existing.get(chargeKey);
-
     if (!charge) {
-      const amount = quantity * tariff.pricePerUnit;
-      const chargeRef = doc(db, 'utility_charges', chargeKey);
       charge = {
-        _docId: chargeKey,
-        chargeKey,
-        clientId,
-        berthId,
-        boatId,
-        customerId,
-        utilityType: spec.type,
-        unit: spec.unit,
-        fromReadingId: previous.id,
-        toReadingId: latest.id,
-        fromValue: previous.value,
-        toValue: latest.value,
-        quantity,
-        rate: tariff.pricePerUnit,
-        amount,
-        billed: false,
-        invoiceId: null,
-        invoiceDocId: null,
-        createdAt: Date.now()
+        _docId: chargeKey, chargeKey, clientId, berthId, boatId, customerId,
+        utilityType:type, unit, readingMode:segment.mode,
+        fromReadingId:previous?.id ?? null, toReadingId:latest.id,
+        fromValue:previous?.value ?? null, toValue:latest.value,
+        quantity, rate, amount:quantity*rate, billed:false,
+        invoiceId:null, invoiceDocId:null, createdAt:Date.now()
       };
-      await setDoc(chargeRef, charge);
+      if (!Number.isFinite(charge.amount)) throw new Error('Invalid utility charge amount');
+      await setDoc(doc(db, 'utility_charges', chargeKey), charge);
     }
-
     if (charge.billed !== true) charges.push(charge);
   }
 

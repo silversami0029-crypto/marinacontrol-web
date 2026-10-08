@@ -1,3 +1,4 @@
+import { utilitySegments } from './utilityConsumption.js';
 const DAY = 86400000;
 export function toMs(v) {
   if (v == null) return 0;
@@ -38,26 +39,21 @@ export function calculateTrends(clientId, start, records, options = {}) {
       if (!occupied.has(key)) { occupied.add(key); r.booked[idx(t)]++; }
     }
   }
-  const previous = new Map();
-  const readings = tenant(records.utility_readings).sort((a,b) => toMs(a.recordedAt)-toMs(b.recordedAt) || Number(a.id)-Number(b.id));
-  for (const v of readings) {
-    const time = toMs(v.recordedAt), i = idx(time), unit = String(v.unit || '').trim().toUpperCase();
-    const type = String(v.utilityType || '').toUpperCase();
-    const amount = v.value == null || v.value === '' ? NaN : Number(v.value);
-    if (v.readingMode !== 'CUMULATIVE' || time <= 0 || !Number.isFinite(amount) || amount < 0
-        || !(Number(v.berthId)>0 || Number(v.assetId)>0)
-        || !(type === 'ELECTRICITY' && unit === 'KWH' || type === 'WATER' && ['L','M3','M³'].includes(unit))) {
-      if (i >= 0) r.excludedReadings++; continue;
-    }
-    const key = JSON.stringify([Number(v.berthId)||0, Number(v.assetId)||0, type, v.readingType || '', unit]);
-    const prior = previous.get(key); previous.set(key, {time,amount});
-    if (!prior || i < 0) continue;
-    if (time <= prior.time) { r.excludedReadings++; continue; }
-    const delta = amount-prior.amount;
-    if (delta < 0) { r.meterDrops++; continue; }
-    if (monthStart(time) !== monthStart(prior.time)) r.crossMonthPairs++;
-    const metric = type === 'WATER' ? 'water' : 'electricity';
-    r[metric][i] += delta * (type === 'WATER' && unit !== 'L' ? 1000 : 1);
+  const utilities = utilitySegments(clientId, records.utility_readings);
+  r.utilityIssues = utilities.issues;
+  r.instantaneousReadings = utilities.instantaneous.filter(v=>idx(v.at)>=0);
+  r.mixedModeReadings = utilities.issues.filter(v=>v.reason==='MIXED_MODES' && idx(v.at)>=0).length;
+  for (const issue of utilities.issues) {
+    if (idx(issue.at)<0) continue;
+    if (issue.informational) continue;
+    r.excludedReadings++;
+    if (issue.reason==='METER_DROP') r.meterDrops++;
+  }
+  for (const segment of utilities.segments) {
+    const i = idx(segment.at); if (i<0) continue;
+    if (segment.from && monthStart(segment.at)!==monthStart(segment.from.at)) r.crossMonthPairs++;
+    const metric = segment.type==='WATER' ? 'water' : 'electricity';
+    r[metric][i] += segment.quantity;
     r[metric+'Pairs'][i]++;
   }
   for (const v of tenant(records.maintenance)) {

@@ -6,12 +6,13 @@ import { esc } from '../utils.js';
 
 const UTILITY_TYPES = ['ELECTRICITY', 'WATER'];
 const UNITS = { ELECTRICITY: 'kWh', WATER: 'L' };
+const message = (en, ar) => uiLocale().startsWith('ar') ? ar : en;
 const MODES = ['CUMULATIVE', 'INTERVAL', 'INSTANTANEOUS'];
 
 /* ============================================================
    ADD READING DIALOG
    ============================================================ */
-export function showAddReadingDialog(berth, onAddReading) {
+export function showAddReadingDialog(berth, onAddReading, options = {}) {
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
 
@@ -20,7 +21,7 @@ export function showAddReadingDialog(berth, onAddReading) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">${esc(tr("Add Berth Reading", {berth:berth.berthNumber}))}</div>
+    <div class="sheet-title" style="text-align:center;">${esc(options.title || tr("Add Berth Reading", {berth:berth.berthNumber}))}</div>
 
     <form id="utilForm" class="add-form" novalidate>
       <div class="add-scroll">
@@ -36,7 +37,7 @@ export function showAddReadingDialog(berth, onAddReading) {
         </select>
 
         <input class="add-input" id="utilValue"
-               type="number" step="0.01" placeholder="${tr("Meter reading")}">
+               type="number" min="0" step="any" placeholder="${tr("Meter reading")}">
 
         <input class="add-input" id="utilNotes"
                type="text" placeholder="${tr("Notes (optional)")}">
@@ -47,7 +48,7 @@ export function showAddReadingDialog(berth, onAddReading) {
 
       <div class="util-dialog-actions">
         <button type="button" class="util-cancel-btn" id="utilCancel">${tr("CANCEL")}</button>
-        <button type="submit" class="util-save-btn" id="utilSave">${tr("SAVE")}</button>
+        <button type="submit" class="util-save-btn" id="utilSave">${esc(options.saveLabel || tr("SAVE"))}</button>
       </div>
     </form>
   `;
@@ -68,7 +69,18 @@ export function showAddReadingDialog(berth, onAddReading) {
 
   const typeEl = sheet.querySelector('#utilType');
   const unitEl = sheet.querySelector('#utilUnit');
-  const syncUnit = () => { unitEl.value = UNITS[typeEl.value] || ''; };
+  const modeEl = sheet.querySelector('#utilMode');
+  if (options.initial) {
+    typeEl.value = options.initial.utilityType || options.initial.type || 'ELECTRICITY';
+    modeEl.value = options.initial.readingMode || options.initial.mode || 'CUMULATIVE';
+    sheet.querySelector('#utilValue').value = options.initial.value ?? '';
+    sheet.querySelector('#utilNotes').value = options.initial.notes || '';
+  }
+  const syncUnit = () => {
+    unitEl.value = modeEl.value==='INSTANTANEOUS' ? (typeEl.value==='ELECTRICITY' ? 'kW' : 'L/min') : UNITS[typeEl.value];
+    sheet.querySelector('#utilValue').placeholder = modeEl.value==='CUMULATIVE' ? tr('Meter reading') : modeEl.value==='INTERVAL' ? message('Consumption for one non-overlapping period','الاستهلاك لفترة واحدة غير متداخلة') : message('Current power or flow','القدرة أو التدفق الحالي');
+  };
+  modeEl.addEventListener('change', syncUnit);
   typeEl.addEventListener('change', syncUnit);
   syncUnit();
 
@@ -83,7 +95,7 @@ export function showAddReadingDialog(berth, onAddReading) {
     e.preventDefault();
 
     const value = parseFloat(valueInput.value);
-    if (isNaN(value)) { valueInput.focus(); return; }
+    if (!Number.isFinite(value) || value<0) { valueInput.focus(); return; }
 
     save.disabled = true;
     save.textContent = tr('SAVING…');
@@ -94,9 +106,9 @@ export function showAddReadingDialog(berth, onAddReading) {
         berthId:     berth.id,
         utilityType: type,
         value:       value,
-        unit:        UNITS[type],
+        unit:        unitEl.value,
         readingMode: sheet.querySelector('#utilMode').value,
-        readingType: type === 'ELECTRICITY' ? 'ENERGY' : 'WATER_VOLUME',
+        readingType: modeEl.value==='INSTANTANEOUS' ? (type==='ELECTRICITY' ? 'POWER' : 'WATER_FLOW') : (type==='ELECTRICITY' ? 'ENERGY' : 'WATER_VOLUME'),
         notes:       notesInput.value.trim()
       });
 
@@ -104,18 +116,19 @@ export function showAddReadingDialog(berth, onAddReading) {
       valueInput.value = '';
       notesInput.value = '';
       save.disabled = false;
-      save.textContent = tr('SAVE');
+      save.textContent = options.saveLabel || tr('SAVE');
+      if (options.closeOnSave) { close(); return; }
       valueInput.focus();
 
     } catch (err) {
       console.error('[utility] save failed', err);
       save.disabled = false;
-      save.textContent = tr('SAVE');
+      save.textContent = options.saveLabel || tr('SAVE');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');
         errEl.className = 'add-error';
-        form.insertBefore(errEl, save);
+        sheet.querySelector('.add-scroll').append(errEl);
       }
       errEl.textContent = err.message || tr('Failed to save reading.');
     }

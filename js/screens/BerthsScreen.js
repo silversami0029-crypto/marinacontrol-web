@@ -12,13 +12,15 @@ import { confirmSheet } from '../ui/confirm.js';
 import { showBerthHelp } from '../components/BerthHelpDialog.js';
 import { showAssignBoatSheet } from '../components/AssignBoatSheet.js';
 import { showAddReadingDialog } from '../components/UtilitiesSheet.js';
+import { utilityHistory } from '../analytics/utilityConsumption.js';
 import {
   listenForBerths,
   createBerth, deleteAllBerths, importBerthsFromRows,
   updateBerthStatus, updateBerth, deleteBerth,
   assignBoatToBerth, releaseBoatFromBerth,
   listenForUtilityReadings, createUtilityReading,
-  getActiveTariff, saveTariff, prepareUtilityInvoice
+  getActiveTariff, saveTariff, prepareUtilityInvoice,
+  voidUtilityReading, correctUtilityReading
 } from '../db.js';
 
 let unsubscribe = null;
@@ -496,7 +498,7 @@ function onViewBerth(berth) {
   const utilsId = 'viewUtil_' + berth.id;
 
   sheet.innerHTML = `
-    <div class="assign-handle"></div>
+    <button type="button" id="berthDetailCloseTop" aria-label="${t('Close')}" style="position:absolute;right:18px;top:16px;border:0;background:transparent;color:inherit;font-size:28px;line-height:1;cursor:pointer;">&times;</button>
     <div class="assign-title">${t("Berth Details")}</div>
     <div class="assign-divider"></div>
 
@@ -520,6 +522,7 @@ function onViewBerth(berth) {
     <div class="assign-divider"></div>
     <div class="view-berth-actions">
       <button class="view-berth-btn" id="viewAddReading">${t("+ Reading")}</button>
+      <button class="view-berth-btn" id="viewReadingHistory">${t("Reading History")}</button>
       <button class="view-berth-btn" id="viewTariffs">${t("£ Tariffs")}</button>
     </div>
     <button class="view-berth-generate" id="viewGenerate">${t("Generate Invoice")}</button>
@@ -540,10 +543,15 @@ function onViewBerth(berth) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('#berthDetailCloseTop').addEventListener('click', close);
   sheet.querySelector('#berthDetailClose').addEventListener('click', close);
 
   sheet.querySelector('#viewAddReading').addEventListener('click', () => {
     openAddReadingFromView(berth);
+  });
+
+  sheet.querySelector('#viewReadingHistory').addEventListener('click', () => {
+    openReadingHistory(berth);
   });
 
   sheet.querySelector('#viewTariffs').addEventListener('click', () => {
@@ -591,8 +599,9 @@ async function renderViewUtilities(berth, containerId) {
         return;
       }
 
-      const elec = latestTwoFor(readings, 'ELECTRICITY');
-      const water = latestTwoFor(readings, 'WATER');
+      const history = utilityHistory(store.activeClientId, readings);
+      const elec = latestFor(history, 'ELECTRICITY');
+      const water = latestFor(history, 'WATER');
 
       container.innerHTML = `
         ${renderViewUtilBlock('Electricity', elec, elecTariff, 'kWh')}
@@ -602,17 +611,12 @@ async function renderViewUtilities(berth, containerId) {
   );
 }
 
-function latestTwoFor(readings, type) {
-  const filtered = (readings || [])
-    .filter(r => r.utilityType === type)
-    .sort((a, b) => (b.recordedAt || 0) - (a.recordedAt || 0));
-  return {
-    latest: filtered[0] || null,
-    previous: filtered[1] || null
-  };
+function latestFor(history, type) {
+  const entries = history.entries.filter(r => r.type === type && !r.voided);
+  return { latest: entries[0] || null, mixed: new Set(entries.filter(r => r.mode !== 'INSTANTANEOUS').map(r => r.mode)).size > 1 };
 }
 
-function renderViewUtilBlock(label, { latest, previous }, tariff, unit) {
+function renderViewUtilBlock(label, { latest, mixed }, tariff, unit) {
   if (!latest) {
     return `
       <div class="view-util-block">
@@ -622,7 +626,7 @@ function renderViewUtilBlock(label, { latest, previous }, tariff, unit) {
     `;
   }
 
-  const consumption = previous ? (latest.value - previous.value) : null;
+  const consumption = latest.consumption;
   const pricingMode = tariff?.pricingMode || 'METERED';
   const price = tariff?.pricePerUnit || 0;
   const isIncluded = pricingMode === 'INCLUDED';
@@ -635,12 +639,140 @@ function renderViewUtilBlock(label, { latest, previous }, tariff, unit) {
   return `
     <div class="view-util-block">
       <div class="view-util-label">${tr(label)}</div>
-      <div class="view-util-line">Latest: ${latest.value} ${unit}</div>
-      ${consumption != null ? `<div class="view-util-line">Since last reading: ${consumption.toFixed(2)} ${unit}</div>` : ''}
+      <div class="view-util-line">${t('Latest')}: ${latest.value} ${escapeHtml(latest.unit || unit)} <span class="util-mode-badge">${t(latest.mode)}</span></div>
+      ${consumption != null ? `<div class="view-util-line">${t('Calculated consumption')}: ${consumption.toFixed(2)} ${unit}</div>` : `<div class="view-util-line view-util-empty">${latest.mode === 'INSTANTANEOUS' ? t('Instantaneous readings are not consumption') : t('A previous cumulative reading is required')}</div>`}
+      ${mixed ? `<div class="view-util-line util-warning">${t('Mixed reading modes are calculated separately')}</div>` : ''}
       <div class="view-util-line">${tariffLine}</div>
       ${consumption != null && !isIncluded ? `<div class="view-util-line">Charge: £${charge.toFixed(2)}</div>` : ''}
     </div>
   `;
+}
+
+function openReadingHistory(berth) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sheet-backdrop';
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet berth-details-sheet';
+  sheet.innerHTML = `
+    <button type="button" data-close aria-label="${t('Close')}" style="position:absolute;right:18px;top:16px;border:0;background:transparent;color:inherit;font-size:28px;line-height:1;">&times;</button>
+    <div class="sheet-title" style="text-align:center;">${t('Reading History')} · ${escapeHtml(berth.berthNumber || '')}</div>
+    <div style="display:flex;gap:8px;padding:12px 18px;">
+      <button type="button" class="view-berth-btn" data-filter="ALL" style="height:42px;min-width:72px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">${t('All')}</button>
+      <button type="button" class="view-berth-btn" data-filter="ELECTRICITY" style="height:42px;min-width:112px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">${t('Electricity')}</button>
+      <button type="button" class="view-berth-btn" data-filter="WATER" style="height:42px;min-width:88px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">${t('Water')}</button>
+    </div>
+    <div class="add-scroll" data-history style="padding:0 18px 24px;overflow:auto;"><div class="view-util-empty">${t('Loading…')}</div></div>`;
+  document.getElementById('modalRoot').append(backdrop, sheet);
+  requestAnimationFrame(() => { backdrop.classList.add('is-open'); sheet.classList.add('is-open'); });
+  let filter = 'ALL', unsub = null, cached = [];
+  const close = () => {
+    if (unsub) unsub();
+    backdrop.classList.remove('is-open'); sheet.classList.remove('is-open');
+    setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
+  };
+  const draw = () => {
+    const result = utilityHistory(store.activeClientId, cached);
+    const entries = result.entries.filter(r => filter === 'ALL' || r.type === filter);
+    const modes = new Set(entries.filter(r => !r.voided && r.mode !== 'INSTANTANEOUS').map(r => `${r.type}:${r.mode}`));
+    const mixedTypes = ['ELECTRICITY', 'WATER'].filter(type =>
+      [...modes].some(v => v === `${type}:CUMULATIVE`) && [...modes].some(v => v === `${type}:INTERVAL`));
+    sheet.querySelector('[data-history]').innerHTML = `
+      ${mixedTypes.length ? `<div class="util-warning" style="padding:12px;margin-bottom:10px;border:1px solid currentColor;border-radius:12px;">${t('Mixed reading modes are calculated separately')}</div>` : ''}
+      ${entries.length ? entries.map(reading => renderHistoryEntry(reading)).join('') : `<div class="view-util-empty">${t('No readings recorded')}</div>`}`;
+    sheet.querySelectorAll('[data-void]').forEach(button => button.onclick = () => voidHistoryReading(entries.find(r => String(r._docId) === button.dataset.void)));
+    sheet.querySelectorAll('[data-correct]').forEach(button => button.onclick = () => correctHistoryReading(berth, entries.find(r => String(r._docId) === button.dataset.correct)));
+  };
+  const renderHistoryEntry = reading => {
+    const when = reading.at ? new Intl.DateTimeFormat(uiLocale(), {dateStyle:'medium', timeStyle:'short'}).format(reading.at) : '—';
+    const calculated = reading.consumption == null ? (reading.mode === 'INSTANTANEOUS' ? t('Informational only') : t('Baseline / not calculated')) : `${reading.consumption.toFixed(2)} ${escapeHtml(reading.unit)}`;
+    return `<div class="view-util-block" style="margin-bottom:10px;${reading.voided ? 'opacity:.55;' : ''}">
+      <div class="view-util-label">${t(reading.type === 'WATER' ? 'Water' : 'Electricity')} <span class="util-mode-badge">${t(reading.mode)}</span>${reading.voided ? ` <span class="util-mode-badge">${t('VOID')}</span>` : ''}</div>
+      <div class="view-util-line">${escapeHtml(when)} · ${reading.value} ${escapeHtml(reading.unit)}</div>
+      <div class="view-util-line">${t('Calculated consumption')}: ${calculated}</div>
+      ${reading.notes ? `<div class="view-util-line">${escapeHtml(reading.notes)}</div>` : ''}
+      ${reading.voided && reading.voidReason ? `<div class="view-util-line">${t('Reason')}: ${escapeHtml(reading.voidReason)}</div>` : ''}
+      ${!reading.voided ? `<div style="display:flex;gap:10px;margin-top:12px;"><button type="button" class="view-berth-btn" data-correct="${escapeAttr(reading._docId)}" style="height:42px;min-width:96px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">${t('Correct')}</button><button type="button" class="view-berth-btn" data-void="${escapeAttr(reading._docId)}" style="height:42px;min-width:76px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">${t('Void')}</button></div>` : ''}
+    </div>`;
+  };
+  const voidHistoryReading = async reading => {
+    if (!reading) return;
+    const reason = await showVoidReadingSheet(reading);
+    if (reason == null) return;
+    try {
+      await voidUtilityReading(store.activeClientId, reading, store.userProfile?.userId || 0, reason);
+      toast(t('Reading voided'), {kind:'success'});
+    } catch (err) { toast(err.message || t('Unable to void reading'), {kind:'error'}); }
+  };
+  const correctHistoryReading = (targetBerth, reading) => {
+    if (!reading) return;
+    showAddReadingDialog(targetBerth, async fields => {
+      await correctUtilityReading(store.activeClientId, reading, store.userProfile?.userId || 0, fields);
+      toast(t('Correction saved'), {kind:'success'});
+    }, { initial: reading, title: t('Correct Reading'), saveLabel: t('SAVE CORRECTION'), closeOnSave: true });
+  };
+  backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-close]').addEventListener('click', close);
+  sheet.querySelectorAll('[data-filter]').forEach(button => button.onclick = () => { filter = button.dataset.filter; draw(); });
+  unsub = listenForUtilityReadings(store.activeClientId, berth.id, (readings, err) => {
+    if (err) { sheet.querySelector('[data-history]').innerHTML = `<div class="view-util-empty">${t('Failed to load')}</div>`; return; }
+    cached = readings; draw();
+  });
+}
+
+function showVoidReadingSheet(reading) {
+  return new Promise(resolve => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'sheet-backdrop';
+    const sheet = document.createElement('div');
+    sheet.className = 'sheet';
+    sheet.innerHTML = `
+      <button type="button" data-close aria-label="${t('Close')}" style="position:absolute;right:18px;top:16px;border:0;background:transparent;color:inherit;font-size:28px;line-height:1;cursor:pointer;">&times;</button>
+      <div class="sheet-title" style="text-align:center;padding:4px 44px 0;">${t('Void Reading')}</div>
+      <form class="add-form" data-form novalidate>
+        <div class="add-scroll">
+          <div class="view-util-block" style="margin-bottom:16px;">
+            <div class="view-util-label">${t(reading.type === 'WATER' ? 'Water' : 'Electricity')} · ${t(reading.mode)}</div>
+            <div class="view-util-line">${reading.value} ${escapeHtml(reading.unit || '')}</div>
+          </div>
+          <label class="add-section-title" for="voidReason">${t('Reason for voiding this reading')}</label>
+          <textarea class="add-input" id="voidReason" rows="3" maxlength="250" placeholder="${t('Enter a reason')}" style="min-height:92px;resize:vertical;"></textarea>
+          <div class="add-error" data-error hidden>${t('Please enter a reason')}</div>
+        </div>
+        <div class="util-dialog-actions">
+          <button type="button" class="util-cancel-btn" data-cancel>${t('CANCEL')}</button>
+          <button type="submit" class="util-save-btn" data-confirm>${t('VOID READING')}</button>
+        </div>
+      </form>`;
+    document.getElementById('modalRoot').append(backdrop, sheet);
+    requestAnimationFrame(() => {
+      backdrop.classList.add('is-open');
+      sheet.classList.add('is-open');
+      sheet.querySelector('#voidReason').focus();
+    });
+    let finished = false;
+    const close = value => {
+      if (finished) return;
+      finished = true;
+      backdrop.classList.remove('is-open');
+      sheet.classList.remove('is-open');
+      setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
+      resolve(value);
+    };
+    backdrop.addEventListener('click', () => close(null));
+    sheet.querySelector('[data-close]').addEventListener('click', () => close(null));
+    sheet.querySelector('[data-cancel]').addEventListener('click', () => close(null));
+    sheet.querySelector('[data-form]').addEventListener('submit', event => {
+      event.preventDefault();
+      const input = sheet.querySelector('#voidReason');
+      const reason = input.value.trim();
+      if (!reason) {
+        sheet.querySelector('[data-error]').hidden = false;
+        input.focus();
+        return;
+      }
+      close(reason);
+    });
+  });
 }
 
 function openAddReadingFromView(berth) {
