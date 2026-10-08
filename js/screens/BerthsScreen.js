@@ -12,6 +12,10 @@ import { confirmSheet } from '../ui/confirm.js';
 import { showBerthHelp } from '../components/BerthHelpDialog.js';
 import { showAssignBoatSheet } from '../components/AssignBoatSheet.js';
 import { showAddReadingDialog } from '../components/UtilitiesSheet.js';
+import {
+  findActiveBookingForBerth,
+  showBookingDetailsSheet
+} from './BookingDetailsSheet.js';
 import { utilityHistory } from '../analytics/utilityConsumption.js';
 import {
   listenForBerths,
@@ -454,19 +458,50 @@ async function onDeleteAll() {
 /* ============================================================
    BERTH MENU
    ============================================================ */
-function openBerthMenu(berth) {
-  showBerthMenu(berth, {
+async function openBerthMenu(berth) {
+  let activeBooking = null;
+
+  try {
+    activeBooking = await findActiveBookingForBerth(
+      store.activeClientId,
+      berth.id
+    );
+  } catch (err) {
+    console.error('[berth booking] lookup failed', err);
+    toast(tr('Failed to load booking'), { kind: 'error' });
+  }
+
+  const berthWithBooking = { ...berth, activeBooking };
+
+  showBerthMenu(berthWithBooking, {
     onSetAvailable:   onSetStatus('AVAILABLE'),
     onSetOccupied:    onSetStatus('OCCUPIED'),
     onSetMaintenance: onSetStatus('MAINTENANCE'),
-    onBookBerth:      () => toast(tr('Booking coming soon')),
-    onViewBooking:    () => toast(tr('View booking coming soon')),
+    onViewBooking:    onViewBooking,
     onAssignBoat:     onAssignBoat,
     onReleaseBoat:    onReleaseBoat,
     onViewBerth:      onViewBerth,
     onUtilities:      onViewBerth,
     onEditBerth:      onEditBerth,
     onDeleteBerth:    onDeleteBerth
+  });
+}
+
+function onViewBooking(berth) {
+  if (!berth.activeBooking) {
+    toast(tr('No active booking found'), { kind: 'error' });
+    return;
+  }
+
+  showBookingDetailsSheet({
+    booking: berth.activeBooking,
+    berth,
+    onCheckedIn: () => {
+      toast(
+        tr(`${berth.activeBooking.vesselName || 'Vessel'} checked in`),
+        { kind: 'success' }
+      );
+    }
   });
 }
 
