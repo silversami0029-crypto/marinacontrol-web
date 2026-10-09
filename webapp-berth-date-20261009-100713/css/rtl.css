@@ -1,0 +1,50 @@
+/* Loaded after the existing styles. English retains its original layout. */
+.language-picker { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-block:14px; }
+.language-picker select { color:inherit; background:var(--color-surface,#151a20); border:1px solid #388dcc; border-radius:8px; padding:8px 12px; font:inherit; }
+html[dir="rtl"] body { font-family:Tahoma,Arial,sans-serif; }
+html[dir="rtl"] .drawer { left:auto; right:0; border-right:0; border-left:1px solid var(--color-divider); transform:translateX(100%); }
+html[dir="rtl"] .drawer.is-open { transform:translateX(0); }
+html[dir="rtl"] .drawer-user-info,
+html[dir="rtl"] .drawer-item-label,
+html[dir="rtl"] .sheet-item-title,
+html[dir="rtl"] .sheet-item-subtitle { text-align:start; }
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="number"],
+html[dir="rtl"] input[type="date"] { direction:ltr; }
+html[dir="rtl"] textarea { unicode-bidi:plaintext; }
+@media (min-width:768px) {
+  html[dir="rtl"] .drawer { left:auto !important; right:0 !important; transform:translateX(0) !important; }
+  html[dir="rtl"] body { margin-left:0 !important; margin-right:284px !important; }
+  html[dir="rtl"] .topbar { left:0 !important; right:284px !important; }
+  html[dir="rtl"] .bottomnav { left:auto !important; right:284px !important; }
+  html[dir="rtl"] .fab,
+  html[dir="rtl"] .um-fab { left:auto !important; right:calc(284px + var(--phone-w) - 16px) !important; transform:translateX(100%) !important; }
+  html[dir="rtl"] .bulk-btn { left:auto !important; right:300px !important; }
+  html[dir="rtl"] .bulk-bar { left:auto !important; right:350px !important; }
+  html[dir="rtl"] .sheet,
+  html[dir="rtl"] .confirm-sheet { left:calc((100% - 284px) / 2) !important; right:auto !important; }
+}
+
+html[dir="rtl"] .sheet-chevron { transform:rotate(180deg); }
+html[dir="rtl"] .berth-menu-label { text-align:start; }
+
+/* Forms and detail screens use logical alignment; user values keep their own bidi order. */
+html[dir="rtl"] .add-label,
+html[dir="rtl"] .add-section-title,
+html[dir="rtl"] .md-body,
+html[dir="rtl"] .doc-info,
+html[dir="rtl"] .eq-info,
+html[dir="rtl"] .dash-tile-text,
+html[dir="rtl"] .iv-info { text-align:start; }
+html[dir="rtl"] .md-value { unicode-bidi:plaintext; }
+html[dir="rtl"] .iv-amount,
+html[dir="rtl"] .iv-summary-value,
+html[dir="rtl"] .iv-number { direction:ltr; unicode-bidi:isolate; }
+html[dir="rtl"] .dash-back svg,
+html[dir="rtl"] [id$="Back"] svg { transform:rotate(180deg); }
+html[dir="rtl"] [id="iv-close"] { right:auto !important; left:0 !important; }
+html[dir="rtl"] .cm-fab { right:auto; left:18px; }
+html[dir="rtl"] .help-body { white-space:pre-line; }
+
+html[dir="rtl"] .help-tips { white-space:pre-line; }

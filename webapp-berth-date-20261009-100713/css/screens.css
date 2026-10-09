@@ -1006,84 +1006,6 @@ body {
   font-weight: 700;
 }
 
-.berth-date-filter {
-  width: calc(100% - 28px);
-  min-height: 40px;
-  margin: 10px 14px 2px;
-  padding: 7px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  border: 1px solid var(--color-water-blue);
-  border-radius: 14px;
-  background: var(--color-surface);
-  color: var(--color-water-blue);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.berth-date-filter:hover { background: rgba(33,150,243,.08); }
-
-.berth-date-sheet { padding: 10px 0 16px; }
-
-.berth-date-item {
-  width: 100%;
-  border: 0;
-  color: inherit;
-  font: inherit;
-  text-align: start;
-}
-
-.berth-date-item + .berth-date-item { margin-top: 8px; }
-.berth-date-item .sheet-item-title,
-.berth-date-item .sheet-item-subtitle { display: block; }
-
-.berth-date-fields {
-  display: grid;
-  gap: 14px;
-  padding: 8px 20px 14px;
-}
-
-.berth-date-fields label {
-  display: grid;
-  gap: 7px;
-  color: var(--color-text-secondary);
-  font-size: 13px;
-}
-
-.berth-date-fields input {
-  width: 100%;
-  height: 48px;
-  box-sizing: border-box;
-  padding: 0 14px;
-  border: 1px solid var(--color-divider);
-  border-radius: 14px;
-  background: var(--color-bg);
-  color: var(--color-text-primary);
-  color-scheme: dark;
-  font: inherit;
-  outline: none;
-}
-
-.berth-date-fields input:focus {
-  border-color: var(--color-water-blue);
-  box-shadow: 0 0 0 3px rgba(33,150,243,.12);
-}
-
-.berth-date-error {
-  min-height: 18px;
-  color: #E5484D;
-  font-size: 13px;
-}
-
-.berth-date-sheet .add-save,
-.berth-date-sheet .assign-cancel {
-  width: calc(100% - 32px);
-  margin-inline: 16px;
-}
-
 .berth-search {
   display: flex;
   align-items: center;
@@ -1366,33 +1288,6 @@ body {
 .bkr-detail-row:last-of-type { border-bottom: none; }
 .bkr-detail-row span { color: var(--color-text-secondary); }
 .bkr-detail-row b { color: var(--color-text-primary); font-weight: 700; text-align: right; }
-
-.berth-shore-power-fields {
-  margin-top: 14px;
-  padding: 14px;
-  border: 1px solid var(--color-divider);
-  border-radius: 14px;
-  background: var(--color-bg);
-}
-.berth-shore-power-fields[hidden] { display: none; }
-.berth-shore-power-fields .add-section-title { margin: 0 0 12px; }
-.berth-shore-power-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.berth-shore-power-grid label { display: grid; gap: 6px; min-width: 0; color: var(--color-text-secondary); font-size: 13px; }
-.berth-shore-power-grid .add-input { width: 100%; margin: 0; }
-.shore-power-warning {
-  display: grid;
-  gap: 6px;
-  margin-top: 14px;
-  padding: 12px 14px;
-  border: 1px solid #F5A524;
-  border-radius: 12px;
-  background: rgba(245,165,36,.08);
-  color: #FFD18A;
-  font-size: 13px;
-  line-height: 1.45;
-}
-.shore-power-warning strong { color: #FFD18A; }
-@media (max-width: 420px) { .berth-shore-power-grid { grid-template-columns: 1fr; } }
 
 .bkr-detail-message-label {
   font-size: 11px;

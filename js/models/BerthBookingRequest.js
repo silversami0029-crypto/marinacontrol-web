@@ -27,6 +27,10 @@ export class BerthBookingRequest {
     this.vesselBeam         = raw.vesselBeam      != null ? Number(raw.vesselBeam)      : null;
     this.vesselDraft        = raw.vesselDraft     != null ? Number(raw.vesselDraft)     : null;
     this.vesselAirDraft     = raw.vesselAirDraft  != null ? Number(raw.vesselAirDraft)  : null;
+    this.shorePowerAmps     = raw.shorePowerAmps != null ? Number(raw.shorePowerAmps) : null;
+    this.shorePowerVoltage  = raw.shorePowerVoltage != null ? Number(raw.shorePowerVoltage) : null;
+    this.shorePowerPhase    = raw.shorePowerPhase || null;
+    this.shorePowerConnections = raw.shorePowerConnections != null ? Number(raw.shorePowerConnections) : null;
 
     this.arrivalDate        = raw.arrivalDate   != null ? Number(raw.arrivalDate)   : null;
     this.departureDate      = raw.departureDate != null ? Number(raw.departureDate) : null;

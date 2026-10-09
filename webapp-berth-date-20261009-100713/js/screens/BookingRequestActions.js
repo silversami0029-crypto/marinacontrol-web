@@ -40,12 +40,24 @@ export async function approveBookingRequest(request) {
   }
 
   const clientId = Number(store.activeClientId);
-  const matchedBoat = await findBoatByName(clientId, request.vesselName);
-  const bookingBoat = matchedBoat
-    ? boatForCurrentRequest(matchedBoat, request)
-    : draftBoatFromRequest(request);
+  let matchedBoat = await findBoatByName(clientId, request.vesselName);
 
-  const suitable = await findSuitableBerths(clientId, bookingBoat, request.arrivalDate, request.departureDate, request);
+  if (!matchedBoat) {
+    const confirmed = await confirmSheet({
+      title: 'Vessel not registered',
+      message: tr(`${request.vesselName} is not registered in MarinaControl.\n\nCreate this vessel from the request?`),
+      confirmText: tr('Create'),
+      cancelText: tr('Cancel')
+    });
+    if (!confirmed) return;
+    matchedBoat = await createBoatFromRequest(clientId, request);
+    if (!matchedBoat) {
+      toast(tr('Could not create vessel'), { kind: 'error' });
+      return;
+    }
+  }
+
+  const suitable = await findSuitableBerths(clientId, matchedBoat, request.arrivalDate, request.departureDate);
 
   if (!suitable.length) {
     toast(tr('No compatible berths available for those dates'), { kind: 'error', duration: 4000 });
@@ -53,38 +65,13 @@ export async function approveBookingRequest(request) {
   }
 
   if (Number(store.activeClientId) !== clientId) return;
-  showBerthPicker(suitable, bookingBoat, request);
+  showBerthPicker(suitable, matchedBoat, request);
   } catch (err) {
     console.error('[approve] failed', err);
     toast(tr('Failed to create booking'), { kind: 'error' });
   } finally {
     approvalInProgress.delete(key);
   }
-}
-
-function boatForCurrentRequest(boat, request) {
-  return {
-    ...boat,
-    name: request.vesselName || boat.name,
-    length: request.vesselLength != null ? Number(request.vesselLength) : Number(boat.length || 0),
-    beam: request.vesselBeam != null ? Number(request.vesselBeam) : Number(boat.beam || 0),
-    draft: request.vesselDraft != null ? Number(request.vesselDraft) : Number(boat.draft || 0),
-    airDraft: request.vesselAirDraft != null ? Number(request.vesselAirDraft) : Number(boat.airDraft || 0)
-  };
-}
-
-function draftBoatFromRequest(request) {
-  return {
-    id: 0,
-    customerId: 0,
-    name: request.vesselName || '',
-    mmsi: null,
-    length: Number(request.vesselLength || 0),
-    beam: Number(request.vesselBeam || 0),
-    draft: Number(request.vesselDraft || 0),
-    airDraft: Number(request.vesselAirDraft || 0),
-    _pendingCreate: true
-  };
 }
 
 async function findBoatByName(clientId, vesselName) {
@@ -137,7 +124,7 @@ async function createBoatFromRequest(clientId, request) {
   }
 }
 
-async function findSuitableBerths(clientId, boat, arrival, departure, request) {
+async function findSuitableBerths(clientId, boat, arrival, departure) {
   const suitable = [];
 
   try {
@@ -148,7 +135,7 @@ async function findSuitableBerths(clientId, boat, arrival, departure, request) {
 
       if (String(berth.status || '').toUpperCase() === 'MAINTENANCE') continue;
 
-      const fit = checkFit(boat, berth, request);
+      const fit = checkFit(boat, berth);
       if (fit.failures.length > 0) continue;
 
       const overlap = await countOverlapping(clientId, berth.id, arrival, departure);
@@ -243,67 +230,8 @@ function showBerthPicker(berths, boat, request) {
       if (!berth) return;
       selected = true;
       close();
-      showBookingConfirmation(request, boat, berth);
+      await createBooking(request, boat, berth);
     });
-  });
-}
-
-function showBookingConfirmation(request, boat, berth) {
-  const fit = checkFit(boat, berth, request);
-  const backdrop = document.createElement('div');
-  backdrop.className = 'sheet-backdrop';
-  const sheet = document.createElement('div');
-  sheet.className = 'sheet';
-  sheet.innerHTML = `
-    <div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;min-height:48px;background:var(--color-surface,#1C222A);">
-      <div class="sheet-title" style="flex:1;margin:0;padding:12px 48px;text-align:center;">${tr('Confirm Booking')}</div>
-      <button type="button" data-sheet-close aria-label="${tr('Close')}" style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#F5F7F9;cursor:pointer;">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </div>
-    <div class="bkr-detail-body">
-      <div class="bkr-detail-row"><span>${tr('Vessel')}</span><b>${escapeHtml(boat.name || request.vesselName || '')}</b></div>
-      ${boat._pendingCreate ? `<div class="bkr-detail-row"><span>${tr('Vessel record')}</span><b>${tr('Created when booking is confirmed')}</b></div>` : ''}
-      <div class="bkr-detail-row"><span>${tr('Berth')}</span><b>${escapeHtml([berth.dockName, berth.berthNumber].filter(Boolean).join(' · '))}</b></div>
-      <div class="bkr-detail-row"><span>${tr('Arrival')}</span><b>${escapeHtml(formatDate(request.arrivalDate))}</b></div>
-      <div class="bkr-detail-row"><span>${tr('Departure')}</span><b>${escapeHtml(formatDate(request.departureDate))}</b></div>
-      <div class="bkr-detail-row"><span>${tr('Shore power requested')}</span><b>${escapeHtml(formatShorePower(request))}</b></div>
-      <div class="bkr-detail-row"><span>${tr('Berth shore power')}</span><b>${escapeHtml(berth.hasElectric ? formatShorePower(berth) : tr('No electricity'))}</b></div>
-      ${fit.warnings.length ? `<div class="shore-power-warning"><strong>${tr('Compatibility warning')}</strong>${fit.warnings.map(warning => `<span>${escapeHtml(warning)}</span>`).join('')}</div>` : ''}
-    </div>
-    <button type="button" class="add-save" data-confirm>${tr('Confirm Booking')}</button>
-    <button type="button" class="assign-cancel" data-cancel>${tr('Cancel')}</button>`;
-  document.getElementById('modalRoot').append(backdrop, sheet);
-  requestAnimationFrame(() => { backdrop.classList.add('is-open'); sheet.classList.add('is-open'); });
-  let busy = false;
-  const close = () => {
-    if (busy) return;
-    backdrop.classList.remove('is-open');
-    sheet.classList.remove('is-open');
-    setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
-  };
-  backdrop.addEventListener('click', close);
-  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
-  sheet.querySelector('[data-cancel]').addEventListener('click', close);
-  sheet.querySelector('[data-confirm]').addEventListener('click', async () => {
-    if (busy) return;
-    busy = true;
-    sheet.querySelectorAll('button').forEach(button => { button.disabled = true; });
-    let confirmedBoat = boat;
-    if (boat._pendingCreate) {
-      confirmedBoat = await createBoatFromRequest(Number(store.activeClientId), request);
-      if (!confirmedBoat) {
-        busy = false;
-        sheet.querySelectorAll('button').forEach(button => { button.disabled = false; });
-        toast(tr('Could not create vessel'), { kind: 'error' });
-        return;
-      }
-      confirmedBoat = boatForCurrentRequest(confirmedBoat, request);
-    }
-    await createBooking(request, confirmedBoat, berth);
-    busy = false;
-    backdrop.remove();
-    sheet.remove();
   });
 }
 
@@ -583,16 +511,6 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
-}
-
-function formatShorePower(source) {
-  const values = [];
-  if (source?.shorePowerAmps != null) values.push(`${source.shorePowerAmps}A`);
-  if (source?.shorePowerVoltage != null) values.push(`${source.shorePowerVoltage}V`);
-  const phase = String(source?.shorePowerPhase || '').trim().toUpperCase().replace(/[- ]/g, '_');
-  if (phase) values.push(phase === 'THREE_PHASE' ? tr('Three-phase') : tr('Single-phase'));
-  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${tr(source.shorePowerConnections === 1 ? 'connection' : 'connections')}`);
-  return values.length ? values.join(' · ') : tr('Not specified');
 }
 function showDateProposal(request) {
   const clientId = Number(store.activeClientId);

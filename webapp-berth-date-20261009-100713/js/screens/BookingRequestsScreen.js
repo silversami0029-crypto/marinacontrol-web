@@ -280,7 +280,6 @@ async function showDetail(r) {
 
       ${r.status==='DECLINED'?`<div class="bkr-detail-row"><span>${t('Decline reason')}</span><b>${esc(t(DECLINE_REASONS[r.declineReasonCode]||'Reason not recorded'))}</b></div>${r.declineNote?`<div class="bkr-detail-message-label">${t('Internal note')}</div><div class="bkr-detail-message">${esc(r.declineNote)}</div>`:''}`:''}
       <div class="bkr-detail-row"><span>${t('Vessel dimensions')}</span><b>${esc([r.vesselLength != null ? `${t('Length')}: ${r.vesselLength} m` : '', r.vesselBeam != null ? `${t('Beam')}: ${r.vesselBeam} m` : '', r.vesselDraft != null ? `${t('Draft')}: ${r.vesselDraft} m` : ''].filter(Boolean).join(' · ') || t('Not provided'))}</b></div>
-      <div class="bkr-detail-row"><span>${t('Shore power requested')}</span><b>${esc(formatShorePower(r))}</b></div>
       ${renderBookingTimeline(r)}
       ${r.dateProposal ? `<div class="bkr-detail-row"><span>${t("Date proposal")}</span><b>${esc(r.dateProposal.state)} · ${esc(r.dateProposal.delivery)}</b></div>` : ''}
       ${r.latestOwnerReply?.text ? `<div class="bkr-detail-message-label">${t("Owner reply — review before recording acceptance")}</div><div class="bkr-detail-message">${esc(r.latestOwnerReply.text)}</div>` : ''}
@@ -339,15 +338,6 @@ function escapeHtml(s) {
 
 function esc(s) {
   return escapeHtml(s);
-}
-function formatShorePower(source) {
-  const values = [];
-  if (source?.shorePowerAmps != null) values.push(`${source.shorePowerAmps}A`);
-  if (source?.shorePowerVoltage != null) values.push(`${source.shorePowerVoltage}V`);
-  const phase = String(source?.shorePowerPhase || '').trim().toUpperCase().replace(/[- ]/g, '_');
-  if (phase) values.push(phase === 'THREE_PHASE' ? t('Three-phase') : t('Single-phase'));
-  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${t(source.shorePowerConnections === 1 ? 'connection' : 'connections')}`);
-  return values.length ? values.join(' · ') : t('Not specified');
 }
 async function resolveRequestBerth(request, clientId) {
   const saved = [request.assignedDockName, request.assignedBerthNumber || request.berthNumber].filter(Boolean).join(' ');

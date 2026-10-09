@@ -6,7 +6,6 @@ import { t, getLocale, languagePicker } from '../i18n.js';
 import { renderBerthCard } from '../components/BerthCard.js';
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
-import { wireBookingDatePicker } from '../ui/BookingDatePicker.js';
 import { showBerthToolbarMenu } from '../components/BerthToolbarMenu.js';
 import { showBerthMenu } from '../components/BerthMenuSheet.js';
 import { confirmSheet } from '../ui/confirm.js';
@@ -33,7 +32,6 @@ let unsubscribe = null;
 let bookingUnsubscribe = null;
 let searchQuery = '';
 let viewUtilUnsub = null;
-let berthDateView = { mode: 'TODAY', start: null, end: null, label: 'Viewing: Today' };
 
 export function mountBerthsScreen() {
   if (!store.activeClientId) {
@@ -46,7 +44,6 @@ export function mountBerthsScreen() {
   }
 
   searchQuery = '';
-  berthDateView = { mode: 'TODAY', start: null, end: null, label: 'Viewing: Today' };
   store.berthBookings = [];
 
   const screen = document.getElementById('screen');
@@ -82,12 +79,6 @@ export function mountBerthsScreen() {
       </div>
 
       <div class="berth-summary" id="berthSummary">${t("Loading...")}</div>
-      <button type="button" class="berth-date-filter" id="berthDateFilter">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="7"/><line x1="16" y1="2" x2="16" y2="7"/>
-        </svg>
-        <span id="berthDateFilterLabel">${t("Viewing: Today")}</span>
-      </button>
     </div>
 
     <div class="berth-search" id="berthSearch" hidden>
@@ -103,7 +94,6 @@ export function mountBerthsScreen() {
 
   document.getElementById('berthHelp').addEventListener('click', showBerthHelp);
   document.getElementById('berthMenuBtn').addEventListener('click', openToolbarMenu);
-  document.getElementById('berthDateFilter').addEventListener('click', showBerthDateFilterSheet);
 
   setupSearch();
 
@@ -179,178 +169,13 @@ function applySearch(berths) {
   );
 }
 
-function showBerthDateFilterSheet() {
-  const backdrop = document.createElement('div');
-  backdrop.className = 'sheet-backdrop';
-  const sheet = document.createElement('div');
-  sheet.className = 'sheet berth-date-sheet';
-  sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">${t('Berth Date View')}</div>
-    ${dateViewItem('dateViewToday', 'Today', 'Live berth status')}
-    ${dateViewItem('dateViewSingle', 'Select a date', 'View bookings and availability for one day')}
-    ${dateViewItem('dateViewRange', 'Custom stay dates', 'Check availability from arrival to departure')}
-    <button type="button" class="assign-cancel berth-date-cancel">${t('Cancel')}</button>
-  `;
-  document.getElementById('modalRoot').append(backdrop, sheet);
-
-  const close = () => closeDateSheet(backdrop, sheet);
-  backdrop.addEventListener('click', close);
-  sheet.querySelector('.berth-date-cancel').addEventListener('click', close);
-  sheet.querySelector('#dateViewToday').addEventListener('click', () => {
-    close();
-    berthDateView = { mode: 'TODAY', start: null, end: null, label: 'Viewing: Today' };
-    updateDateFilterLabel();
-    renderBerthGrid();
-    updateSummary();
-  });
-  sheet.querySelector('#dateViewSingle').addEventListener('click', () => {
-    close();
-    setTimeout(() => showDateInputSheet(false), 230);
-  });
-  sheet.querySelector('#dateViewRange').addEventListener('click', () => {
-    close();
-    setTimeout(() => showDateInputSheet(true), 230);
-  });
-
-  requestAnimationFrame(() => {
-    backdrop.classList.add('is-open');
-    sheet.classList.add('is-open');
-  });
-}
-
-function dateViewItem(id, title, subtitle) {
-  return `
-    <button type="button" class="sheet-item berth-date-item" id="${id}">
-      <span class="sheet-item-icon">
-        <svg class="sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="7"/><line x1="16" y1="2" x2="16" y2="7"/></svg>
-      </span>
-      <span class="sheet-item-text"><span class="sheet-item-title">${t(title)}</span><span class="sheet-item-subtitle">${t(subtitle)}</span></span>
-      <span class="sheet-chevron">›</span>
-    </button>`;
-}
-
-function showDateInputSheet(isRange) {
-  const backdrop = document.createElement('div');
-  backdrop.className = 'sheet-backdrop';
-  const sheet = document.createElement('div');
-  sheet.className = 'sheet berth-date-sheet';
-  const today = toDateInputValue(Date.now());
-
-  sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">${t(isRange ? 'Custom stay dates' : 'Select a date')}</div>
-    <div class="berth-date-fields">
-      <label><span>${t(isRange ? 'Arrival' : 'Date')}</span><input type="date" id="berthDateStart" value="${today}"></label>
-      ${isRange ? `<label><span>${t('Departure')}</span><input type="date" id="berthDateEnd" value="${toDateInputValue(nextLocalDay(Date.now()))}"></label>` : ''}
-      <div class="berth-date-error" id="berthDateError"></div>
-    </div>
-    <button type="button" class="add-save" id="applyBerthDate">${t('Apply')}</button>
-    <button type="button" class="assign-cancel berth-date-cancel">${t('Cancel')}</button>
-  `;
-  document.getElementById('modalRoot').append(backdrop, sheet);
-
-  const calendars = [];
-  const startInput = sheet.querySelector('#berthDateStart');
-  const endInput = sheet.querySelector('#berthDateEnd');
-  calendars.push(wireBookingDatePicker(startInput, {
-    label: t(isRange ? 'Arrival' : 'Date'),
-    locale: getLocale()
-  }));
-  if (endInput) {
-    calendars.push(wireBookingDatePicker(endInput, {
-      label: t('Departure'),
-      locale: getLocale()
-    }));
-  }
-
-  const close = () => {
-    calendars.forEach(calendar => calendar.close());
-    closeDateSheet(backdrop, sheet);
-  };
-  backdrop.addEventListener('click', close);
-  sheet.querySelector('.berth-date-cancel').addEventListener('click', close);
-  sheet.querySelector('#applyBerthDate').addEventListener('click', () => {
-    const startValue = sheet.querySelector('#berthDateStart').value;
-    const endValue = isRange ? sheet.querySelector('#berthDateEnd').value : startValue;
-    const start = localDateStart(startValue);
-    const selectedEnd = localDateStart(endValue);
-    const error = sheet.querySelector('#berthDateError');
-
-    if (!Number.isFinite(start) || !Number.isFinite(selectedEnd)) {
-      error.textContent = t('Select valid dates');
-      return;
-    }
-
-    if (isRange && selectedEnd <= start) {
-      error.textContent = t('Departure must be after arrival');
-      return;
-    }
-
-    const end = isRange ? selectedEnd : nextLocalDay(start);
-    const label = isRange
-      ? `Stay: ${formatShortDate(start)} – ${formatShortDate(selectedEnd)}`
-      : `Viewing: ${formatLongDate(start)}`;
-
-    berthDateView = { mode: isRange ? 'RANGE' : 'DATE', start, end, label };
-    updateDateFilterLabel();
-    renderBerthGrid();
-    updateSummary();
-    close();
-  });
-
-  requestAnimationFrame(() => {
-    backdrop.classList.add('is-open');
-    sheet.classList.add('is-open');
-  });
-}
-
-function closeDateSheet(backdrop, sheet) {
-  backdrop.classList.remove('is-open');
-  sheet.classList.remove('is-open');
-  setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
-}
-
-function localDateStart(value) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
-  if (!match) return NaN;
-  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 0, 0, 0, 0).getTime();
-}
-
-function toDateInputValue(timestamp) {
-  const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function nextLocalDay(timestamp) {
-  const date = new Date(timestamp);
-  date.setDate(date.getDate() + 1);
-  return date.getTime();
-}
-
-function formatShortDate(timestamp) {
-  return new Intl.DateTimeFormat(getLocale() || 'en-GB', { day: '2-digit', month: 'short' }).format(timestamp);
-}
-
-function formatLongDate(timestamp) {
-  return new Intl.DateTimeFormat(getLocale() || 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(timestamp);
-}
-
-function updateDateFilterLabel() {
-  const label = document.getElementById('berthDateFilterLabel');
-  if (label) label.textContent = berthDateView.label;
-}
-
 /* ============================================================
    RENDER
    ============================================================ */
 function renderBerthGrid() {
   const grid = document.getElementById('berthGrid');
   if (!grid) return;
-  const berths = applySearch((store.berthsFull || []).map(withDateViewBooking));
+  const berths = applySearch((store.berthsFull || []).map(withActiveBooking));
 
   if (!berths.length) {
     grid.innerHTML = `
@@ -371,7 +196,7 @@ function renderBerthGrid() {
 
   grid.querySelectorAll('.berth-card').forEach(el => {
     const berthId = Number(el.dataset.berthId);
-    const berth = withDateViewBooking(store.berthsFull.find(b => b.id === berthId));
+    const berth = withActiveBooking(store.berthsFull.find(b => b.id === berthId));
 
     el.addEventListener('click', (e) => {
       if (e.target.closest('button')) return;
@@ -391,24 +216,6 @@ function updateSummary() {
 
   const berths = store.berthsFull || [];
   const total = berths.length;
-
-  if (berthDateView.mode !== 'TODAY') {
-    const projected = berths.map(withDateViewBooking);
-    const booked = projected.filter(b => b?.periodBookingCount > 0).length;
-    const maintenance = projected.filter(b => b?.status === 'MAINTENANCE').length;
-    const unavailable = new Set(projected
-      .filter(b => b?.periodBookingCount > 0 || b?.status === 'MAINTENANCE')
-      .map(b => Number(b.id)));
-    const available = Math.max(0, total - unavailable.size);
-
-    el.innerHTML = `
-      <div>${t('Period availability')}</div>
-      <div>${t('Booked:')} <b>${booked}</b>    ${t('Available:')} <b>${available}</b></div>
-      <div>${t('Maintenance:')} <b>${maintenance}</b>    ${t('Total:')} <b>${total}</b></div>
-    `;
-    return;
-  }
-
   const occupied = berths.filter(b => b.status === 'OCCUPIED').length;
   const maintenance = berths.filter(b => b.status === 'MAINTENANCE').length;
   const available = berths.filter(b => b.status === 'AVAILABLE').length;
@@ -437,35 +244,6 @@ function withActiveBooking(berth) {
       return Number(left.arrivalDate || 0) - Number(right.arrivalDate || 0);
     });
   return { ...berth, activeBooking: bookings[0] || null };
-}
-
-function withDateViewBooking(berth) {
-  if (!berth || berthDateView.mode === 'TODAY') return withActiveBooking(berth);
-
-  const bookings = (store.berthBookings || [])
-    .filter(booking => Number(booking.berthId) === Number(berth.id))
-    .filter(booking => Number(booking.arrivalDate || 0) < berthDateView.end
-      && Number(booking.departureDate || 0) > berthDateView.start)
-    .sort((left, right) => Number(left.arrivalDate || 0) - Number(right.arrivalDate || 0));
-
-  const first = bookings[0] || null;
-  const activeBooking = first ? {
-    ...first,
-    vesselName: bookings.length > 1
-      ? `${first.vesselName || 'Vessel'} +${bookings.length - 1}`
-      : (first.vesselName || 'Vessel')
-  } : null;
-
-  return {
-    ...berth,
-    liveStatus: berth.status,
-    status: berth.status === 'MAINTENANCE' ? 'MAINTENANCE' : (activeBooking ? 'OCCUPIED' : 'AVAILABLE'),
-    assignedBoatName: activeBooking ? `📅  ${activeBooking.vesselName}` : null,
-    activeBooking,
-    selectedPeriodBooking: first,
-    periodBookingCount: bookings.length,
-    dateProjection: true
-  };
 }
 
 function escapeHtml(s) {
@@ -713,25 +491,19 @@ async function onDeleteAll() {
    BERTH MENU
    ============================================================ */
 async function openBerthMenu(berth) {
-  let activeBooking = berth.dateProjection ? berth.selectedPeriodBooking : null;
+  let activeBooking = null;
 
-  if (!berth.dateProjection) {
-    try {
-      activeBooking = await findActiveBookingForBerth(
-        store.activeClientId,
-        berth.id
-      );
-    } catch (err) {
-      console.error('[berth booking] lookup failed', err);
-      toast(tr('Failed to load booking'), { kind: 'error' });
-    }
+  try {
+    activeBooking = await findActiveBookingForBerth(
+      store.activeClientId,
+      berth.id
+    );
+  } catch (err) {
+    console.error('[berth booking] lookup failed', err);
+    toast(tr('Failed to load booking'), { kind: 'error' });
   }
 
-  const berthWithBooking = {
-    ...berth,
-    status: berth.liveStatus || berth.status,
-    activeBooking
-  };
+  const berthWithBooking = { ...berth, activeBooking };
 
   showBerthMenu(berthWithBooking, {
     onSetAvailable:   onSetStatus('AVAILABLE'),
@@ -801,7 +573,6 @@ function onViewBerth(berth) {
       <div class="bkr-detail-row"><span>${t("Size")}</span><b>${berth.length}m x ${berth.width}m</b></div>
       <div class="bkr-detail-row"><span>${t("Depth")}</span><b>${berth.depth} m</b></div>
       <div class="bkr-detail-row"><span>${t("Electric")}</span><b>${berth.hasElectric ? tr('Yes') : tr('No')}</b></div>
-      ${berth.hasElectric ? `<div class="bkr-detail-row"><span>${t("Shore power")}</span><b>${escapeHtml(formatShorePower(berth))}</b></div>` : ''}
       <div class="bkr-detail-row"><span>${t("Water")}</span><b>${berth.hasWater ? tr('Yes') : tr('No')}</b></div>
       <div class="bkr-detail-row"><span>${t("Status")}</span><b>${escapeHtml(status)}</b></div>
       <div class="bkr-detail-row"><span>${t("Boat")}</span><b>${escapeHtml(boat)}</b></div>
@@ -1106,24 +877,6 @@ function onEditBerth(berth) {
           <span>${t("Has electricity")}</span>
         </label>
 
-        <div id="eb-shorePower" class="berth-shore-power-fields" ${berth.hasElectric ? '' : 'hidden'}>
-          <div class="add-section-title">${t("Shore power specification")}</div>
-          <div class="berth-shore-power-grid">
-            <label><span>${t("Amperage")}</span><select class="add-input add-select" id="eb-shorePowerAmps">
-              ${shorePowerOptions([16, 32, 63, 125], berth.shorePowerAmps, 'A')}
-            </select></label>
-            <label><span>${t("Voltage")}</span><select class="add-input add-select" id="eb-shorePowerVoltage">
-              ${shorePowerOptions([230, 400], berth.shorePowerVoltage, 'V')}
-            </select></label>
-            <label><span>${t("Phase")}</span><select class="add-input add-select" id="eb-shorePowerPhase">
-              <option value="">${t("Not specified")}</option>
-              <option value="SINGLE_PHASE" ${normalisePhase(berth.shorePowerPhase) === 'SINGLE_PHASE' ? 'selected' : ''}>${t("Single-phase")}</option>
-              <option value="THREE_PHASE" ${normalisePhase(berth.shorePowerPhase) === 'THREE_PHASE' ? 'selected' : ''}>${t("Three-phase")}</option>
-            </select></label>
-            <label><span>${t("Connections")}</span><input class="add-input" id="eb-shorePowerConnections" type="number" min="1" step="1" value="${berth.shorePowerConnections ?? ''}" placeholder="${t("Not specified")}"></label>
-          </div>
-        </div>
-
         <label class="add-checkbox">
           <input type="checkbox" id="eb-water" ${berth.hasWater ? 'checked' : ''}>
           <span>${t("Has water")}</span>
@@ -1157,9 +910,6 @@ function onEditBerth(berth) {
 
   const form = sheet.querySelector('#editBerthForm');
   const save = sheet.querySelector('#eb-save');
-  const electric = sheet.querySelector('#eb-electric');
-  const shorePower = sheet.querySelector('#eb-shorePower');
-  electric.addEventListener('change', () => { shorePower.hidden = !electric.checked; });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1175,10 +925,6 @@ function onEditBerth(berth) {
         depth:        parseFloat(sheet.querySelector('#eb-depth').value)  || 0,
         hasElectric:  sheet.querySelector('#eb-electric').checked,
         hasWater:     sheet.querySelector('#eb-water').checked,
-        shorePowerAmps: optionalPositiveInteger(sheet.querySelector('#eb-shorePowerAmps').value),
-        shorePowerVoltage: optionalPositiveInteger(sheet.querySelector('#eb-shorePowerVoltage').value),
-        shorePowerPhase: sheet.querySelector('#eb-shorePowerPhase').value || null,
-        shorePowerConnections: optionalPositiveInteger(sheet.querySelector('#eb-shorePowerConnections').value),
         status:       sheet.querySelector('#eb-status').value
       };
 
@@ -1204,33 +950,6 @@ function onEditBerth(berth) {
       errEl.textContent = err.message || 'Failed to update berth.';
     }
   });
-}
-
-function shorePowerOptions(values, selected, unit) {
-  const options = selected != null && !values.includes(Number(selected)) ? [Number(selected), ...values] : values;
-  return `<option value="">${t('Not specified')}</option>` + options.map(value =>
-    `<option value="${value}" ${Number(selected) === value ? 'selected' : ''}>${value}${unit}</option>`
-  ).join('');
-}
-
-function optionalPositiveInteger(value) {
-  if (value === '' || value == null) return null;
-  const number = Number(value);
-  if (!Number.isInteger(number) || number <= 0) throw new Error(tr('Shore power values must be positive whole numbers'));
-  return number;
-}
-
-function normalisePhase(value) {
-  return String(value || '').trim().toUpperCase().replace(/[- ]/g, '_');
-}
-
-function formatShorePower(source) {
-  const values = [];
-  if (source?.shorePowerAmps != null) values.push(`${source.shorePowerAmps}A`);
-  if (source?.shorePowerVoltage != null) values.push(`${source.shorePowerVoltage}V`);
-  if (source?.shorePowerPhase) values.push(normalisePhase(source.shorePowerPhase) === 'THREE_PHASE' ? t('Three-phase') : t('Single-phase'));
-  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${t(source.shorePowerConnections === 1 ? 'connection' : 'connections')}`);
-  return values.length ? values.join(' · ') : t('Not specified');
 }
 
 async function onDeleteBerth(berth) {

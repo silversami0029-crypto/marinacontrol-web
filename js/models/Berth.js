@@ -13,6 +13,10 @@ export class Berth {
     this.maxAirDraft    = Number(raw.maxAirDraft ?? 0);
     this.hasElectric    = !!raw.hasElectric;
     this.hasWater       = !!raw.hasWater;
+    this.shorePowerAmps = raw.shorePowerAmps != null ? Number(raw.shorePowerAmps) : null;
+    this.shorePowerVoltage = raw.shorePowerVoltage != null ? Number(raw.shorePowerVoltage) : null;
+    this.shorePowerPhase = raw.shorePowerPhase || null;
+    this.shorePowerConnections = raw.shorePowerConnections != null ? Number(raw.shorePowerConnections) : null;
     this.status         = (raw.status || 'AVAILABLE').toUpperCase();
 
     this.boatId           = raw.boatId != null ? Number(raw.boatId) : null;

@@ -48,6 +48,7 @@ export function showBookingRequestDetail(request, berth) {
       <div class="bkr-detail-row"><span>${tr("Phone")}</span><b>${escapeHtml(phone)}</b></div>
       <div class="bkr-detail-row"><span>${tr("Arrival")}</span><b>${escapeHtml(arrival)}</b></div>
       <div class="bkr-detail-row"><span>${tr("Departure")}</span><b>${escapeHtml(departure)}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Shore power requested")}</span><b>${escapeHtml(formatShorePower(request))}</b></div>
       <div class="bkr-detail-row"><span>${tr("Berth")}</span><b>${escapeHtml(berthText)}</b></div>
       <div class="bkr-detail-row"><span>${tr("Source")}</span><b>${escapeHtml(source)}</b></div>
       <div class="bkr-detail-row"><span>${tr("Status")}</span><b>${escapeHtml(requestStatusLabel(request))}</b></div>
@@ -193,4 +194,14 @@ function requestStatusLabel(request) {
   if (status === 'APPROVED' && request.approvedBookingUuid) return getLanguage() === 'ar' ? 'تم الحجز' : 'Booked';
   if (status === 'AWAITING_OWNER') return tr('Awaiting owner agreement');
   return tr(status);
+}
+
+function formatShorePower(source) {
+  const values = [];
+  if (source?.shorePowerAmps != null) values.push(`${source.shorePowerAmps}A`);
+  if (source?.shorePowerVoltage != null) values.push(`${source.shorePowerVoltage}V`);
+  const phase = String(source?.shorePowerPhase || '').trim().toUpperCase().replace(/[- ]/g, '_');
+  if (phase) values.push(phase === 'THREE_PHASE' ? tr('Three-phase') : tr('Single-phase'));
+  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${tr(source.shorePowerConnections === 1 ? 'connection' : 'connections')}`);
+  return values.length ? values.join(' · ') : tr('Not specified');
 }
