@@ -1,3 +1,4 @@
+import { mountBerthPierMap } from '../components/BerthPierMap.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/BerthsScreen.js
@@ -29,6 +30,7 @@ import {
   voidUtilityReading, correctUtilityReading
 } from '../db.js';
 
+let pierMap = null;
 let unsubscribe = null;
 let bookingUnsubscribe = null;
 let searchQuery = '';
@@ -45,6 +47,7 @@ export function mountBerthsScreen() {
     return;
   }
 
+  pierMap = null;
   searchQuery = '';
   berthDateView = { mode: 'TODAY', start: null, end: null, label: 'Viewing: Today' };
   store.berthBookings = [];
@@ -96,6 +99,7 @@ export function mountBerthsScreen() {
       <button type="button" class="search-cancel" id="berthSearchCancel">${t("Cancel")}</button>
     </div>
 
+    <div id="berthPierMap"></div>
     <div class="berth-grid" id="berthGrid">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
     </div>
@@ -105,6 +109,7 @@ export function mountBerthsScreen() {
   document.getElementById('berthMenuBtn').addEventListener('click', openToolbarMenu);
   document.getElementById('berthDateFilter').addEventListener('click', showBerthDateFilterSheet);
 
+  pierMap = mountBerthPierMap(document.getElementById('berthPierMap'), { clientId: store.activeClientId, t, onOpen: openBerthMenu });
   setupSearch();
 
   if (unsubscribe) unsubscribe();
@@ -351,6 +356,7 @@ function renderBerthGrid() {
   const grid = document.getElementById('berthGrid');
   if (!grid) return;
   const berths = applySearch((store.berthsFull || []).map(withDateViewBooking));
+  pierMap?.render(berths);
 
   if (!berths.length) {
     grid.innerHTML = `
