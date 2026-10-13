@@ -14,10 +14,10 @@ function normalise(reading, index) {
   const rawUnit = text(reading.unit).replace('M³', 'M3');
   const rawValue = number(reading.value);
   const at = time(reading.recordedAt);
-  const factor = type === 'WATER' && rawUnit === 'M3' && mode !== 'INSTANTANEOUS' ? 1000 : 1;
+  const factor = ['WATER', 'WASTEWATER'].includes(type) && rawUnit === 'M3' && mode !== 'INSTANTANEOUS' ? 1000 : 1;
   const unit = mode === 'INSTANTANEOUS'
-    ? (type === 'WATER' ? 'L/min' : 'kW')
-    : (type === 'WATER' ? 'L' : 'kWh');
+    ? (['WATER', 'WASTEWATER'].includes(type) ? 'L/min' : 'kW')
+    : (['WATER', 'WASTEWATER'].includes(type) ? 'L' : 'kWh');
   const meter = reading.assetId == null || reading.assetId === ''
     ? `BERTH:${Number(reading.berthId || 0)}:${text(reading.readingType) || type}`
     : `ASSET:${reading.assetId}`;
@@ -53,7 +53,7 @@ export function utilitySegments(clientId, rawReadings = []) {
     if (!reading.voided && reading.mode !== 'INSTANTANEOUS') modesBySeries.get(key).add(reading.mode);
 
     if (reading.voided) continue;
-    if (!['ELECTRICITY', 'WATER'].includes(reading.type) || !MODES.has(reading.mode) ||
+    if (!['ELECTRICITY', 'WATER', 'WASTEWATER'].includes(reading.type) || !MODES.has(reading.mode) ||
         !Number.isFinite(reading.value) || reading.value < 0 || reading.at <= 0) {
       issues.push({ ...reading, reason: 'INVALID_READING' });
       continue;

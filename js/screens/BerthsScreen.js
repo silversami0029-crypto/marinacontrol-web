@@ -879,10 +879,12 @@ async function renderViewUtilities(berth, containerId) {
 
   let elecTariff = null;
   let waterTariff = null;
+  let wastewaterTariff = null;
 
   try {
     elecTariff = await getActiveTariff(store.activeClientId, 'ELECTRICITY');
     waterTariff = await getActiveTariff(store.activeClientId, 'WATER');
+    wastewaterTariff = await getActiveTariff(store.activeClientId, 'WASTEWATER');
   } catch (err) {
     console.warn('[utilities] tariffs unavailable', err);
   }
@@ -902,10 +904,12 @@ async function renderViewUtilities(berth, containerId) {
       const history = utilityHistory(store.activeClientId, readings);
       const elec = latestFor(history, 'ELECTRICITY');
       const water = latestFor(history, 'WATER');
+      const wastewater = latestFor(history, 'WASTEWATER');
 
       container.innerHTML = `
         ${renderViewUtilBlock('Electricity', elec, elecTariff, 'kWh')}
         ${renderViewUtilBlock('Water', water, waterTariff, 'L')}
+        ${renderViewUtilBlock('Wastewater', wastewater, wastewaterTariff, 'L')}
       `;
     }
   );
@@ -928,7 +932,8 @@ function renderViewUtilBlock(label, { latest, mixed }, tariff, unit) {
 
   const consumption = latest.consumption;
   const pricingMode = tariff?.pricingMode || 'METERED';
-  const price = tariff?.pricePerUnit || 0;
+  const tariffUnit = String(tariff?.unit || '').trim().toUpperCase();
+  const price = (tariff?.pricePerUnit || 0) / (unit === 'L' && ['M3', 'M³'].includes(tariffUnit) ? 1000 : 1);
   const isIncluded = pricingMode === 'INCLUDED';
   const charge = (consumption != null && !isIncluded) ? consumption * price : 0;
 
@@ -943,7 +948,7 @@ function renderViewUtilBlock(label, { latest, mixed }, tariff, unit) {
       ${consumption != null ? `<div class="view-util-line">${t('Calculated consumption')}: ${consumption.toFixed(2)} ${unit}</div>` : `<div class="view-util-line view-util-empty">${latest.mode === 'INSTANTANEOUS' ? t('Instantaneous readings are not consumption') : t('A previous cumulative reading is required')}</div>`}
       ${mixed ? `<div class="view-util-line util-warning">${t('Mixed reading modes are calculated separately')}</div>` : ''}
       <div class="view-util-line">${tariffLine}</div>
-      ${consumption != null && !isIncluded ? `<div class="view-util-line">Charge: £${charge.toFixed(2)}</div>` : ''}
+      ${consumption != null && tariff && !isIncluded ? `<div class="view-util-line">Charge: £${charge.toFixed(2)}</div>` : ''}
     </div>
   `;
 }
@@ -956,10 +961,11 @@ function openReadingHistory(berth) {
   sheet.innerHTML = `
     <button type="button" data-close aria-label="${t('Close')}" style="position:absolute;right:18px;top:16px;border:0;background:transparent;color:inherit;font-size:28px;line-height:1;">&times;</button>
     <div class="sheet-title" style="text-align:center;">${t('Reading History')} · ${escapeHtml(berth.berthNumber || '')}</div>
-    <div style="display:flex;gap:8px;padding:12px 18px;">
+    <div style="display:flex;gap:8px;padding:12px 18px;flex-wrap:wrap;">
       <button type="button" class="view-berth-btn" data-filter="ALL" style="height:42px;min-width:72px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">${t('All')}</button>
       <button type="button" class="view-berth-btn" data-filter="ELECTRICITY" style="height:42px;min-width:112px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">${t('Electricity')}</button>
       <button type="button" class="view-berth-btn" data-filter="WATER" style="height:42px;min-width:88px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">${t('Water')}</button>
+      <button type="button" class="view-berth-btn" data-filter="WASTEWATER" style="height:42px;min-width:112px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;">${t('Wastewater')}</button>
     </div>
     <div class="add-scroll" data-history style="padding:0 18px 24px;overflow:auto;"><div class="view-util-empty">${t('Loading…')}</div></div>`;
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -974,7 +980,7 @@ function openReadingHistory(berth) {
     const result = utilityHistory(store.activeClientId, cached);
     const entries = result.entries.filter(r => filter === 'ALL' || r.type === filter);
     const modes = new Set(entries.filter(r => !r.voided && r.mode !== 'INSTANTANEOUS').map(r => `${r.type}:${r.mode}`));
-    const mixedTypes = ['ELECTRICITY', 'WATER'].filter(type =>
+    const mixedTypes = ['ELECTRICITY', 'WATER', 'WASTEWATER'].filter(type =>
       [...modes].some(v => v === `${type}:CUMULATIVE`) && [...modes].some(v => v === `${type}:INTERVAL`));
     sheet.querySelector('[data-history]').innerHTML = `
       ${mixedTypes.length ? `<div class="util-warning" style="padding:12px;margin-bottom:10px;border:1px solid currentColor;border-radius:12px;">${t('Mixed reading modes are calculated separately')}</div>` : ''}
@@ -986,7 +992,7 @@ function openReadingHistory(berth) {
     const when = reading.at ? new Intl.DateTimeFormat(uiLocale(), {dateStyle:'medium', timeStyle:'short'}).format(reading.at) : '—';
     const calculated = reading.consumption == null ? (reading.mode === 'INSTANTANEOUS' ? t('Informational only') : t('Baseline / not calculated')) : `${reading.consumption.toFixed(2)} ${escapeHtml(reading.unit)}`;
     return `<div class="view-util-block" style="margin-bottom:10px;${reading.voided ? 'opacity:.55;' : ''}">
-      <div class="view-util-label">${t(reading.type === 'WATER' ? 'Water' : 'Electricity')} <span class="util-mode-badge">${t(reading.mode)}</span>${reading.voided ? ` <span class="util-mode-badge">${t('VOID')}</span>` : ''}</div>
+      <div class="view-util-label">${t(reading.type === 'WASTEWATER' ? 'Wastewater' : reading.type === 'WATER' ? 'Water' : 'Electricity')} <span class="util-mode-badge">${t(reading.mode)}</span>${reading.voided ? ` <span class="util-mode-badge">${t('VOID')}</span>` : ''}</div>
       <div class="view-util-line">${escapeHtml(when)} · ${reading.value} ${escapeHtml(reading.unit)}</div>
       <div class="view-util-line">${t('Calculated consumption')}: ${calculated}</div>
       ${reading.notes ? `<div class="view-util-line">${escapeHtml(reading.notes)}</div>` : ''}
@@ -1031,7 +1037,7 @@ function showVoidReadingSheet(reading) {
       <form class="add-form" data-form novalidate>
         <div class="add-scroll">
           <div class="view-util-block" style="margin-bottom:16px;">
-            <div class="view-util-label">${t(reading.type === 'WATER' ? 'Water' : 'Electricity')} · ${t(reading.mode)}</div>
+            <div class="view-util-label">${t(reading.type === 'WASTEWATER' ? 'Wastewater' : reading.type === 'WATER' ? 'Water' : 'Electricity')} · ${t(reading.mode)}</div>
             <div class="view-util-line">${reading.value} ${escapeHtml(reading.unit || '')}</div>
           </div>
           <label class="add-section-title" for="voidReason">${t('Reason for voiding this reading')}</label>
@@ -1343,17 +1349,21 @@ async function openTariffsSheet(berth) {
   const now = Date.now();
   let elecTariff = null;
   let waterTariff = null;
+  let wastewaterTariff = null;
 
   try {
     elecTariff = await getActiveTariff(store.activeClientId, 'ELECTRICITY');
     waterTariff = await getActiveTariff(store.activeClientId, 'WATER');
+    wastewaterTariff = await getActiveTariff(store.activeClientId, 'WASTEWATER');
   } catch (err) {
     console.warn('[tariffs] load failed', err);
   }
 
   const elecPrice = elecTariff?.pricePerUnit || 0;
   const waterIncluded = waterTariff?.pricingMode === 'INCLUDED';
-  const waterPrice = waterTariff?.pricePerUnit || 0;
+  const waterPrice = (waterTariff?.pricePerUnit || 0) / (['M3', 'M³'].includes(String(waterTariff?.unit || '').toUpperCase()) ? 1000 : 1);
+  const wastewaterMode = wastewaterTariff?.pricingMode || '';
+  const wastewaterPrice = (wastewaterTariff?.pricePerUnit || 0) / (['M3', 'M³'].includes(String(wastewaterTariff?.unit || '').toUpperCase()) ? 1000 : 1);
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -1379,6 +1389,18 @@ async function openTariffsSheet(berth) {
                placeholder="${t("Price per L")}" value="${waterPrice > 0 ? waterPrice : ''}"
                ${waterIncluded ? 'disabled' : ''}>
         <input class="add-input" id="tf-waterDate" type="date" value="${today}">
+        <div class="add-section-sub">${t("Effective from")}</div>
+
+        <div class="add-section-title" style="margin-top:20px;">${t("Wastewater")}</div>
+        <select class="add-input add-select" id="tf-wastewaterMode">
+          ${!wastewaterTariff ? `<option value="" selected>${t("Not set")}</option>` : ''}
+          <option value="METERED" ${wastewaterMode === 'METERED' ? 'selected' : ''}>${t("Metered")}</option>
+          <option value="INCLUDED" ${wastewaterMode === 'INCLUDED' ? 'selected' : ''}>${t("Included")}</option>
+        </select>
+        <input class="add-input" id="tf-wastewaterPrice" type="number" min="0" step="0.0001"
+               placeholder="${t("Price per L")}" value="${wastewaterPrice}"
+               ${wastewaterMode !== 'METERED' ? 'disabled' : ''}>
+        <input class="add-input" id="tf-wastewaterDate" type="date" value="${today}">
         <div class="add-section-sub">${t("Effective from")}</div>
 
       </div>
@@ -1410,6 +1432,13 @@ async function openTariffsSheet(berth) {
     if (included) waterPriceEl.value = '0.00';
   });
 
+  const wastewaterModeEl = sheet.querySelector('#tf-wastewaterMode');
+  const wastewaterPriceEl = sheet.querySelector('#tf-wastewaterPrice');
+  wastewaterModeEl.addEventListener('change', () => {
+    wastewaterPriceEl.disabled = wastewaterModeEl.value !== 'METERED';
+    if (wastewaterModeEl.value === 'INCLUDED') wastewaterPriceEl.value = '0';
+  });
+
   const form = sheet.querySelector('#tariffsForm');
   const save = sheet.querySelector('#tf-save');
 
@@ -1420,14 +1449,20 @@ async function openTariffsSheet(berth) {
 
     try {
       const elecVal = parseFloat(sheet.querySelector('#tf-elecPrice').value);
-      if (isNaN(elecVal)) throw new Error(tr('Enter electricity price'));
+      if (!Number.isFinite(elecVal) || elecVal < 0) throw new Error(tr('Enter electricity price'));
 
       const waterMode = modeEl.value;
       let waterVal = 0;
       if (waterMode === 'METERED') {
         waterVal = parseFloat(waterPriceEl.value);
-        if (isNaN(waterVal)) throw new Error(tr('Enter water price'));
+        if (!Number.isFinite(waterVal) || waterVal < 0) throw new Error(tr('Enter water price'));
       }
+
+      const wastewaterPricingMode = wastewaterModeEl.value;
+      const wastewaterVal = wastewaterPricingMode === 'METERED' ? parseFloat(wastewaterPriceEl.value) : 0;
+      if (wastewaterPricingMode === 'METERED' && (!Number.isFinite(wastewaterVal) || wastewaterVal < 0))
+        throw new Error(tr('Enter wastewater price'));
+      const wastewaterDate = new Date(sheet.querySelector('#tf-wastewaterDate').value).getTime() || Date.now();
 
       const elecDate = new Date(sheet.querySelector('#tf-elecDate').value).getTime() || Date.now();
       const waterDate = new Date(sheet.querySelector('#tf-waterDate').value).getTime() || Date.now();
@@ -1449,6 +1484,13 @@ async function openTariffsSheet(berth) {
         pricePerUnit: waterVal,
         effectiveFrom: waterDate
       });
+
+      if (wastewaterPricingMode) {
+        await saveTariff(store.activeClientId, userId, {
+          utilityType: 'WASTEWATER', unit: 'L', pricingMode: wastewaterPricingMode,
+          pricePerUnit: wastewaterVal, effectiveFrom: wastewaterDate
+        });
+      }
 
       // Bust the tariff cache so View Berth reloads fresh
       if (store._tariffCache) delete store._tariffCache;

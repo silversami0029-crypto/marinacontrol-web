@@ -775,8 +775,8 @@ export async function createUtilityReading(clientId, userId, fields) {
   const type = String(fields.utilityType || '').trim().toUpperCase();
   const amount = fields.value == null || fields.value === '' ? NaN : Number(fields.value);
   const validUnit = mode==='INSTANTANEOUS'
-    ? type==='ELECTRICITY' && unit==='KW' || type==='WATER' && unit==='L/MIN'
-    : type==='ELECTRICITY' && unit==='KWH' || type==='WATER' && ['L','M3','M³'].includes(unit);
+    ? type==='ELECTRICITY' && unit==='KW' || ['WATER','WASTEWATER'].includes(type) && unit==='L/MIN'
+    : type==='ELECTRICITY' && unit==='KWH' || ['WATER','WASTEWATER'].includes(type) && ['L','M3','M³'].includes(unit);
   if (!Number.isFinite(amount) || amount<0 || !validUnit || !['CUMULATIVE','INTERVAL','INSTANTANEOUS'].includes(mode))
     throw new Error('Invalid utility reading value, mode or unit');
   const newId = await nextUtilityReadingId(clientId);
@@ -786,8 +786,8 @@ export async function createUtilityReading(clientId, userId, fields) {
     clientId:      clientId,
     berthId:       Number(fields.berthId),
     assetId:       null,
-    utilityType:   fields.utilityType,     // ELECTRICITY | WATER
-    readingType:   fields.readingType,     // ENERGY | WATER_VOLUME
+    utilityType:   fields.utilityType,     // ELECTRICITY | WATER | WASTEWATER
+    readingType:   fields.readingType,     // ENERGY | WATER_VOLUME | WASTEWATER_VOLUME
     readingMode:   fields.readingMode,     // CUMULATIVE | INTERVAL | INSTANTANEOUS
     value:         Number(fields.value),
     unit:          fields.unit,            // kWh | L
@@ -822,8 +822,8 @@ export async function correctUtilityReading(clientId, reading, userId, fields) {
   const type = String(fields.utilityType || '').trim().toUpperCase();
   const amount = Number(fields.value);
   const validUnit = mode === 'INSTANTANEOUS'
-    ? type === 'ELECTRICITY' && unit === 'KW' || type === 'WATER' && unit === 'L/MIN'
-    : type === 'ELECTRICITY' && unit === 'KWH' || type === 'WATER' && ['L','M3','M³'].includes(unit);
+    ? type === 'ELECTRICITY' && unit === 'KW' || ['WATER', 'WASTEWATER'].includes(type) && unit === 'L/MIN'
+    : type === 'ELECTRICITY' && unit === 'KWH' || ['WATER', 'WASTEWATER'].includes(type) && ['L','M3','M³'].includes(unit);
   if (!Number.isFinite(amount) || amount < 0 || !validUnit || !['CUMULATIVE','INTERVAL','INSTANTANEOUS'].includes(mode))
     throw new Error('Invalid utility reading value, mode or unit');
   const newId = await nextUtilityReadingId(clientId);
@@ -920,8 +920,8 @@ export async function prepareUtilityInvoice(clientId, berth) {
     if (tariff.pricingMode === 'INCLUDED') continue;
     if (tariff.pricingMode !== 'METERED') throw new Error('Unsupported utility pricing mode');
     const tariffUnit = String(tariff.unit).trim().toUpperCase();
-    const factor = type==='WATER' && ['M3','M³'].includes(tariffUnit) ? 1000 : 1;
-    if (!(type==='ELECTRICITY' && tariffUnit==='KWH' || type==='WATER' && ['L','M3','M³'].includes(tariffUnit)) ||
+    const factor = ['WATER','WASTEWATER'].includes(type) && ['M3','M³'].includes(tariffUnit) ? 1000 : 1;
+    if (!(type==='ELECTRICITY' && tariffUnit==='KWH' || ['WATER','WASTEWATER'].includes(type) && ['L','M3','M³'].includes(tariffUnit)) ||
         !Number.isFinite(tariff.pricePerUnit) || tariff.pricePerUnit<0) throw new Error('Invalid utility tariff unit or rate');
     const rate = tariff.pricePerUnit/factor;
     // Preserve existing cumulative charge keys so previously billed pairs remain billed.
@@ -952,7 +952,7 @@ export async function prepareUtilityInvoice(clientId, berth) {
     category: 'UTILITIES',
     amount: charges.reduce((sum, c) => sum + Number(c.amount || 0), 0),
     description: charges.map(c =>
-      `${c.utilityType === 'WATER' ? 'Water' : 'Electricity'}: ` +
+      `${c.utilityType === 'WASTEWATER' ? 'Wastewater' : c.utilityType === 'WATER' ? 'Water' : 'Electricity'}: ` +
       `${Number(c.quantity).toFixed(2)} ${c.unit} @ ` +
       `£${Number(c.rate).toFixed(4)}/${c.unit} = £${Number(c.amount).toFixed(2)}`
     ).join('\n'),

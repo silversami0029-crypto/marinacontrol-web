@@ -1,3 +1,4 @@
+import { mountEditCustomerScreen, unmountEditCustomerScreen } from './screens/EditCustomerScreen.js';
 import { mountHomeScreen, unmountHomeScreen } from './screens/HomeScreen.js';
 import { mountPedestalFoundationScreen } from './screens/PedestalFoundationScreen.js';
 import { mountOperationsTrendsScreen } from './screens/OperationsTrendsScreen.js';
@@ -21,7 +22,7 @@ import { mountBookingRequestsScreen } from './screens/BookingRequestsScreen.js';
 import { initDrawer } from './components/Drawer.js';
 import { mountBoatDashboardScreen } from './screens/BoatDashboardScreen.js';
 import { mountUserManagementScreen } from './screens/UserManagementScreen.js';
-import { mountCustomerDirectoryScreen } from './screens/CustomerDirectoryScreen.js';
+import { mountCustomerDirectoryScreen, unmountCustomerDirectoryScreen } from './screens/CustomerDirectoryScreen.js';
 import { mountMaintenanceScreen } from './screens/MaintenanceScreen.js';
 import { mountClient360Screen } from './screens/Client360Screen.js';
 import { mountCrewManagementScreen } from './screens/CrewManagementScreen.js';
@@ -36,7 +37,7 @@ import { mountNotificationsScreen } from './screens/NotificationsScreen.js';
 
 initLanguage();
 
-const PROTECTED = ['/home', '/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/client-360','/notifications'];
+const PROTECTED = ['/home', '/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/edit-customer','/client-360','/notifications'];
 
 const routes = {
   '/home':             mountHomeScreen,
@@ -49,6 +50,7 @@ const routes = {
   '/user-management':  mountUserManagementScreen,
   '/permissions': mountPermissionsScreen,
  '/customer-directory': mountCustomerDirectoryScreen,
+ '/edit-customer': mountEditCustomerScreen,
 '/maintenance': mountMaintenanceScreen,
   '/client-360': mountClient360Screen,
  '/crew': mountCrewManagementScreen,
@@ -102,10 +104,12 @@ function navigate() {
   }
 
   unmountHomeScreen();
+  unmountCustomerDirectoryScreen();
+  unmountEditCustomerScreen();
   showChrome(route !== '/login');
 
   const isBoatDashboard = route === '/dashboard' && location.hash.includes('boatId=');
-  const highlightRoute  = isBoatDashboard ? '/boats' : route;
+  const highlightRoute  = isBoatDashboard ? '/boats' : route === '/edit-customer' ? '/customer-directory' : route;
 
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.toggle('is-active', btn.dataset.route === highlightRoute);
@@ -184,7 +188,7 @@ export async function switchMarina(clientId, destinationRoute = null) {
     // Reload tears down every screen listener, pending view and module-local cache.
     // Strip record IDs that belong to the old marina.
     const route = destinationRoute && routes[destinationRoute] ? destinationRoute
-      : currentRoute() === '/boat-dashboard' ? '/boats' : currentRoute();
+      : currentRoute() === '/boat-dashboard' ? '/boats' : currentRoute() === '/edit-customer' ? '/customer-directory' : currentRoute();
     history.replaceState(null, '', `${location.pathname}${location.search}#${route}`);
     location.reload();
   } finally {
@@ -199,6 +203,8 @@ async function bootstrapUser(firebaseUser) {
   const generation = ++sessionGeneration;
   authReady = false;
   unmountHomeScreen();
+  unmountCustomerDirectoryScreen();
+  unmountEditCustomerScreen();
   resetTopBarNotifications();
   stopCustomers();
   baseProfile = null;

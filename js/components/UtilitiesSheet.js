@@ -4,8 +4,8 @@ import { t as tr, getLocale as uiLocale } from '../i18n.js';
 
 import { esc } from '../utils.js';
 
-const UTILITY_TYPES = ['ELECTRICITY', 'WATER'];
-const UNITS = { ELECTRICITY: 'kWh', WATER: 'L' };
+const UTILITY_TYPES = ['ELECTRICITY', 'WATER', 'WASTEWATER'];
+const UNITS = { ELECTRICITY: 'kWh', WATER: 'L', WASTEWATER: 'L' };
 const message = (en, ar) => uiLocale().startsWith('ar') ? ar : en;
 const MODES = ['CUMULATIVE', 'INTERVAL', 'INSTANTANEOUS'];
 
@@ -108,7 +108,7 @@ export function showAddReadingDialog(berth, onAddReading, options = {}) {
         value:       value,
         unit:        unitEl.value,
         readingMode: sheet.querySelector('#utilMode').value,
-        readingType: modeEl.value==='INSTANTANEOUS' ? (type==='ELECTRICITY' ? 'POWER' : 'WATER_FLOW') : (type==='ELECTRICITY' ? 'ENERGY' : 'WATER_VOLUME'),
+        readingType: type==='WASTEWATER' ? 'WASTEWATER_VOLUME' : modeEl.value==='INSTANTANEOUS' ? (type==='ELECTRICITY' ? 'POWER' : 'WATER_FLOW') : (type==='ELECTRICITY' ? 'ENERGY' : 'WATER_VOLUME'),
         notes:       notesInput.value.trim()
       });
 

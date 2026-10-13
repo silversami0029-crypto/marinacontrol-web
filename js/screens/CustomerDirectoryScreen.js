@@ -16,6 +16,11 @@ const selectedIds = new Set();
 let currentCustomers = [];
 let isSearchOpen = false;
 
+export function unmountCustomerDirectoryScreen() {
+  unsubscribe?.();
+  unsubscribe = null;
+}
+
 export function mountCustomerDirectoryScreen() {
   if (!store.activeClientId) {
     document.getElementById('screen').innerHTML =
@@ -166,7 +171,9 @@ export function mountCustomerDirectoryScreen() {
     updateBulkVisibility();
   }, (err) => {
     console.error('[customers] listen failed', err);
-    document.getElementById('cdList').innerHTML =
+    const list = document.getElementById('cdList');
+    if (!list) return;
+    list.innerHTML =
       `<div class="boats-empty">
          <h2>${tr("Couldn't load customers")}</h2>
          <p>${err.message || 'Permission denied.'}</p>
@@ -208,7 +215,7 @@ function renderList() {
   listEl.innerHTML = sorted.map(c => {
     const selected = selectedIds.has(c.id);
     return `
-      <div class="cd-row${selected ? ' is-selected' : ''}" data-customer-id="${c.id}">
+      <div class="cd-row${selected ? ' is-selected' : ''}" data-customer-id="${escapeHtml(c.id)}" data-customer-doc-id="${escapeHtml(c._docId)}">
         ${isBulkMode ? `<input type="checkbox" class="cd-check" ${selected ? 'checked' : ''}>` : ''}
         <div class="cd-avatar">${escapeHtml(computeInitials(c.name))}</div>
         <div class="cd-info">
@@ -234,9 +241,9 @@ function renderList() {
   }).join('');
 
   listEl.querySelectorAll('.cd-row').forEach(row => {
-    const id = Number(row.dataset.customerId);
-    const customer = customers.find(c => c.id === id);
+    const customer = customers.find(c => c._docId === row.dataset.customerDocId);
     if (!customer) return;
+    const id = customer.id;
 
     if (isBulkMode) {
       row.addEventListener('click', () => toggleSelection(id));
@@ -248,7 +255,7 @@ function renderList() {
     }
 
     row.addEventListener('click', () => {
-      location.hash = `#/client-360?customerId=${id}`;
+      location.hash = `#/edit-customer?docId=${encodeURIComponent(customer._docId)}&customerId=${encodeURIComponent(id)}`;
     });
   });
 }
