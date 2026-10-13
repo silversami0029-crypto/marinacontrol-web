@@ -1,5 +1,4 @@
-// Uploaded plan mapped by berth number. Enable only for the intended client.
-const MAP_CLIENT_ID = 5;
+// Shared plan mapped by berth number; records remain scoped to the active client.
 const PLAN_URL = new URL('../../assets/marina-pier-plan.jpg', import.meta.url).href;
 const NS = 'http://www.w3.org/2000/svg';
 const VIEWS = { ALL: '90 165 640 616', A: '640 465 100 325', B: '495 330 140 460', C: '360 265 120 525', D: '205 225 125 565', E: '85 155 90 635' };
@@ -49,7 +48,6 @@ export function planSlots() {
 }
 
 export function mountBerthPierMap(host, { clientId, t, onOpen }) {
-  if (Number(clientId) !== MAP_CLIENT_ID) return { render() {} };
   let current = [];
   let baseView = VIEWS.ALL.split(' ').map(Number);
   let camera = [...baseView];

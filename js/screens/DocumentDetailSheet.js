@@ -20,8 +20,24 @@ export function showDocumentDetail(item) {
   }
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">${escapeHtml(item.name || 'Document')}</div>
+    
+  
+
+<div class="invoice-sheet-header"
+  style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface, #1C222A);">
+
+   <div class="sheet-title">${escapeHtml(item.name || 'Document')}</div>
+
+  <button type="button" id="iv-close" aria-label="Close invoice sheet"
+    style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      aria-hidden="true">
+      <path d="M6 6l12 12M18 6L6 18"/>
+    </svg>
+  </button>
+</div>
+
 
     <div class="md-body">
       <div class="md-line"><span class="md-label">${tr("Type:")}</span> <span class="md-value">${escapeHtml(tr(item.type || '—'))}</span></div>
@@ -48,6 +64,7 @@ export function showDocumentDetail(item) {
 
   backdrop.addEventListener('click', close);
   sheet.querySelector('#docDetailClose').addEventListener('click', close);
+  sheet.querySelector('#iv-close').addEventListener('click', close);
 }
 
 function formatDate(ts) {
