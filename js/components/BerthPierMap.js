@@ -3,6 +3,13 @@ const PLAN_URL = new URL('../../assets/marina-pier-plan.jpg', import.meta.url).h
 const NS = 'http://www.w3.org/2000/svg';
 const VIEWS = { ALL: '90 165 640 616', A: '640 465 100 325', B: '495 330 140 460', C: '360 265 120 525', D: '205 225 125 565', E: '85 155 90 635' };
 
+export function mapBaseView(pier) {
+  const bounds = (VIEWS[pier] || VIEWS.ALL).split(' ').map(Number);
+  const aspect = 640 / 616;
+  const width = Math.max(bounds[2], bounds[3] * aspect);
+  const height = width / aspect;
+  return [bounds[0] - (width - bounds[2]) / 2, bounds[1] - (height - bounds[3]) / 2, width, height];
+}
 
 export function zoomMapView(base, view, factor, anchor) {
   const width = Math.max(base[2] / 8, Math.min(base[2], view[2] * factor));
@@ -77,7 +84,7 @@ export function mountBerthPierMap(host, { clientId, t, onOpen }) {
   const svg = host.querySelector('svg');
   function applyCamera() { svg.setAttribute('viewBox', camera.join(' ')); }
   function resetCamera() {
-    baseView = VIEWS[select.value].split(' ').map(Number);
+    baseView = mapBaseView(select.value);
     camera = [...baseView];
     applyCamera();
   }
@@ -141,7 +148,7 @@ export function mountBerthPierMap(host, { clientId, t, onOpen }) {
     cancelAnimationFrame(fitFrame);
     fitFrame = requestAnimationFrame(() => {
       if (!host.isConnected || panel.hidden) return;
-      const [, , viewWidth, viewHeight] = VIEWS[select.value].split(' ').map(Number);
+      const [, , viewWidth, viewHeight] = baseView;
       const note = host.querySelector('.pier-map-note');
       const panelStyle = getComputedStyle(panel);
       const availableWidth = panel.clientWidth - parseFloat(panelStyle.paddingLeft) - parseFloat(panelStyle.paddingRight);
@@ -175,7 +182,14 @@ export function mountBerthPierMap(host, { clientId, t, onOpen }) {
     applyCamera();
     const image = document.createElementNS(NS, 'image');
     Object.entries({ href: PLAN_URL, x: 24, y: 5, width: 724, height: 776 }).forEach(([k,v]) => image.setAttribute(k,v));
-    svg.append(image);
+    // A nested SVG crops the plan to this pier without narrowing the outer canvas.
+    const bounds = VIEWS[select.value].split(' ').map(Number);
+    const plan = document.createElementNS(NS, 'svg');
+    Object.entries({ x: bounds[0], y: bounds[1], width: bounds[2], height: bounds[3],
+      viewBox: bounds.join(' '), overflow: 'hidden', 'pointer-events': 'none' })
+      .forEach(([k,v]) => plan.setAttribute(k,v));
+    plan.append(image);
+    svg.append(plan);
     const records = new Map();
     const duplicates = new Set();
     const key = b => String(b.berthNumber || '').trim().toUpperCase().replace(/\s/g, '');
