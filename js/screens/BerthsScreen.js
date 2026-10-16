@@ -1,3 +1,6 @@
+import { showBerthingRates, showBerthingCharges, showUtilityInvoiceChoices } from './BerthingBillingSheet.js';
+import { money, savedCurrency } from '../util/BillingCurrency.js';
+import { marinaCurrency, checkBillingClient } from '../util/BillingData.js';
 import { mountBerthPierMap } from '../components/BerthPierMap.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
@@ -815,6 +818,15 @@ function onViewBerth(berth) {
 
     <div class="assign-divider"></div>
     <div class="view-util-section">
+      <div class="view-util-heading">${t("Berthing")}</div>
+    </div>
+    <div class="view-berth-actions">
+      <button type="button" class="view-berth-btn" id="viewBerthingRates" style="grid-column:1 / -1;">${t("Berthing Rates")}</button>
+    </div>
+    <button type="button" class="view-berth-generate" id="viewBerthingCharges">${t("Berthing Charges / Invoice")}</button>
+
+    <div class="assign-divider"></div>
+    <div class="view-util-section">
       <div class="view-util-heading">${t("Utilities")}</div>
       <div id="${utilsId}" class="view-util-body">${tr("Loading¦")}</div>
     </div>
@@ -823,7 +835,7 @@ function onViewBerth(berth) {
     <div class="view-berth-actions">
       <button class="view-berth-btn" id="viewAddReading">${t("+ Reading")}</button>
       <button class="view-berth-btn" id="viewReadingHistory">${t("Reading History")}</button>
-      <button class="view-berth-btn" id="viewTariffs">${t("£ Tariffs")}</button>
+      <button class="view-berth-btn" id="viewTariffs">${t("Utility Rates")}</button>
     </div>
     <button class="view-berth-generate" id="viewGenerate">${t("Generate Invoice")}</button>
     <button class="assign-cancel" id="berthDetailClose">${t("CLOSE")}</button>
@@ -854,6 +866,16 @@ function onViewBerth(berth) {
     openReadingHistory(berth);
   });
 
+  sheet.querySelector('#viewBerthingRates').addEventListener('click', () => {
+    close();
+    showBerthingRates(berth);
+  });
+
+  sheet.querySelector('#viewBerthingCharges').addEventListener('click', () => {
+    close();
+    showBerthingCharges(berth);
+  });
+
   sheet.querySelector('#viewTariffs').addEventListener('click', () => {
     close();
     openTariffsSheet(berth);
@@ -864,7 +886,8 @@ function onViewBerth(berth) {
       const draft = await prepareUtilityInvoice(store.activeClientId, berth);
       close();
       const { showAddInvoiceSheet } = await import('./AddInvoiceSheet.js');
-      await showAddInvoiceSheet(draft);
+      if (draft.groups) showUtilityInvoiceChoices(draft.groups);
+      else await showAddInvoiceSheet(draft);
     } catch (err) {
       console.error('[utility invoice]', err);
       toast(err.message || 'Unable to generate utility invoice', { kind: 'error' });
@@ -938,8 +961,8 @@ function renderViewUtilBlock(label, { latest, mixed }, tariff, unit) {
   const charge = (consumption != null && !isIncluded) ? consumption * price : 0;
 
   const tariffLine = isIncluded
-    ? 'Tariff: Included'
-    : (tariff ? `Tariff: £${price.toFixed(4)}/${unit}` : 'Tariff: Not set');
+    ? 'Rate: Included'
+    : (tariff ? `Rate: ${savedCurrency(tariff.currency)} ${price.toFixed(4)}/${unit}` : 'Rate: Not set');
 
   return `
     <div class="view-util-block">
@@ -948,7 +971,7 @@ function renderViewUtilBlock(label, { latest, mixed }, tariff, unit) {
       ${consumption != null ? `<div class="view-util-line">${t('Calculated consumption')}: ${consumption.toFixed(2)} ${unit}</div>` : `<div class="view-util-line view-util-empty">${latest.mode === 'INSTANTANEOUS' ? t('Instantaneous readings are not consumption') : t('A previous cumulative reading is required')}</div>`}
       ${mixed ? `<div class="view-util-line util-warning">${t('Mixed reading modes are calculated separately')}</div>` : ''}
       <div class="view-util-line">${tariffLine}</div>
-      ${consumption != null && tariff && !isIncluded ? `<div class="view-util-line">Charge: £${charge.toFixed(2)}</div>` : ''}
+      ${consumption != null && tariff && !isIncluded ? `<div class="view-util-line">Charge: ${money(charge, tariff.currency, uiLocale())}</div>` : ''}
     </div>
   `;
 }
@@ -1344,19 +1367,25 @@ async function openTariffsSheet(berth) {
   backdrop.className = 'sheet-backdrop';
 
   const sheet = document.createElement('div');
-  sheet.className = 'sheet';
+  sheet.className = 'sheet billing-sheet';
 
+  const clientId = Number(store.activeClientId);
+  let currency;
+  try { currency = await marinaCurrency(clientId); }
+  catch (error) { toast(error.message, { kind: 'error' }); return; }
   const now = Date.now();
   let elecTariff = null;
   let waterTariff = null;
   let wastewaterTariff = null;
 
   try {
-    elecTariff = await getActiveTariff(store.activeClientId, 'ELECTRICITY');
-    waterTariff = await getActiveTariff(store.activeClientId, 'WATER');
-    wastewaterTariff = await getActiveTariff(store.activeClientId, 'WASTEWATER');
+    elecTariff = await getActiveTariff(clientId, 'ELECTRICITY');
+    waterTariff = await getActiveTariff(clientId, 'WATER');
+    wastewaterTariff = await getActiveTariff(clientId, 'WASTEWATER');
   } catch (err) {
-    console.warn('[tariffs] load failed', err);
+    console.error('[tariffs] load failed', err);
+    toast(err.message || 'Unable to load utility rates', { kind: 'error' });
+    return;
   }
 
   const elecPrice = elecTariff?.pricePerUnit || 0;
@@ -1365,20 +1394,22 @@ async function openTariffsSheet(berth) {
   const wastewaterMode = wastewaterTariff?.pricingMode || '';
   const wastewaterPrice = (wastewaterTariff?.pricePerUnit || 0) / (['M3', 'M³'].includes(String(wastewaterTariff?.unit || '').toUpperCase()) ? 1000 : 1);
 
+  checkBillingClient(clientId);
   const today = new Date().toISOString().slice(0, 10);
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">${t("Utility Tariffs")}</div>
+    <div class="sheet-title" style="text-align:center;">${t("Utility Rates")} · ${currency}</div>
 
     <form id="tariffsForm" class="add-form" novalidate>
       <div class="add-scroll">
 
         <div class="add-section-title">${t("Electricity")}</div>
         <input class="add-input" id="tf-elecPrice" type="number" step="0.01"
-               placeholder="${t("Price per kWh")}" value="${elecPrice > 0 ? elecPrice : ''}">
+               placeholder="${t("Price per kWh")} (${currency})" value="${elecTariff && savedCurrency(elecTariff.currency) === currency ? elecPrice : ''}">
         <input class="add-input" id="tf-elecDate" type="date" value="${today}">
         <div class="add-section-sub">${t("Effective from")}</div>
+        <div class="add-section-sub">${elecTariff ? (elecTariff.pricingMode === 'INCLUDED' ? t('Current rate: Included') : `${t('Current rate')}: ${savedCurrency(elecTariff.currency)} ${elecPrice.toFixed(4)}/kWh`) : t('Current rate: Not set')}</div>
 
         <div class="add-section-title" style="margin-top:20px;">${t("Water")}</div>
         <select class="add-input add-select" id="tf-waterMode">
@@ -1386,10 +1417,11 @@ async function openTariffsSheet(berth) {
           <option value="INCLUDED" ${waterIncluded  ? 'selected' : ''}>${t("Included")}</option>
         </select>
         <input class="add-input" id="tf-waterPrice" type="number" step="0.0001"
-               placeholder="${t("Price per L")}" value="${waterPrice > 0 ? waterPrice : ''}"
+               placeholder="${t("Price per L")} (${currency})" value="${waterTariff && savedCurrency(waterTariff.currency) === currency ? waterPrice : ''}"
                ${waterIncluded ? 'disabled' : ''}>
         <input class="add-input" id="tf-waterDate" type="date" value="${today}">
         <div class="add-section-sub">${t("Effective from")}</div>
+        <div class="add-section-sub">${waterTariff ? (waterTariff.pricingMode === 'INCLUDED' ? t('Current rate: Included') : `${t('Current rate')}: ${savedCurrency(waterTariff.currency)} ${waterPrice.toFixed(4)}/L`) : t('Current rate: Not set')}</div>
 
         <div class="add-section-title" style="margin-top:20px;">${t("Wastewater")}</div>
         <select class="add-input add-select" id="tf-wastewaterMode">
@@ -1398,14 +1430,15 @@ async function openTariffsSheet(berth) {
           <option value="INCLUDED" ${wastewaterMode === 'INCLUDED' ? 'selected' : ''}>${t("Included")}</option>
         </select>
         <input class="add-input" id="tf-wastewaterPrice" type="number" min="0" step="0.0001"
-               placeholder="${t("Price per L")}" value="${wastewaterPrice}"
+               placeholder="${t("Price per L")} (${currency})" value="${wastewaterTariff && savedCurrency(wastewaterTariff.currency) === currency ? wastewaterPrice : ''}"
                ${wastewaterMode !== 'METERED' ? 'disabled' : ''}>
         <input class="add-input" id="tf-wastewaterDate" type="date" value="${today}">
         <div class="add-section-sub">${t("Effective from")}</div>
+        <div class="add-section-sub">${wastewaterTariff ? (wastewaterTariff.pricingMode === 'INCLUDED' ? t('Current rate: Included') : `${t('Current rate')}: ${savedCurrency(wastewaterTariff.currency)} ${wastewaterPrice.toFixed(4)}/L`) : t('Current rate: Not set')}</div>
 
       </div>
 
-      <button type="submit" class="add-save" id="tf-save">${t("Save Tariffs")}</button>
+      <button type="submit" class="add-save" id="tf-save">${t("Save Rates")} (${currency})</button>
     </form>
   `;
 
@@ -1415,7 +1448,16 @@ async function openTariffsSheet(berth) {
     sheet.classList.add('is-open');
   });
 
+  const calendars = [
+    ['tf-elecDate', 'Electricity effective from'],
+    ['tf-waterDate', 'Water effective from'],
+    ['tf-wastewaterDate', 'Wastewater effective from']
+  ].map(([id, label]) => wireBookingDatePicker(sheet.querySelector('#' + id), {
+    label: tr(label), locale: uiLocale()
+  }));
+
   const close = () => {
+    calendars.forEach(calendar => calendar.close());
     backdrop.classList.remove('is-open');
     sheet.classList.remove('is-open');
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
@@ -1448,6 +1490,7 @@ async function openTariffsSheet(berth) {
     save.textContent = tr('Saving¦');
 
     try {
+      checkBillingClient(clientId);
       const elecVal = parseFloat(sheet.querySelector('#tf-elecPrice').value);
       if (!Number.isFinite(elecVal) || elecVal < 0) throw new Error(tr('Enter electricity price'));
 
@@ -1469,7 +1512,8 @@ async function openTariffsSheet(berth) {
 
       const userId = store.userProfile?.userId || 0;
 
-      await saveTariff(store.activeClientId, userId, {
+      await saveTariff(clientId, userId, {
+        currency,
         utilityType: 'ELECTRICITY',
         unit: 'kWh',
         pricingMode: 'METERED',
@@ -1477,7 +1521,8 @@ async function openTariffsSheet(berth) {
         effectiveFrom: elecDate
       });
 
-      await saveTariff(store.activeClientId, userId, {
+      await saveTariff(clientId, userId, {
+        currency,
         utilityType: 'WATER',
         unit: 'L',
         pricingMode: waterMode,
@@ -1486,7 +1531,8 @@ async function openTariffsSheet(berth) {
       });
 
       if (wastewaterPricingMode) {
-        await saveTariff(store.activeClientId, userId, {
+        await saveTariff(clientId, userId, {
+        currency,
           utilityType: 'WASTEWATER', unit: 'L', pricingMode: wastewaterPricingMode,
           pricePerUnit: wastewaterVal, effectiveFrom: wastewaterDate
         });
@@ -1496,19 +1542,19 @@ async function openTariffsSheet(berth) {
       if (store._tariffCache) delete store._tariffCache;
 
       close();
-      toast(tr('Tariffs saved'), { kind: 'success' });
+      toast(tr('Rates saved'), { kind: 'success' });
 
     } catch (err) {
       console.error('[tariffs] save failed', err);
       save.disabled = false;
-      save.textContent = tr('Save Tariffs');
+      save.textContent = tr('Save Rates');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to save tariffs.';
+      errEl.textContent = err.message || 'Failed to save rates.';
     }
   });
 }

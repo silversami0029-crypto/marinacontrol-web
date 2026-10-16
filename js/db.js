@@ -1,3 +1,6 @@
+import { savedCurrency, money, currencyDigits } from './util/BillingCurrency.js';
+import { marinaCurrency, checkBillingClient } from './util/BillingData.js';
+import { runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { utilitySegments } from './analytics/utilityConsumption.js';
 // js/db.js
 import {
@@ -852,33 +855,28 @@ export async function correctUtilityReading(clientId, reading, userId, fields) {
  * Get the active tariff for a given utility type at a given moment.
  * Returns { pricingMode, pricePerUnit, unit, effectiveFrom } or null.
  */
-export async function getActiveTariff(clientId, utilityType) {
-  const q = query(
+export async function getActiveTariff(clientId, utilityType, at = Date.now()) {
+  const snap = await getDocs(query(
     collection(db, 'utility_tariffs'),
-    where('clientId', '==', clientId),
-    where('utilityType', '==', utilityType),
-    where('active', '==', true)
-  );
-
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-
-  // If multiple active, prefer the most recent by effectiveFrom
-  const sorted = snap.docs
-    .map(d => d.data())
-    .sort((a, b) => (b.effectiveFrom || 0) - (a.effectiveFrom || 0));
-
+    where('clientId', '==', Number(clientId)),
+    where('utilityType', '==', utilityType)
+  ));
+  const sorted = snap.docs.map(d => d.data())
+    .filter(t => Number(t.effectiveFrom || 0) <= at
+      && (t.effectiveTo == null || Number(t.effectiveTo) > at))
+    .sort((a, b) => Number(b.effectiveFrom || 0) - Number(a.effectiveFrom || 0)
+      || Number(b.createdAt || 0) - Number(a.createdAt || 0));
   const t = sorted[0];
-
-  return {
-    pricingMode:  t.pricingMode || 'METERED',
+  return t ? {
+    pricingMode: t.pricingMode || 'METERED',
     pricePerUnit: Number(t.pricePerUnit ?? 0),
-    unit:         t.unit || '',
+    unit: t.unit || '', currency: savedCurrency(t.currency),
     effectiveFrom: Number(t.effectiveFrom ?? 0)
-  };
+  } : null;
 }
 
 export async function prepareUtilityInvoice(clientId, berth) {
+  checkBillingClient(clientId);
   const berthId = Number(berth?.id || 0);
   const boatId = Number(berth?.boatId || 0);
   if (!boatId) throw new Error('No boat assigned to this berth');
@@ -915,7 +913,7 @@ export async function prepareUtilityInvoice(clientId, berth) {
   for (const segment of candidates) {
     const {type, quantity, unit, from:previous, to:latest} = segment;
     if (quantity===0) continue;
-    const tariff = await getActiveTariff(clientId, type);
+    const tariff = await getActiveTariff(clientId, type, segment.at);
     if (!tariff) throw new Error(`No ${type.toLowerCase()} tariff is configured`);
     if (tariff.pricingMode === 'INCLUDED') continue;
     if (tariff.pricingMode !== 'METERED') throw new Error('Unsupported utility pricing mode');
@@ -935,29 +933,42 @@ export async function prepareUtilityInvoice(clientId, berth) {
         utilityType:type, unit, readingMode:segment.mode,
         fromReadingId:previous?.id ?? null, toReadingId:latest.id,
         fromValue:previous?.value ?? null, toValue:latest.value,
-        quantity, rate, amount:quantity*rate, billed:false,
+        quantity, rate, currency: savedCurrency(tariff.currency), amount:quantity*rate, billed:false,
         invoiceId:null, invoiceDocId:null, createdAt:Date.now()
       };
       if (!Number.isFinite(charge.amount)) throw new Error('Invalid utility charge amount');
-      await setDoc(doc(db, 'utility_charges', chargeKey), charge);
+      const chargeRef = doc(db, 'utility_charges', chargeKey);
+      charge = await runTransaction(db, async tx => {
+        checkBillingClient(clientId);
+        const prior = await tx.get(chargeRef);
+        if (prior.exists()) return { ...prior.data(), _docId: prior.id };
+        tx.set(chargeRef, charge);
+        return charge;
+      });
     }
-    if (charge.billed !== true) charges.push(charge);
+    if (charge.billed !== true && Number(charge.boatId) === boatId) charges.push(charge);
   }
 
   if (!charges.length) throw new Error('No unbilled utility charges');
 
-  return {
-    boatId,
-    customerId,
-    category: 'UTILITIES',
-    amount: charges.reduce((sum, c) => sum + Number(c.amount || 0), 0),
-    description: charges.map(c =>
+  checkBillingClient(clientId);
+  const groups = new Map();
+  for (const charge of charges) {
+    const currency = savedCurrency(charge.currency);
+    if (!groups.has(currency)) groups.set(currency, []);
+    groups.get(currency).push(charge);
+  }
+  const drafts = [...groups].map(([currency, items]) => ({
+    clientId, boatId, customerId, currency, category: 'UTILITIES',
+    amount: Number(items.reduce((sum, c) => sum + Number(c.amount || 0), 0).toFixed(currencyDigits(currency))),
+    description: items.map(c =>
       `${c.utilityType === 'WASTEWATER' ? 'Wastewater' : c.utilityType === 'WATER' ? 'Water' : 'Electricity'}: ` +
       `${Number(c.quantity).toFixed(2)} ${c.unit} @ ` +
-      `£${Number(c.rate).toFixed(4)}/${c.unit} = £${Number(c.amount).toFixed(2)}`
+      `${currency} ${Number(c.rate).toFixed(4)}/${c.unit} = ${money(c.amount, currency)}`
     ).join('\n'),
-    utilityChargeDocIds: charges.map(c => c._docId)
-  };
+    utilityChargeDocIds: items.map(c => c._docId)
+  }));
+  return drafts.length === 1 ? drafts[0] : { groups: drafts };
 }
 
 
@@ -966,44 +977,39 @@ export async function prepareUtilityInvoice(clientId, berth) {
    ============================================================ */
 
 export async function saveTariff(clientId, userId, fields) {
-  const effectiveFrom = Number(fields.effectiveFrom || Date.now());
-
-  const activeSnap = await getDocs(query(
+  checkBillingClient(clientId);
+  const currency = await marinaCurrency(clientId);
+  if (fields.currency !== currency) throw new Error('Marina currency changed. Reopen utility rates.');
+  const effectiveFrom = Number(fields.effectiveFrom);
+  if (!Number.isFinite(effectiveFrom) || !Number.isFinite(Number(fields.pricePerUnit)) || Number(fields.pricePerUnit) < 0)
+    throw new Error('Enter a valid effective date and rate');
+  const snap = await getDocs(query(
     collection(db, 'utility_tariffs'),
-    where('clientId', '==', clientId),
-    where('utilityType', '==', fields.utilityType),
-    where('active', '==', true)
+    where('clientId', '==', Number(clientId)),
+    where('utilityType', '==', fields.utilityType)
   ));
-
-  const batch = writeBatch(db);
-
-  activeSnap.docs.forEach(current => {
-    batch.update(current.ref, {
-      active: false,
-      effectiveTo: effectiveFrom,
-      updatedAt: Date.now()
+  const future = snap.docs.map(d => Number(d.data().effectiveFrom))
+    .filter(value => value > effectiveFrom).sort((a, b) => a - b)[0] || null;
+  const id = Date.now();
+  const tariffRef = doc(db, 'utility_tariffs', `${clientId}_${crypto.randomUUID()}`);
+  await runTransaction(db, async tx => {
+    checkBillingClient(clientId);
+    const existing = await Promise.all(snap.docs.map(d => tx.get(d.ref)));
+    for (const current of existing) {
+      const t = current.data();
+      if (current.exists() && Number(t.effectiveFrom) <= effectiveFrom
+          && (t.effectiveTo == null || Number(t.effectiveTo) > effectiveFrom)) {
+        tx.update(current.ref, { active: false, effectiveTo: effectiveFrom, updatedAt: Date.now() });
+      }
+    }
+    tx.set(tariffRef, {
+      id, clientId: Number(clientId), currency,
+      utilityType: fields.utilityType, unit: fields.unit,
+      pricingMode: fields.pricingMode, pricePerUnit: Number(fields.pricePerUnit),
+      effectiveFrom, effectiveTo: future, active: future == null,
+      createdAt: Date.now(), updatedAt: Date.now(), lastModifiedBy: String(userId || '')
     });
   });
-
-  const id = Date.now();
-  const tariffRef = doc(db, 'utility_tariffs', String(id));
-
-  batch.set(tariffRef, {
-    id,
-    clientId,
-    utilityType: fields.utilityType,
-    unit: fields.unit,
-    pricingMode: fields.pricingMode,
-    pricePerUnit: Number(fields.pricePerUnit),
-    effectiveFrom,
-    effectiveTo: null,
-    active: true,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    lastModifiedBy: String(userId || '')
-  });
-
-  await batch.commit();
 }
 
 /* ============================================================

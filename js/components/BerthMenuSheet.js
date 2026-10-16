@@ -231,7 +231,7 @@ export function showBerthMenu(berth, handlers = {}) {
     id: 'btnUtilities',
     icon: ICONS.utilities,
     title: 'Utilities',
-    subtitle: 'Electricity, water readings and tariffs',
+    subtitle: 'Electricity, water, wastewater and rates',
     onClick: () => { close(); handlers.onUtilities?.(berth); }
   }));
 

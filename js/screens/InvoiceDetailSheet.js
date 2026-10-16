@@ -1,3 +1,5 @@
+import { money } from '../util/BillingCurrency.js';
+import { checkBillingClient } from '../util/BillingData.js';
 import { showInvoicePaymentFoundation } from './InvoicePaymentFoundationSheet.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InvoiceDetailSheet.js
@@ -36,7 +38,7 @@ export function showInvoiceDetail(inv) {
 <div style="position:relative;display:flex;align-items:center;min-height:48px;">
   <div class="sheet-title"
        style="flex:1;margin:0;padding:12px 48px;text-align:center;">
-    ${tr("Confirm Payment")}
+    ${tr("Invoice Details")}
   </div>
   <button type="button" id="ivPayClose" aria-label="${tr("Close")}"
           style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#F5F7F9;cursor:pointer;">
@@ -53,7 +55,7 @@ export function showInvoiceDetail(inv) {
       <div class="md-line"><span class="md-label">${tr("Boat:")}</span> <span class="md-value">${escapeHtml(inv.boatName || '—')}</span></div>
       ${inv.description ? `<div class="md-line"><span class="md-label">${tr("Description:")}</span> <span class="md-value">${escapeHtml(inv.description)}</span></div>` : ''}
       <div class="md-line"><span class="md-label">${tr("Category:")}</span> <span class="md-value">${escapeHtml(tr(CATEGORY_LABELS[inv.category] || inv.category))}</span></div>
-      <div class="md-line"><span class="md-label">${tr("Amount:")}</span> <span class="md-value" style="font-weight:700;">£${Number(inv.amount || 0).toFixed(2)}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Amount:")}</span> <span class="md-value" style="font-weight:700;">${money(inv.amount, inv.currency, uiLocale())}</span></div>
       <div class="md-line"><span class="md-label">${tr("Issue Date:")}</span> <span class="md-value">${escapeHtml(formatDate(inv.issueDate))}</span></div>
       <div class="md-line"><span class="md-label">${tr("Due Date:")}</span> <span class="md-value">${escapeHtml(formatDate(inv.dueDate))}</span></div>
       <div class="md-line"><span class="md-label">${tr("Status:")}</span> <span class="md-value" style="color:${statusColor};font-weight:700;">${escapeHtml(tr(inv.status))}</span></div>
@@ -91,6 +93,7 @@ sheet.querySelector('#ivPayClose').addEventListener('click', close);
       markBtn.disabled = true;
       markBtn.textContent = tr('Saving…');
       try {
+        checkBillingClient(inv.clientId);
         await updateDoc(doc(db, 'invoices', String(inv._docId)), {
           status: 'PAID',
           lastModified: Date.now()
@@ -102,7 +105,7 @@ sheet.querySelector('#ivPayClose').addEventListener('click', close);
           boatId: inv.boatId,
           action: 'PAID',
           title: 'Invoice marked as paid',
-          detail: `£${Number(inv.amount || 0).toFixed(2)}`
+          detail: `${money(inv.amount, inv.currency, uiLocale())}`
         });
         close();
         toast(tr('Invoice marked as paid'), { kind: 'success' });

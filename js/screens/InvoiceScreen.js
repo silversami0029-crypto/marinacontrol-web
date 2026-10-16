@@ -1,3 +1,4 @@
+import { money, savedCurrency, totalsText } from '../util/BillingCurrency.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InvoiceScreen.js
 import { store } from '../store.js';
@@ -78,17 +79,17 @@ export function mountInvoiceScreen() {
     <div class="iv-summary" id="ivSummary">
       <div class="iv-summary-col">
         <div class="iv-summary-label">${tr("Total")}</div>
-        <div class="iv-summary-value" id="ivTotal">£0.00</div>
+        <div class="iv-summary-value" id="ivTotal">—</div>
       </div>
       <div class="iv-summary-divider"></div>
       <div class="iv-summary-col">
         <div class="iv-summary-label">${tr("Outstanding")}</div>
-        <div class="iv-summary-value iv-outstanding" id="ivOutstanding">£0.00</div>
+        <div class="iv-summary-value iv-outstanding" id="ivOutstanding">—</div>
       </div>
       <div class="iv-summary-divider"></div>
       <div class="iv-summary-col">
         <div class="iv-summary-label">${tr("Paid")}</div>
-        <div class="iv-summary-value iv-paid" id="ivPaid">£0.00</div>
+        <div class="iv-summary-value iv-paid" id="ivPaid">—</div>
       </div>
     </div>
 
@@ -255,6 +256,8 @@ function subscribeToInvoices(urlCustomerId) {
           issueDate: Number(data.issueDate || 0),
           dueDate: Number(data.dueDate || 0),
           amount: Number(data.amount || 0),
+          currency: savedCurrency(data.currency),
+          berthingBookingUuid: data.berthingBookingUuid || null,
           status: (data.status || 'PENDING').toUpperCase()
         };
       })
@@ -274,19 +277,13 @@ function subscribeToInvoices(urlCustomerId) {
 }
 
 function paintSummary() {
-  let total = 0, paid = 0, outstanding = 0;
-  for (const inv of currentItems) {
-    total += inv.amount;
-    if (inv.status === 'PAID') paid += inv.amount;
-    else outstanding += inv.amount;
-  }
-  document.getElementById('ivTotal').textContent = formatMoney(total);
-  document.getElementById('ivOutstanding').textContent = formatMoney(outstanding);
-  document.getElementById('ivPaid').textContent = formatMoney(paid);
+  document.getElementById('ivTotal').textContent = totalsText(currentItems);
+  document.getElementById('ivOutstanding').textContent = totalsText(currentItems, inv => inv.status !== 'PAID');
+  document.getElementById('ivPaid').textContent = totalsText(currentItems, inv => inv.status === 'PAID');
 }
 
-function formatMoney(n) {
-  return '£' + Number(n || 0).toFixed(2);
+function formatMoney(n, currency) {
+  return money(n, currency, uiLocale());
 }
 
 function getVisible() {
@@ -367,7 +364,7 @@ function renderList() {
           ${inv.description ? `<div class="iv-description">${escapeHtml(inv.description)}</div>` : ''}
 
           <div class="iv-line-3">
-            <div class="iv-amount">${formatMoney(inv.amount)}</div>
+            <div class="iv-amount">${escapeHtml(formatMoney(inv.amount, inv.currency))}</div>
             ${isPayable
               ? `<button type="button" class="iv-pay-btn" data-pay="${inv._docId}">${tr("Pay Now")}</button>`
               : `<div class="iv-due">${tr("Due" )} ${escapeHtml(formatDate(inv.dueDate))}</div>`}

@@ -1,3 +1,6 @@
+import { store } from '../store.js';
+import { money } from '../util/BillingCurrency.js';
+import { checkBillingClient } from '../util/BillingData.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InvoicePaymentSheet.js
 import { toast } from '../ui/toast.js';
@@ -32,7 +35,7 @@ export function showInvoicePaymentSheet(inv) {
       <div class="md-line"><span class="md-label">${tr("Invoice:")}</span> <span class="md-value">${escapeHtml(inv.invoiceNumber || '')}</span></div>
       <div class="md-line"><span class="md-label">${tr("Boat:")}</span> <span class="md-value">${escapeHtml(inv.boatName || '—')}</span></div>
       ${inv.description ? `<div class="md-line"><span class="md-label">${tr("Description:")}</span> <span class="md-value">${escapeHtml(inv.description)}</span></div>` : ''}
-      <div class="md-line"><span class="md-label">${tr("Amount:")}</span> <span class="md-value" style="font-weight:700;">£${Number(inv.amount || 0).toFixed(2)}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Amount:")}</span> <span class="md-value" style="font-weight:700;">${money(inv.amount, inv.currency, uiLocale())}</span></div>
     </div>
 
     <div class="ao-actions" style="margin-top:20px;">
@@ -63,6 +66,7 @@ sheet.querySelector('#ivPayClose').addEventListener('click', close);
     btn.textContent = tr('Saving…');
 
     try {
+      checkBillingClient(inv.clientId);
       await updateDoc(doc(db, 'invoices', String(inv._docId)), {
         status: 'PAID',
         lastModified: Date.now()
@@ -74,7 +78,7 @@ sheet.querySelector('#ivPayClose').addEventListener('click', close);
         boatId: inv.boatId,
         action: 'PAID',
         title: 'Invoice marked as paid',
-        detail: `£${Number(inv.amount || 0).toFixed(2)}`
+        detail: `${money(inv.amount, inv.currency, uiLocale())}`
       });
       close();
       toast(tr('Invoice marked as paid'), { kind: 'success' });

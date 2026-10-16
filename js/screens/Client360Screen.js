@@ -1,3 +1,4 @@
+import { savedCurrency, totalsText } from '../util/BillingCurrency.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/Client360Screen.js
 import { store } from '../store.js';
@@ -446,6 +447,7 @@ async function loadAll(clientId, customerId) {
       issueDate: Number(data.issueDate || 0),
       dueDate: Number(data.dueDate || 0),
       amount: Number(data.amount || 0),
+      currency: savedCurrency(data.currency),
       status: (data.status || 'PENDING').toUpperCase()
     });
   });
@@ -781,42 +783,35 @@ function renderFinancialCard() {
   if (!invoices.length) {
     return `
       <div class="c360-card c360-card-disabled" data-coming-next="No invoices">
-        <div class="c360-card-title">${tr("£ Financial Snapshot")}</div>
+        <div class="c360-card-title">${tr("Financial Snapshot")}</div>
         <div class="c360-line c360-line-dim">${tr("No invoices recorded")}</div>
       </div>
     `;
   }
 
-  let total = 0, paid = 0, outstanding = 0, overdue = 0;
-  for (const inv of invoices) {
-    total += inv.amount;
-    if (inv.status === 'PAID') paid += inv.amount;
-    else {
-      outstanding += inv.amount;
-      if (inv.status === 'OVERDUE') overdue += inv.amount;
-    }
-  }
-
-  const fmt = (n) => '£' + Number(n || 0).toFixed(2);
+  const total = totalsText(invoices);
+  const paid = totalsText(invoices, inv => inv.status === 'PAID');
+  const outstanding = totalsText(invoices, inv => inv.status !== 'PAID');
+  const overdue = invoices.filter(inv => inv.status === 'OVERDUE');
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">${tr("£ Financial Snapshot")}</div>
+      <div class="c360-card-title">${tr("Financial Snapshot")}</div>
       <div class="c360-fin-grid">
         <div class="c360-fin-col">
           <div class="c360-fin-label">${tr("Total")}</div>
-          <div class="c360-fin-value">${fmt(total)}</div>
+          <div class="c360-fin-value">${escapeHtml(total)}</div>
         </div>
         <div class="c360-fin-col">
           <div class="c360-fin-label">${tr("Outstanding")}</div>
-          <div class="c360-fin-value" style="color:#FF4444;">${fmt(outstanding)}</div>
+          <div class="c360-fin-value" style="color:#FF4444;">${escapeHtml(outstanding)}</div>
         </div>
         <div class="c360-fin-col">
           <div class="c360-fin-label">${tr("Paid")}</div>
-          <div class="c360-fin-value" style="color:#4CAF50;">${fmt(paid)}</div>
+          <div class="c360-fin-value" style="color:#4CAF50;">${escapeHtml(paid)}</div>
         </div>
       </div>
-      ${overdue > 0 ? `<div class="c360-alert-more" style="color:#FF4444;">Overdue: ${fmt(overdue)}</div>` : ''}
+      ${overdue.length > 0 ? `<div class="c360-alert-more" style="color:#FF4444;">Overdue: ${escapeHtml(totalsText(overdue))}</div>` : ''}
     </div>
   `;
 }

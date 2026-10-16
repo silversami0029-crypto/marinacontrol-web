@@ -1,11 +1,13 @@
+import { wireBookingDatePicker } from '../ui/BookingDatePicker.js';
+import { marinaCurrency, checkBillingClient, createBillingInvoice } from '../util/BillingData.js';
+import { savedCurrency, currencyCode, currencyDigits, invoiceAmount, money } from '../util/BillingCurrency.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddInvoiceSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { logHistory } from '../util/history.js';
 import {
-  collection, query, where, getDocs, doc, setDoc, updateDoc,
-  writeBatch, serverTimestamp
+  collection, query, where, getDocs, doc, updateDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
@@ -16,6 +18,21 @@ export async function showAddInvoiceSheet(opts = {}) {
   const { item, customerId } = opts;
   const isEdit = !!item;
   const clientId = Number(store.activeClientId);
+  let currency;
+  try {
+    checkBillingClient(clientId);
+    if (opts.clientId && Number(opts.clientId) !== clientId) throw new Error('Marina changed. Reopen the invoice.');
+    if (isEdit && Number(item.clientId) !== clientId) throw new Error('Invoice belongs to another marina');
+    if (isEdit && (item.berthingBookingUuid || item.utilityChargeDocIds?.length))
+      throw new Error('This generated invoice has linked charges. Open its details to record payment.');
+    currency = isEdit ? savedCurrency(item.currency)
+      : opts.currency ? currencyCode(opts.currency) : await marinaCurrency(clientId);
+  } catch (error) {
+    console.error('[invoice currency]', error);
+    toast(error.message, { kind: 'error' });
+    return;
+  }
+  const generated = !!opts.berthingBooking || !!opts.utilityChargeDocIds?.length;
 
   let customers = [];
   let boats = [];
@@ -62,19 +79,23 @@ export async function showAddInvoiceSheet(opts = {}) {
 
   const requestedBoatId = Number(opts.boatId || store.activeBoatId || 0);
   const activeBoat =
-    boats.find(b => b.id === requestedBoatId) ||
-    boats.find(b => b.isActive);
+    requestedBoatId ? boats.find(b => b.id === requestedBoatId) : boats.find(b => b.isActive);
 
   const activeBoatId = Number(activeBoat?.id || 0);
   const defaultCustomerId = Number(
     customerId || activeBoat?.customerId || 0
   );
 
+  try {
+    checkBillingClient(clientId);
+    if (generated && !activeBoat) throw new Error('The vessel linked to these charges could not be found');
+  } catch (error) { toast(error.message, { kind: 'error' }); return; }
+
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
 
   const sheet = document.createElement('div');
-  sheet.className = 'sheet';
+  sheet.className = 'sheet billing-sheet';
 
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
@@ -149,13 +170,13 @@ export async function showAddInvoiceSheet(opts = {}) {
           `).join('')}
         </select>
 
-        <label class="add-label" for="iv-amount">${tr("Amount (£)")}</label>
+        <label class="add-label" for="iv-amount">${tr("Amount")} (${currency})</label>
         <input
           class="add-input"
           id="iv-amount"
           type="number"
           inputmode="decimal"
-          step="0.01"
+          step="${10 ** -currencyDigits(currency)}"
           min="0"
           placeholder="0.00"
         >
@@ -188,7 +209,9 @@ export async function showAddInvoiceSheet(opts = {}) {
     sheet.classList.add('is-open');
   });
 
+  const calendars = [];
   const close = () => {
+    calendars.forEach(calendar => calendar.close());
     backdrop.classList.remove('is-open');
     sheet.classList.remove('is-open');
 
@@ -233,7 +256,20 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     sheet.querySelector('#iv-desc').value = opts.description || '';
     sheet.querySelector('#iv-category').value = opts.category || 'GENERAL';
     sheet.querySelector('#iv-amount').value =
-      opts.amount == null ? '' : Number(opts.amount).toFixed(2);
+      opts.amount == null ? '' : Number(opts.amount).toFixed(currencyDigits(currency));
+  }
+
+  for (const [id, label] of [['iv-issue', 'Issue Date'], ['iv-due', 'Due Date']]) {
+    calendars.push(wireBookingDatePicker(sheet.querySelector('#' + id), {
+      label: tr(label), locale: uiLocale()
+    }));
+  }
+
+  if (generated) {
+    boatSelect.disabled = true;
+    sheet.querySelector('#iv-amount').readOnly = true;
+    sheet.querySelector('#iv-desc').readOnly = true;
+    sheet.querySelector('#iv-category').disabled = true;
   }
 
   boatSelect.addEventListener('change', () => {
@@ -285,7 +321,18 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
       return;
     }
 
-    const amount = Math.max(0, parseFloat(amountStr) || 0);
+    let amount;
+    try {
+      checkBillingClient(clientId);
+      amount = invoiceAmount(amountStr, currency);
+      if (generated && amount !== invoiceAmount(String(opts.amount), currency))
+        throw new Error('The amount must match the reviewed charges');
+      if (!issueStr || !dueStr) throw new Error('Select issue and due dates');
+      if (dueStr < issueStr) throw new Error('Due date cannot be before issue date');
+    } catch (error) {
+      toast(error.message, { kind: 'error' });
+      return;
+    }
     const issueDate =
       new Date(issueStr + 'T00:00:00').getTime();
     const dueDate =
@@ -304,6 +351,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
         await updateDoc(
           doc(db, 'invoices', String(item._docId)),
           {
+            currency,
             customerId: selectedCustomerId,
             clientName: customerName,
             boatId,
@@ -326,66 +374,23 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
           boatId,
           action: 'UPDATED',
           title: 'Invoice edited'
-        });
+        }).catch(error => console.warn('[invoice history]', error));
       } else {
-        const now = Date.now();
-
-        const snap = await getDocs(query(
-          collection(db, 'invoices'),
-          where('clientId', '==', clientId)
-        ));
-
-        let maxId = 0;
-
-        snap.forEach(invoiceDocument => {
-          const value = Number(invoiceDocument.data()?.id || 0);
-
-          if (
-            Number.isInteger(value) &&
-            value > maxId &&
-            value < 2147483647
-          ) {
-            maxId = value;
-          }
-        });
-
-        const nextId = maxId + 1;
-        const cloudId = crypto.randomUUID
-          ? crypto.randomUUID()
-          : `inv-${clientId}-${nextId}`;
-
-        const invoiceRef = doc(db, 'invoices', cloudId);
-        const batch = writeBatch(db);
-
-        batch.set(invoiceRef, {
-            id: nextId,
-            clientId,
-            customerId: selectedCustomerId,
-            clientName: customerName,
-            boatId,
-            boatName,
-            invoiceNumber,
-            description,
-            category,
-            amount,
-            issueDate,
-            dueDate,
-            status,
-            createdAt: now,
-            syncTime: serverTimestamp(),
-            syncedAt: 0
-        });
-
-        for (const chargeDocId of opts.utilityChargeDocIds || []) {
-          batch.update(doc(db, 'utility_charges', chargeDocId), {
-            billed: true,
-            invoiceId: nextId,
-            invoiceDocId: cloudId,
-            billedAt: now
-          });
-        }
-
-        await batch.commit();
+        const created = await createBillingInvoice(clientId, {
+          customerId: selectedCustomerId,
+          clientName: customerName,
+          boatId,
+          boatName,
+          invoiceNumber,
+          description,
+          category,
+          currency,
+          amount,
+          issueDate,
+          dueDate,
+          status
+        }, opts);
+        const nextId = created.id;
 
         await logHistory({
           entityType: 'INVOICE',
@@ -394,8 +399,8 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
           boatId,
           action: 'CREATED',
           title: 'Invoice created',
-          detail: `£${amount.toFixed(2)} Â· ${status}`
-        });
+          detail: `${money(amount, currency)} · ${status}`
+        }).catch(error => console.warn('[invoice history]', error));
       }
 
       close();

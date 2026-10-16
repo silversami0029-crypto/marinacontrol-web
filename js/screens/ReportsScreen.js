@@ -1,3 +1,4 @@
+import { money, totalsText, currencyTotals, savedCurrency } from '../util/BillingCurrency.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ReportsScreen.js
 import { store } from '../store.js';
@@ -142,19 +143,19 @@ function renderUnpaid() {
     String(inv.status || '').toUpperCase() !== 'PAID'
   );
 
-  const total = unpaid.reduce((s, inv) => s + Number(inv.amount || 0), 0);
+  const total = unpaid;
   const overdue = unpaid.filter(inv => String(inv.status || '').toUpperCase() === 'OVERDUE');
   const pending = unpaid.filter(inv => String(inv.status || '').toUpperCase() === 'PENDING');
 
-  const overdueAmt = overdue.reduce((s, inv) => s + Number(inv.amount || 0), 0);
-  const pendingAmt = pending.reduce((s, inv) => s + Number(inv.amount || 0), 0);
+  const overdueAmt = overdue;
+  const pendingAmt = pending;
 
   const byBoat = {};
   for (const inv of unpaid) {
     const bn = inv.boatName || 'Unknown boat';
-    if (!byBoat[bn]) byBoat[bn] = { count: 0, total: 0, overdue: 0 };
+    if (!byBoat[bn]) byBoat[bn] = { count: 0, total: [], overdue: 0 };
     byBoat[bn].count++;
-    byBoat[bn].total += Number(inv.amount || 0);
+    byBoat[bn].total.push(inv);
     if (String(inv.status || '').toUpperCase() === 'OVERDUE') byBoat[bn].overdue++;
   }
 
@@ -204,7 +205,7 @@ function renderUnpaid() {
               <div class="rp-detail-title">${escapeHtml(inv.boatName || 'Unknown boat')}</div>
               <div class="rp-detail-desc">${escapeHtml(inv.description || '')} – Due: ${escapeHtml(fmtDate(inv.dueDate))}</div>
             </div>
-            <div class="rp-detail-value">${fmtMoney(inv.amount)}</div>
+            <div class="rp-detail-value">${fmtMoney(inv.amount, inv.currency)}</div>
           </div>
         `;
       }).join('')}
@@ -406,16 +407,17 @@ function renderRevenue() {
     return d >= from && d <= to;
   });
 
-  const total = filtered.reduce((s, inv) => s + Number(inv.amount || 0), 0);
-  const avg = filtered.length ? total / filtered.length : 0;
+  const total = filtered;
+  const avg = currencyTotals(filtered).map(group => money(group.amount / filtered.filter(inv => savedCurrency(inv.currency) === group.currency).length, group.currency)).join(' · ') || '—';
 
   const byBoat = {};
   for (const inv of filtered) {
     const bn = inv.boatName || 'Unknown boat';
-    byBoat[bn] = (byBoat[bn] || 0) + Number(inv.amount || 0);
+    if (!byBoat[bn]) byBoat[bn] = [];
+    byBoat[bn].push(inv);
   }
 
-  const sortedBoats = Object.entries(byBoat).sort((a, b) => b[1] - a[1]);
+  const sortedBoats = Object.entries(byBoat).sort(([a], [b]) => a.localeCompare(b));
 
   body.innerHTML = `
     <div class="rp-filters">
@@ -448,7 +450,7 @@ function renderRevenue() {
       <div class="rp-section-title">${tr("By Status")}</div>
       <div class="rp-status-row">
         <span class="rp-status-emoji">📊</span>
-        <span class="rp-status-label">${filtered.length} ${filtered.length === 1 ? 'invoice' : 'invoices'} · Avg ${fmtMoney(avg)}</span>
+        <span class="rp-status-label">${filtered.length} ${filtered.length === 1 ? 'invoice' : 'invoices'} · Avg ${escapeHtml(avg)}</span>
       </div>
 
       <div class="rp-section-title">${tr("By Boat")}</div>
@@ -489,8 +491,8 @@ function renderRevenue() {
 /* ============================================================
    Helpers
    ============================================================ */
-function fmtMoney(n) {
-  return '£' + Number(n || 0).toFixed(2);
+function fmtMoney(n, currency) {
+  return Array.isArray(n) ? totalsText(n) : money(n, currency, uiLocale());
 }
 
 function fmtDate(ms) {
@@ -584,7 +586,7 @@ function getDetailRows(tab) {
       rows.push({
         left: inv.boatName || 'Unknown boat',
         mid: `${inv.description || ''} – Due: ${fmtDate(inv.dueDate)}`,
-        right: fmtMoney(inv.amount)
+        right: fmtMoney(inv.amount, inv.currency)
       });
     });
   } else if (tab === 1) {
@@ -615,7 +617,8 @@ function getDetailRows(tab) {
     const byBoat = {};
     for (const inv of paid) {
       const bn = inv.boatName || 'Unknown boat';
-      byBoat[bn] = (byBoat[bn] || 0) + Number(inv.amount || 0);
+      if (!byBoat[bn]) byBoat[bn] = [];
+    byBoat[bn].push(inv);
     }
     Object.entries(byBoat).forEach(([boat, amt]) => {
       rows.push({ left: boat, mid: 'Total paid', right: fmtMoney(amt) });

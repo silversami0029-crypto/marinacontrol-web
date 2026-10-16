@@ -1,3 +1,4 @@
+import { showBerthingCharges } from './BerthingBillingSheet.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -88,6 +89,8 @@ export function showBookingDetailsSheet({
       <button type="button" class="add-save" id="bookingCheckOut" style="margin-top:12px;">${tr('Check Out')}</button>
     ` : ''}
 
+    <button type="button" class="view-berth-generate" id="bookingBerthingCharges">${tr('Berthing Charges / Invoice')}</button>
+
     <div class="ao-actions" style="margin-top:8px;">
       <button type="button" class="csv-btn csv-btn--cancel" data-sheet-close>${tr('Close')}</button>
     </div>
@@ -107,6 +110,11 @@ export function showBookingDetailsSheet({
   backdrop.addEventListener('click', close);
   sheet.querySelectorAll('[data-sheet-close]').forEach(button => {
     button.addEventListener('click', close);
+  });
+
+  sheet.querySelector('#bookingBerthingCharges').addEventListener('click', () => {
+    close();
+    showBerthingCharges(berth);
   });
 
   const checkInButton = sheet.querySelector('#bookingCheckIn');

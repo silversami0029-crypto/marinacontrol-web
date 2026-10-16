@@ -5722,3 +5722,40 @@ body:not(.drawer-page-hidden) .bottomnav {
     cursor: pointer;
   }
 }
+
+/* Billing sheets reuse the current typography, colours, fields and buttons.
+   Only the form body scrolls; its action stays visible. */
+.sheet.billing-sheet {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.billing-sheet > .sheet-handle,
+.billing-sheet > .sheet-title {
+  flex-shrink: 0;
+}
+.billing-sheet .add-form {
+  min-height: 0;
+  overflow: hidden;
+}
+.billing-sheet .add-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+.billing-sheet .add-save {
+  flex-shrink: 0;
+}
+/* Currency totals wrap without changing existing font sizes. */
+.iv-summary-col,
+.c360-fin-col {
+  min-width: 0;
+}
+.iv-summary-value,
+.c360-fin-value,
+.rp-summary-value,
+.rp-status-amount,
+.rp-boat-summary {
+  overflow-wrap: anywhere;
+}

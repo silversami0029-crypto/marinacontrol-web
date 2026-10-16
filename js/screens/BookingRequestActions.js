@@ -1,3 +1,4 @@
+import { reviewNewBookingPrice } from './BerthingBillingSheet.js';
 import { DECLINE_REASONS } from '../analytics/bookingDemand.js';
 import { wireBookingDatePicker } from '../ui/BookingDatePicker.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -344,6 +345,7 @@ async function createBooking(request, boat, berth) {
       syncTime: serverTimestamp(),
       syncedAt: 0
     };
+    bookingData.berthingTerms = await reviewNewBookingPrice(bookingData, berth);
     await runTransaction(db, async transaction => {
       const snapshot = await transaction.get(requestRef);
       if (!snapshot.exists() || !actionable(snapshot.data())) throw new Error('Request already processed or awaiting owner agreement');
