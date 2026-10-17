@@ -5759,3 +5759,20 @@ body:not(.drawer-page-hidden) .bottomnav {
 .rp-boat-summary {
   overflow-wrap: anywhere;
 }
+
+/* Reuse confirmation dimensions and typography for Archive and Restore. */
+.confirm-sheet--archive .confirm-warn-circle,
+.confirm-sheet--archive .confirm-btn--confirm { background: var(--maintenance-archived); }
+.confirm-sheet--archive .confirm-btn--confirm:hover { filter: brightness(1.08); }
+.confirm-sheet--archive .confirm-btn--confirm svg { width: 16px; height: 16px; }
+.mt-visibility { display: flex; align-items: center; gap: 12px; margin: 12px 20px; }
+.mt-visibility select {
+  flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px;
+  color: var(--color-text-primary); background: var(--color-surface);
+  border: 1px solid var(--color-text-muted); border-radius: 12px; font: inherit;
+}
+.maintenance-archived { color: var(--maintenance-archived); }
+
+.maintenance-menu-action { width: 100%; border: 0; text-align: start; font: inherit; margin-bottom: 8px; }
+.maintenance-menu-action.maintenance-archived .sheet-item-title,
+.maintenance-menu-action.maintenance-archived .sheet-item-icon { color: var(--maintenance-archived); }

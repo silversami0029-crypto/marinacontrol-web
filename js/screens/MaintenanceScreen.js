@@ -1,3 +1,4 @@
+import { maintenanceColours, maintenanceVisible } from '../util/MaintenanceState.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/MaintenanceScreen.js
 import { store } from '../store.js';
@@ -16,6 +17,7 @@ let currentBoatName = '';
 let currentItems = [];
 let isSearchOpen = false;
 let attentionFilter = false;
+let visibility = 'current';
 
 export function mountMaintenanceScreen() {
   const screen = document.getElementById('screen');
@@ -26,6 +28,7 @@ export function mountMaintenanceScreen() {
 
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
   currentItems = [];
+  visibility = 'current';
   isSearchOpen = false;
 
   screen.innerHTML = `
@@ -63,6 +66,15 @@ export function mountMaintenanceScreen() {
     <div class="boats-search-bar" id="mtSearchBar" hidden>
       <input id="mtSearchInput" type="text" placeholder="${tr("Search maintenance...")}" autocomplete="off">
       <button type="button" class="search-cancel" id="mtSearchCancel">${tr("Cancel")}</button>
+    </div>
+
+    <div class="mt-visibility">
+      <label for="mtVisibility">${tr('Task visibility')}</label>
+      <select id="mtVisibility">
+        <option value="current">${tr('Current')}</option>
+        <option value="archived">${tr('Archived')}</option>
+        <option value="all">${tr('All')}</option>
+      </select>
     </div>
 
     <div class="mt-list" id="mtList">
@@ -109,6 +121,11 @@ export function mountMaintenanceScreen() {
       console.error('[maintenance fab] failed', err);
       toast(tr('Could not open Add Maintenance'));
     }
+  });
+
+  document.getElementById('mtVisibility').addEventListener('change', event => {
+    visibility = event.target.value;
+    renderList();
   });
 
   resolveBoatAndSubscribe(urlBoatId);
@@ -196,7 +213,12 @@ function subscribeToMaintenance(clientId, boatId) {
           berthId: data.berthId != null ? Number(data.berthId) : null,
           type: data.type || '',
           date: data.date || '',
-          status: data.status || 'ACTIVE',
+          status: data.status || (data.completed ? 'COMPLETED' : 'ACTIVE'),
+          archived: data.archived === true,
+          archivedAt: Number(data.archivedAt || 0),
+          archivedBy: data.archivedBy || '',
+          archiveModifiedAt: Number(data.archiveModifiedAt || 0),
+          archiveModifiedBy: data.archiveModifiedBy || '',
           priority: data.priority || '',
           completed: !!data.completed,
           notes: data.notes || '',
@@ -249,8 +271,9 @@ function subscribeToMaintenance(clientId, boatId) {
    ============================================================ */
 function getVisibleItems() {
   const q = (document.getElementById('mtSearchInput')?.value || '').trim().toLowerCase();
-  if (!q) return currentItems;
-  return currentItems.filter(m =>
+  const visible = currentItems.filter(item => maintenanceVisible(item, visibility));
+  if (!q) return visible;
+  return visible.filter(m =>
     (m.type || '').toLowerCase().includes(q) ||
     (m.notes || '').toLowerCase().includes(q) ||
     (m.status || '').toLowerCase().includes(q) ||
@@ -271,6 +294,8 @@ function renderList() {
     let emptyHTML;
     if (q) {
       emptyHTML = `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>No maintenance matches "${escapeHtml(q)}"</p></div>`;
+    } else if (visibility === 'archived') {
+      emptyHTML = `<div class="boats-empty"><h2>${tr('No archived maintenance')}</h2></div>`;
     } else if (attentionFilter) {
       emptyHTML = `<div class="boats-empty"><h2>${tr("All clear")}</h2><p>${tr("No items need attention.")}</p></div>`;
     } else {
@@ -300,6 +325,7 @@ function renderList() {
 
         <div class="mt-info">
           <div class="mt-title">${escapeHtml(m.type || 'Maintenance')}</div>
+          ${m.archived ? `<div class="mt-assigned maintenance-archived">${tr('Archived')}</div>` : ''}
           ${m.notes ? `<div class="mt-notes">${escapeHtml(m.notes)}</div>` : ''}
           ${m.assignedTo ? `<div class="mt-assigned">${tr("Assigned:" )} ${escapeHtml(m.assignedTo)}</div>` : ''}
           ${m.source ? `
@@ -356,13 +382,13 @@ function getRowState(m) {
   const now = Date.now();
 
   if (m.status === 'ESCALATED') {
-    return { color: '#9C27B0', icon: '↑', dateLabel: 'Escalated', dateColor: '#9C27B0' };
+    return { color: maintenanceColours.escalated, icon: '↑', dateLabel: 'Escalated', dateColor: maintenanceColours.escalated };
   }
   if (m.status === 'DEFERRED') {
-    return { color: '#2196F3', icon: '⏳', dateLabel: 'Deferred', dateColor: '#2196F3' };
+    return { color: maintenanceColours.deferred, icon: '⏳', dateLabel: 'Deferred', dateColor: maintenanceColours.deferred };
   }
   if (m.completed || m.status === 'COMPLETED') {
-    return { color: '#4CAF50', icon: '✓', dateLabel: 'Completed', dateColor: '#4CAF50' };
+    return { color: maintenanceColours.completed, icon: '✓', dateLabel: 'Completed', dateColor: maintenanceColours.completed };
   }
 
   if (!m.date) {
@@ -379,20 +405,20 @@ function getRowState(m) {
   if (due < now) {
     const abs = Math.abs(diffDays);
     return {
-      color: '#F44336',
+      color: maintenanceColours.overdue,
       icon: '!',
       dateLabel: `Overdue by ${abs} ${abs === 1 ? 'day' : 'days'}`,
-      dateColor: '#F44336'
+      dateColor: maintenanceColours.overdue
     };
   }
   if (diffDays === 0) {
-    return { color: '#FF9800', icon: '⏰', dateLabel: 'Due Today', dateColor: '#FF9800' };
+    return { color: maintenanceColours.dueSoon, icon: '⏰', dateLabel: 'Due Today', dateColor: maintenanceColours.dueSoon };
   }
   if (diffDays === 1) {
-    return { color: '#FF9800', icon: '⏰', dateLabel: 'Due Tomorrow', dateColor: '#FF9800' };
+    return { color: maintenanceColours.dueSoon, icon: '⏰', dateLabel: 'Due Tomorrow', dateColor: maintenanceColours.dueSoon };
   }
   if (diffDays <= 7) {
-    return { color: '#FF9800', icon: '⏰', dateLabel: `Due in ${diffDays} days`, dateColor: '#FF9800' };
+    return { color: maintenanceColours.dueSoon, icon: '⏰', dateLabel: `Due in ${diffDays} days`, dateColor: maintenanceColours.dueSoon };
   }
 
   const d = new Date(m.date + 'T00:00:00');

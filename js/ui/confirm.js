@@ -35,7 +35,8 @@ export function confirmSheet(opts) {
     title       = 'Are you sure?',
     message     = '',
     confirmText = 'Delete',
-    cancelText  = 'Cancel'
+    cancelText  = 'Cancel',
+    action = 'delete'
   } = opts;
 
   return new Promise((resolve) => {
@@ -44,10 +45,13 @@ export function confirmSheet(opts) {
 
     const sheet = document.createElement('div');
     sheet.className = 'confirm-sheet';
+    const archiveAction = action === 'archive' || action === 'restore';
+    if (archiveAction) sheet.classList.add('confirm-sheet--archive');
+    const actionIcon = archiveAction ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16v13H4zM3 3h18v5H3z"/><path d="${action === 'restore' ? 'M12 17v-6m-3 3 3-3 3 3' : 'M9 12h6'}"/></svg>` : null;
     sheet.innerHTML = `
       <div class="confirm-handle"></div>
 
-      <div class="confirm-warn-circle">${WARN_ICON}</div>
+      <div class="confirm-warn-circle">${actionIcon || WARN_ICON}</div>
 
       <div class="confirm-title">${escapeHtml(title)}</div>
       <div class="confirm-message">${escapeHtml(message)}</div>
@@ -57,7 +61,7 @@ export function confirmSheet(opts) {
           ${escapeHtml(cancelText)}
         </button>
         <button class="confirm-btn confirm-btn--confirm" type="button">
-          ${TRASH_ICON}<span>${escapeHtml(confirmText)}</span>
+          ${actionIcon || TRASH_ICON}<span>${escapeHtml(confirmText)}</span>
         </button>
       </div>
     `;
@@ -69,7 +73,11 @@ export function confirmSheet(opts) {
       sheet.classList.add('is-open');
     });
 
+    let settled = false;
     function close(result) {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('keydown', onKey);
       backdrop.classList.remove('is-open');
       sheet.classList.remove('is-open');
       setTimeout(() => {
@@ -78,6 +86,13 @@ export function confirmSheet(opts) {
       }, 220);
       resolve(result);
     }
+
+    const onKey = event => { if (event.key === 'Escape') close(false); };
+    document.addEventListener('keydown', onKey);
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-label', title);
+    sheet.querySelector('.confirm-btn--cancel').focus();
 
     sheet.querySelector('.confirm-btn--cancel').addEventListener('click', () => close(false));
     sheet.querySelector('.confirm-btn--confirm').addEventListener('click', () => close(true));

@@ -1,3 +1,7 @@
+import { setMaintenanceArchived, deleteMaintenanceTask } from '../util/MaintenanceArchive.js';
+import { isMaintenanceCompleted } from '../util/MaintenanceState.js';
+import { showMaintenanceDetail } from './MaintenanceDetailSheet.js';
+import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t } from '../i18n.js';
 // js/screens/MaintenanceMenuSheet.js
 import { store } from '../store.js';
@@ -7,7 +11,7 @@ import { showAssignOwnerSheet } from './AssignOwnerSheet.js';
 import { showDeferMaintenanceSheet } from './DeferMaintenanceSheet.js';
 import { showAddMaintenanceSheet } from './AddMaintenanceSheet.js';
 import { showReviewMaintenanceSheet } from './ReviewMaintenanceSheet.js';
-import { doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
 export function showMaintenanceMenu(item, { onChanged } = {}) {
@@ -18,7 +22,7 @@ export function showMaintenanceMenu(item, { onChanged } = {}) {
   sheet.className = 'sheet';
 
   const status = (item.status || 'ACTIVE').toUpperCase();
-  const isCompleted = item.completed || status === 'COMPLETED';
+  const isCompleted = isMaintenanceCompleted(item);
   const isDeferred = status === 'DEFERRED';
 
   sheet.innerHTML = `
@@ -145,6 +149,28 @@ export function showMaintenanceMenu(item, { onChanged } = {}) {
     </div>
   `;
 
+  // Completed work is archived rather than deleted; archived records are read-only.
+  if (isCompleted || item.archived === true) {
+    for (const id of ['mmReview', 'mmComplete', 'mmDefer', 'mmEdit', 'mmAssignOwner', 'mmDelete']) {
+      const row = sheet.querySelector('#' + id);
+      if (row?.nextElementSibling?.classList.contains('sheet-gap-8')) row.nextElementSibling.remove();
+      row?.remove();
+    }
+  }
+  const extra = document.createElement('div');
+  extra.innerHTML = `
+    <button type="button" class="sheet-item maintenance-menu-action" id="mmView">
+      <div class="sheet-item-icon">ⓘ</div>
+      <div class="sheet-item-text"><div class="sheet-item-title">${t('View')}</div></div>
+    </button>
+    ${isCompleted || item.archived === true ? `
+      <button type="button" class="sheet-item maintenance-menu-action maintenance-archived" id="mmArchive">
+        <div class="sheet-item-icon"><svg class="sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v13H4zM3 3h18v5H3zM9 12h6"/></svg></div>
+        <div class="sheet-item-text"><div class="sheet-item-title">${t(item.archived === true ? 'Restore' : 'Archive')}</div></div>
+      </button>` : ''}
+  `;
+  sheet.append(extra);
+
   document.getElementById('modalRoot').append(backdrop, sheet);
   requestAnimationFrame(() => {
     backdrop.classList.add('is-open');
@@ -156,6 +182,15 @@ export function showMaintenanceMenu(item, { onChanged } = {}) {
     sheet.classList.remove('is-open');
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
   };
+
+  sheet.querySelector('#mmView').addEventListener('click', () => {
+    close();
+    setTimeout(() => showMaintenanceDetail(item), 250);
+  });
+  sheet.querySelector('#mmArchive')?.addEventListener('click', async () => {
+    close();
+    await archiveItem(item, onChanged);
+  });
 
   backdrop.addEventListener('click', close);
 sheet.querySelector('#iv-close').addEventListener('click', close);
@@ -170,25 +205,46 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     await completeItem(item, onChanged);
   });
 
-  sheet.querySelector('#mmDefer').addEventListener('click', () => {
+  sheet.querySelector('#mmDefer')?.addEventListener('click', () => {
     close();
     setTimeout(() => showDeferMaintenanceSheet(item, { onChanged }), 250);
   });
 
-  sheet.querySelector('#mmEdit').addEventListener('click', () => {
+  sheet.querySelector('#mmEdit')?.addEventListener('click', () => {
     close();
     setTimeout(() => showAddMaintenanceSheet({ item, onSaved: onChanged }), 250);
   });
 
-  sheet.querySelector('#mmAssignOwner').addEventListener('click', () => {
+  sheet.querySelector('#mmAssignOwner')?.addEventListener('click', () => {
     close();
     setTimeout(() => showAssignOwnerSheet(item, { onChanged }), 250);
   });
 
-  sheet.querySelector('#mmDelete').addEventListener('click', async () => {
+  sheet.querySelector('#mmDelete')?.addEventListener('click', async () => {
     close();
     await deleteItem(item, onChanged);
   });
+}
+
+async function archiveItem(item, onChanged) {
+  const archived = item.archived !== true;
+  const ok = await confirmSheet({
+    action: archived ? 'archive' : 'restore',
+    title: t(archived ? 'Archive maintenance task?' : 'Restore maintenance task?'),
+    message: t(archived
+      ? 'This task will move to Archived. Its completion, history and linked records will be kept.'
+      : 'This task will return to Current. It will remain completed and its history will be kept.'),
+    confirmText: t(archived ? 'Archive' : 'Restore'),
+    cancelText: t('Cancel')
+  });
+  if (!ok) return;
+  try {
+    await setMaintenanceArchived(item, archived);
+    toast(t(archived ? 'Task archived' : 'Task restored'), { kind: 'success' });
+    onChanged?.();
+  } catch (error) {
+    toast(error.message || t('Could not update archive state'), { kind: 'error' });
+  }
 }
 
 async function completeItem(item, onChanged) {
@@ -196,7 +252,7 @@ async function completeItem(item, onChanged) {
     const now = Date.now();
     const userId = String(store.userProfile?.userId || 0);
 
-    await updateDoc(doc(db, 'maintenance', String(item._docId)), {
+    await updateMaintenanceTask(doc(db, 'maintenance', String(item._docId)), {
       completed: true,
       status: 'COMPLETED',
       lastModified: now,
@@ -221,7 +277,7 @@ async function deleteItem(item, onChanged) {
   if (!ok) return;
 
   try {
-    await deleteDoc(doc(db, 'maintenance', String(item._docId)));
+    await deleteMaintenanceTask(item);
     toast(t('deletedNamed', {name:item.type}), { kind: 'success' });
     if (onChanged) onChanged();
   } catch (err) {

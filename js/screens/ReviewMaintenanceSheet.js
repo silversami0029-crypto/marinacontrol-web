@@ -1,8 +1,9 @@
+import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ReviewMaintenanceSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
-import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
 export function showReviewMaintenanceSheet(item, { onChanged } = {}) {
@@ -128,7 +129,7 @@ async function applyReview(item, action, newDate, onChanged) {
       updates.deferredAt = 0;
     }
 
-    await updateDoc(doc(db, 'maintenance', String(item._docId)), updates);
+    await updateMaintenanceTask(doc(db, 'maintenance', String(item._docId)), updates);
 
     const labels = {
       COMPLETED: 'Completed',

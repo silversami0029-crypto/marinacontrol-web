@@ -1,3 +1,4 @@
+import { maintenanceColours, maintenanceStatusColour } from '../util/MaintenanceState.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/MaintenanceDetailSheet.js
 
@@ -57,6 +58,9 @@ ${escapeHtml(item.type || 'Maintenance Details')}
    ============================================================ */
 function buildDetailBody(item) {
   const parts = [];
+  if (item.archived === true) parts.push(row('Archived', tr('Yes'), maintenanceColours.archived));
+  parts.push(row('Status', tr(item.status || (item.completed ? 'COMPLETED' : 'ACTIVE')), maintenanceStatusColour(item)));
+  parts.push(spacer());
 
   // --- Assigned To ---
   if (item.assignedTo) {
@@ -79,7 +83,6 @@ function buildDetailBody(item) {
 
   // --- Deferral (only if deferReason exists) ---
   if (item.deferReason && item.deferReason.trim()) {
-    parts.push(row('Status', tr(item.status || 'N/A')));
     parts.push(row('Reason', item.deferReason));
     parts.push(row('Risk', tr(item.riskLevel || 'N/A')));
     parts.push(row('Mitigation', item.mitigation || 'N/A'));
@@ -103,11 +106,11 @@ function buildDetailBody(item) {
   return parts.join('');
 }
 
-function row(label, value) {
+function row(label, value, colour = '') {
   if (!label) {
     return `<div class="md-line md-line-empty">${escapeHtml(value)}</div>`;
   }
-  return `<div class="md-line"><span class="md-label">${escapeHtml(tr(label))}:</span> <span class="md-value">${escapeHtml(value)}</span></div>`;
+  return `<div class="md-line"><span class="md-label">${escapeHtml(tr(label))}:</span> <span class="md-value"${colour ? ` style="color:${colour}"` : ''}>${escapeHtml(value)}</span></div>`;
 }
 
 function spacer() {

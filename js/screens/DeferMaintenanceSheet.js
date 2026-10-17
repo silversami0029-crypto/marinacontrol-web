@@ -1,8 +1,9 @@
+import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DeferMaintenanceSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
-import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { doc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
 export function showDeferMaintenanceSheet(item, { onChanged } = {}) {
@@ -102,7 +103,7 @@ export function showDeferMaintenanceSheet(item, { onChanged } = {}) {
       const userName = store.userProfile?.name || String(store.userProfile?.userId || '');
       const userId   = String(store.userProfile?.userId || 0);
 
-      await updateDoc(doc(db, 'maintenance', String(item._docId)), {
+      await updateMaintenanceTask(doc(db, 'maintenance', String(item._docId)), {
         status: 'DEFERRED',
         completed: false,
         deferReason: reason,

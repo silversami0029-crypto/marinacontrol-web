@@ -1,3 +1,4 @@
+import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
@@ -8,7 +9,6 @@ import {
   getDocs,
   doc,
   setDoc,
-  updateDoc,
   serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
@@ -475,7 +475,7 @@ async function updateMaintenance(
     store.userProfile?.userId || 0
   );
 
-  await updateDoc(
+  await updateMaintenanceTask(
     doc(
       db,
       'maintenance',

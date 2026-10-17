@@ -51,3 +51,14 @@ html, body {
 button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; }
 a { color: inherit; text-decoration: none; }
 svg { display: block; }
+
+/* Shared maintenance colours matching Android. */
+:root {
+  --accent-teal: #26A69A;
+  --maintenance-archived: var(--accent-teal);
+  --maintenance-completed: #4CAF50;
+  --maintenance-escalated: #9C27B0;
+  --maintenance-deferred: #2196F3;
+  --maintenance-overdue: #F44336;
+  --maintenance-due-soon: #FF9800;
+}

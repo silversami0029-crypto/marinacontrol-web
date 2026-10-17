@@ -1,9 +1,10 @@
+import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AssignOwnerSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import {
-  collection, query, where, getDocs, doc, updateDoc
+  collection, query, where, getDocs, doc
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
@@ -140,7 +141,7 @@ async function setOwner(item, name, onChanged) {
     const now = Date.now();
     const userId = String(store.userProfile?.userId || 0);
 
-    await updateDoc(doc(db, 'maintenance', String(item._docId)), {
+    await updateMaintenanceTask(doc(db, 'maintenance', String(item._docId)), {
       assignedTo: name,
       assignedBy: name ? userId : null,
       assignedAt: name ? now : 0,
