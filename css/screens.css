@@ -5766,10 +5766,23 @@ body:not(.drawer-page-hidden) .bottomnav {
 .confirm-sheet--archive .confirm-btn--confirm:hover { filter: brightness(1.08); }
 .confirm-sheet--archive .confirm-btn--confirm svg { width: 16px; height: 16px; }
 .mt-visibility { display: flex; align-items: center; gap: 12px; margin: 12px 20px; }
-.mt-visibility select {
-  flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px;
-  color: var(--color-text-primary); background: var(--color-surface);
-  border: 1px solid var(--color-text-muted); border-radius: 12px; font: inherit;
+.mt-visibility select,
+.ch-boat-select {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-text-muted);
+  border-radius: 12px;
+  font: inherit;
+}
+
+.ch-boat-select {
+  display: block;
+  width: calc(100% - 40px);
+  margin: 12px 20px;
 }
 .maintenance-archived { color: var(--maintenance-archived); }
 
