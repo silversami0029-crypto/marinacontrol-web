@@ -1,3 +1,4 @@
+import { mountProceduresScreen, unmountProceduresScreen } from './screens/ProceduresScreen.js';
 import { mountEditCustomerScreen, unmountEditCustomerScreen } from './screens/EditCustomerScreen.js';
 import { mountHomeScreen, unmountHomeScreen } from './screens/HomeScreen.js';
 import { mountPedestalFoundationScreen } from './screens/PedestalFoundationScreen.js';
@@ -37,7 +38,7 @@ import { mountNotificationsScreen } from './screens/NotificationsScreen.js';
 
 initLanguage();
 
-const PROTECTED = ['/home', '/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/edit-customer','/client-360','/notifications'];
+const PROTECTED = ['/procedures', '/home', '/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/edit-customer','/client-360','/notifications'];
 
 const routes = {
   '/home':             mountHomeScreen,
@@ -60,6 +61,7 @@ const routes = {
   '/checklists': mountChecklistScreen,
   '/invoices': mountInvoiceScreen,
   '/shift-schedule': mountShiftScheduleScreen,
+  '/procedures': mountProceduresScreen,
   '/documents': mountDocumentScreen,
   '/tasks': mountTaskScreen,
   '/inventory': mountInventoryScreen,
@@ -103,6 +105,7 @@ function navigate() {
     return;
   }
 
+  unmountProceduresScreen();
   unmountHomeScreen();
   unmountCustomerDirectoryScreen();
   unmountEditCustomerScreen();
@@ -202,6 +205,7 @@ export async function switchMarina(clientId, destinationRoute = null) {
 async function bootstrapUser(firebaseUser) {
   const generation = ++sessionGeneration;
   authReady = false;
+  unmountProceduresScreen();
   unmountHomeScreen();
   unmountCustomerDirectoryScreen();
   unmountEditCustomerScreen();

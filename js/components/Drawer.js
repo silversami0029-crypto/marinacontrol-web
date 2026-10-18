@@ -1,3 +1,4 @@
+import { procedureLabel } from '../screens/ProcedureLabels.js';
 import { pedestalLabel } from '../screens/PedestalFoundationScreen.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t } from '../i18n.js';
@@ -49,6 +50,7 @@ const SECTIONS = [
       { id: 'checklists', label: 'Checklists', route: '#/checklists' },
       { id: 'maintenance', label: 'Maintenance', route: '#/maintenance' },
       { id: 'documents', label: 'Documents', route: '#/documents' },
+      { id: 'procedures', label: 'Procedures', route: '#/procedures' },
       { id: 'safety', label: 'Safety Inspections', route: '#/safety' },
     ]
   },
@@ -274,7 +276,7 @@ function renderSection(section) {
             ${item.action ? `data-action="${item.action}"` : ''}
             ${item.toast ? `data-toast="${escapeAttr(item.toast)}"` : ''}>
             <span class="drawer-item-bullet">•</span>
-            <span class="drawer-item-label">${escapeHtml(item.id === 'pedestal-simulator' ? pedestalLabel(item.label) : t(item.label))}</span>
+            <span class="drawer-item-label">${escapeHtml(item.id === 'pedestal-simulator' ? pedestalLabel(item.label) : item.id === 'procedures' ? procedureLabel(item.label) : t(item.label))}</span>
           </button>
         `).join('')}
       </div>

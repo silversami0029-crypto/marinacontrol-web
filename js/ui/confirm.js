@@ -36,10 +36,13 @@ export function confirmSheet(opts) {
     message     = '',
     confirmText = 'Delete',
     cancelText  = 'Cancel',
-    action = 'delete'
+    action = 'delete',
+    signal
   } = opts;
 
   return new Promise((resolve) => {
+    if (signal?.aborted) { resolve(false); return; }
+    const opener = document.activeElement;
     const backdrop = document.createElement('div');
     backdrop.className = 'confirm-backdrop';
 
@@ -47,7 +50,8 @@ export function confirmSheet(opts) {
     sheet.className = 'confirm-sheet';
     const archiveAction = action === 'archive' || action === 'restore';
     if (archiveAction) sheet.classList.add('confirm-sheet--archive');
-    const actionIcon = archiveAction ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16v13H4zM3 3h18v5H3z"/><path d="${action === 'restore' ? 'M12 17v-6m-3 3 3-3 3 3' : 'M9 12h6'}"/></svg>` : null;
+    if (action === 'approve') sheet.classList.add('confirm-sheet--approve');
+    const actionIcon = action === 'approve' ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>` : archiveAction ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16v13H4zM3 3h18v5H3z"/><path d="${action === 'restore' ? 'M12 17v-6m-3 3 3-3 3 3' : 'M9 12h6'}"/></svg>` : null;
     sheet.innerHTML = `
       <div class="confirm-handle"></div>
 
@@ -78,6 +82,8 @@ export function confirmSheet(opts) {
       if (settled) return;
       settled = true;
       document.removeEventListener('keydown', onKey);
+      signal?.removeEventListener('abort', onAbort);
+      if (opener?.isConnected) opener.focus();
       backdrop.classList.remove('is-open');
       sheet.classList.remove('is-open');
       setTimeout(() => {
@@ -87,7 +93,17 @@ export function confirmSheet(opts) {
       resolve(result);
     }
 
-    const onKey = event => { if (event.key === 'Escape') close(false); };
+    const onAbort = () => close(false);
+    const onKey = event => {
+      if (event.key === 'Escape') close(false);
+      if (event.key === 'Tab') {
+        const first = sheet.querySelector('.confirm-btn--cancel');
+        const last = sheet.querySelector('.confirm-btn--confirm');
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    signal?.addEventListener('abort', onAbort, {once: true});
     document.addEventListener('keydown', onKey);
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-modal', 'true');

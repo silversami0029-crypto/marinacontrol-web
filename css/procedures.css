@@ -1,0 +1,38 @@
+/* Procedures reuses existing document headers, forms, rows and bottom sheets. */
+.procedures-screen { --procedure-approved: var(--color-success); --procedure-archived: var(--accent-teal, #26A69A); }
+.procedures-screen .pr-search, .procedures-screen .pr-filters, .procedures-screen .pr-status,
+.procedures-screen .pr-results { margin: 16px 20px; }
+.procedures-screen .pr-filters { display: flex; flex-wrap: wrap; gap: 12px; }
+.procedures-screen .pr-filters label { flex: 1 1 180px; color: var(--color-text-secondary); }
+.procedures-screen .pr-filters .add-input { width: 100%; margin-top: 6px; }
+.pr-actions, .pr-footer { display: flex; flex-wrap: wrap; gap: 10px; }
+.pr-actions { margin-top: 12px; }
+.pr-actions button, .pr-footer button { flex: 1 1 140px; }
+.pr-row { min-height: 100px; }
+.pr-title, .pr-link { border: 0; background: transparent; text-align: start; font: inherit; cursor: pointer; padding: 0; }
+.pr-title { color: var(--color-text-primary); font-weight: 700; }
+.pr-link { color: var(--color-water-blue); margin-top: 8px; text-decoration: underline; }
+.pr-state { margin-top: 6px; color: var(--color-text-secondary); }
+.pr-state--approved { color: var(--procedure-approved); }
+.pr-state--archived { color: var(--procedure-archived); }
+.pr-panel { background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: 14px; padding: 16px; }
+.pr-extract { border-bottom: 1px solid var(--color-divider); padding: 12px 0; }
+.pr-extract p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.pr-note { color: var(--color-text-secondary); line-height: 1.5; }
+.pr-sheet { display: flex; flex-direction: column; width: min(var(--phone-w, 440px), calc(100vw - 16px)); max-height: 88dvh; overflow: hidden; }
+.pr-sheet .add-form { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.pr-sheet .add-scroll { min-height: 0; overflow: auto; }
+.pr-sheet-header { position: relative; flex-shrink: 0; }
+.pr-sheet-header .sheet-title { text-align: center; padding: 0 44px; }
+.pr-sheet-header [data-close] { position: absolute; inset-inline-end: 0; top: -8px; }
+.pr-footer { border-top: 1px solid var(--color-divider); padding-top: 12px; flex-shrink: 0; }
+.procedures-screen #prMore { margin: 16px 20px 90px; }
+.procedures-screen [hidden] { display: none !important; }
+
+/* Existing confirmation layout; semantic colours for non-destructive actions. */
+.confirm-sheet--archive .confirm-warn-circle,
+.confirm-sheet--archive .confirm-btn--confirm { background: var(--accent-teal, #26A69A); }
+.confirm-sheet--approve .confirm-warn-circle,
+.confirm-sheet--approve .confirm-btn--confirm { background: var(--color-success); }
+.confirm-sheet--approve .confirm-btn--confirm svg,
+.confirm-sheet--archive .confirm-btn--confirm svg { width: 16px; height: 16px; }
