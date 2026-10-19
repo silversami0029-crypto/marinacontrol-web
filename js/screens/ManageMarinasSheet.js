@@ -1,3 +1,4 @@
+import {confirmMarinaLifecycle, lifecycleText as lt} from './MarinaLifecycleSheet.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker, getLanguage } from '../i18n.js';
 // js/screens/ManageMarinasSheet.js
@@ -15,13 +16,17 @@ const inputStyle = 'box-sizing:border-box;width:100%;margin-top:5px;padding:11px
 
 export function showManageMarinasSheet() {
   if (openSheet || !store.authUser) return;
+  const cssUrl = new URL('../../css/marina-lifecycle.css', import.meta.url).href;
+  if (![...document.querySelectorAll('link[rel=stylesheet]')].some(link => link.href === cssUrl)) {
+    const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = cssUrl; document.head.append(link);
+  }
   const uid = store.authUser.uid;
   const sourceClientId = Number(store.activeClientId);
   const canCreate = (store.activeRole || store.userProfile?.role) === 'admin';
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
   const sheet = document.createElement('div');
-  sheet.className = 'sheet';
+  sheet.className = 'sheet marina-manage-sheet';
   sheet.setAttribute('role', 'dialog');
   sheet.setAttribute('aria-modal', 'true');
   sheet.setAttribute('aria-labelledby', 'mmTitle');
@@ -45,7 +50,7 @@ export function showManageMarinasSheet() {
   </button>
 </div>
 
-    <h2 id="mmTitle" style="margin:10px 0 16px;font-size:20px;">${t("Manage Marinas")}</h2>
+    <label class="ml-visibility">${lt('Show', 'عرض')}<select id="mmVisibility"><option value="active">${lt('Active marinas', 'المارينات النشطة')}</option><option value="archived">${lt('Archived marinas', 'المارينات المؤرشفة')}</option><option value="all">${lt('All marinas', 'كل المارينات')}</option></select></label>
     <div id="mmList" style="display:grid;gap:8px;margin-bottom:16px;"></div>
     <div id="mmActions" style="display:flex;flex-wrap:wrap;gap:8px;">
       ${canCreate ? `<button type="button" id="mmAdd" style="${buttonStyle}">${t("Add Marina")}</button>` : ''}
@@ -60,7 +65,8 @@ export function showManageMarinasSheet() {
   root.append(backdrop, sheet);
   openSheet = sheet;
   const priorFocus = document.activeElement;
-  let busy = false;
+  let busy = false, deletionRunning = false;
+  let managed = [...store.marinas];
   const $ = selector => sheet.querySelector(selector);
   function validSession() {
     if (store.authUser?.uid !== uid || Number(store.activeClientId) !== sourceClientId) {
@@ -76,12 +82,13 @@ export function showManageMarinasSheet() {
     sheet.querySelectorAll('button,input').forEach(el => { el.disabled = value; });
   }
   function close() {
-    if (busy) return;
+    if (busy && !deletionRunning) return;
     sheet.remove(); backdrop.remove(); openSheet = null;
     document.removeEventListener('keydown', onKey);
     if (priorFocus?.isConnected) priorFocus.focus();
   }
   function onKey(event) {
+    if (document.querySelector('.marina-lifecycle-confirm')) return;
     if (event.key === 'Escape') { event.preventDefault(); close(); }
     if (event.key !== 'Tab') return;
     const items = [...sheet.querySelectorAll('button:not(:disabled),input:not(:disabled)')];
@@ -100,12 +107,15 @@ $('#mmHeaderClose').addEventListener('click', close);
     sheet.querySelector('button')?.focus();
   });
   function renderList() {
-    $('#mmList').innerHTML = store.marinas.map(m => `
+    const visibility = $('#mmVisibility').value;
+    const visible = managed.filter(m => visibility === 'all' || (visibility === 'archived' ? m.archived || m.lifecycle === 'DELETING' : Number(m.isActive) === 1 && !m.archived));
+    $('#mmList').innerHTML = visible.map(m => `
       <div style="border:1px solid #0A8EF7;border-radius:10px;padding:14px;background:#172532;">
         <strong>${esc(m.name)}</strong>
+        ${m.lifecycle === 'DELETING' ? `<div class="ml-state">${lt('Deletion in progress', 'الحذف قيد التنفيذ')}</div>` : m.archived ? `<div class="ml-state">${lt('Archived', 'مؤرشفة')}</div>` : ''}
         <div style="color:#AEB6C1;font-size:13px;margin-top:4px;">${esc(t(m.role || 'staff'))}${Number(m.id) === sourceClientId ? ' · ' + t('Active') : ''}</div>
-        ${Number(m.id) !== sourceClientId ? `<button type="button" data-switch="${Number(m.id)}" style="${buttonStyle}margin-top:8px;">${t("Switch to Marina")}</button>` : ''}
-        ${m.role === 'admin' ? `
+        ${Number(m.id) !== sourceClientId && Number(m.isActive) === 1 && !m.archived ? `<button type="button" data-switch="${Number(m.id)}" style="${buttonStyle}margin-top:8px;">${t("Switch to Marina")}</button>` : ''}
+        ${m.role === 'admin' && Number(m.isActive) === 1 && !m.archived ? `
           <div style="display:flex;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-top:8px;">
             <button type="button" data-invite="${Number(m.id)}" style="${buttonStyle}">${t("Show Invite Code")}</button>
             <div data-invite-panel="${Number(m.id)}" hidden style="flex:1;min-width:200px;border:1px solid #0A8EF7;border-radius:8px;padding:10px;background:#151A20;">
@@ -118,7 +128,20 @@ $('#mmHeaderClose').addEventListener('click', close);
               </div>
             </div>
           </div>` : ''}
-      </div>`).join('');
+        ${m.role === 'admin' ? `<div class="ml-actions">${m.lifecycle === 'DELETING' ? (m.canResume ? `<button type="button" data-resume="${Number(m.id)}" style="${buttonStyle}">${lt('Resume deletion', 'استئناف الحذف')}</button>` : '') : `<button type="button" data-lifecycle="${m.archived ? 'RESTORE' : 'ARCHIVE'}" data-marina="${Number(m.id)}" style="${buttonStyle}color:var(--accent-teal,#26A69A);">${m.archived ? lt('Restore marina', 'استعادة المارينا') : lt('Archive marina', 'أرشفة المارينا')}</button><button type="button" data-lifecycle="DELETE" data-marina="${Number(m.id)}" style="${buttonStyle}color:var(--color-danger,#FF8A80);">${lt('Delete marina', 'حذف المارينا')}</button>`}</div>` : ''}
+      </div>`).join('') || `<p>${lt('No marinas in this view.', 'لا توجد مارينات في هذا العرض.')}</p>`;
+    $('#mmList').querySelectorAll('[data-lifecycle]').forEach(button => button.onclick = () => run(async () => {
+      const clientId = Number(button.dataset.marina), action = button.dataset.lifecycle;
+      const preview = await call('getMarinaLifecyclePreview', {clientId, sourceClientId});
+      if (action !== 'RESTORE' && preview.blocked) { status(preview.blocked, true); return; }
+      const confirmation = await confirmMarinaLifecycle(preview, action);
+      if (!confirmation || !sheet.isConnected) return;
+      validSession();
+      await call('changeMarinaLifecycle', {clientId, sourceClientId, revision: preview.revision, action, ...confirmation});
+      if (action === 'DELETE') { await loadManaged(); await resumeDeletion(clientId); }
+      else { await loadManaged(); status(action === 'RESTORE' ? lt('Marina restored.', 'تمت استعادة المارينا.') : lt('Marina archived. Its records are preserved.', 'تمت أرشفة المارينا مع الاحتفاظ بسجلاتها.')); }
+    }));
+    $('#mmList').querySelectorAll('[data-resume]').forEach(button => button.onclick = () => run(() => resumeDeletion(Number(button.dataset.resume))));
     $('#mmList').querySelectorAll('[data-switch]').forEach(btn => {
       btn.addEventListener('click', () => run(async () => {
         const { switchMarina } = await import('../router.js');
@@ -169,9 +192,34 @@ $('#mmHeaderClose').addEventListener('click', close);
       });
     });
   }
+  async function loadManaged() {
+    const result = await call('listMarinaLifecycle', {});
+    if (!sheet.isConnected) return;
+    managed = result.marinas;
+    store.marinas = managed.filter(m => Number(m.isActive) === 1 && !m.archived);
+    renderList();
+  }
+  async function resumeDeletion(clientId) {
+    deletionRunning = true;
+    try {
+      while (sheet.isConnected) {
+        validSession();
+        setBusy(true); $('#mmClose').disabled = false; $('#mmHeaderClose').disabled = false;
+        const result = await call('continueMarinaDeletion', {clientId});
+        if (!sheet.isConnected) return;
+        if (result.done) { await loadManaged(); status(lt('Test marina and linked records deleted.', 'تم حذف مارينا الاختبار وسجلاتها المرتبطة.')); return; }
+        status(result.waiting ? lt('Deletion started. Waiting for earlier requests to finish. You can close this sheet and resume deletion later under Archived marinas.', 'بدأ الحذف. ننتظر انتهاء الطلبات السابقة. يمكنك إغلاق النافذة واستئناف الحذف لاحقاً ضمن المارينات المؤرشفة.') : lt('Deleting linked records… ', 'جارٍ حذف السجلات المرتبطة… ') + Number(result.deletedRoots || 0));
+        await new Promise(resolve => setTimeout(resolve, Math.max(1000, Math.min(5000, Number(result.retryAfter || 1000)))));
+      }
+    } catch (error) {
+      if (sheet.isConnected) { try { await loadManaged(); } catch {} }
+      throw error;
+    } finally { deletionRunning = false; }
+  }
   async function call(name, data) {
     validSession();
-    return (await httpsCallable(functions, name)(data)).data;
+    const timeout = /MarinaLifecycle|MarinaDeletion/.test(name) ? 550000 : 70000;
+    return (await httpsCallable(functions, name, {timeout})(data)).data;
   }
   async function run(action) {
     if (busy) return;
@@ -203,10 +251,7 @@ $('#mmHeaderClose').addEventListener('click', close);
     }
   }
   $('#mmRefresh').addEventListener('click', () => run(async () => {
-    store.marinas = (await getMyMarinas(uid, store.userProfile?.userId || 0))
-      .filter(m => Number(m.isActive) === 1);
-    validSession();
-    renderList(); status('Marina list refreshed.');
+    await loadManaged(); status(lt('Marina list refreshed.', 'تم تحديث قائمة المارينات.'));
   }));
   function showForm(mode) {
     const adding = mode === 'add';
@@ -315,7 +360,9 @@ $('#mmHeaderClose').addEventListener('click', close);
     });
   }
   $('#mmJoin').addEventListener('click', () => showForm('join'));
+  $('#mmVisibility').onchange = renderList;
   renderList();
+  run(loadManaged);
 }
 
 // RFC-style CSV quoting: supports commas, escaped quotes and line breaks in fields.

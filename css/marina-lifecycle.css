@@ -1,0 +1,15 @@
+/* Existing confirmation layout, with the same teal archive colour used in maintenance. */
+.marina-manage-sheet { width: min(var(--phone-w, 440px), calc(100vw - 16px)); }
+.marina-lifecycle-confirm { max-height: 85dvh; overflow-y: auto; }
+.marina-lifecycle-safe .confirm-warn-circle,
+.marina-lifecycle-safe .confirm-btn--confirm { background: var(--accent-teal, #26A69A); }
+.marina-lifecycle-confirm .confirm-btn--confirm svg { width: 18px; height: 18px; flex-shrink: 0; }
+.marina-lifecycle-confirm .confirm-btn:disabled { opacity: .45; cursor: not-allowed; }
+.ml-delete-fields { margin: 16px 20px; color: var(--color-text-secondary); font-size: 14px; }
+.ml-delete-fields label { display: block; }
+.ml-delete-fields .ml-check { display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; line-height: 1.5; }
+.ml-check input { margin-top: 4px; }
+.ml-visibility { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.ml-visibility select { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px; color: var(--color-text-primary); background: var(--color-surface); border: 1px solid var(--color-text-muted); border-radius: 12px; font: inherit; }
+.ml-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ml-state { color: var(--accent-teal, #26A69A); margin-top: 6px; }
