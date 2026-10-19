@@ -30,42 +30,39 @@ export function showManageMarinasSheet() {
   sheet.setAttribute('role', 'dialog');
   sheet.setAttribute('aria-modal', 'true');
   sheet.setAttribute('aria-labelledby', 'mmTitle');
-  sheet.style.cssText = 'padding:20px;box-sizing:border-box;max-height:85dvh;overflow:auto;color:#F5F7F9;background:#1C222A;';
   sheet.innerHTML = `
-    <div class="marina-sheet-header"
-  style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface,#1C222A);">
-
-  <h2 id="mmTitle" class="sheet-title"
-    style="flex:1;margin:0;padding:12px 48px;text-align:center;font-size:20px;">
-    ${t('Manage Marinas')}
-  </h2>
-
-  <button type="button" id="mmHeaderClose" aria-label="${t('Close')}"
-    style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-      stroke="currentColor" stroke-width="2" stroke-linecap="round"
-      aria-hidden="true">
-      <path d="M6 6l12 12M18 6L6 18"/>
-    </svg>
-  </button>
-</div>
-
-    <label class="ml-visibility">${lt('Show', 'عرض')}<select id="mmVisibility"><option value="active">${lt('Active marinas', 'المارينات النشطة')}</option><option value="archived">${lt('Archived marinas', 'المارينات المؤرشفة')}</option><option value="all">${lt('All marinas', 'كل المارينات')}</option></select></label>
-    <div id="mmList" style="display:grid;gap:8px;margin-bottom:16px;"></div>
-    <div id="mmActions" style="display:flex;flex-wrap:wrap;gap:8px;">
-      ${canCreate ? `<button type="button" id="mmAdd" style="${buttonStyle}">${t("Add Marina")}</button>` : ''}
-      <button type="button" id="mmJoin" style="${buttonStyle}">${t("Join Marina")}</button>
-      <button type="button" id="mmRefresh" style="${buttonStyle}">${t("Refresh List")}</button>
+    <div class="marina-sheet-header ml-header">
+      <h2 id="mmTitle" class="sheet-title">${t('Manage Marinas')}</h2>
+      <button type="button" id="mmHeaderClose" class="ml-header-close" aria-label="${t('Close')}">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
     </div>
-    <div id="mmForm"></div>
-    <p id="mmStatus" role="status" aria-live="polite" style="white-space:pre-wrap;overflow-wrap:anywhere;"></p>
-    <button type="button" id="mmClose" style="${buttonStyle}width:100%;">${t("Close")}</button>`;
+    <div class="ml-body">
+      <label class="ml-visibility">${lt('Show', 'عرض')}
+        <select id="mmVisibility">
+          <option value="active">${lt('Active marinas', 'المارينات النشطة')}</option>
+          <option value="archived">${lt('Archived marinas', 'المارينات المؤرشفة')}</option>
+          <option value="all">${lt('All marinas', 'كل المارينات')}</option>
+        </select>
+      </label>
+      <div id="mmList" class="ml-list"></div>
+      <div id="mmActions" class="ml-tools">
+        ${canCreate ? `<button type="button" id="mmAdd" style="${buttonStyle}">${t('Add Marina')}</button>` : ''}
+        <button type="button" id="mmJoin" style="${buttonStyle}">${t('Join Marina')}</button>
+        <button type="button" id="mmRefresh" style="${buttonStyle}">${t('Refresh List')}</button>
+      </div>
+      <div id="mmForm"></div>
+      <p id="mmStatus" class="ml-status" role="status" aria-live="polite" hidden></p>
+    </div>
+    <div class="ml-footer">
+      <button type="button" id="mmClose" style="${buttonStyle}width:100%;">${t('Close')}</button>
+    </div>`;
   const root = document.getElementById('modalRoot');
   if (!root) return;
   root.append(backdrop, sheet);
   openSheet = sheet;
   const priorFocus = document.activeElement;
-  let busy = false, deletionRunning = false;
+  let busy = false, deletionRunning = false, loadingManaged = false, hasManaged = false;
   let managed = [...store.marinas];
   const $ = selector => sheet.querySelector(selector);
   function validSession() {
@@ -75,6 +72,7 @@ export function showManageMarinasSheet() {
   }
   function status(message, error = false) {
     $('#mmStatus').textContent = message;
+    $('#mmStatus').hidden = !message;
     $('#mmStatus').style.color = error ? '#FF8A80' : '#AEB6C1';
   }
   function setBusy(value) {
@@ -82,7 +80,7 @@ export function showManageMarinasSheet() {
     sheet.querySelectorAll('button,input').forEach(el => { el.disabled = value; });
   }
   function close() {
-    if (busy && !deletionRunning) return;
+    if (busy && !deletionRunning && !loadingManaged) return;
     sheet.remove(); backdrop.remove(); openSheet = null;
     document.removeEventListener('keydown', onKey);
     if (priorFocus?.isConnected) priorFocus.focus();
@@ -91,7 +89,7 @@ export function showManageMarinasSheet() {
     if (document.querySelector('.marina-lifecycle-confirm')) return;
     if (event.key === 'Escape') { event.preventDefault(); close(); }
     if (event.key !== 'Tab') return;
-    const items = [...sheet.querySelectorAll('button:not(:disabled),input:not(:disabled)')];
+    const items = [...sheet.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled)')].filter(el => el.offsetParent !== null);
     const first = items[0], last = items.at(-1);
     if (!first) { event.preventDefault(); return; }
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
@@ -100,7 +98,7 @@ export function showManageMarinasSheet() {
   document.addEventListener('keydown', onKey);
   backdrop.addEventListener('click', close);
   $('#mmClose').addEventListener('click', close);
-$('#mmHeaderClose').addEventListener('click', close);
+  $('#mmHeaderClose').addEventListener('click', close);
   requestAnimationFrame(() => {
     if (!sheet.isConnected) return;
     backdrop.classList.add('is-open'); sheet.classList.add('is-open');
@@ -129,7 +127,7 @@ $('#mmHeaderClose').addEventListener('click', close);
             </div>
           </div>` : ''}
         ${m.role === 'admin' ? `<div class="ml-actions">${m.lifecycle === 'DELETING' ? (m.canResume ? `<button type="button" data-resume="${Number(m.id)}" style="${buttonStyle}">${lt('Resume deletion', 'استئناف الحذف')}</button>` : '') : `<button type="button" data-lifecycle="${m.archived ? 'RESTORE' : 'ARCHIVE'}" data-marina="${Number(m.id)}" style="${buttonStyle}color:var(--accent-teal,#26A69A);">${m.archived ? lt('Restore marina', 'استعادة المارينا') : lt('Archive marina', 'أرشفة المارينا')}</button><button type="button" data-lifecycle="DELETE" data-marina="${Number(m.id)}" style="${buttonStyle}color:var(--color-danger,#FF8A80);">${lt('Delete marina', 'حذف المارينا')}</button>`}</div>` : ''}
-      </div>`).join('') || `<p>${lt('No marinas in this view.', 'لا توجد مارينات في هذا العرض.')}</p>`;
+      </div>`).join('') || `<p class="ml-empty">${!hasManaged ? lt('Loading marinas…', 'جارٍ تحميل المارينات…') : visibility === 'archived' ? lt('No archived marinas.', 'لا توجد مارينات مؤرشفة.') : lt('No marinas in this view.', 'لا توجد مارينات في هذا العرض.')}</p>`;
     $('#mmList').querySelectorAll('[data-lifecycle]').forEach(button => button.onclick = () => run(async () => {
       const clientId = Number(button.dataset.marina), action = button.dataset.lifecycle;
       const preview = await call('getMarinaLifecyclePreview', {clientId, sourceClientId});
@@ -193,11 +191,18 @@ $('#mmHeaderClose').addEventListener('click', close);
     });
   }
   async function loadManaged() {
-    const result = await call('listMarinaLifecycle', {});
-    if (!sheet.isConnected) return;
-    managed = result.marinas;
-    store.marinas = managed.filter(m => Number(m.isActive) === 1 && !m.archived);
-    renderList();
+    loadingManaged = true;
+    $('#mmClose').disabled = false;
+    $('#mmHeaderClose').disabled = false;
+    try {
+      const result = await call('listMarinaLifecycle', {});
+      if (!sheet.isConnected) return;
+      managed = result.marinas;
+      hasManaged = true;
+      store.marinas = managed.filter(m => Number(m.isActive) === 1 && !m.archived);
+      renderList();
+      status('');
+    } finally { loadingManaged = false; }
   }
   async function resumeDeletion(clientId) {
     deletionRunning = true;
@@ -219,11 +224,13 @@ $('#mmHeaderClose').addEventListener('click', close);
   async function call(name, data) {
     validSession();
     const timeout = /MarinaLifecycle|MarinaDeletion/.test(name) ? 550000 : 70000;
-    return (await httpsCallable(functions, name, {timeout})(data)).data;
+    const result = await httpsCallable(functions, name, {timeout})(data);
+    validSession();
+    return result.data;
   }
-  async function run(action) {
+  async function run(action, waitingMessage = lt('Please wait…', 'يرجى الانتظار…')) {
     if (busy) return;
-    setBusy(true); status('Please wait…');
+    setBusy(true); status(waitingMessage);
     try { validSession(); await action(); }
     catch (error) { console.error('[manage marinas]', error); status(error.message || 'Unable to complete this action.', true); }
     finally { if (sheet.isConnected) setBusy(false); }
@@ -362,7 +369,7 @@ $('#mmHeaderClose').addEventListener('click', close);
   $('#mmJoin').addEventListener('click', () => showForm('join'));
   $('#mmVisibility').onchange = renderList;
   renderList();
-  run(loadManaged);
+  run(loadManaged, lt('Loading marinas…', 'جارٍ تحميل المارينات…'));
 }
 
 // RFC-style CSV quoting: supports commas, escaped quotes and line breaks in fields.

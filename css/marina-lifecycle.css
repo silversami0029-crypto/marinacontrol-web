@@ -1,5 +1,55 @@
 /* Existing confirmation layout, with the same teal archive colour used in maintenance. */
-.marina-manage-sheet { width: min(var(--phone-w, 440px), calc(100vw - 16px)); }
+.marina-manage-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(var(--phone-w, 440px), calc(100vw - 16px));
+  max-height: 85dvh;
+  padding: 0;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+}
+.marina-manage-sheet .ml-header {
+  position: relative;
+  flex-shrink: 0;
+  min-height: 72px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--color-divider);
+}
+.marina-manage-sheet .ml-header .sheet-title {
+  margin: 0;
+  padding: 0 36px;
+  text-align: center;
+  font-size: 20px;
+}
+.ml-header-close {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 12px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--color-text-primary);
+  border-radius: 8px;
+}
+.marina-manage-sheet .ml-body {
+  min-height: 0;
+  padding: 20px;
+  overflow-y: auto;
+}
+.marina-manage-sheet .ml-footer {
+  flex-shrink: 0;
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--color-divider);
+}
+.ml-footer button { min-height: 48px; }
+.ml-list { display: grid; gap: 12px; margin-bottom: 20px; }
+.ml-empty { margin: 0; padding: 28px 12px; color: var(--color-text-secondary); text-align: center; line-height: 1.5; }
+.ml-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.marina-manage-sheet .ml-tools button { min-height: 48px; padding: 10px 8px !important; }
+.ml-status { margin: 16px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.marina-manage-sheet [hidden] { display: none !important; }
 .marina-lifecycle-confirm { max-height: 85dvh; overflow-y: auto; }
 .marina-lifecycle-safe .confirm-warn-circle,
 .marina-lifecycle-safe .confirm-btn--confirm { background: var(--accent-teal, #26A69A); }
@@ -9,7 +59,7 @@
 .ml-delete-fields label { display: block; }
 .ml-delete-fields .ml-check { display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; line-height: 1.5; }
 .ml-check input { margin-top: 4px; }
-.ml-visibility { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.ml-visibility { display: flex; align-items: center; gap: 12px; margin: 0 0 20px; }
 .ml-visibility select { flex: 1; min-width: 0; min-height: 44px; padding: 8px 12px; color: var(--color-text-primary); background: var(--color-surface); border: 1px solid var(--color-text-muted); border-radius: 12px; font: inherit; }
 .ml-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .ml-state { color: var(--accent-teal, #26A69A); margin-top: 6px; }
