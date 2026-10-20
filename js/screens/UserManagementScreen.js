@@ -848,7 +848,10 @@ function showAddUserSheet() {
                name="um-password"
                type="password"
                placeholder="${tr("Password")}"
-               autocomplete="new-password">
+               autocomplete="new-password"
+               required minlength="15" maxlength="128"
+               title="Use 15 to 128 characters; spaces are allowed.">
+        <small>Use 15 to 128 characters; spaces are allowed.</small>
 
         <div class="add-section-title"
              style="margin-top:16px;">${tr("User Role")}</div>
@@ -912,8 +915,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
 
     const password = sheet
       .querySelector('#um-password')
-      .value
-      .trim();
+      .value;
 
     const role = sheet
       .querySelector('#um-role')
@@ -929,8 +931,9 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
       return;
     }
 
-    if (!password) {
+    if (password.length < 15 || password.length > 128) {
       sheet.querySelector('#um-password').focus();
+      toast('Password must contain 15 to 128 characters.', { kind: 'error' });
       return;
     }
 

@@ -133,6 +133,8 @@ let baseProfile = null;
 
 function selectionKey(uid) { return `marinacontrol.activeMarina.${uid}`; }
 function clearMarinaData() {
+  // Never retain another marina's or signed-out user's open details.
+  document.getElementById('modalRoot')?.replaceChildren();
   store.boats = [];
   store.boatsFull = [];
   store.customers = [];

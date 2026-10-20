@@ -159,14 +159,14 @@ function renderList() {
   }
 
   listEl.innerHTML = crew.map(c => `
-    <div class="cm-row" data-crew-id="${c.id}">
+    <div class="cm-row" data-crew-id="${escapeAttr(c.id)}">
       <div class="cm-avatar">${escapeHtml(computeInitials(c.name))}</div>
       <div class="cm-info">
         <div class="cm-name">${escapeHtml(c.name)}</div>
         ${c.email ? `<div class="cm-email">${escapeHtml(c.email)}</div>` : ''}
       </div>
       <div class="pm-role-cell">
-        <select class="pm-role-select" data-role-for="${c._docId}">
+        <select class="pm-role-select" data-role-for="${escapeAttr(c._docId)}">
           ${ROLES.map(r => `<option value="${escapeAttr(r)}"${r === c.role ? ' selected' : ''}>${escapeHtml(tr(r))}</option>`).join('')}
         </select>
       </div>
@@ -215,5 +215,5 @@ function escapeHtml(s) {
   }[c]));
 }
 function escapeAttr(s) {
-  return String(s ?? '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return escapeHtml(s);
 }

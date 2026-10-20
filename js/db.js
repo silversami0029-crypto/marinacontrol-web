@@ -802,7 +802,13 @@ export async function createUtilityReading(clientId, userId, fields) {
     ,correctionOf: fields.correctionOf || null
   };
 
-  await setDoc(doc(db, 'utility_readings', String(newId)), data);
+  const ref = doc(db, 'utility_readings', String(newId));
+  await runTransaction(db, async transaction => {
+    if ((await transaction.get(ref)).exists()) {
+      throw new Error('A reading already uses this ID. Refresh and retry; no reading was overwritten.');
+    }
+    transaction.set(ref, data);
+  });
   console.log('[db] Utility reading created', newId);
   return newId;
 }
@@ -837,13 +843,26 @@ export async function correctUtilityReading(clientId, reading, userId, fields) {
     unit:fields.unit, notes:fields.notes || '', source:'MANUAL', recordedAt:Number(reading.recordedAt || now),
     correctionOf:reading._docId, createdAt:now, lastModified:now, lastModifiedBy:String(userId ?? '')
   };
-  const batch = writeBatch(db);
-  batch.set(doc(db, 'utility_readings', String(newId)), replacement);
-  batch.update(doc(db, 'utility_readings', String(reading._docId)), {
-    voidedAt:now, voidedBy:String(userId ?? ''), voidReason:'Corrected', correctedBy:String(newId),
-    lastModified:now, lastModifiedBy:String(userId ?? '')
+  const replacementRef = doc(db, 'utility_readings', String(newId));
+  const originalRef = doc(db, 'utility_readings', String(reading._docId));
+  await runTransaction(db, async transaction => {
+    const [existingReplacement, original] = await Promise.all([
+      transaction.get(replacementRef), transaction.get(originalRef)
+    ]);
+    if (existingReplacement.exists()) {
+      throw new Error('A reading already uses this ID. Refresh and retry; no reading was overwritten.');
+    }
+    const current = original.data();
+    if (!original.exists() || Number(current.clientId) !== Number(clientId) ||
+        Number(current.voidedAt || 0) > 0) {
+      throw new Error('This reading changed or was already corrected. Refresh before retrying.');
+    }
+    transaction.set(replacementRef, replacement);
+    transaction.update(originalRef, {
+      voidedAt:now, voidedBy:String(userId ?? ''), voidReason:'Corrected', correctedBy:String(newId),
+      lastModified:now, lastModifiedBy:String(userId ?? '')
+    });
   });
-  await batch.commit();
   return newId;
 }
 
