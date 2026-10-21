@@ -1,3 +1,4 @@
+import {showPedestalInvoicePreview} from './PedestalInvoicePreviewSheet.js';
 import {store} from '../store.js';
 import {getLocale} from '../i18n.js';
 import {getApp} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -26,6 +27,7 @@ const words = {
   'Test event recorded.':'تم تسجيل حدث الاختبار.', 'Test pedestal created.':'تم إنشاء منصة خدمات تجريبية.',
   'Request failed. You can retry the same request.':'فشل الطلب. يمكنك إعادة محاولة الطلب نفسه.',
   'Test not deployed yet or backend unavailable.':'لم يتم نشر الاختبار بعد أو أن الخدمة غير متاحة.',
+  'Test Invoice Preview':'معاينة فاتورة تجريبية',
   'Details':'التفاصيل', 'Help':'المساعدة', 'Back':'رجوع', 'Got it':'فهمت', 'READING':'قراءة', 'FAULT':'عطل', 'HEARTBEAT':'إشارة اتصال',
   'INSPECT':'فحص', 'ASSIGN':'تعيين', 'RESOLVE':'إغلاق', 'Test events':'أحداث الاختبار',
   'Only marina administrators can run this simulator.':'يمكن لمسؤولي المرسى فقط تشغيل هذا المحاكي.',
@@ -94,6 +96,9 @@ export function mountPedestalFoundationScreen() {
           <button ${busy || pending ? 'disabled':''}>${esc(L('Send Reading'))}</button></form></div>`;
       }).join('')}</div>
       <div class="ps-panel ps-actions">
+        <button type="button" id="psInvoicePreview" ${busy || pending ? 'disabled':''}>${esc(L('Test Invoice Preview'))}</button>
+      </div>
+      <div class="ps-panel ps-actions">
         <button data-action="FAULT" ${busy || pending || open ? 'disabled':''}>${esc(L('Report Fault'))}</button>
         <button data-action="OFFLINE" ${busy || pending ? 'disabled':''}>${esc(L('Simulate Offline'))}</button>
         <button data-action="HEARTBEAT" ${busy || pending ? 'disabled':''}>${esc(L('Send Heartbeat'))}</button>
@@ -134,6 +139,14 @@ export function mountPedestalFoundationScreen() {
     });
     root.querySelectorAll('form[data-workflow]').forEach(form => form.onsubmit = event => {
       event.preventDefault(); const data = Object.fromEntries(new FormData(form)); send({action:form.dataset.workflow,...data});
+    });
+    root.querySelector('#psInvoicePreview')?.addEventListener('click', async event => {
+      const button = event.currentTarget;
+      const snapshot = session;
+      button.disabled = true;
+      try {await showPedestalInvoicePreview(snapshot, () => active() && session === snapshot);}
+      catch (error) {if (active()) {failure = true; status = error.message || 'Unable to preview test invoice.';render();}}
+      finally {if (button.isConnected) button.disabled = busy || !!pending;}
     });
     root.querySelector('#psReplay')?.addEventListener('click', () => run({name:'applyPedestalTestEvent',args:{sessionId:session.sessionId,event:lastEvent}}));
     root.querySelector('#psRefresh')?.addEventListener('click', () => run({name:'getPedestalFoundation',args:{sessionId:session.sessionId}}));
