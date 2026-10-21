@@ -316,6 +316,7 @@ function renderList() {
   listEl.innerHTML = sorted.map(m => {
     const state = getRowState(m);
     const isChecklist = (m.source || '').startsWith('CHECKLIST:');
+    const isYard = (m.source || '').startsWith('YARD_STORAGE:');
 
     return `
       <div class="mt-row" data-maint-id="${m.id}">
@@ -330,7 +331,7 @@ function renderList() {
           ${m.assignedTo ? `<div class="mt-assigned">${tr("Assigned:" )} ${escapeHtml(m.assignedTo)}</div>` : ''}
           ${m.source ? `
             <span class="mt-source-badge ${isChecklist ? 'mt-source-checklist' : 'mt-source-manual'}">
-              ${isChecklist ? '📝 Checklist' : '🔧 Manual'}
+              ${isYard ? escapeHtml('Yard Storage · ' + m.source.slice('YARD_STORAGE:'.length)) : isChecklist ? '📝 Checklist' : '🔧 Manual'}
             </span>
           ` : ''}
           <div class="mt-date" style="color:${state.dateColor};">

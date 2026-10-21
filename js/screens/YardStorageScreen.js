@@ -198,6 +198,7 @@ function showYardHelp() {
     <label>${esc(L('Planned launch date'))}<input name="launchDate" type="date" min="2000-01-01" max="2100-12-31" value="${esc(space.launchDate)}" ${!canWrite?'disabled':''}></label>
     <label>${esc(L('Notes'))}<textarea name="notes" maxlength="500" ${!canWrite?'disabled':''}>${esc(space.notes)}</textarea></label>
     <label>${esc(L('Launch blockers'))}<textarea name="blockers" maxlength="500" ${!canWrite?'disabled':''}>${esc(space.blockers)}</textarea></label>
+    ${canWrite&&occupied&&known?'<button type="button" data-add-yard-maintenance>Add maintenance</button>':''}
     ${occupied?`<p>${model.maintenanceTruncated?'Maintenance review is incomplete.':`${tasks} unfinished maintenance task(s), including unfinished archived tasks.`}</p><a href="#/maintenance?boatId=${Number(space.boatId)}">${esc(L('Maintenance'))}</a><p>A manager confirms readiness after reviewing preparation and outstanding work. Save edits before confirming readiness. Recording launch clears the yard space and keeps an audit record.</p>`:''}
     ${canWrite?`<button>${esc(L('Save'))}</button>`:''}</form>
     <div class="ys-actions">${canWrite&&!occupied?`<button data-availability>${esc(L(space.unavailable?'Make available':'Mark unavailable'))}</button>`:''}
@@ -210,6 +211,21 @@ function showYardHelp() {
     sheet.querySelector('[data-release]')?.addEventListener('click',()=>confirmAction(L('Release space'),`Release ${space.boatName} from ${slot.label}? This records a release, not a launch.`,{action:'RELEASE',slot:slot.id}));
     sheet.querySelector('[data-ready]')?.addEventListener('click',()=>confirmAction(L('Confirm ready'),`Confirm that ${space.boatName} has been reviewed and is ready for its planned launch? The server will recheck unfinished maintenance.`,{action:'READY',slot:slot.id}));
     sheet.querySelector('[data-launch]')?.addEventListener('click',()=>confirmAction(L('Record launch'),`Confirm ${space.boatName} has actually been launched? This frees ${slot.label}; it does not assign a wet berth or operate lifting equipment.`,{action:'LAUNCH',slot:slot.id}));
+    sheet.querySelector('[data-add-yard-maintenance]')?.addEventListener('click',async()=>{
+      if(!active()||busy||!writer()||pending)return;
+      modalClose?.();
+      try {
+        const {showAddMaintenanceSheet}=await import('./AddMaintenanceSheet.js');
+        if(!active()||!writer())return;
+        const closeAdd=await showAddMaintenanceSheet({
+          boatId:space.boatId,yardSpaceId:slot.id,yardSpaceLabel:slot.label,
+          canSave:()=>active()&&writer()&&!pending,
+          onSaved:async()=>{await load();if(active()&&!error&&model.yard.spaces[slot.id]?.boatDocId===space.boatDocId)openSpace(slot);}
+        });
+        if(active()){if(typeof closeAdd==='function')modalClose=closeAdd;}
+        else closeAdd?.();
+      } catch(e){if(active())dialog('Unable to open maintenance',`<p>${esc(e.message||'Please refresh and try again.')}</p>`);}
+    });
     sheet.querySelector('[data-plan]')?.addEventListener('click',()=>showYardJobDialog({model,day:plannerDay,dialog,mutate,slotId:slot.id}));
     sheet.querySelector('[data-move]')?.addEventListener('click',()=>{const targets=yardSlots(model.yard.zones).filter(s=>s.id!==slot.id&&!model.yard.spaces[s.id]?.boatDocId&&!model.yard.spaces[s.id]?.unavailable&&!model.yard.spaces[s.id]?.notes);const move=dialog(L('Move boat'),`<form><label>${esc(L('Destination'))}<select name="target" required>${targets.map(s=>`<option value="${esc(s.id)}">${esc(s.label)}</option>`).join('')}</select></label><p>Moves preserve dates and work links; readiness must be confirmed again.</p><button ${!targets.length?'disabled':''}>${esc(L('Move boat'))}</button></form>`);move.querySelector('form').onsubmit=e=>{e.preventDefault();mutate({action:'MOVE',slot:slot.id,target:new FormData(e.target).get('target')});};});
   }

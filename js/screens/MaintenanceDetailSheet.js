@@ -96,7 +96,7 @@ function buildDetailBody(item) {
 
   // --- Source ---
   if (item.source && item.source.trim()) {
-    parts.push(row('Source', item.source));
+    parts.push(row('Source', item.source.startsWith('YARD_STORAGE:') ? 'Yard Storage · ' + item.source.slice('YARD_STORAGE:'.length) : item.source));
     parts.push(spacer());
   }
 

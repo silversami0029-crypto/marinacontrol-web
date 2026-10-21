@@ -34,13 +34,22 @@ const MAINTENANCE_TYPES = [
 export async function showAddMaintenanceSheet(opts = {}) {
   const { item, onSaved } = opts;
   const isEdit = !!item;
+  const originClientId = Number(store.activeClientId);
+  const originUid = store.authUser?.uid;
+  const sameSession = () => Number(store.activeClientId) === originClientId
+    && store.authUser?.uid === originUid && (!opts.canSave || opts.canSave());
+  const source = !isEdit && opts.yardSpaceId
+    ? `YARD_STORAGE:${String(opts.yardSpaceLabel || opts.yardSpaceId).slice(0,80)}`
+    : 'MANUAL';
 
   const boat = await resolveActiveBoat(
-    isEdit && item ? item.boatId : 0
+    isEdit && item ? item.boatId : Number(opts.boatId || 0)
   );
 
+  if (!sameSession()) return;
+
   if (!boat || !boat.id) {
-    toast(tr('Set a boat as active first'), {
+    toast(tr(opts.boatId ? 'The selected boat is unavailable. Refresh the yard.' : 'Set a boat as active first'), {
       kind: 'error'
     });
     return;
@@ -92,6 +101,8 @@ export async function showAddMaintenanceSheet(opts = {}) {
             boat.name || tr('Unnamed')
           )}
         </div>
+
+        ${!isEdit && opts.yardSpaceId ? `<p class="add-label">${escapeHtml('Yard Storage · ' + (opts.yardSpaceLabel || opts.yardSpaceId))}</p>` : ''}
 
         <label class="add-label"
                for="am-type">${tr("Type")}</label>
@@ -151,7 +162,12 @@ export async function showAddMaintenanceSheet(opts = {}) {
     sheet.classList.add('is-open');
   });
 
+  let unsubscribeContext = null;
+  let closed = false;
   const close = () => {
+    if (closed) return;
+    closed = true;
+    unsubscribeContext?.();
     backdrop.classList.remove('is-open');
     sheet.classList.remove('is-open');
 
@@ -161,6 +177,8 @@ export async function showAddMaintenanceSheet(opts = {}) {
     }, 220);
   };
 
+  unsubscribeContext = store.subscribe(() => { if (!sameSession()) close(); });
+  if (!sameSession()) { close(); return; }
   backdrop.addEventListener('click', close);
 sheet.querySelector('#iv-close').addEventListener('click', close);
 
@@ -189,6 +207,8 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     'submit',
     async event => {
       event.preventDefault();
+      if (save.disabled || closed) return;
+      if (!sameSession()) { close(); return; }
 
       const type =
         sheet.querySelector('#am-type').value;
@@ -233,7 +253,10 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
             date,
             notes,
             boatId: boat.id,
-            boatName: boat.name
+            boatName: boat.name,
+            clientId: originClientId,
+            source,
+            yardSpaceId: opts.yardSpaceId || null
           });
         }
 
@@ -246,8 +269,8 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
           { kind: 'success' }
         );
 
-        if (onSaved) {
-          onSaved();
+        if (onSaved && sameSession()) {
+          await onSaved();
         }
       } catch (error) {
         console.error(
@@ -283,6 +306,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
       }
     }
   );
+  return close;
 }
 
 async function resolveActiveBoat(
@@ -321,6 +345,8 @@ async function resolveActiveBoat(
         };
       }
     }
+
+    if (preferBoatId) return null;
 
     if (store.activeBoatId) {
       const snapshot = await getDocs(
@@ -403,10 +429,11 @@ async function createMaintenance({
   date,
   notes,
   boatId,
-  boatName
+  boatName,
+  clientId,
+  source = 'MANUAL',
+  yardSpaceId = null
 }) {
-  const clientId =
-    Number(store.activeClientId);
 
   if (!clientId) {
     throw new Error(tr('No active client'));
@@ -438,7 +465,8 @@ async function createMaintenance({
       notes: notes || '',
       completed: false,
       status: 'ACTIVE',
-      source: 'MANUAL',
+      source,
+      ...(yardSpaceId ? {yardSpaceId: String(yardSpaceId)} : {}),
       priority: null,
       assignedTo: null,
       assignedBy: null,
