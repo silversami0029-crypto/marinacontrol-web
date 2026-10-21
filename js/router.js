@@ -1,3 +1,4 @@
+import { mountYardStorageScreen, unmountYardStorageScreen } from './screens/YardStorageScreen.js';
 import { mountProceduresScreen, unmountProceduresScreen } from './screens/ProceduresScreen.js';
 import { mountEditCustomerScreen, unmountEditCustomerScreen } from './screens/EditCustomerScreen.js';
 import { mountHomeScreen, unmountHomeScreen } from './screens/HomeScreen.js';
@@ -47,6 +48,7 @@ const routes = {
   '/dashboard':        mountDashboardScreen,
   '/boat-dashboard':   mountBoatDashboardScreen,
   '/berths':           mountBerthsScreen,
+  '/yard-storage':     mountYardStorageScreen,
   '/booking-requests': mountBookingRequestsScreen,
   '/user-management':  mountUserManagementScreen,
   '/permissions': mountPermissionsScreen,
@@ -105,6 +107,7 @@ function navigate() {
     return;
   }
 
+  unmountYardStorageScreen();
   unmountProceduresScreen();
   unmountHomeScreen();
   unmountCustomerDirectoryScreen();
@@ -207,6 +210,7 @@ export async function switchMarina(clientId, destinationRoute = null) {
 async function bootstrapUser(firebaseUser) {
   const generation = ++sessionGeneration;
   authReady = false;
+  unmountYardStorageScreen();
   unmountProceduresScreen();
   unmountHomeScreen();
   unmountCustomerDirectoryScreen();

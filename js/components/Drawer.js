@@ -46,6 +46,7 @@ const SECTIONS = [
       { id: 'fleet-overview', label: 'Fleet Overview', route: '#/fleet' },
       { id: 'booking-requests', label: 'Booking Requests', route: '#/booking-requests' },
       { id: 'berth-management', label: 'Berth Management', route: '#/berths' },
+      { id: 'yard-storage', label: 'Yard Storage', route: '#/yard-storage' },
       { id: 'pedestal-simulator', label: 'Pedestal Simulator', route: '#/pedestal-simulator' },
       { id: 'checklists', label: 'Checklists', route: '#/checklists' },
       { id: 'maintenance', label: 'Maintenance', route: '#/maintenance' },
