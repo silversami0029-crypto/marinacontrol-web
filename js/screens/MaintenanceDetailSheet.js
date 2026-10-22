@@ -1,3 +1,4 @@
+import {launchLabel} from '../util/YardWorkPackageApi.js';
 import { maintenanceColours, maintenanceStatusColour } from '../util/MaintenanceState.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/MaintenanceDetailSheet.js
@@ -99,6 +100,9 @@ function buildDetailBody(item) {
     parts.push(row('Source', item.source.startsWith('YARD_STORAGE:') ? 'Yard Storage · ' + item.source.slice('YARD_STORAGE:'.length) : item.source));
     parts.push(spacer());
   }
+
+  if(item.workPackageName)parts.push(row('Work package',item.workPackageName));
+  parts.push(row('Launch requirement',launchLabel(item)));
 
   // --- Notes ---
   parts.push(row('Notes', item.notes || tr('No notes')));

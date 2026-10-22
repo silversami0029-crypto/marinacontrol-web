@@ -1,3 +1,4 @@
+import {readYardWorkPackages,maintenanceScope,launchLabel} from '../util/YardWorkPackageApi.js';
 import { maintenanceColours, maintenanceVisible } from '../util/MaintenanceState.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/MaintenanceScreen.js
@@ -12,6 +13,7 @@ import {
 import { db } from '../firebase.js';
 
 let unsubscribe = null;
+let launchLoadToken=0;
 let currentBoatId = 0;
 let currentBoatName = '';
 let currentItems = [];
@@ -20,6 +22,7 @@ let attentionFilter = false;
 let visibility = 'current';
 
 export function mountMaintenanceScreen() {
+  launchLoadToken++;
   const screen = document.getElementById('screen');
 
   const params = new URLSearchParams(location.hash.split('?')[1] || '');
@@ -223,6 +226,8 @@ function subscribeToMaintenance(clientId, boatId) {
           completed: !!data.completed,
           notes: data.notes || '',
           source: data.source || '',
+          workPackageId:data.workPackageId||'',workPackageName:data.workPackageName||'',requiredBeforeLaunch:data.requiredBeforeLaunch,
+          workPackageTaskTitle:data.workPackageTaskTitle||'',
           assignedTo: data.assignedTo || '',
           assignedBy: data.assignedBy || '',
           assignedAt: Number(data.assignedAt || 0),
@@ -253,6 +258,12 @@ function subscribeToMaintenance(clientId, boatId) {
       });
 
     renderList();
+    const launchToken=++launchLoadToken;
+    readYardWorkPackages(boatId).then(data=>{
+      if(launchToken!==launchLoadToken||Number(store.activeClientId)!==Number(clientId)||!document.getElementById('mtList'))return;
+      const checked=new Map(data.tasks.map(t=>[t._docId,t]));
+      currentItems=currentItems.map(item=>{const server=checked.get(item._docId);return server&&server.launchScope===maintenanceScope(item)?{...item,launchScope:server.launchScope,launchState:server.launchState}:item;});renderList();
+    }).catch(err=>console.warn('[maintenance launch review] unavailable',err.message));
   }, (err) => {
     console.error('[maintenance] listen failed', err);
     const listEl = document.getElementById('mtList');
@@ -327,6 +338,8 @@ function renderList() {
         <div class="mt-info">
           <div class="mt-title">${escapeHtml(m.type || 'Maintenance')}</div>
           ${m.archived ? `<div class="mt-assigned maintenance-archived">${tr('Archived')}</div>` : ''}
+          ${m.workPackageName?`<div class="mt-assigned">Work package: ${escapeHtml(m.workPackageName)}</div>`:''}
+          <div class="mt-assigned">${escapeHtml(launchLabel(m))}</div>
           ${m.notes ? `<div class="mt-notes">${escapeHtml(m.notes)}</div>` : ''}
           ${m.assignedTo ? `<div class="mt-assigned">${tr("Assigned:" )} ${escapeHtml(m.assignedTo)}</div>` : ''}
           ${m.source ? `

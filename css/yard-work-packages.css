@@ -1,0 +1,19 @@
+.yw-packages{display:grid;gap:18px;margin:16px 0}.yw-package{min-width:0;border:1px solid #42586a;border-radius:14px;padding:16px;background:var(--color-surface,#1c222a)}.yw-package h3{margin:0 0 10px}.yw-package progress{width:100%;height:12px;accent-color:#3b9bd9}.yw-tasks{display:grid;margin-top:12px;gap:10px}.yw-task{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #354455;border-radius:10px;overflow-wrap:anywhere}.yw-task>div,.yw-task.yw-muted{display:grid;gap:6px;min-width:0}.yw-task span{display:block;font-size:13px}.yw-muted{opacity:.75}.yw-launch-required,.yw-launch-unreviewed,.yw-error{color:#ffd176}.yw-launch-optional{color:#83b8ff}.yw-launch-completed{color:#6be4a2}.yw-editor-task{display:grid;gap:12px;min-width:0;border:1px solid #42586a;border-radius:10px;padding:12px;margin:14px 0}.yw-editor-task legend{padding:0 6px}.yw-check{display:flex!important;align-items:center;gap:10px!important}.yw-check input[type=checkbox]{width:20px!important;min-height:20px!important;flex-shrink:0}.yw-sheet{width:calc(100% - 24px)!important;max-width:600px!important;max-height:88dvh!important;box-sizing:border-box;padding:0!important;display:flex!important;flex-direction:column;overflow:hidden!important}.yw-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #354455;gap:12px}.yw-header h2{font-size:18px;margin:0}.yw-header button{min-width:44px;min-height:44px;font-size:24px;color:inherit}.yw-body{overflow:auto;padding:18px;line-height:1.5}.yw-body form,.yw-body label{display:grid;gap:12px;min-width:0}.yw-body input,.yw-body textarea{max-width:100%;box-sizing:border-box;padding:10px;background:var(--color-background,#151a20);color:inherit;border:1px solid #536171;border-radius:10px;font:inherit}.yw-body textarea{min-height:80px;width:100%}.yw-body button[type=submit]{min-height:44px;padding:10px 14px;border:1px solid #3b9bd9;border-radius:10px;color:inherit;background:#234363;font:inherit}.yw-body button:disabled{opacity:.5}.yw-body :focus-visible{outline:3px solid #69bbfa;outline-offset:2px}@media(max-width:600px){.yw-task{align-items:flex-start;flex-wrap:wrap}.yw-task button{align-self:flex-end}.yw-package{padding:12px}}
+
+.ys-planner-toolbar label {
+  display: grid;
+  gap: 6px;
+}
+
+.ys-planner-toolbar select {
+  box-sizing: border-box;
+  min-height: 44px;
+  min-width: 200px;
+  max-width: 100%;
+  padding: 9px;
+  border: 1px solid #536171;
+  border-radius: 10px;
+  background: var(--color-background, #151a20);
+  color: inherit;
+  font: inherit;
+}

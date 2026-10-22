@@ -1,4 +1,6 @@
+import {renderYardWorkPackages} from './YardWorkPackages.js';
 import {renderYardDayPlanner,showYardJobDialog} from './YardDayPlanner.js';
+import {renderYardStays,showStayForm} from './YardStorageStays.js';
 import {store} from '../store.js';
 import {getFunctions,httpsCallable} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
 import {app} from '../firebase.js';
@@ -20,7 +22,7 @@ export function mountYardStorageScreen(){
   const root=screen.firstElementChild,clientId=Number(store.activeClientId),uid=store.authUser?.uid;
   let dead=false,model=null,busy=false,message='',error=false,zone='',search='',filter='',mode='map',size=112,modalClose=null,pending=null;
   const active=()=>!dead&&root.isConnected&&Number(store.activeClientId)===clientId&&store.authUser?.uid===uid;
-  const cameraState={};let mapController=null,plannerDay='';
+  const cameraState={};let mapController=null,plannerDay='',workBoatId=0,workDispose=null;
   const fetchModel=async()=>{const result=await call('getYardStorage',{day:plannerDay});if(active()&&result.plannerDay)plannerDay=result.plannerDay;return result;};
   const functions=getFunctions(app,'us-central1');
   const call=(name,data)=>httpsCallable(functions,name)({clientId,...data}).then(r=>r.data);
@@ -30,18 +32,18 @@ export function mountYardStorageScreen(){
   async function load(){if(busy||!active())return;busy=true;message=L('Loading…');error=false;render();try{const data=await fetchModel();if(!active())return;model=data;message='';}catch(e){if(!active())return;message=e.message||'Could not load yard.';error=true;}finally{busy=false;if(active())render();}}
   async function mutate(args,command=null){
     if(busy||!active())return;
-    const payload=command||{...args,revision:model.yard.revision,commandId:crypto.randomUUID()};
-    pending=payload;busy=true;message=L('Loading…');error=false;modalClose?.();render();
-    try{await call('changeYardStorage',payload);if(!active())return;pending=null;if(payload.action==='SCHEDULE_JOB')plannerDay=payload.day;const data=await fetchModel();if(active()){model=data;message='Saved.';}}
-    catch(e){if(!active())return;message=e.message||'Save failed. Refresh before making another change.';error=true;
+    const payload=command||{...args,revision:model.yard.revision,commandId:crypto.randomUUID()};let writeComplete=false;
+    pending=payload;busy=true;message=L('Saving…');error=false;modalClose?.();render();
+    try{await call(payload.api==='work_packages'?'changeYardWorkPackages':'changeYardStorage',payload);writeComplete=true;if(!active())return;pending=null;message=L('Saved. Updating view…');render();if(payload.action==='SCHEDULE_JOB')plannerDay=payload.day;if(['RESERVE_STAY','UPDATE_STAY','ADOPT_STAY','ARRIVE_STAY','CANCEL_STAY','DEPART_STAY'].includes(payload.action))mode='stays';const data=await fetchModel();if(active()){model=data;message='Saved.';}}
+    catch(e){if(!active())return;message=writeComplete?'Saved, but the view could not be refreshed. Press Refresh to reload.':e.message||'Save failed. Refresh before making another change.';error=true;
       if(['functions/aborted','functions/failed-precondition','functions/permission-denied','functions/invalid-argument','functions/not-found','functions/already-exists','functions/resource-exhausted'].includes(e.code))pending=null;
     }finally{busy=false;if(active())render();}
   }
-  function status(space){if(!space?.boatDocId)return space?.unavailable?'unavailable':'available';if(model.maintenanceTruncated||space.blockers||(model.unfinished[String(space.boatId)]||0)>0)return 'blocked';return space.readyAt?'ready':'occupied';}
+  function status(space){if(!space?.boatDocId)return space?.unavailable?'unavailable':'available';if(model.maintenanceTruncated||space.blockers||((model.launchBlockers||model.unfinished)[String(space.boatId)]||0)>0)return 'blocked';return space.readyAt?'ready':'occupied';}
   function visibleSlots(){return yardSlots(model.yard.zones).filter(slot=>{
     const s=model.yard.spaces[slot.id];return(!zone||slot.zone===zone)&&(!filter||status(s)===filter)&&(`${slot.label} ${slot.id} ${s?.boatName||''}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
   });}
-  function render(){if(!active())return;if(zone&&model&&!model.yard.zones.some(z=>z.id===zone))zone='';const yard=model?.yard,slots=yard?yardSlots(yard.zones):[],occupied=slots.filter(s=>yard.spaces[s.id]?.boatDocId).length,unavailable=slots.filter(s=>yard.spaces[s.id]?.unavailable).length;
+  function render(){if(!active())return;workDispose?.();workDispose=null;if(zone&&model&&!model.yard.zones.some(z=>z.id===zone))zone='';const yard=model?.yard,slots=yard?yardSlots(yard.zones):[],occupied=slots.filter(s=>yard.spaces[s.id]?.boatDocId).length,unavailable=slots.filter(s=>yard.spaces[s.id]?.unavailable).length;
     root.innerHTML=`<div class="c360-header"><div class="c360-header-row"><button class="mt-icon-btn" data-back
         aria-label="${esc(L('Back'))}"
         style="border:0;background:transparent;padding:0;width:44px;display:grid;place-items:center;">
@@ -62,19 +64,19 @@ export function mountYardStorageScreen(){
   </svg>
 </button>
 <button data-refresh ${busy?'disabled':''}>${esc(L('Refresh'))}</button>${manager()?`<button data-config ${busy||pending?'disabled':''}>${esc(L('Configure yard'))}</button>`:''}</div></div>
-    <p class="ys-status ${error?'ys-error':''}" role="status">${esc(message)}</p>
+    <p class="ys-status ${busy?'ys-saving-feedback':''} ${error?'ys-error':''}" role="status">${esc(message)}</p>
     ${pending&&!busy?'<div class="ys-notice">The save result is uncertain. Retry the same request safely, or refresh to inspect the yard.<button data-retry>Retry same request</button></div>':''}
     ${!model?'':`<div class="ys-summary"><strong>${esc(L('Virtual yard'))}</strong><span>${slots.length} spaces · ${occupied} assigned · ${slots.length-occupied-unavailable} available · ${unavailable} unavailable</span></div>
-    <p class="ys-note">Numbered storage spaces, not a surveyed yard layout. Yard assignments do not change wet-berth bookings. Refresh to see other users’ changes.</p>
+    <p class="ys-note">Numbered storage spaces, not a surveyed yard layout. Map colours show current assignments, not future availability. Use Reservations & stays for dated bookings. Yard assignments do not change wet-berth bookings. Refresh to see other users’ changes.</p>
     ${!model.writable?'<p class="ys-notice">This marina is unavailable for changes. Yard records are read-only.</p>':''}
     ${model.boatsTruncated||model.maintenanceTruncated?'<p class="ys-notice">Some records exceed the loading limit. Boat selection may be incomplete; launch readiness is blocked if maintenance is incomplete.</p>':''}
     ${!yard.zones.length?`<div class="ys-empty">${esc(L('No yard configured yet.'))}${manager()?`<button data-create>${esc(L('Configure yard'))}</button>`:' Ask a marina administrator or manager to configure the yard.'}</div>`:`
-    <div class="ys-controls"><button data-mode="list" aria-pressed="${mode==='list'}">${esc(L('List'))}</button><button data-mode="map" aria-pressed="${mode==='map'}">${esc(L('Map'))}</button><button data-mode="planner" aria-pressed="${mode==='planner'}">Day planner</button><button data-mode="schedule" aria-pressed="${mode==='schedule'}">${esc(L('Launch schedule'))}</button>
+    <div class="ys-controls"><button data-mode="list" aria-pressed="${mode==='list'}">${esc(L('List'))}</button><button data-mode="map" aria-pressed="${mode==='map'}">${esc(L('Map'))}</button><button data-mode="stays" aria-pressed="${mode==='stays'}">Reservations & stays</button><button data-mode="packages" aria-pressed="${mode==='packages'}">Work packages</button><button data-mode="planner" aria-pressed="${mode==='planner'}">Day planner</button><button data-mode="schedule" aria-pressed="${mode==='schedule'}">${esc(L('Launch schedule'))}</button>
     <select data-zone aria-label="${esc(L('Zone'))}"><option value="">${esc(L('All zones'))}</option>${yard.zones.map(z=>`<option ${zone===z.id?'selected':''} value="${esc(z.id)}">${esc(z.id)} (${z.capacity})</option>`).join('')}</select>
     <select data-filter aria-label="Status"><option value="">${esc(L('All statuses'))}</option>${[['available','Available'],['occupied','Assigned'],['blocked','Work / review needed'],['ready','Ready to launch'],['unavailable','Unavailable']].map(([v,l])=>`<option value="${v}" ${filter===v?'selected':''}>${esc(L(l))}</option>`).join('')}</select>
     <input data-search type="search" placeholder="${esc(L('Search boats or spaces'))}" value="${esc(search)}"></div>
     <div class="ys-legend"><span class="available">● ${esc(L('Available'))}</span><span class="occupied">● ${esc(L('Assigned'))}</span><span class="blocked">● ${esc(L('Work / review needed'))}</span><span class="ready">● ${esc(L('Ready to launch'))}</span><span class="unavailable">● ${esc(L('Unavailable'))}</span></div>
-    ${['map','list'].includes(mode)?`<div class="ys-controls"><button data-zoom="1" aria-label="${esc(L('Zoom in'))}">+</button><button data-zoom="-1" aria-label="${esc(L('Zoom out'))}">−</button><button data-reset>${esc(L('Reset view'))}</button></div>${mode==='map'?'<p class="ys-note">Virtual arrangement · drag to pan · use +/− or pinch to zoom · select a space to open it. Filter a zone for a closer view. Lanes are illustrative.</p><div class="ys-map-host"></div>':`<div class="ys-grid" style="--ys-cell:${size}px"></div>`}`:mode==='planner'?'<div class="ys-day-planner"></div>':'<div class="ys-schedule"></div>'}`}`}`;
+    ${['map','list'].includes(mode)?`<div class="ys-controls"><button data-zoom="1" aria-label="${esc(L('Zoom in'))}">+</button><button data-zoom="-1" aria-label="${esc(L('Zoom out'))}">−</button><button data-reset>${esc(L('Reset view'))}</button></div>${mode==='map'?'<p class="ys-note">Virtual arrangement · drag to pan · use +/− or pinch to zoom · select a space to open it. Filter a zone for a closer view. Lanes are illustrative.</p><div class="ys-map-host"></div>':`<div class="ys-grid" style="--ys-cell:${size}px"></div>`}`:mode==='packages'?'<div class="ys-work-packages"></div>':mode==='stays'?'<div class="ys-stays"></div>':mode==='planner'?'<div class="ys-day-planner"></div>':'<div class="ys-schedule"></div>'}`}`}`;
     root.querySelector('[data-back]').onclick=()=>{location.hash='#/home';};
     root.querySelector('[data-help]').onclick = showYardHelp;
     root.querySelector('[data-refresh]').onclick=()=>{modalClose?.();load();};
@@ -90,8 +92,19 @@ export function mountYardStorageScreen(){
     drawContent();root.querySelectorAll('button,input,select').forEach(el=>{if(busy)el.disabled=true;});
   }
   function drawContent(){if(!model?.yard.zones.length)return;const slots=visibleSlots();
-    const grid=root.querySelector('.ys-grid');if(grid){mountYardStorageList(grid,{slots,spaces:model.yard.spaces,boats:model.boats,unfinished:model.unfinished,unknown:model.maintenanceTruncated,onOpen:openSpace,L});if(!slots.length)grid.textContent=L('No matches');}
-    const map=root.querySelector('.ys-map-host,.ys-map-viewport');if(map){mapController=mountYardStorageMap(map,{zones:model.yard.zones,slots,spaces:model.yard.spaces,boats:model.boats,unfinished:model.unfinished,unknown:model.maintenanceTruncated,onOpen:openSpace,L,cameraState,zone});}
+    const grid=root.querySelector('.ys-grid');if(grid){mountYardStorageList(grid,{slots,spaces:model.yard.spaces,boats:model.boats,unfinished:model.launchBlockers||model.unfinished,unknown:model.maintenanceTruncated,onOpen:openSpace,L});if(!slots.length)grid.textContent=L('No matches');}
+    const map=root.querySelector('.ys-map-host,.ys-map-viewport');if(map){mapController=mountYardStorageMap(map,{zones:model.yard.zones,slots,spaces:model.yard.spaces,boats:model.boats,unfinished:model.launchBlockers||model.unfinished,unknown:model.maintenanceTruncated,onOpen:openSpace,L,cameraState,zone});}
+    const workBoard=root.querySelector('.ys-work-packages');if(workBoard){
+      root.querySelectorAll('[data-zone],[data-filter],[data-search],.ys-legend').forEach(el=>el.style.display='none');
+      if(model.workPackagesVersion!==1)workBoard.innerHTML='<p class="ys-notice">Deploy the updated yard functions plus getYardWorkPackages and changeYardWorkPackages to enable preparation packages.</p>';
+      else {if(!workBoatId)workBoatId=model.boats.find(b=>Object.values(model.yard.spaces).some(s=>s.boatId===b.id))?.id||model.boats[0]?.id||0;
+        workDispose=renderYardWorkPackages(workBoard,{model,manager:manager()&&!pending&&!busy,writer:writer()&&!pending&&!busy,boatId:workBoatId,onBoat:id=>{workBoatId=id;render();},dialog,mutate,onChanged:load});}
+    }
+    const staysBoard=root.querySelector('.ys-stays');if(staysBoard){
+      root.querySelectorAll('[data-zone],[data-filter],[data-search],.ys-legend').forEach(el=>el.style.display='none');
+      if(model.stayVersion!==1)staysBoard.innerHTML='<p class="ys-notice">Deploy the updated getYardStorage and changeYardStorage functions to enable reservations.</p>';
+      else renderYardStays(staysBoard,{model,manager:manager()&&!pending,dialog,mutate,onBook:stay=>showYardJobDialog({model,day:stay.status==='RESERVED'?stay.startDate:stay.endDate,dialog,mutate,slotId:stay.slot,stayId:stay.id})});
+    }
     const board=root.querySelector('.ys-day-planner');if(board){
       root.querySelectorAll('[data-zone],[data-filter],[data-search],.ys-legend').forEach(el=>el.style.display='none');
       if(model.plannerVersion!==1)board.innerHTML='<p class="ys-notice">Deploy the updated getYardStorage and changeYardStorage functions to enable the Day planner.</p>';
@@ -173,7 +186,7 @@ function showYardHelp() {
       <div class="help-section-title">Launch readiness</div>
       <p>
         A launch cannot start while the boat has launch blockers,
-        unfinished maintenance, or hasn’t been marked ready.
+        unfinished launch-critical or unreviewed maintenance, unresolved package reviews, or hasn’t been marked ready. Approved optional work remains visible without blocking launch.
       </p>
 
       <div class="help-section-title">Interrupted work</div>
@@ -191,7 +204,7 @@ function showYardHelp() {
   }
   function confirmAction(title,description,args){const sheet=dialog(title,`<p>${esc(description)}</p><button data-confirm>${esc(title)}</button>`);sheet.querySelector('[data-confirm]').onclick=()=>mutate(args);}
   function openSpace(slot){if(!active()||busy)return;const space=model.yard.spaces[slot.id]||{},occupied=!!space.boatDocId,canWrite=writer()&&!pending;
-    const tasks=model.unfinished[String(space.boatId)]||0,known=model.boats.some(b=>b.docId===space.boatDocId),eligible=occupied&&known&&!!space.launchDate&&!space.blockers&&!tasks&&!model.maintenanceTruncated;
+    const tasks=model.unfinished[String(space.boatId)]||0,launchTasks=(model.launchBlockers||model.unfinished)[String(space.boatId)]||0,known=model.boats.some(b=>b.docId===space.boatDocId),eligible=occupied&&known&&!!space.launchDate&&!space.blockers&&!launchTasks&&!model.maintenanceTruncated;
     const boats=model.boats.filter(b=>b.docId===space.boatDocId||!Object.values(model.yard.spaces).some(s=>s.boatDocId===b.docId));
     const sheet=dialog(`${L('Yard Storage')} · ${slot.label}`,`<form class="ys-form"><label>${esc(L('Boat'))}<select name="boatDocId" ${!canWrite||occupied||space.unavailable?'disabled':''}><option value="">${esc(L('No boat assigned'))}</option>${occupied&&!known?`<option selected value="${esc(space.boatDocId)}">${esc(space.boatName)} — record needs review</option>`:''}${boats.map(b=>`<option value="${esc(b.docId)}" ${b.docId===space.boatDocId?'selected':''}>${esc(b.name)}</option>`).join('')}</select></label>
     <label>${esc(L('Planned haul-out date'))}<input name="haulDate" type="date" min="2000-01-01" max="2100-12-31" value="${esc(space.haulDate)}" ${!canWrite?'disabled':''}></label>
@@ -199,17 +212,28 @@ function showYardHelp() {
     <label>${esc(L('Notes'))}<textarea name="notes" maxlength="500" ${!canWrite?'disabled':''}>${esc(space.notes)}</textarea></label>
     <label>${esc(L('Launch blockers'))}<textarea name="blockers" maxlength="500" ${!canWrite?'disabled':''}>${esc(space.blockers)}</textarea></label>
     ${canWrite&&occupied&&known?'<button type="button" data-add-yard-maintenance>Add maintenance</button>':''}
-    ${occupied?`<p>${model.maintenanceTruncated?'Maintenance review is incomplete.':`${tasks} unfinished maintenance task(s), including unfinished archived tasks.`}</p><a href="#/maintenance?boatId=${Number(space.boatId)}">${esc(L('Maintenance'))}</a><p>A manager confirms readiness after reviewing preparation and outstanding work. Save edits before confirming readiness. Recording launch clears the yard space and keeps an audit record.</p>`:''}
+    ${occupied?`<p>${model.maintenanceTruncated?'Maintenance review is incomplete.':`${tasks} unfinished maintenance task(s); ${launchTasks} launch-critical/unreviewed tasks or package reviews.`}</p><a href="#/maintenance?boatId=${Number(space.boatId)}">${esc(L('Maintenance'))}</a><p>A manager confirms readiness after reviewing preparation and outstanding work. Save edits before confirming readiness. Recording launch clears the yard space and keeps an audit record.</p>`:''}
     ${canWrite?`<button>${esc(L('Save'))}</button>`:''}</form>
     <div class="ys-actions">${canWrite&&!occupied?`<button data-availability>${esc(L(space.unavailable?'Make available':'Mark unavailable'))}</button>`:''}
     ${manager()&&occupied&&!pending&&model.plannerVersion===1?'<button data-plan>Book yard operation</button>':''}
     ${canWrite&&occupied?`<button data-move>${esc(L('Move boat'))}</button><button data-release>${esc(L('Release space'))}</button>`:''}
     ${manager()&&occupied&&!pending?`<button data-ready ${!eligible?'disabled':''}>${esc(L('Confirm ready'))}</button><button data-launch ${!eligible||!space.readyAt?'disabled':''}>${esc(L('Record launch'))}</button>`:''}</div>`);
+    if(occupied&&known){const b=document.createElement('button');b.type='button';b.textContent='View work packages';b.onclick=()=>{modalClose?.();workBoatId=space.boatId;mode='packages';render();};sheet.querySelector('.ys-sheet-body').prepend(b);}
+    if(model.stayVersion===1){
+      const related=Object.values(model.yard.stays||{}).filter(s=>s.slot===slot.id);
+      const notice=document.createElement('div');notice.className='ys-notice';
+      notice.innerHTML=related.map(s=>`<p>${esc(s.boatName)} · ${s.status==='RESERVED'?'Reserved':'In storage'} · ${esc(s.startDate)} → ${esc(s.endDate)}</p>`).join('')||'<p>No dated storage stays for this space.</p>';
+      if(occupied&&!related.some(s=>s.status==='IN_STORAGE'&&s.boatDocId===space.boatDocId))notice.innerHTML+='<p>Existing assignment: actual arrival has not been confirmed as a storage stay.</p>';
+      if(manager()&&!pending){const b=document.createElement('button');b.type='button';b.textContent='Reservations & stays';b.onclick=()=>{modalClose?.();mode='stays';render();};notice.append(b);
+        if(!occupied){const reserve=document.createElement('button');reserve.type='button';reserve.textContent='Reserve this space';reserve.onclick=()=>showStayForm({model,dialog,mutate,slotId:slot.id});notice.append(reserve);}}
+      sheet.querySelector('.ys-sheet-body').prepend(notice);
+    }
     sheet.querySelector('form').addEventListener('input',()=>sheet.querySelectorAll('[data-ready],[data-launch]').forEach(b=>{b.disabled=true;}));
+    if(Object.values(model.yard.stays||{}).some(s=>s.slot===slot.id&&s.status==='IN_STORAGE')){sheet.querySelectorAll('[name=haulDate],[name=launchDate]').forEach(el=>el.readOnly=true);}
     sheet.querySelector('form').onsubmit=e=>{e.preventDefault();if(!canWrite)return;const form=new FormData(e.target);mutate({action:'SAVE',slot:slot.id,boatDocId:occupied?space.boatDocId:String(form.get('boatDocId')||''),haulDate:String(form.get('haulDate')||''),launchDate:String(form.get('launchDate')||''),notes:String(form.get('notes')||''),blockers:String(form.get('blockers')||'')});};
     sheet.querySelector('[data-availability]')?.addEventListener('click',()=>mutate({action:'AVAILABILITY',slot:slot.id,unavailable:!space.unavailable}));
     sheet.querySelector('[data-release]')?.addEventListener('click',()=>confirmAction(L('Release space'),`Release ${space.boatName} from ${slot.label}? This records a release, not a launch.`,{action:'RELEASE',slot:slot.id}));
-    sheet.querySelector('[data-ready]')?.addEventListener('click',()=>confirmAction(L('Confirm ready'),`Confirm that ${space.boatName} has been reviewed and is ready for its planned launch? The server will recheck unfinished maintenance.`,{action:'READY',slot:slot.id}));
+    sheet.querySelector('[data-ready]')?.addEventListener('click',()=>confirmAction(L('Confirm ready'),`Confirm that ${space.boatName} has been reviewed and is ready for its planned launch? The server will recheck launch-critical work and package reviews.`,{action:'READY',slot:slot.id}));
     sheet.querySelector('[data-launch]')?.addEventListener('click',()=>confirmAction(L('Record launch'),`Confirm ${space.boatName} has actually been launched? This frees ${slot.label}; it does not assign a wet berth or operate lifting equipment.`,{action:'LAUNCH',slot:slot.id}));
     sheet.querySelector('[data-add-yard-maintenance]')?.addEventListener('click',async()=>{
       if(!active()||busy||!writer()||pending)return;
@@ -230,6 +254,6 @@ function showYardHelp() {
     sheet.querySelector('[data-move]')?.addEventListener('click',()=>{const targets=yardSlots(model.yard.zones).filter(s=>s.id!==slot.id&&!model.yard.spaces[s.id]?.boatDocId&&!model.yard.spaces[s.id]?.unavailable&&!model.yard.spaces[s.id]?.notes);const move=dialog(L('Move boat'),`<form><label>${esc(L('Destination'))}<select name="target" required>${targets.map(s=>`<option value="${esc(s.id)}">${esc(s.label)}</option>`).join('')}</select></label><p>Moves preserve dates and work links; readiness must be confirmed again.</p><button ${!targets.length?'disabled':''}>${esc(L('Move boat'))}</button></form>`);move.querySelector('form').onsubmit=e=>{e.preventDefault();mutate({action:'MOVE',slot:slot.id,target:new FormData(e.target).get('target')});};});
   }
   const clear=store.subscribe(()=>{if(!active())unmountYardStorageScreen();});
-  dispose=()=>{dead=true;modalClose?.();clear();};
+  dispose=()=>{dead=true;workDispose?.();modalClose?.();clear();};
   load();
 }

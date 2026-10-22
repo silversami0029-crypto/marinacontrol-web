@@ -1,3 +1,5 @@
+import {packageManagers} from '../util/YardWorkPackageApi.js';
+import {showMaintenanceLaunchReview} from './MaintenanceLaunchReviewSheet.js';
 import { setMaintenanceArchived, deleteMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { isMaintenanceCompleted } from '../util/MaintenanceState.js';
 import { showMaintenanceDetail } from './MaintenanceDetailSheet.js';
@@ -169,6 +171,10 @@ export function showMaintenanceMenu(item, { onChanged } = {}) {
         <div class="sheet-item-text"><div class="sheet-item-title">${t(item.archived === true ? 'Restore' : 'Archive')}</div></div>
       </button>` : ''}
   `;
+  if(packageManagers()&&Number(item.boatId)>0&&!isCompleted&&item.archived!==true){
+    const review=document.createElement('button');review.type='button';review.className='sheet-item maintenance-menu-action';review.id='mmLaunchRequirement';
+    review.innerHTML='<div class="sheet-item-icon">⚑</div><div class="sheet-item-text"><div class="sheet-item-title">Launch requirement</div><div class="sheet-item-subtitle">Review required or optional work</div></div>';extra.append(review);
+  }
   sheet.append(extra);
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -183,6 +189,7 @@ export function showMaintenanceMenu(item, { onChanged } = {}) {
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
   };
 
+  sheet.querySelector('#mmLaunchRequirement')?.addEventListener('click',()=>{close();setTimeout(()=>showMaintenanceLaunchReview(item,{onChanged}),250);});
   sheet.querySelector('#mmView').addEventListener('click', () => {
     close();
     setTimeout(() => showMaintenanceDetail(item), 250);
