@@ -1,3 +1,4 @@
+import {mountLayoutCanvas,reconcileYardLayout} from './YardLayoutCanvas.js';
 // A virtual layout: stable space IDs are independent of their display position.
 export function yardSlots(zones) {
   return zones.flatMap(zone => Array.from({length:zone.capacity},(_,i)=>({id:`${zone.id}-${i+1}`,zone:zone.id,label:`${zone.id}${i+1}`})));
@@ -39,7 +40,8 @@ export function virtualYardLayout(zones){
   }
   return {width,height:rowY+60,items,blocks};
 }
-export function mountYardStorageMap(root,{zones,slots,spaces,boats,unfinished,unknown,onOpen,L,cameraState,zone=''}){
+export function mountYardStorageMap(root,{zones,slots,spaces,boats,unfinished,unknown,onOpen,L,cameraState,zone='',publishedLayout=null}){
+  if(publishedLayout)return mountLayoutCanvas(root,{layout:reconcileYardLayout(publishedLayout,yardSlots(zones)),slots,spaces,boats,unfinished,unknown,onOpen,L,cameraState,zone});
   root.replaceChildren();root.className='ys-map-viewport';root.tabIndex=0;root.setAttribute('aria-label','Virtual yard map. Use zoom controls, drag to pan, and select a numbered space.');
   const layout=virtualYardLayout(zones),shown=new Set(slots.map(s=>s.id)),byBoat=new Map(boats.map(b=>[b.docId,b]));
   const selected=zone?layout.blocks.filter(b=>b.id===zone):layout.blocks;

@@ -23,7 +23,7 @@ export async function showAddInvoiceSheet(opts = {}) {
     checkBillingClient(clientId);
     if (opts.clientId && Number(opts.clientId) !== clientId) throw new Error('Marina changed. Reopen the invoice.');
     if (isEdit && Number(item.clientId) !== clientId) throw new Error('Invoice belongs to another marina');
-    if (isEdit && (item.berthingBookingUuid || item.utilityChargeDocIds?.length))
+    if (isEdit && (item.berthingBookingUuid || item.utilityChargeDocIds?.length || item.yardPackageId))
       throw new Error('This generated invoice has linked charges. Open its details to record payment.');
     currency = isEdit ? savedCurrency(item.currency)
       : opts.currency ? currencyCode(opts.currency) : await marinaCurrency(clientId);
@@ -32,7 +32,7 @@ export async function showAddInvoiceSheet(opts = {}) {
     toast(error.message, { kind: 'error' });
     return;
   }
-  const generated = !!opts.berthingBooking || !!opts.utilityChargeDocIds?.length;
+  const generated = !!opts.berthingBooking || !!opts.utilityChargeDocIds?.length || !!opts.yardPackageInvoice;
 
   let customers = [];
   let boats = [];
@@ -202,6 +202,7 @@ export async function showAddInvoiceSheet(opts = {}) {
     </form>
   `;
 
+  if(opts.yardPackageInvoice&&(Number(store.activeClientId)!==clientId||store.authUser?.uid!==opts.yardPackageInvoice.uid)){toast('Marina/session changed. Reopen invoice preparation.',{kind:'error'});return;}
   document.getElementById('modalRoot').append(backdrop, sheet);
 
   requestAnimationFrame(() => {
@@ -270,6 +271,13 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     sheet.querySelector('#iv-amount').readOnly = true;
     sheet.querySelector('#iv-desc').readOnly = true;
     sheet.querySelector('#iv-category').disabled = true;
+    if(opts.yardPackageInvoice){
+      sheet.querySelector('#iv-status').disabled=true;
+      const review=document.createElement('label');review.className='add-label';review.style.cssText='display:flex;align-items:flex-start;gap:10px;margin-top:16px';
+      review.innerHTML='<input type="checkbox" data-yard-reviewed style="width:20px;min-width:20px;height:20px;margin-top:3px"><span>I checked the selected customer against '+escapeHtml(opts.yardPackageInvoice.approvedCustomerName)+', the completed work, agreed charges and tax treatment.</span>';
+      sheet.querySelector('.add-scroll').append(review);
+      customerSelect.addEventListener('change',()=>{review.querySelector('input').checked=false;});
+    }
   }
 
   boatSelect.addEventListener('change', () => {
@@ -289,6 +297,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
   form.addEventListener('submit', async e => {
     e.preventDefault();
 
+    if(opts.yardPackageInvoice&&!sheet.querySelector('[data-yard-reviewed]')?.checked){toast('Confirm the customer, completed work, charges and tax treatment.',{kind:'error'});return;}
     const selectedCustomerId = Number(customerSelect.value);
     const boatId = Number(boatSelect.value);
     const invoiceNumber =
@@ -389,7 +398,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
           issueDate,
           dueDate,
           status
-        }, opts);
+        }, {...opts,yardInvoiceDates:{issueDay:issueStr,dueDay:dueStr},yardInvoiceReviewed:sheet.querySelector('[data-yard-reviewed]')?.checked===true});
         const nextId = created.id;
 
         await logHistory({
@@ -427,6 +436,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
         err.message || tr('Failed to save.');
     }
   });
+  opts.onOpened?.();
 }
 
 function toDateInput(ts) {

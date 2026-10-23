@@ -298,7 +298,7 @@ export async function createBerth(clientId, userId, fields) {
     syncedAt:        Date.now()
   };
 
-  await setDoc(doc(db, 'berths', String(newId)), data);
+  await setDoc(doc(db, 'berths', `${clientId}_${newId}`), data);
   return newId;
 }
 
@@ -318,6 +318,8 @@ export async function deleteAllBerths(clientId) {
 }
 
 export async function importBerthsFromRows(clientId, userId, rows, onProgress) {
+  clientId = Number(clientId);
+  if (!Number.isSafeInteger(clientId) || clientId <= 0) throw new Error('Select a valid marina before importing berths.');
   let success = 0;
   let skipped = 0;
   const errors = [];
@@ -367,7 +369,7 @@ export async function importBerthsFromRows(clientId, userId, rows, onProgress) {
       const validStatus = ['AVAILABLE','OCCUPIED','MAINTENANCE'].includes(status)
         ? status : 'AVAILABLE';
 
-      await setDoc(doc(db, 'berths', String(nextId)), {
+      await setDoc(doc(db, 'berths', `${clientId}_${nextId}`), {
         id:               nextId,
         clientId:         clientId,
         dockName:         dockName,

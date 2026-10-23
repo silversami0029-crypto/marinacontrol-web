@@ -1,0 +1,13 @@
+.be-editor .be-pier-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;flex:none}
+.be-editor .be-pier-controls[hidden]{display:none!important}
+.be-editor .be-pier-controls label{display:flex;align-items:center;gap:8px;margin:0!important;font-size:13px!important}
+.be-editor .be-pier-controls select{font-size:13px!important;min-height:34px!important;height:34px!important;padding:5px 8px!important;width:auto;max-width:260px}
+.be-editor .be-pier-controls button{font-size:13px!important;min-height:34px!important;padding:5px 10px!important}
+.be-editor .be-pier-controls [data-pier-count]{font-size:12px;color:var(--color-text-secondary,#aeb6c1)}
+.be-editor .be-pier-selected{filter:drop-shadow(0 0 3px #fff)}
+.be-editor .be-pier-card{font-size:13px;line-height:1.35}
+.be-editor .be-pier-card p{font-size:12px;margin:8px 0;color:var(--color-text-secondary,#aeb6c1)}
+.be-editor .be-pier-card label{display:block;font-size:12px!important;margin-bottom:9px}
+.be-editor .be-pier-card select{font-size:13px!important;min-height:34px!important;height:34px!important;padding:6px 8px!important;margin-top:4px}
+.be-editor .be-pier-card button{font-size:13px!important;min-height:34px!important;padding:6px 8px!important;margin-bottom:7px}
+@media(max-width:700px){.be-editor .be-pier-controls{gap:6px}.be-editor .be-pier-controls select{max-width:195px}.be-editor .be-properties:has(.be-pier-card){max-height:220px}.be-editor .be-main:has(.be-pier-card){grid-template-rows:minmax(160px,1fr) 220px}}

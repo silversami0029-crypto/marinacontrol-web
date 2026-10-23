@@ -258,6 +258,10 @@ function subscribeToInvoices(urlCustomerId) {
           amount: Number(data.amount || 0),
           currency: savedCurrency(data.currency),
           berthingBookingUuid: data.berthingBookingUuid || null,
+          yardPackageId:data.yardPackageId||null,
+          yardPackageName:data.yardPackageName||'',
+          yardEstimateId:data.yardEstimateId||null,
+          yardEstimateRevision:data.yardEstimateRevision||null,
           status: (data.status || 'PENDING').toUpperCase()
         };
       })
@@ -361,7 +365,7 @@ function renderList() {
             <div class="iv-number">${escapeHtml(inv.invoiceNumber || '')}</div>
           </div>
 
-          ${inv.description ? `<div class="iv-description">${escapeHtml(inv.description)}</div>` : ''}
+          ${(inv.yardPackageId || inv.description) ? `<div class="iv-description">${escapeHtml(inv.yardPackageId ? (inv.yardPackageName || "Yard maintenance") : inv.description)}</div>` : ''}
 
           <div class="iv-line-3">
             <div class="iv-amount">${escapeHtml(formatMoney(inv.amount, inv.currency))}</div>

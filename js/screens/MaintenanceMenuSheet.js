@@ -1,3 +1,4 @@
+import {showYardJobCosts} from './YardJobCosts.js';
 import {packageManagers} from '../util/YardWorkPackageApi.js';
 import {showMaintenanceLaunchReview} from './MaintenanceLaunchReviewSheet.js';
 import { setMaintenanceArchived, deleteMaintenanceTask } from '../util/MaintenanceArchive.js';
@@ -175,6 +176,10 @@ export function showMaintenanceMenu(item, { onChanged } = {}) {
     const review=document.createElement('button');review.type='button';review.className='sheet-item maintenance-menu-action';review.id='mmLaunchRequirement';
     review.innerHTML='<div class="sheet-item-icon">⚑</div><div class="sheet-item-text"><div class="sheet-item-title">Launch requirement</div><div class="sheet-item-subtitle">Review required or optional work</div></div>';extra.append(review);
   }
+  if(item.workPackageId&&Number(item.boatId)>0){
+    const costs=document.createElement('button');costs.type='button';costs.className='sheet-item maintenance-menu-action';costs.id='mmLogWork';
+    costs.innerHTML='<div class="sheet-item-icon"><svg class="sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="sheet-item-text"><div class="sheet-item-title">'+(item.archived===true?'Job costs':'Log work')+'</div><div class="sheet-item-subtitle">Hours, materials and package costs</div></div>';extra.append(costs);
+  }
   sheet.append(extra);
 
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -189,6 +194,7 @@ export function showMaintenanceMenu(item, { onChanged } = {}) {
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
   };
 
+  sheet.querySelector('#mmLogWork')?.addEventListener('click',()=>{close();setTimeout(()=>{if(Number(store.activeClientId)===Number(item.clientId))showYardJobCosts({packageId:item.workPackageId,taskDocId:item._docId});},250);});
   sheet.querySelector('#mmLaunchRequirement')?.addEventListener('click',()=>{close();setTimeout(()=>showMaintenanceLaunchReview(item,{onChanged}),250);});
   sheet.querySelector('#mmView').addEventListener('click', () => {
     close();

@@ -6,6 +6,7 @@ import {getFunctions,httpsCallable} from 'https://www.gstatic.com/firebasejs/10.
 import {app} from '../firebase.js';
 import {getLocale,t} from '../i18n.js';
 import {yardSlots,mountYardStorageMap,mountYardStorageList} from '../components/YardStorageMap.js';
+import {showYardMapEditor} from './YardMapEditor.js';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 
@@ -18,12 +19,13 @@ export function mountYardStorageScreen(){
   unmountYardStorageScreen();
   const href=new URL('../../css/yard-storage.css',import.meta.url).href;
   if(![...document.querySelectorAll('link')].some(x=>x.href===href)){const css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css);}
+  const mapCss=new URL('../../css/yard-map-editor.css',import.meta.url).href;if(![...document.querySelectorAll('link')].some(x=>x.href===mapCss)){const link=document.createElement('link');link.rel='stylesheet';link.href=mapCss;document.head.append(link);}
   const screen=document.getElementById('screen');screen.innerHTML='<section class="ys-screen"></section>';
   const root=screen.firstElementChild,clientId=Number(store.activeClientId),uid=store.authUser?.uid;
   let dead=false,model=null,busy=false,message='',error=false,zone='',search='',filter='',mode='map',size=112,modalClose=null,pending=null;
   const active=()=>!dead&&root.isConnected&&Number(store.activeClientId)===clientId&&store.authUser?.uid===uid;
   const cameraState={};let mapController=null,plannerDay='',workBoatId=0,workDispose=null;
-  const fetchModel=async()=>{const result=await call('getYardStorage',{day:plannerDay});if(active()&&result.plannerDay)plannerDay=result.plannerDay;return result;};
+  const fetchModel=async()=>{const [result,mapState]=await Promise.all([call('getYardStorage',{day:plannerDay}),call('getYardMapLayout',{}).catch(e=>({loadError:e.message||'Custom layout unavailable.'}))]);result.mapState=mapState;if(active()&&result.plannerDay)plannerDay=result.plannerDay;return result;};
   const functions=getFunctions(app,'us-central1');
   const call=(name,data)=>httpsCallable(functions,name)({clientId,...data}).then(r=>r.data);
   const writer=()=>model?.writable&&['admin','manager','staff','inspector'].includes(store.activeRole);
@@ -67,7 +69,8 @@ export function mountYardStorageScreen(){
     <p class="ys-status ${busy?'ys-saving-feedback':''} ${error?'ys-error':''}" role="status">${esc(message)}</p>
     ${pending&&!busy?'<div class="ys-notice">The save result is uncertain. Retry the same request safely, or refresh to inspect the yard.<button data-retry>Retry same request</button></div>':''}
     ${!model?'':`<div class="ys-summary"><strong>${esc(L('Virtual yard'))}</strong><span>${slots.length} spaces · ${occupied} assigned · ${slots.length-occupied-unavailable} available · ${unavailable} unavailable</span></div>
-    <p class="ys-note">Numbered storage spaces, not a surveyed yard layout. Map colours show current assignments, not future availability. Use Reservations & stays for dated bookings. Yard assignments do not change wet-berth bookings. Refresh to see other users’ changes.</p>
+    ${model.mapState?.loadError?'<p class="ye-map-notice">Custom layout could not load. Showing the virtual arrangement; Refresh to retry.</p>':''}
+    <p class="ys-note">Storage plan for operations; not a surveyed or navigation chart. Map colours show current assignments, not future availability. Use Reservations & stays for dated bookings. Yard assignments do not change wet-berth bookings. Refresh to see other users’ changes.</p>
     ${!model.writable?'<p class="ys-notice">This marina is unavailable for changes. Yard records are read-only.</p>':''}
     ${model.boatsTruncated||model.maintenanceTruncated?'<p class="ys-notice">Some records exceed the loading limit. Boat selection may be incomplete; launch readiness is blocked if maintenance is incomplete.</p>':''}
     ${!yard.zones.length?`<div class="ys-empty">${esc(L('No yard configured yet.'))}${manager()?`<button data-create>${esc(L('Configure yard'))}</button>`:' Ask a marina administrator or manager to configure the yard.'}</div>`:`
@@ -76,10 +79,11 @@ export function mountYardStorageScreen(){
     <select data-filter aria-label="Status"><option value="">${esc(L('All statuses'))}</option>${[['available','Available'],['occupied','Assigned'],['blocked','Work / review needed'],['ready','Ready to launch'],['unavailable','Unavailable']].map(([v,l])=>`<option value="${v}" ${filter===v?'selected':''}>${esc(L(l))}</option>`).join('')}</select>
     <input data-search type="search" placeholder="${esc(L('Search boats or spaces'))}" value="${esc(search)}"></div>
     <div class="ys-legend"><span class="available">● ${esc(L('Available'))}</span><span class="occupied">● ${esc(L('Assigned'))}</span><span class="blocked">● ${esc(L('Work / review needed'))}</span><span class="ready">● ${esc(L('Ready to launch'))}</span><span class="unavailable">● ${esc(L('Unavailable'))}</span></div>
-    ${['map','list'].includes(mode)?`<div class="ys-controls"><button data-zoom="1" aria-label="${esc(L('Zoom in'))}">+</button><button data-zoom="-1" aria-label="${esc(L('Zoom out'))}">−</button><button data-reset>${esc(L('Reset view'))}</button></div>${mode==='map'?'<p class="ys-note">Virtual arrangement · drag to pan · use +/− or pinch to zoom · select a space to open it. Filter a zone for a closer view. Lanes are illustrative.</p><div class="ys-map-host"></div>':`<div class="ys-grid" style="--ys-cell:${size}px"></div>`}`:mode==='packages'?'<div class="ys-work-packages"></div>':mode==='stays'?'<div class="ys-stays"></div>':mode==='planner'?'<div class="ys-day-planner"></div>':'<div class="ys-schedule"></div>'}`}`}`;
+    ${['map','list'].includes(mode)?`<div class="ys-controls"><button data-zoom="1" aria-label="${esc(L('Zoom in'))}">+</button><button data-zoom="-1" aria-label="${esc(L('Zoom out'))}">−</button><button data-reset>${esc(L('Reset view'))}</button>${mode==='map'&&manager()?`<button type="button" data-layout-menu aria-label="Yard map options" style="border:0;background:transparent;box-shadow:none;width:44px;padding:0;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>`:''}</div>${mode==='map'?'<p class="ys-note">Map · drag to pan · use +/− or pinch to zoom · select a space to open it. Managers can edit the layout using ⋮. Current capacity is always shown, including newly added spaces.</p><div class="ys-map-host"></div>':`<div class="ys-grid" style="--ys-cell:${size}px"></div>`}`:mode==='packages'?'<div class="ys-work-packages"></div>':mode==='stays'?'<div class="ys-stays"></div>':mode==='planner'?'<div class="ys-day-planner"></div>':'<div class="ys-schedule"></div>'}`}`}`;
     root.querySelector('[data-back]').onclick=()=>{location.hash='#/home';};
     root.querySelector('[data-help]').onclick = showYardHelp;
     root.querySelector('[data-refresh]').onclick=()=>{modalClose?.();load();};
+    root.querySelector('[data-layout-menu]')?.addEventListener('click',()=>{const menu=dialog('Yard map',`<button type="button" class="sheet-item maintenance-menu-action" data-edit-layout><span class="sheet-item-text"><span class="sheet-item-title">Edit layout</span></span></button>`);menu.querySelector('[data-edit-layout]').onclick=()=>showYardMapEditor({model,dialog,call,onPublished:load});});
     root.querySelector('[data-retry]')?.addEventListener('click',()=>mutate({},pending));
     root.querySelectorAll('[data-config],[data-create]').forEach(b=>b.onclick=configureDialog);
     root.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;render();});
@@ -93,7 +97,7 @@ export function mountYardStorageScreen(){
   }
   function drawContent(){if(!model?.yard.zones.length)return;const slots=visibleSlots();
     const grid=root.querySelector('.ys-grid');if(grid){mountYardStorageList(grid,{slots,spaces:model.yard.spaces,boats:model.boats,unfinished:model.launchBlockers||model.unfinished,unknown:model.maintenanceTruncated,onOpen:openSpace,L});if(!slots.length)grid.textContent=L('No matches');}
-    const map=root.querySelector('.ys-map-host,.ys-map-viewport');if(map){mapController=mountYardStorageMap(map,{zones:model.yard.zones,slots,spaces:model.yard.spaces,boats:model.boats,unfinished:model.launchBlockers||model.unfinished,unknown:model.maintenanceTruncated,onOpen:openSpace,L,cameraState,zone});}
+    const map=root.querySelector('.ys-map-host,.ys-map-viewport');if(map){mapController=mountYardStorageMap(map,{zones:model.yard.zones,slots,spaces:model.yard.spaces,boats:model.boats,unfinished:model.launchBlockers||model.unfinished,unknown:model.maintenanceTruncated,onOpen:openSpace,L,cameraState,zone,publishedLayout:model.mapState?.published});}
     const workBoard=root.querySelector('.ys-work-packages');if(workBoard){
       root.querySelectorAll('[data-zone],[data-filter],[data-search],.ys-legend').forEach(el=>el.style.display='none');
       if(model.workPackagesVersion!==1)workBoard.innerHTML='<p class="ys-notice">Deploy the updated yard functions plus getYardWorkPackages and changeYardWorkPackages to enable preparation packages.</p>';
@@ -112,9 +116,9 @@ export function mountYardStorageScreen(){
     }
     const list=root.querySelector('.ys-schedule');if(list){const assigned=slots.filter(s=>model.yard.spaces[s.id]?.boatDocId).sort((a,b)=>(model.yard.spaces[a.id].launchDate||'9999').localeCompare(model.yard.spaces[b.id].launchDate||'9999')||a.id.localeCompare(b.id));list.innerHTML=assigned.map(s=>{const p=model.yard.spaces[s.id];return `<button class="ys-launch" data-slot="${esc(s.id)}"><strong>${esc(s.label)} · ${esc(p.boatName)}</strong><span>${esc(date(p.launchDate))}</span><span>${esc(L(status(p)==='ready'?'Ready to launch':status(p)==='blocked'?'Work / review needed':'Assigned'))}</span></button>`;}).join('')||`<p>${esc(L('No matches'))}</p>`;list.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>openSpace(slots.find(s=>s.id===b.dataset.slot)));}
   }
-  function dialog(title,body){modalClose?.();const previous=document.activeElement,backdrop=document.createElement('div'),sheet=document.createElement('div');backdrop.className='sheet-backdrop is-open';sheet.className='sheet ys-sheet is-open';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label',title);sheet.innerHTML=`<div class="ys-sheet-header"><h2>${esc(title)}</h2><button type="button" data-close aria-label="${esc(L('Close'))}">×</button></div><div class="ys-sheet-body">${body}</div>`;document.getElementById('modalRoot').append(backdrop,sheet);
-    const close=()=>{document.removeEventListener('keydown',key);sheet.remove();backdrop.remove();modalClose=null;if(previous?.isConnected)previous.focus();};
-    const key=e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...sheet.querySelectorAll('button,input,select,textarea,a[href]')].filter(x=>!x.disabled&&!x.hidden);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};
+  function dialog(title,body,options={}){modalClose?.();const previous=document.activeElement,backdrop=document.createElement('div'),sheet=document.createElement('div');backdrop.className='sheet-backdrop is-open';sheet.className='sheet ys-sheet is-open';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label',title);sheet.innerHTML=`<div class="ys-sheet-header"><h2>${esc(title)}</h2><button type="button" data-close aria-label="${esc(L('Close'))}">×</button></div><div class="ys-sheet-body">${body}</div>`;document.getElementById('modalRoot').append(backdrop,sheet);
+    const close=(force=false)=>{if(force!==true&&options.beforeClose&&options.beforeClose()===false)return;document.removeEventListener('keydown',key);sheet.remove();backdrop.remove();modalClose=null;if(previous?.isConnected)previous.focus();};
+    const key=e=>{if(document.querySelector('.confirm-sheet'))return;if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...sheet.querySelectorAll('button,input,select,textarea,a[href]')].filter(x=>!x.disabled&&!x.hidden);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};
     sheet.querySelector('[data-close]').onclick=close;backdrop.onclick=close;document.addEventListener('keydown',key);modalClose=close;sheet.querySelector('[data-close]').focus();return sheet;
   }
 function showYardHelp() {
@@ -254,6 +258,6 @@ function showYardHelp() {
     sheet.querySelector('[data-move]')?.addEventListener('click',()=>{const targets=yardSlots(model.yard.zones).filter(s=>s.id!==slot.id&&!model.yard.spaces[s.id]?.boatDocId&&!model.yard.spaces[s.id]?.unavailable&&!model.yard.spaces[s.id]?.notes);const move=dialog(L('Move boat'),`<form><label>${esc(L('Destination'))}<select name="target" required>${targets.map(s=>`<option value="${esc(s.id)}">${esc(s.label)}</option>`).join('')}</select></label><p>Moves preserve dates and work links; readiness must be confirmed again.</p><button ${!targets.length?'disabled':''}>${esc(L('Move boat'))}</button></form>`);move.querySelector('form').onsubmit=e=>{e.preventDefault();mutate({action:'MOVE',slot:slot.id,target:new FormData(e.target).get('target')});};});
   }
   const clear=store.subscribe(()=>{if(!active())unmountYardStorageScreen();});
-  dispose=()=>{dead=true;workDispose?.();modalClose?.();clear();};
+  dispose=()=>{dead=true;workDispose?.();modalClose?.(true);clear();};
   load();
 }

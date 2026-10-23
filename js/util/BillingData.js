@@ -1,3 +1,4 @@
+import {createYardInvoiceThroughBilling} from './YardInvoiceBilling.js';
 import { db } from '../firebase.js';
 import { store } from '../store.js';
 import {
@@ -216,6 +217,7 @@ export async function recordAssignedStay(clientId, berth, arrival, departure) {
 // A single transaction claims the stay/utility charges and creates the invoice.
 export async function createBillingInvoice(clientId, fields, opts = {}) {
   checkBillingClient(clientId);
+  if(opts.yardPackageInvoice)return createYardInvoiceThroughBilling(clientId,fields,opts);
   const invoices = await getDocsFromServer(query(collection(db, 'invoices'), where('clientId', '==', Number(clientId))));
   let max = 0;
   invoices.forEach(d => { const id = Number(d.data().id); if (Number.isInteger(id) && id > max && id < 2147483647) max = id; });

@@ -1,0 +1,22 @@
+/* Local to Arrange a pier; use the existing theme and buttons. */
+.be-editor .be-properties:has(.be-arrange-panel){overflow:hidden;display:flex;flex-direction:column;padding:0;min-height:0}
+.be-editor .be-arrange-panel{display:flex;flex-direction:column;min-height:0;height:100%;width:100%;font-size:13px;line-height:1.35;overflow:hidden}
+.be-editor .be-arrange-heading{flex:none;padding:3px 4px 9px;font-size:14px}
+.be-editor .be-arrange-heading span{display:block;font-size:12px;color:var(--color-text-secondary,#aeb6c1);margin-top:3px}
+.be-editor .be-arrange-fields{flex:1;min-height:0;overflow:auto;padding:0 4px}
+.be-editor .be-arrange-panel label{display:block;font-size:12px!important;line-height:1.3;margin:0 0 8px!important;gap:4px}
+.be-editor .be-arrange-panel input,.be-editor .be-arrange-panel select{box-sizing:border-box;font-size:13px!important;line-height:1.2;min-height:34px!important;height:34px!important;padding:6px 8px!important;border-radius:8px!important;margin-top:4px;width:100%}
+.be-editor .be-arrange-panel .ys-inline-label{display:flex;align-items:center;gap:6px}
+.be-editor .be-arrange-panel input[type=checkbox]{width:16px!important;height:16px!important;min-height:16px!important;flex:0 0 16px;margin:0}
+.be-editor .be-arrange-adjust{margin:3px 0 8px}
+.be-editor .be-arrange-adjust summary{font-size:13px;padding:6px 0;cursor:pointer}
+.be-editor .be-arrange-actions{flex:none;background:var(--color-surface,#1c222a);border-top:1px solid #354455;padding:8px 4px 0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.be-editor .be-arrange-actions button{font-size:13px!important;min-height:36px!important;padding:6px 8px!important;margin:0!important;width:100%}
+.be-editor .be-arrange-actions p{grid-column:1/-1;margin:0;font-size:12px;line-height:1.3}
+.be-editor .be-arrange-actions [data-arrange-error]:empty{display:none}
+@media(max-width:700px){.be-editor .be-properties:has(.be-arrange-panel){height:240px;max-height:240px}.be-editor .be-main:has(.be-arrange-panel){grid-template-rows:minmax(160px,1fr) 240px}}
+
+.be-editor .be-arrange-actions button{font-size:12px!important;height:32px!important;min-height:32px!important;max-height:32px!important;line-height:1.15!important;padding:4px 7px!important;border-radius:8px!important;white-space:nowrap!important}
+.be-editor .be-toolbar button,.be-editor .be-footer button,.be-editor .be-pier-controls button,.be-editor .be-pier-card button{font-size:12px!important;min-height:32px!important;padding:5px 9px!important;line-height:1.2!important}
+.be-editor .be-arrange-heading{padding-bottom:6px}
+.be-editor .be-arrange-panel label{margin-bottom:6px!important}

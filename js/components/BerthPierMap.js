@@ -1,3 +1,4 @@
+import {mountEditableBerthMap} from './BerthCustomMap.js';
 // Shared plan mapped by berth number; records remain scoped to the active client.
 const PLAN_URL = new URL('../../assets/marina-pier-plan.jpg', import.meta.url).href;
 const NS = 'http://www.w3.org/2000/svg';
@@ -54,7 +55,7 @@ export function planSlots() {
   return slots;
 }
 
-export function mountBerthPierMap(host, { clientId, t, onOpen }) {
+function mountLegacyBerthPierMap(host, { clientId, t, onOpen }) {
   let current = [];
   let baseView = VIEWS.ALL.split(' ').map(Number);
   let camera = [...baseView];
@@ -170,7 +171,7 @@ export function mountBerthPierMap(host, { clientId, t, onOpen }) {
     panel.hidden = !panel.hidden;
     selector.hidden = panel.hidden;
     host.querySelector('[data-zoom-controls]').hidden = panel.hidden;
-    if (summary) summary.style.display = panel.hidden ? originalSummaryDisplay : 'none';
+    if (summary) summary.style.display = originalSummaryDisplay;
     if (grid) { grid.hidden = !panel.hidden; grid.style.display = panel.hidden ? '' : 'none'; }
     host.querySelector('[data-toggle]').textContent = t(panel.hidden ? 'Map' : 'List');
     fitMap();
@@ -228,5 +229,7 @@ export function mountBerthPierMap(host, { clientId, t, onOpen }) {
     host.querySelector('.pier-map-note').textContent = `${t('Scroll to zoom · Drag to move · Reset view to fit. Berth colours follow the selected date view.')} ${unmapped ? `${unmapped} ${t('berths are not on this plan; use List to view them.')}` : ''} ${duplicates.size ? t('Duplicate berth numbers are disabled on the map.') : ''}`;
     fitMap();
   }
-  return { render };
+  return { render, destroy(){cancelAnimationFrame(fitFrame);observer.disconnect();window.removeEventListener('resize',onResize);} };
 }
+
+export function mountBerthPierMap(host,options){return mountEditableBerthMap(host,{...options,legacy:mountLegacyBerthPierMap,planSlots,planUrl:PLAN_URL});}

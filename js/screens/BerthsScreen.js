@@ -606,8 +606,9 @@ async function runBerthImport(rows) {
     backdrop.remove();
     sheet.remove();
 
-    toast(tr(`Imported ${result.success} Â· skipped ${result.skipped} Â· failed ${result.failed}`),
-          { kind: result.success > 0 ? 'success' : 'info' });
+    toast(`Imported ${result.success} · skipped ${result.skipped} · failed ${result.failed}` +
+          (result.failed ? ` — ${result.errors[0]}` : ''),
+          { kind: result.failed ? 'error' : result.success > 0 ? 'success' : 'info' });
   } catch (err) {
     console.error('[berth import] failed', err);
     backdrop.remove();
@@ -776,7 +777,7 @@ function onSetStatus(newStatus) {
   return async (berth) => {
     try {
       const userId = store.userProfile?.userId || 0;
-      await updateBerthStatus(store.activeClientId, berth.id, newStatus, userId);
+      await updateBerthStatus(store.activeClientId, berth._docId || berth.id, newStatus, userId);
       toast(tr(`Berth ${berth.berthNumber} set to ${newStatus.toLowerCase()}`), { kind: 'success' });
     } catch (err) {
       console.error('[berth status]', err);
@@ -1222,7 +1223,7 @@ function onEditBerth(berth) {
       }
 
       const userId = store.userProfile?.userId || 0;
-      await updateBerth(berth.id, userId, fields);
+      await updateBerth(berth._docId || berth.id, userId, fields);
       close();
       toast(tr(`Berth ${fields.berthNumber} updated`), { kind: 'success' });
 
@@ -1278,7 +1279,7 @@ async function onDeleteBerth(berth) {
   if (!ok) return;
 
   try {
-    await deleteBerth(berth.id);
+    await deleteBerth(berth._docId || berth.id);
     toast(tr(`Berth ${berth.berthNumber} deleted`), { kind: 'success' });
   } catch (err) {
     console.error('[berth delete]', err);
@@ -1324,7 +1325,7 @@ async function onAssignBoat(berth) {
       onAssign: async (boat) => {
         try {
           const userId = store.userProfile?.userId || 0;
-          await assignBoatToBerth(berth.id, boat, userId);
+          await assignBoatToBerth(berth._docId || berth.id, boat, userId);
           toast(tr(`${boat.name} assigned to berth ${berth.berthNumber}`), { kind: 'success' });
         } catch (err) {
           console.error('[assign boat]', err);
@@ -1351,7 +1352,7 @@ async function onReleaseBoat(berth) {
 
   try {
     const userId = store.userProfile?.userId || 0;
-    await releaseBoatFromBerth(berth.id, userId);
+    await releaseBoatFromBerth(berth._docId || berth.id, userId);
     toast(tr(`${boatName} released from berth ${berth.berthNumber}`), { kind: 'success' });
   } catch (err) {
     console.error('[release boat]', err);
