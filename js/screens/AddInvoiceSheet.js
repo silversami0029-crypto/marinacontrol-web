@@ -7,7 +7,7 @@ import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { logHistory } from '../util/history.js';
 import {
-  collection, query, where, getDocs, doc, updateDoc
+  collection, query, where, getDocs, doc, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
@@ -23,7 +23,7 @@ export async function showAddInvoiceSheet(opts = {}) {
     checkBillingClient(clientId);
     if (opts.clientId && Number(opts.clientId) !== clientId) throw new Error('Marina changed. Reopen the invoice.');
     if (isEdit && Number(item.clientId) !== clientId) throw new Error('Invoice belongs to another marina');
-    if (isEdit && (item.berthingBookingUuid || item.utilityChargeDocIds?.length || item.yardPackageId))
+    if (isEdit && (item.berthingBookingUuid || item.utilityChargeKeys?.length || item.utilityChargeDocIds?.length || item.yardPackageId))
       throw new Error('This generated invoice has linked charges. Open its details to record payment.');
     currency = isEdit ? savedCurrency(item.currency)
       : opts.currency ? currencyCode(opts.currency) : await marinaCurrency(clientId);
@@ -296,6 +296,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
+    if (save.disabled) return;
 
     if(opts.yardPackageInvoice&&!sheet.querySelector('[data-yard-reviewed]')?.checked){toast('Confirm the customer, completed work, charges and tax treatment.',{kind:'error'});return;}
     const selectedCustomerId = Number(customerSelect.value);
@@ -357,9 +358,18 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
 
     try {
       if (isEdit) {
-        await updateDoc(
-          doc(db, 'invoices', String(item._docId)),
-          {
+        await runTransaction(db, async transaction => {
+          checkBillingClient(clientId);
+          const ref = doc(db, 'invoices', String(item._docId));
+          const live = await transaction.get(ref);
+          if (!live.exists() || Number(live.data().clientId) !== clientId)
+            throw new Error('Invoice no longer exists at this marina');
+          const current = live.data();
+          if (current.berthingBookingUuid || current.utilityChargeKeys?.length
+              || current.utilityChargeDocIds?.length || current.yardPackageId)
+            throw new Error('This generated invoice has linked charges. Open its details to record payment.');
+          checkBillingClient(clientId);
+          transaction.update(ref, {
             currency,
             customerId: selectedCustomerId,
             clientName: customerName,
@@ -373,8 +383,8 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
             dueDate,
             status,
             lastModified: Date.now()
-          }
-        );
+          });
+        });
 
         await logHistory({
           entityType: 'INVOICE',

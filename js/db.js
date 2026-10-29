@@ -1,6 +1,6 @@
 import { savedCurrency, money, currencyDigits } from './util/BillingCurrency.js';
 import { marinaCurrency, checkBillingClient } from './util/BillingData.js';
-import { runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { runTransaction, getDocsFromServer } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { utilitySegments } from './analytics/utilityConsumption.js';
 // js/db.js
 import {
@@ -775,6 +775,8 @@ export async function nextUtilityReadingId(clientId) {
 }
 
 export async function createUtilityReading(clientId, userId, fields) {
+  clientId = Number(clientId);
+  checkBillingClient(clientId);
   const unit = String(fields.unit || '').trim().toUpperCase();
   const mode = String(fields.readingMode || '').trim().toUpperCase();
   const type = String(fields.utilityType || '').trim().toUpperCase();
@@ -804,11 +806,13 @@ export async function createUtilityReading(clientId, userId, fields) {
     ,correctionOf: fields.correctionOf || null
   };
 
-  const ref = doc(db, 'utility_readings', String(newId));
+  const ref = doc(db, 'utility_readings', `${clientId}_${newId}`);
   await runTransaction(db, async transaction => {
+    checkBillingClient(clientId);
     if ((await transaction.get(ref)).exists()) {
       throw new Error('A reading already uses this ID. Refresh and retry; no reading was overwritten.');
     }
+    checkBillingClient(clientId);
     transaction.set(ref, data);
   });
   console.log('[db] Utility reading created', newId);
@@ -827,6 +831,8 @@ export async function voidUtilityReading(clientId, reading, userId, reason = '')
 }
 
 export async function correctUtilityReading(clientId, reading, userId, fields) {
+  clientId = Number(clientId);
+  checkBillingClient(clientId);
   if (Number(reading?.clientId) !== Number(clientId) || !reading?._docId) throw new Error('Invalid utility reading');
   const unit = String(fields.unit || '').trim().toUpperCase();
   const mode = String(fields.readingMode || '').trim().toUpperCase();
@@ -845,9 +851,10 @@ export async function correctUtilityReading(clientId, reading, userId, fields) {
     unit:fields.unit, notes:fields.notes || '', source:'MANUAL', recordedAt:Number(reading.recordedAt || now),
     correctionOf:reading._docId, createdAt:now, lastModified:now, lastModifiedBy:String(userId ?? '')
   };
-  const replacementRef = doc(db, 'utility_readings', String(newId));
+  const replacementRef = doc(db, 'utility_readings', `${clientId}_${newId}`);
   const originalRef = doc(db, 'utility_readings', String(reading._docId));
   await runTransaction(db, async transaction => {
+    checkBillingClient(clientId);
     const [existingReplacement, original] = await Promise.all([
       transaction.get(replacementRef), transaction.get(originalRef)
     ]);
@@ -859,6 +866,7 @@ export async function correctUtilityReading(clientId, reading, userId, fields) {
         Number(current.voidedAt || 0) > 0) {
       throw new Error('This reading changed or was already corrected. Refresh before retrying.');
     }
+    checkBillingClient(clientId);
     transaction.set(replacementRef, replacement);
     transaction.update(originalRef, {
       voidedAt:now, voidedBy:String(userId ?? ''), voidReason:'Corrected', correctedBy:String(newId),
@@ -903,17 +911,20 @@ export async function prepareUtilityInvoice(clientId, berth) {
   if (!boatId) throw new Error('No boat assigned to this berth');
 
   const [readingSnap, boatSnap, chargeSnap] = await Promise.all([
-    getDocs(query(
+    getDocsFromServer(query(
       collection(db, 'utility_readings'),
       where('clientId', '==', clientId),
       where('berthId', '==', berthId)
     )),
-    getDocs(query(collection(db, 'boats'), where('clientId', '==', clientId))),
-    getDocs(query(collection(db, 'utility_charges'), where('clientId', '==', clientId)))
+    getDocsFromServer(query(collection(db, 'boats'), where('clientId', '==', clientId))),
+    getDocsFromServer(query(collection(db, 'utility_charges'), where('clientId', '==', clientId)))
   ]);
+  checkBillingClient(clientId);
 
   const boatDoc = boatSnap.docs.find(d => Number(d.data().id || 0) === boatId);
   const customerId = Number(boatDoc?.data().customerId || 0);
+  if (!boatDoc || !Number.isSafeInteger(customerId) || customerId <= 0)
+    throw new Error('Assign a customer to this boat before generating a utility invoice');
   const readings = readingSnap.docs.map(d => ({
     _docId: d.id,
     ...d.data(),

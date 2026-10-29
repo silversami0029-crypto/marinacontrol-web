@@ -224,12 +224,23 @@ export async function createBillingInvoice(clientId, fields, opts = {}) {
   const id = max + 1;
   if (id >= 2147483647) throw new Error('Invoice ID limit reached');
   const invoiceRef = doc(db, 'invoices', `${clientId}_${id}`);
-  const chargeIds = [...new Set(opts.utilityChargeDocIds || [])];
+  const chargeIds = opts.utilityChargeDocIds || [];
+  if (!Array.isArray(chargeIds) || chargeIds.some(key => typeof key !== 'string'
+      || !key.startsWith(`${clientId}_`) || key.includes('/'))
+      || new Set(chargeIds).size !== chargeIds.length)
+    throw new Error('Invalid utility charge identities. Reopen the utility invoice.');
   if (chargeIds.length > 450) throw new Error('Too many utility charges for one invoice');
+  if (chargeIds.length && (!Number.isSafeInteger(fields.customerId) || fields.customerId <= 0
+      || !Number.isSafeInteger(fields.boatId) || fields.boatId <= 0))
+    throw new Error('Select a valid customer and vessel before invoicing utilities');
   const currency = currencyCode(fields.currency);
   const amount = invoiceAmount(String(fields.amount), currency);
   const now = Date.now();
   const data = { ...fields, id, clientId: Number(clientId), currency, amount, createdAt: now, lastModified: now, syncedAt: 0 };
+  if (chargeIds.length) {
+    data.utilityChargeKeys = [...chargeIds];
+    data.category = 'UTILITIES';
+  }
   await debug('CREATE_INVOICE', clientId, () => runTransaction(db, async tx => {
     checkBillingClient(clientId);
     const prior = await tx.get(invoiceRef);
@@ -239,7 +250,8 @@ export async function createBillingInvoice(clientId, fields, opts = {}) {
     for (const charge of charges) {
       const c = charge.data();
       if (!charge.exists() || Number(c.clientId) !== Number(clientId) || Number(c.boatId) !== Number(fields.boatId)
-          || c.billed === true || savedCurrency(c.currency) !== currency)
+          || c.billed === true || savedCurrency(c.currency) !== currency
+          || typeof c.amount !== 'number' || !Number.isFinite(c.amount) || c.amount < 0)
         throw new Error('Utility charges changed or were already invoiced. Reopen the utility invoice.');
     }
     if (charges.length) {
@@ -266,10 +278,12 @@ export async function createBillingInvoice(clientId, fields, opts = {}) {
       data.category = 'BERTH';
       data.invoiceDocId = invoiceRef.id;
     }
+    checkBillingClient(clientId);
     tx.set(invoiceRef, { ...data, syncTime: serverTimestamp() });
     if (claim) tx.set(claim, { ...data, syncTime: serverTimestamp() });
     charges.forEach((charge, index) => tx.update(chargeRefs[index], {
-      billed: true, invoiceId: id, invoiceDocId: invoiceRef.id, billedAt: now, currency
+      billed: true, invoiceId: id, invoiceDocId: invoiceRef.id,
+      customerId: fields.customerId, billedAt: serverTimestamp()
     }));
   }));
   return { ...data, _docId: invoiceRef.id };
