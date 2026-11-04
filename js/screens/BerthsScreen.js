@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { showBerthingRates, showBerthingCharges, showUtilityInvoiceChoices } from './BerthingBillingSheet.js';
 import { money, savedCurrency } from '../util/BillingCurrency.js';
 import { marinaCurrency, checkBillingClient } from '../util/BillingData.js';
@@ -133,7 +134,7 @@ export function mountBerthsScreen() {
       document.getElementById('berthGrid').innerHTML =
         `<div class="boats-empty">
            <h2>${t("Couldn't load berths")}</h2>
-           <p>${err.message || 'Permission denied.'}</p>
+           <p>${err.message || itUI('Permission denied.')}</p>
          </div>`;
       return;
     }
@@ -247,9 +248,9 @@ function showDateInputSheet(isRange) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title">${t(isRange ? 'Custom stay dates' : 'Select a date')}</div>
+    <div class="sheet-title">${t(isRange ? itUI('Custom stay dates') : itUI('Select a date'))}</div>
     <div class="berth-date-fields">
-      <label><span>${t(isRange ? 'Arrival' : 'Date')}</span><input type="date" id="berthDateStart" value="${today}"></label>
+      <label><span>${t(isRange ? itUI('Arrival') : itUI('Date'))}</span><input type="date" id="berthDateStart" value="${today}"></label>
       ${isRange ? `<label><span>${t('Departure')}</span><input type="date" id="berthDateEnd" value="${toDateInputValue(nextLocalDay(Date.now()))}"></label>` : ''}
       <div class="berth-date-error" id="berthDateError"></div>
     </div>
@@ -364,8 +365,8 @@ function renderBerthGrid() {
   if (!berths.length) {
     grid.innerHTML = `
       <div class="boats-empty" style="grid-column: 1 / -1;">
-        <h2>${searchQuery ? tr('No matches') : 'No berths yet'}</h2>
-        <p>${searchQuery ? `${escapeHtml(tr("ui.noMatches", {query:searchQuery}))}` : 'Add berths from your Android app or via CSV.'}</p>
+        <h2>${searchQuery ? tr('No matches') : itUI('No berths yet')}</h2>
+        <p>${searchQuery ? `${escapeHtml(tr("ui.noMatches", {query:searchQuery}))}` : itUI('Add berths from your Android app or via CSV.')}</p>
       </div>`;
     return;
   }
@@ -429,7 +430,7 @@ function updateSummary() {
   const pct = total > 0 ? Math.round((occupied * 100) / total) : 0;
 
   el.innerHTML = `
-    <div>${t("Occupied:")} <b>${occupied}</b> (${pct}%)    Total: <b>${total}</b></div>
+    <div>${t("Occupied:")} <b>${occupied}</b> (${pct}${itUI("%) Total:")} <b>${total}</b></div>
     <div>${t("Booked:")} <b>${booked}</b>    ${t("Available:")} <b>${available}</b></div>
     <div>${t("Maintenance:")} <b>${maintenance}</b>    ${t("Alerts:")} <b>${alerts}</b></div>
   `;
@@ -461,8 +462,8 @@ function withDateViewBooking(berth) {
   const activeBooking = first ? {
     ...first,
     vesselName: bookings.length > 1
-      ? `${first.vesselName || 'Vessel'} +${bookings.length - 1}`
-      : (first.vesselName || 'Vessel')
+      ? `${first.vesselName || itUI('Vessel')} +${bookings.length - 1}`
+      : (first.vesselName || itUI('Vessel'))
   } : null;
 
   return {
@@ -767,8 +768,8 @@ function onViewBooking(berth) {
     booking: berth.activeBooking,
     berth,
     onChanged: status => {
-      const action = status === 'CHECKED_OUT' ? 'checked out' : 'checked in';
-      toast(tr(`${berth.activeBooking.vesselName || 'Vessel'} ${action}`), { kind: 'success' });
+      const action = status === 'CHECKED_OUT' ? itUI('checked out') : itUI('checked in');
+      toast(tr(`${berth.activeBooking.vesselName || itUI('Vessel')} ${action}`), { kind: 'success' });
     }
   });
 }
@@ -891,7 +892,7 @@ function onViewBerth(berth) {
       else await showAddInvoiceSheet(draft);
     } catch (err) {
       console.error('[utility invoice]', err);
-      toast(err.message || 'Unable to generate utility invoice', { kind: 'error' });
+      toast(err.message || itUI('Unable to generate utility invoice'), { kind: 'error' });
     }
   });
 
@@ -963,7 +964,7 @@ function renderViewUtilBlock(label, { latest, mixed }, tariff, unit) {
 
   const tariffLine = isIncluded
     ? 'Rate: Included'
-    : (tariff ? `Rate: ${savedCurrency(tariff.currency)} ${price.toFixed(4)}/${unit}` : 'Rate: Not set');
+    : (tariff ? `Rate: ${savedCurrency(tariff.currency)} ${price.toFixed(4)}/${unit}` : itUI('Rate: Not set'));
 
   return `
     <div class="view-util-block">
@@ -972,7 +973,7 @@ function renderViewUtilBlock(label, { latest, mixed }, tariff, unit) {
       ${consumption != null ? `<div class="view-util-line">${t('Calculated consumption')}: ${consumption.toFixed(2)} ${unit}</div>` : `<div class="view-util-line view-util-empty">${latest.mode === 'INSTANTANEOUS' ? t('Instantaneous readings are not consumption') : t('A previous cumulative reading is required')}</div>`}
       ${mixed ? `<div class="view-util-line util-warning">${t('Mixed reading modes are calculated separately')}</div>` : ''}
       <div class="view-util-line">${tariffLine}</div>
-      ${consumption != null && tariff && !isIncluded ? `<div class="view-util-line">Charge: ${money(charge, tariff.currency, uiLocale())}</div>` : ''}
+      ${consumption != null && tariff && !isIncluded ? `<div class="view-util-line">${itUI("Charge:")} ${money(charge, tariff.currency, uiLocale())}</div>` : ''}
     </div>
   `;
 }
@@ -1016,7 +1017,7 @@ function openReadingHistory(berth) {
     const when = reading.at ? new Intl.DateTimeFormat(uiLocale(), {dateStyle:'medium', timeStyle:'short'}).format(reading.at) : '—';
     const calculated = reading.consumption == null ? (reading.mode === 'INSTANTANEOUS' ? t('Informational only') : t('Baseline / not calculated')) : `${reading.consumption.toFixed(2)} ${escapeHtml(reading.unit)}`;
     return `<div class="view-util-block" style="margin-bottom:10px;${reading.voided ? 'opacity:.55;' : ''}">
-      <div class="view-util-label">${t(reading.type === 'WASTEWATER' ? 'Wastewater' : reading.type === 'WATER' ? 'Water' : 'Electricity')} <span class="util-mode-badge">${t(reading.mode)}</span>${reading.voided ? ` <span class="util-mode-badge">${t('VOID')}</span>` : ''}</div>
+      <div class="view-util-label">${t(reading.type === 'WASTEWATER' ? itUI('Wastewater') : reading.type === 'WATER' ? itUI('Water') : itUI('Electricity'))} <span class="util-mode-badge">${t(reading.mode)}</span>${reading.voided ? ` <span class="util-mode-badge">${t('VOID')}</span>` : ''}</div>
       <div class="view-util-line">${escapeHtml(when)} · ${reading.value} ${escapeHtml(reading.unit)}</div>
       <div class="view-util-line">${t('Calculated consumption')}: ${calculated}</div>
       ${reading.notes ? `<div class="view-util-line">${escapeHtml(reading.notes)}</div>` : ''}
@@ -1061,7 +1062,7 @@ function showVoidReadingSheet(reading) {
       <form class="add-form" data-form novalidate>
         <div class="add-scroll">
           <div class="view-util-block" style="margin-bottom:16px;">
-            <div class="view-util-label">${t(reading.type === 'WASTEWATER' ? 'Wastewater' : reading.type === 'WATER' ? 'Water' : 'Electricity')} · ${t(reading.mode)}</div>
+            <div class="view-util-label">${t(reading.type === 'WASTEWATER' ? itUI('Wastewater') : reading.type === 'WATER' ? itUI('Water') : itUI('Electricity'))} · ${t(reading.mode)}</div>
             <div class="view-util-line">${reading.value} ${escapeHtml(reading.unit || '')}</div>
           </div>
           <label class="add-section-title" for="voidReason">${t('Reason for voiding this reading')}</label>
@@ -1237,7 +1238,7 @@ function onEditBerth(berth) {
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to update berth.';
+      errEl.textContent = err.message || itUI('Failed to update berth.');
     }
   });
 }
@@ -1265,7 +1266,7 @@ function formatShorePower(source) {
   if (source?.shorePowerAmps != null) values.push(`${source.shorePowerAmps}A`);
   if (source?.shorePowerVoltage != null) values.push(`${source.shorePowerVoltage}V`);
   if (source?.shorePowerPhase) values.push(normalisePhase(source.shorePowerPhase) === 'THREE_PHASE' ? t('Three-phase') : t('Single-phase'));
-  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${t(source.shorePowerConnections === 1 ? 'connection' : 'connections')}`);
+  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${t(source.shorePowerConnections === 1 ? itUI('connection') : itUI('connections'))}`);
   return values.length ? values.join(' · ') : t('Not specified');
 }
 
@@ -1385,7 +1386,7 @@ async function openTariffsSheet(berth) {
     wastewaterTariff = await getActiveTariff(clientId, 'WASTEWATER');
   } catch (err) {
     console.error('[tariffs] load failed', err);
-    toast(err.message || 'Unable to load utility rates', { kind: 'error' });
+    toast(err.message || itUI('Unable to load utility rates'), { kind: 'error' });
     return;
   }
 
@@ -1555,7 +1556,7 @@ async function openTariffsSheet(berth) {
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to save rates.';
+      errEl.textContent = err.message || itUI('Failed to save rates.');
     }
   });
 }

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InventoryDetailSheet.js
 
@@ -12,7 +13,7 @@ export function showInventoryDetail(item) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title">${escapeHtml(item.name || 'Inventory Item')}</div>
+    <div class="sheet-title">${escapeHtml(item.name || itUI('Inventory Item'))}</div>
 
     <div class="md-body">
       <div class="md-line"><span class="md-label">${tr("Category:")}</span> <span class="md-value">${escapeHtml(tr(item.category || '—'))}</span></div>

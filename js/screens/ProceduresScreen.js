@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { store } from '../store.js';
 import { auth } from '../firebase.js';
 import { getLocale } from '../i18n.js';
@@ -67,7 +68,7 @@ export function mountProceduresScreen() {
         <button type="button" class="pr-title" data-procedure="${esc(item.procedureId)}" data-version="${esc(version.versionId)}">${esc(version.title)}</button>
         <div class="doc-type">${t(version.category)} · ${t('Version')} ${esc(version.versionLabel)}</div>
         <div class="doc-notes">${esc(version.assetTags.join(' · '))}</div>
-        <div class="pr-state pr-state--${item.archived ? 'archived' : version.versionId === item.activeVersionId ? 'approved' : 'draft'}">${t(item.archived ? 'Archived' : version.versionId === item.activeVersionId ? 'Approved / current' : version.status === 'FAILED' ? 'Could not process' : 'Draft — awaiting approval')}</div>
+        <div class="pr-state pr-state--${item.archived ? 'archived' : version.versionId === item.activeVersionId ? 'approved' : 'draft'}">${t(item.archived ? itUI('Archived') : version.versionId === item.activeVersionId ? itUI('Approved / current') : version.status === 'FAILED' ? itUI('Could not process') : itUI('Draft — awaiting approval'))}</div>
         ${item.current && item.latest?.versionId !== item.activeVersionId ? `<div class="doc-notes">${t('A separate revision is awaiting review. The approved version stays current.')}</div>` : ''}
         ${canManage ? `<button class="pr-link" type="button" data-manage="${esc(item.procedureId)}">${t('Manage versions')}</button>` : ''}
       </div></div>`;
@@ -126,7 +127,7 @@ export function mountProceduresScreen() {
       const version = data.version;
       const view = modal(version.title, `<div class="add-scroll">
         <p class="doc-type">${t(version.category)} · ${t('Version')} ${esc(version.versionLabel)} · ${esc(version.fileName)}</p>
-        <p class="pr-state">${t(data.archived ? 'Archived' : data.activeVersionId === version.versionId ? 'Approved / current' : version.status === 'FAILED' ? 'Could not process' : 'Draft — awaiting approval')}</p>
+        <p class="pr-state">${t(data.archived ? itUI('Archived') : data.activeVersionId === version.versionId ? itUI('Approved / current') : version.status === 'FAILED' ? itUI('Could not process') : itUI('Draft — awaiting approval'))}</p>
         ${version.error ? `<p class="add-error">${esc(version.error)}</p>` : ''}
         ${data.canManage ? `<label class="add-label">${t('Version history')}<select class="add-input add-select" id="prVersion">${data.versions.map(row => `<option value="${esc(row.versionId)}" ${row.versionId === version.versionId ? 'selected' : ''}>${esc(row.versionLabel)} · ${row.versionId === data.activeVersionId ? t('Approved / current') : t('Not current')} · ${new Date(row.createdAt).toLocaleDateString(getLocale())}</option>`).join('')}</select></label>` : ''}
         <p class="pr-note">${t('Extracted text is a search aid. Check the original file for diagrams, tables and all applicable warnings.')}</p>
@@ -136,7 +137,7 @@ export function mountProceduresScreen() {
         <button class="csv-btn csv-btn--choose" type="button" id="prOriginal">${t('Download original')}</button>
         ${data.canManage ? `${!data.archived ? `<button class="csv-btn csv-btn--cancel" type="button" id="prRevision">${t('Upload revision')}</button>` : ''}
         ${!data.archived && version.status === 'READY' && version.versionId !== data.activeVersionId ? `<button class="csv-btn csv-btn--choose" type="button" id="prApprove">${t('Approve this version')}</button>` : ''}
-        <button class="csv-btn csv-btn--cancel" type="button" id="prArchive">${t(data.archived ? 'Restore' : 'Archive')}</button>` : ''}
+        <button class="csv-btn csv-btn--cancel" type="button" id="prArchive">${t(data.archived ? itUI('Restore') : itUI('Archive'))}</button>` : ''}
       </div>`);
       const report = error => { if (view.active()) view.sheet.querySelector('#prDetailError').textContent = error.message; };
       view.sheet.querySelector('#prVersion')?.addEventListener('change', event => { view.close(); showProcedure(procedureId, event.target.value); });
@@ -174,7 +175,7 @@ export function mountProceduresScreen() {
       <div class="add-scroll">
         <label class="add-label" for="prTitle">${t('Title')}</label><input class="add-input" id="prTitle" maxlength="160" required value="${esc(prior?.title || '')}">
         <label class="add-label" for="prUploadCategory">${t('Category')}</label><select class="add-input add-select" id="prUploadCategory">${categories.map(value => `<option value="${esc(value)}" ${value === prior?.category ? 'selected' : ''}>${t(value)}</option>`).join('')}</select>
-        <label class="add-label" for="prUploadTags">${t('Asset tags — comma separated')}</label><input class="add-input" id="prUploadTags" value="${esc((prior?.assetTags || []).join(', '))}" placeholder="pontoon, electrical">
+        <label class="add-label" for="prUploadTags">${t('Asset tags — comma separated')}</label><input class="add-input" id="prUploadTags" value="${esc((prior?.assetTags || []).join(', '))}" placeholder="${itUI("pontoon, electrical")}">
         <label class="add-label" for="prVersionLabel">${t('Version')}</label><input class="add-input" id="prVersionLabel" maxlength="40" required placeholder="1.0">
         <label class="add-label" for="prFile">${t('Procedure file')}</label><input class="add-input" id="prFile" type="file" accept=".pdf,.docx,.txt" required>
         <p class="pr-note">${t('PDF, DOCX or UTF-8 TXT. Up to 4 MB and 100 PDF pages. Scanned pages need OCR first. Uploads remain drafts until approved.')}</p>
@@ -206,7 +207,7 @@ export function mountProceduresScreen() {
       const data = await call(answer ? 'askProcedures' : 'searchProcedures', {question, category: $('#prCategory').value, assetTag: $('#prTag').value.trim()});
       if (generation !== searchGeneration) return;
       const hits = answer ? data.matches.map(match => ({...data.hits.find(row => row.sourceId === match.sourceId), quote: match.quote})) : data.hits;
-      $('#prResults').innerHTML = `<div class="pr-panel"><h3>${t(answer ? 'Answer from approved procedures' : 'Content search results')}</h3>
+      $('#prResults').innerHTML = `<div class="pr-panel"><h3>${t(answer ? itUI('Answer from approved procedures') : itUI('Content search results'))}</h3>
         ${answer ? `<p class="pr-note">${esc(data.message)}</p>` : ''}
         ${!hits.length ? `<p>${t('No supporting passage found. Try different words or contact your supervisor.')}</p>` : hits.map((hit, n) => `<section class="pr-extract"><p>${esc(hit.quote || hit.text)}</p><button class="pr-link" type="button" data-source="${n}">${esc(hit.title)} · ${t('Version')} ${esc(hit.versionLabel)} · ${esc(hit.locator)}</button></section>`).join('')}
         ${data.truncated ? `<p class="pr-note">${t('Many matches found. These results are limited; narrow your query or filters. Search matches words, not every possible synonym.')}</p>` : ''}

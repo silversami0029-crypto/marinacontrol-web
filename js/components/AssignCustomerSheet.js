@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/AssignCustomerSheet.js
 import { esc } from '../utils.js';
@@ -14,7 +15,7 @@ export function showAssignCustomerSheet(opts) {
   if (!customers || !customers.length) {
     sheet.innerHTML = `
       <div class="assign-handle"></div>
-      <div class="assign-title">Assign Customer to ${esc(boat.name)}</div>
+      <div class="assign-title">${itUI("Assign Customer to")} ${esc(boat.name)}</div>
       <div class="assign-divider"></div>
       <div class="assign-empty">${tr("No customers in this marina yet.")}</div>
       <button type="button" class="assign-cancel" id="assignDirectory"
@@ -27,7 +28,7 @@ export function showAssignCustomerSheet(opts) {
 
     sheet.innerHTML = `
       <div class="assign-handle"></div>
-      <div class="assign-title">Assign Customer to ${esc(boat.name)}</div>
+      <div class="assign-title">${itUI("Assign Customer to")} ${esc(boat.name)}</div>
       <div class="assign-divider"></div>
       <div class="assign-list" id="assignList">
         ${customers.map(c => `

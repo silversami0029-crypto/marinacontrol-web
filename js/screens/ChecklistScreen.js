@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ChecklistScreen.js
 import { store } from '../store.js';
@@ -246,7 +247,7 @@ function subscribeToChecklists() {
         <div class="boats-empty">
           <h2>${tr("Couldn't load checklists")}</h2>
           <p>${escapeHtml(
-            error.message || 'Permission denied.'
+            error.message || itUI('Permission denied.')
           )}</p>
         </div>
       `;
@@ -325,17 +326,17 @@ function renderList() {
       document.getElementById('chSearchInput')?.value || ''
     ).trim();
 
-    let message = 'No checklists';
+    let message = itUI('No checklists');
 
     if (searchText) {
       message =
         `${escapeHtml(tr("ui.noMatches", {query:searchText}))}`;
     } else if (boatFilter > 0) {
-      message = 'No checklists for this boat';
+      message = itUI('No checklists for this boat');
     } else if (filterMode === 'IN_PROGRESS') {
-      message = 'No checklists in progress';
+      message = itUI('No checklists in progress');
     } else if (filterMode === 'COMPLETED') {
-      message = 'No completed checklists';
+      message = itUI('No completed checklists');
     }
 
     listElement.innerHTML = `
@@ -387,7 +388,7 @@ function renderList() {
               <div class="chk-status"
                    style="background:${statusColor};">
                 ${escapeHtml(
-                  checklist.status.replaceAll('_', ' ')
+                  itUI(checklist.status.replaceAll('_', ' '))
                 )}
               </div>
             </div>
@@ -401,7 +402,7 @@ function renderList() {
             </div>
 
             <div class="chk-meta">
-              ${escapeHtml(checklist.type)}
+              ${escapeHtml(itUI(checklist.type))}
             </div>
 
             <div class="chk-progress">
@@ -417,14 +418,14 @@ function renderList() {
 
             <div class="chk-counters">
               <span class="chk-counter chk-passed">
-                ✓ ${checklist.passedItems} passed
+                ✓ ${checklist.passedItems} ${itUI("passed")}
               </span>
 
               ${
                 checklist.failedItems > 0
                   ? `
                     <span class="chk-counter chk-failed">
-                      ✗ ${checklist.failedItems} failed
+                      ✗ ${checklist.failedItems} ${itUI("failed")}
                     </span>
                   `
                   : ''

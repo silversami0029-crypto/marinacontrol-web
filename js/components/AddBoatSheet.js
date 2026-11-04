@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
 // js/components/AddBoatSheet.js
@@ -145,7 +146,7 @@ Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
   /* ---------- Form (used for both Add + Edit) ---------- */
   function renderForm() {
     const title  = isEditMode ? t('Edit Boat') : t('Boat Details');
-    const btnTxt = isEditMode ? 'Update Boat' : 'Save Boat';
+    const btnTxt = isEditMode ? itUI('Update Boat') : itUI('Save Boat');
 
     // Build status options — in edit mode, add the current value if non-standard
     let statusOptions = [...BASE_STATUS_OPTIONS];
@@ -319,7 +320,7 @@ function pickAndImportCsv() {
       console.error('[csv] read failed', err);
       showResultModal({
         success: 0, skipped: 0, failed: 1,
-        errors: [err.message || 'Failed to read file.']
+        errors: [err.message || itUI('Failed to read file.')]
       });
     }
   });
@@ -432,7 +433,7 @@ async function runImportWithProgress(rows) {
     sheet.remove();
     showResultModal({
       success: 0, skipped: 0, failed: 1,
-      errors: [err.message || 'Import failed.']
+      errors: [err.message || itUI('Import failed.')]
     });
   }
 }
@@ -466,7 +467,7 @@ function showResultModal({ success, skipped, failed, errors = [] }) {
       <div class="import-errors">
         <div class="import-errors-title">${tr("Errors")}</div>
         ${errors.slice(0, 10).map(e => `<div class="import-error-line">• ${escapeHtml(e)}</div>`).join('')}
-        ${errors.length > 10 ? `<div class="import-error-line">…and ${errors.length - 10} more</div>` : ''}
+        ${errors.length > 10 ? `<div class="import-error-line">${itUI("…and")} ${errors.length - 10} ${itUI("more")}</div>` : ''}
       </div>
     ` : ''}
 

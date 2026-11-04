@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';

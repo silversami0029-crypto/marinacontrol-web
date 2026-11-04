@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import {renderYardWorkPackages} from './YardWorkPackages.js';
 import {renderYardDayPlanner,showYardJobDialog} from './YardDayPlanner.js';
 import {renderYardStays,showStayForm} from './YardStorageStays.js';
@@ -25,19 +26,19 @@ export function mountYardStorageScreen(){
   let dead=false,model=null,busy=false,message='',error=false,zone='',search='',filter='',mode='map',size=112,modalClose=null,pending=null;
   const active=()=>!dead&&root.isConnected&&Number(store.activeClientId)===clientId&&store.authUser?.uid===uid;
   const cameraState={};let mapController=null,plannerDay='',workBoatId=0,workDispose=null;
-  const fetchModel=async()=>{const [result,mapState]=await Promise.all([call('getYardStorage',{day:plannerDay}),call('getYardMapLayout',{}).catch(e=>({loadError:e.message||'Custom layout unavailable.'}))]);result.mapState=mapState;if(active()&&result.plannerDay)plannerDay=result.plannerDay;return result;};
+  const fetchModel=async()=>{const [result,mapState]=await Promise.all([call('getYardStorage',{day:plannerDay}),call('getYardMapLayout',{}).catch(e=>({loadError:e.message||itUI('Custom layout unavailable.')}))]);result.mapState=mapState;if(active()&&result.plannerDay)plannerDay=result.plannerDay;return result;};
   const functions=getFunctions(app,'us-central1');
   const call=(name,data)=>httpsCallable(functions,name)({clientId,...data}).then(r=>r.data);
   const writer=()=>model?.writable&&['admin','manager','staff','inspector'].includes(store.activeRole);
   const manager=()=>model?.writable&&['admin','manager'].includes(store.activeRole);
   const date=s=>s?new Intl.DateTimeFormat(getLocale(),{dateStyle:'medium',timeZone:'UTC'}).format(new Date(s+'T12:00:00Z')):'—';
-  async function load(){if(busy||!active())return;busy=true;message=L('Loading…');error=false;render();try{const data=await fetchModel();if(!active())return;model=data;message='';}catch(e){if(!active())return;message=e.message||'Could not load yard.';error=true;}finally{busy=false;if(active())render();}}
+  async function load(){if(busy||!active())return;busy=true;message=L('Loading…');error=false;render();try{const data=await fetchModel();if(!active())return;model=data;message='';}catch(e){if(!active())return;message=e.message||itUI('Could not load yard.');error=true;}finally{busy=false;if(active())render();}}
   async function mutate(args,command=null){
     if(busy||!active())return;
     const payload=command||{...args,revision:model.yard.revision,commandId:crypto.randomUUID()};let writeComplete=false;
     pending=payload;busy=true;message=L('Saving…');error=false;modalClose?.();render();
-    try{await call(payload.api==='work_packages'?'changeYardWorkPackages':'changeYardStorage',payload);writeComplete=true;if(!active())return;pending=null;message=L('Saved. Updating view…');render();if(payload.action==='SCHEDULE_JOB')plannerDay=payload.day;if(['RESERVE_STAY','UPDATE_STAY','ADOPT_STAY','ARRIVE_STAY','CANCEL_STAY','DEPART_STAY'].includes(payload.action))mode='stays';const data=await fetchModel();if(active()){model=data;message='Saved.';}}
-    catch(e){if(!active())return;message=writeComplete?'Saved, but the view could not be refreshed. Press Refresh to reload.':e.message||'Save failed. Refresh before making another change.';error=true;
+    try{await call(payload.api==='work_packages'?'changeYardWorkPackages':'changeYardStorage',payload);writeComplete=true;if(!active())return;pending=null;message=L('Saved. Updating view…');render();if(payload.action==='SCHEDULE_JOB')plannerDay=payload.day;if(['RESERVE_STAY','UPDATE_STAY','ADOPT_STAY','ARRIVE_STAY','CANCEL_STAY','DEPART_STAY'].includes(payload.action))mode='stays';const data=await fetchModel();if(active()){model=data;message=itUI('Saved.');}}
+    catch(e){if(!active())return;message=writeComplete?itUI('Saved, but the view could not be refreshed. Press Refresh to reload.'):e.message||itUI('Save failed. Refresh before making another change.');error=true;
       if(['functions/aborted','functions/failed-precondition','functions/permission-denied','functions/invalid-argument','functions/not-found','functions/already-exists','functions/resource-exhausted'].includes(e.code))pending=null;
     }finally{busy=false;if(active())render();}
   }
@@ -57,7 +58,7 @@ export function mountYardStorageScreen(){
   </svg>
 </button><div class="c360-pill">${esc(L('Yard Storage'))}</div>
 <div class="c360-spacer"></div>
-<button type="button" class="ys-icon" data-help aria-label="Yard Storage help"
+<button type="button" class="ys-icon" data-help aria-label="${itUI("Yard Storage help")}"
         style="border:0;background:transparent;box-shadow:none;padding:0;width:44px;height:44px;display:grid;place-items:center;">
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
        stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -66,24 +67,24 @@ export function mountYardStorageScreen(){
   </svg>
 </button>
 <button data-refresh ${busy?'disabled':''}>${esc(L('Refresh'))}</button>${manager()?`<button data-config ${busy||pending?'disabled':''}>${esc(L('Configure yard'))}</button>`:''}</div></div>
-    <p class="ys-status ${busy?'ys-saving-feedback':''} ${error?'ys-error':''}" role="status">${esc(message)}</p>
-    ${pending&&!busy?'<div class="ys-notice">The save result is uncertain. Retry the same request safely, or refresh to inspect the yard.<button data-retry>Retry same request</button></div>':''}
-    ${!model?'':`<div class="ys-summary"><strong>${esc(L('Virtual yard'))}</strong><span>${slots.length} spaces · ${occupied} assigned · ${slots.length-occupied-unavailable} available · ${unavailable} unavailable</span></div>
-    ${model.mapState?.loadError?'<p class="ye-map-notice">Custom layout could not load. Showing the virtual arrangement; Refresh to retry.</p>':''}
-    <p class="ys-note">Storage plan for operations; not a surveyed or navigation chart. Map colours show current assignments, not future availability. Use Reservations & stays for dated bookings. Yard assignments do not change wet-berth bookings. Refresh to see other users’ changes.</p>
-    ${!model.writable?'<p class="ys-notice">This marina is unavailable for changes. Yard records are read-only.</p>':''}
-    ${model.boatsTruncated||model.maintenanceTruncated?'<p class="ys-notice">Some records exceed the loading limit. Boat selection may be incomplete; launch readiness is blocked if maintenance is incomplete.</p>':''}
-    ${!yard.zones.length?`<div class="ys-empty">${esc(L('No yard configured yet.'))}${manager()?`<button data-create>${esc(L('Configure yard'))}</button>`:' Ask a marina administrator or manager to configure the yard.'}</div>`:`
-    <div class="ys-controls"><button data-mode="list" aria-pressed="${mode==='list'}">${esc(L('List'))}</button><button data-mode="map" aria-pressed="${mode==='map'}">${esc(L('Map'))}</button><button data-mode="stays" aria-pressed="${mode==='stays'}">Reservations & stays</button><button data-mode="packages" aria-pressed="${mode==='packages'}">Work packages</button><button data-mode="planner" aria-pressed="${mode==='planner'}">Day planner</button><button data-mode="schedule" aria-pressed="${mode==='schedule'}">${esc(L('Launch schedule'))}</button>
+    <p class="ys-status ${busy?'ys-saving-feedback':''} ${error?'ys-error':''}" role="status">${esc(itUI(message))}</p>
+    ${pending&&!busy?`<div class="ys-notice">${itUI("The save result is uncertain. Retry the same request safely, or refresh to inspect the yard.")}<button data-retry>${itUI("Retry same request")}</button></div>`:''}
+    ${!model?'':`<div class="ys-summary"><strong>${esc(L('Virtual yard'))}</strong><span>${slots.length} ${itUI("spaces ·")} ${occupied} ${itUI("assigned ·")} ${slots.length-occupied-unavailable} ${itUI("available ·")} ${unavailable} ${itUI("unavailable")}</span></div>
+    ${model.mapState?.loadError?`<p class="ye-map-notice">${itUI("Custom layout could not load. Showing the virtual arrangement; Refresh to retry.")}</p>`:''}
+    <p class="ys-note">${itUI("Storage plan for operations; not a surveyed or navigation chart. Map colours show current assignments, not future availability. Use Reservations & stays for dated bookings. Yard assignments do not change wet-berth bookings. Refresh to see other users’ changes.")}</p>
+    ${!model.writable?`<p class="ys-notice">${itUI("This marina is unavailable for changes. Yard records are read-only.")}</p>`:''}
+    ${model.boatsTruncated||model.maintenanceTruncated?`<p class="ys-notice">${itUI("Some records exceed the loading limit. Boat selection may be incomplete; launch readiness is blocked if maintenance is incomplete.")}</p>`:''}
+    ${!yard.zones.length?`<div class="ys-empty">${esc(L('No yard configured yet.'))}${manager()?`<button data-create>${esc(L('Configure yard'))}</button>`:itUI(' Ask a marina administrator or manager to configure the yard.')}</div>`:`
+    <div class="ys-controls"><button data-mode="list" aria-pressed="${mode==='list'}">${esc(L('List'))}</button><button data-mode="map" aria-pressed="${mode==='map'}">${esc(L('Map'))}</button><button data-mode="stays" aria-pressed="${mode==='stays'}">${itUI("Reservations & stays")}</button><button data-mode="packages" aria-pressed="${mode==='packages'}">${itUI("Work packages")}</button><button data-mode="planner" aria-pressed="${mode==='planner'}">${itUI("Day planner")}</button><button data-mode="schedule" aria-pressed="${mode==='schedule'}">${esc(L('Launch schedule'))}</button>
     <select data-zone aria-label="${esc(L('Zone'))}"><option value="">${esc(L('All zones'))}</option>${yard.zones.map(z=>`<option ${zone===z.id?'selected':''} value="${esc(z.id)}">${esc(z.id)} (${z.capacity})</option>`).join('')}</select>
-    <select data-filter aria-label="Status"><option value="">${esc(L('All statuses'))}</option>${[['available','Available'],['occupied','Assigned'],['blocked','Work / review needed'],['ready','Ready to launch'],['unavailable','Unavailable']].map(([v,l])=>`<option value="${v}" ${filter===v?'selected':''}>${esc(L(l))}</option>`).join('')}</select>
+    <select data-filter aria-label="${itUI("Status")}"><option value="">${esc(L('All statuses'))}</option>${[['available','Available'],['occupied','Assigned'],['blocked','Work / review needed'],['ready','Ready to launch'],['unavailable','Unavailable']].map(([v,l])=>`<option value="${v}" ${filter===v?'selected':''}>${esc(L(l))}</option>`).join('')}</select>
     <input data-search type="search" placeholder="${esc(L('Search boats or spaces'))}" value="${esc(search)}"></div>
     <div class="ys-legend"><span class="available">● ${esc(L('Available'))}</span><span class="occupied">● ${esc(L('Assigned'))}</span><span class="blocked">● ${esc(L('Work / review needed'))}</span><span class="ready">● ${esc(L('Ready to launch'))}</span><span class="unavailable">● ${esc(L('Unavailable'))}</span></div>
-    ${['map','list'].includes(mode)?`<div class="ys-controls"><button data-zoom="1" aria-label="${esc(L('Zoom in'))}">+</button><button data-zoom="-1" aria-label="${esc(L('Zoom out'))}">−</button><button data-reset>${esc(L('Reset view'))}</button>${mode==='map'&&manager()?`<button type="button" data-layout-menu aria-label="Yard map options" style="border:0;background:transparent;box-shadow:none;width:44px;padding:0;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>`:''}</div>${mode==='map'?'<p class="ys-note">Map · drag to pan · use +/− or pinch to zoom · select a space to open it. Managers can edit the layout using ⋮. Current capacity is always shown, including newly added spaces.</p><div class="ys-map-host"></div>':`<div class="ys-grid" style="--ys-cell:${size}px"></div>`}`:mode==='packages'?'<div class="ys-work-packages"></div>':mode==='stays'?'<div class="ys-stays"></div>':mode==='planner'?'<div class="ys-day-planner"></div>':'<div class="ys-schedule"></div>'}`}`}`;
+    ${['map','list'].includes(mode)?`<div class="ys-controls"><button data-zoom="1" aria-label="${esc(L('Zoom in'))}">+</button><button data-zoom="-1" aria-label="${esc(L('Zoom out'))}">−</button><button data-reset>${esc(L('Reset view'))}</button>${mode==='map'&&manager()?`<button type="button" data-layout-menu aria-label="${itUI("Yard map options")}" style="border:0;background:transparent;box-shadow:none;width:44px;padding:0;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>`:''}</div>${mode==='map'?`<p class="ys-note">${itUI("Map · drag to pan · use +/− or pinch to zoom · select a space to open it. Managers can edit the layout using ⋮. Current capacity is always shown, including newly added spaces.")}</p><div class="ys-map-host"></div>`:`<div class="ys-grid" style="--ys-cell:${size}px"></div>`}`:mode==='packages'?'<div class="ys-work-packages"></div>':mode==='stays'?'<div class="ys-stays"></div>':mode==='planner'?'<div class="ys-day-planner"></div>':'<div class="ys-schedule"></div>'}`}`}`;
     root.querySelector('[data-back]').onclick=()=>{location.hash='#/home';};
     root.querySelector('[data-help]').onclick = showYardHelp;
     root.querySelector('[data-refresh]').onclick=()=>{modalClose?.();load();};
-    root.querySelector('[data-layout-menu]')?.addEventListener('click',()=>{const menu=dialog('Yard map',`<button type="button" class="sheet-item maintenance-menu-action" data-edit-layout><span class="sheet-item-text"><span class="sheet-item-title">Edit layout</span></span></button>`);menu.querySelector('[data-edit-layout]').onclick=()=>showYardMapEditor({model,dialog,call,onPublished:load});});
+    root.querySelector('[data-layout-menu]')?.addEventListener('click',()=>{const menu=dialog(itUI('Yard map'),`<button type="button" class="sheet-item maintenance-menu-action" data-edit-layout><span class="sheet-item-text"><span class="sheet-item-title">${itUI("Edit layout")}</span></span></button>`);menu.querySelector('[data-edit-layout]').onclick=()=>showYardMapEditor({model,dialog,call,onPublished:load});});
     root.querySelector('[data-retry]')?.addEventListener('click',()=>mutate({},pending));
     root.querySelectorAll('[data-config],[data-create]').forEach(b=>b.onclick=configureDialog);
     root.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;render();});
@@ -92,7 +93,7 @@ export function mountYardStorageScreen(){
     root.querySelector('[data-search]')?.addEventListener('input',e=>{search=e.target.value;drawContent();});
     root.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{if(mode==='map'){Number(b.dataset.zoom)>0?mapController?.zoomIn():mapController?.zoomOut();return;}size=Math.max(84,Math.min(220,size+Number(b.dataset.zoom)*24));root.querySelector('.ys-grid').style.setProperty('--ys-cell',`${size}px`);});
     root.querySelector('[data-reset]')?.addEventListener('click',()=>{if(mode==='map'){mapController?.reset();return;}size=112;render();});
-    if(model?.events?.length){const details=document.createElement('details');details.className='ys-history';const summary=document.createElement('summary');summary.textContent='Recent yard activity (latest 20)';details.append(summary);for(const event of model.events){const row=document.createElement('p');row.textContent=`${new Intl.DateTimeFormat(getLocale(),{dateStyle:'short',timeStyle:'short'}).format(event.recordedAt)} · ${event.action} · ${event.slot||'Yard'} ${event.target?'→ '+event.target:''} · ${event.boatName||''}`;details.append(row);}root.append(details);}
+    if(model?.events?.length){const details=document.createElement('details');details.className='ys-history';const summary=document.createElement('summary');summary.textContent=itUI('Recent yard activity (latest 20)');details.append(summary);for(const event of model.events){const row=document.createElement('p');row.textContent=`${new Intl.DateTimeFormat(getLocale(),{dateStyle:'short',timeStyle:'short'}).format(event.recordedAt)} · ${event.action} · ${event.slot||itUI('Yard')} ${event.target?'→ '+event.target:''} · ${event.boatName||''}`;details.append(row);}root.append(details);}
     drawContent();root.querySelectorAll('button,input,select').forEach(el=>{if(busy)el.disabled=true;});
   }
   function drawContent(){if(!model?.yard.zones.length)return;const slots=visibleSlots();
@@ -100,136 +101,126 @@ export function mountYardStorageScreen(){
     const map=root.querySelector('.ys-map-host,.ys-map-viewport');if(map){mapController=mountYardStorageMap(map,{zones:model.yard.zones,slots,spaces:model.yard.spaces,boats:model.boats,unfinished:model.launchBlockers||model.unfinished,unknown:model.maintenanceTruncated,onOpen:openSpace,L,cameraState,zone,publishedLayout:model.mapState?.published});}
     const workBoard=root.querySelector('.ys-work-packages');if(workBoard){
       root.querySelectorAll('[data-zone],[data-filter],[data-search],.ys-legend').forEach(el=>el.style.display='none');
-      if(model.workPackagesVersion!==1)workBoard.innerHTML='<p class="ys-notice">Deploy the updated yard functions plus getYardWorkPackages and changeYardWorkPackages to enable preparation packages.</p>';
+      if(model.workPackagesVersion!==1)workBoard.innerHTML=`<p class="ys-notice">${itUI("Deploy the updated yard functions plus getYardWorkPackages and changeYardWorkPackages to enable preparation packages.")}</p>`;
       else {if(!workBoatId)workBoatId=model.boats.find(b=>Object.values(model.yard.spaces).some(s=>s.boatId===b.id))?.id||model.boats[0]?.id||0;
         workDispose=renderYardWorkPackages(workBoard,{model,manager:manager()&&!pending&&!busy,writer:writer()&&!pending&&!busy,boatId:workBoatId,onBoat:id=>{workBoatId=id;render();},dialog,mutate,onChanged:load});}
     }
     const staysBoard=root.querySelector('.ys-stays');if(staysBoard){
       root.querySelectorAll('[data-zone],[data-filter],[data-search],.ys-legend').forEach(el=>el.style.display='none');
-      if(model.stayVersion!==1)staysBoard.innerHTML='<p class="ys-notice">Deploy the updated getYardStorage and changeYardStorage functions to enable reservations.</p>';
+      if(model.stayVersion!==1)staysBoard.innerHTML=`<p class="ys-notice">${itUI("Deploy the updated getYardStorage and changeYardStorage functions to enable reservations.")}</p>`;
       else renderYardStays(staysBoard,{model,manager:manager()&&!pending,dialog,mutate,onBook:stay=>showYardJobDialog({model,day:stay.status==='RESERVED'?stay.startDate:stay.endDate,dialog,mutate,slotId:stay.slot,stayId:stay.id})});
     }
     const board=root.querySelector('.ys-day-planner');if(board){
       root.querySelectorAll('[data-zone],[data-filter],[data-search],.ys-legend').forEach(el=>el.style.display='none');
-      if(model.plannerVersion!==1)board.innerHTML='<p class="ys-notice">Deploy the updated getYardStorage and changeYardStorage functions to enable the Day planner.</p>';
+      if(model.plannerVersion!==1)board.innerHTML=`<p class="ys-notice">${itUI("Deploy the updated getYardStorage and changeYardStorage functions to enable the Day planner.")}</p>`;
       else renderYardDayPlanner(board,{model,manager:manager()&&!pending,writer:writer()&&!pending,day:plannerDay,onDay:value=>{plannerDay=value;load();},dialog,mutate,onBook:job=>showYardJobDialog({model,day:plannerDay,dialog,mutate,job})});
     }
-    const list=root.querySelector('.ys-schedule');if(list){const assigned=slots.filter(s=>model.yard.spaces[s.id]?.boatDocId).sort((a,b)=>(model.yard.spaces[a.id].launchDate||'9999').localeCompare(model.yard.spaces[b.id].launchDate||'9999')||a.id.localeCompare(b.id));list.innerHTML=assigned.map(s=>{const p=model.yard.spaces[s.id];return `<button class="ys-launch" data-slot="${esc(s.id)}"><strong>${esc(s.label)} · ${esc(p.boatName)}</strong><span>${esc(date(p.launchDate))}</span><span>${esc(L(status(p)==='ready'?'Ready to launch':status(p)==='blocked'?'Work / review needed':'Assigned'))}</span></button>`;}).join('')||`<p>${esc(L('No matches'))}</p>`;list.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>openSpace(slots.find(s=>s.id===b.dataset.slot)));}
+    const list=root.querySelector('.ys-schedule');if(list){const assigned=slots.filter(s=>model.yard.spaces[s.id]?.boatDocId).sort((a,b)=>(model.yard.spaces[a.id].launchDate||'9999').localeCompare(model.yard.spaces[b.id].launchDate||'9999')||a.id.localeCompare(b.id));list.innerHTML=assigned.map(s=>{const p=model.yard.spaces[s.id];return `<button class="ys-launch" data-slot="${esc(s.id)}"><strong>${esc(s.label)} · ${esc(p.boatName)}</strong><span>${esc(date(p.launchDate))}</span><span>${esc(L(status(p)==='ready'?itUI('Ready to launch'):status(p)==='blocked'?itUI('Work / review needed'):itUI('Assigned')))}</span></button>`;}).join('')||`<p>${esc(L('No matches'))}</p>`;list.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>openSpace(slots.find(s=>s.id===b.dataset.slot)));}
   }
-  function dialog(title,body,options={}){modalClose?.();const previous=document.activeElement,backdrop=document.createElement('div'),sheet=document.createElement('div');backdrop.className='sheet-backdrop is-open';sheet.className='sheet ys-sheet is-open';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label',title);sheet.innerHTML=`<div class="ys-sheet-header"><h2>${esc(title)}</h2><button type="button" data-close aria-label="${esc(L('Close'))}">×</button></div><div class="ys-sheet-body">${body}</div>`;document.getElementById('modalRoot').append(backdrop,sheet);
+  function dialog(title,body,options={}){title=itUI(title);modalClose?.();const previous=document.activeElement,backdrop=document.createElement('div'),sheet=document.createElement('div');backdrop.className='sheet-backdrop is-open';sheet.className='sheet ys-sheet is-open';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');sheet.setAttribute('aria-label',title);sheet.innerHTML=`<div class="ys-sheet-header"><h2>${esc(title)}</h2><button type="button" data-close aria-label="${esc(L('Close'))}">×</button></div><div class="ys-sheet-body">${body}</div>`;document.getElementById('modalRoot').append(backdrop,sheet);
     const close=(force=false)=>{if(force!==true&&options.beforeClose&&options.beforeClose()===false)return;document.removeEventListener('keydown',key);sheet.remove();backdrop.remove();modalClose=null;if(previous?.isConnected)previous.focus();};
     const key=e=>{if(document.querySelector('.confirm-sheet'))return;if(e.key==='Escape')close();if(e.key==='Tab'){const nodes=[...sheet.querySelectorAll('button,input,select,textarea,a[href]')].filter(x=>!x.disabled&&!x.hidden);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};
     sheet.querySelector('[data-close]').onclick=close;backdrop.onclick=close;document.addEventListener('keydown',key);modalClose=close;sheet.querySelector('[data-close]').focus();return sheet;
   }
 function showYardHelp() {
-  dialog('Yard Storage help', `
+  dialog(itUI('Yard Storage help'), `
     <div class="help-scroll">
-      <div class="help-pill">Yard Storage & Day planner</div>
+      <div class="help-pill">${itUI("Yard Storage & Day planner")}</div>
 
       <p class="help-desc">
-        Track boat locations, plan haul-outs and launches,
-        and coordinate staff and equipment.
+        ${itUI("Track boat locations, plan haul-outs and launches, and coordinate staff and equipment.")}
       </p>
 
-      <div class="help-section-title">Here’s the workflow</div>
+      <div class="help-section-title">${itUI("Here’s the workflow")}</div>
 
       <div class="help-step">
         <div class="help-step-num">1</div>
         <div class="help-step-text">
-          <b>Set up the planner once</b><br>
-          Open <b>Day planner → Planner settings & equipment</b>.
-          Set the marina’s timezone and add your hoist, crane or trailer.
-          Staff are selected from <b>Crew</b>.
+          <b>${itUI("Set up the planner once")}</b><br>
+          ${itUI("Open")} <b>${itUI("Day planner → Planner settings & equipment")}</b>${itUI(". Set the marina’s timezone and add your hoist, crane or trailer. Staff are selected from")} <b>${itUI("Crew")}</b>.
         </div>
       </div>
 
       <div class="help-step">
         <div class="help-step-num">2</div>
         <div class="help-step-text">
-          <b>Assign a boat to a yard space</b><br>
-          Use the yard map or list—for example,
-          boat “Shore Sami” in <b>A1</b>.
+          <b>${itUI("Assign a boat to a yard space")}</b><br>
+          ${itUI("Use the yard map or list—for example, boat “Shore Sami” in")} <b>A1</b>.
         </div>
       </div>
 
       <div class="help-step">
         <div class="help-step-num">3</div>
         <div class="help-step-text">
-          <b>Book a haul-out or launch</b><br>
-          Choose the boat, date, start/end time, equipment and staff.<br>
-          Example: <b>Haul-out · 09:00–09:30 · Hoist 1 · Ahmed and John.</b>
+          <b>${itUI("Book a haul-out or launch")}</b><br>
+          ${itUI("Choose the boat, date, start/end time, equipment and staff.")}<br>
+          ${itUI("Example:")} <b>${itUI("Haul-out · 09:00–09:30 · Hoist 1 · Ahmed and John.")}</b>
         </div>
       </div>
 
       <div class="help-step">
         <div class="help-step-num">4</div>
         <div class="help-step-text">
-          <b>The planner checks for clashes</b><br>
-          It rejects overlapping bookings involving the same boat,
-          equipment or staff. Different teams and equipment can
-          work simultaneously.
+          <b>${itUI("The planner checks for clashes")}</b><br>
+          ${itUI("It rejects overlapping bookings involving the same boat, equipment or staff. Different teams and equipment can work simultaneously.")}
         </div>
       </div>
 
       <div class="help-step">
         <div class="help-step-num">5</div>
         <div class="help-step-text">
-          <b>Start and complete the operation</b><br>
-          During the booked time, staff can press <b>Start</b>.
-          An admin or manager confirms <b>Complete</b>
-          after the physical work finishes.
-          <p><b>Haul-out completed:</b>
-          the boat remains assigned to its yard space.</p>
-          <p><b>Launch completed:</b>
-          its yard space becomes available.</p>
+          <b>${itUI("Start and complete the operation")}</b><br>
+          ${itUI("During the booked time, staff can press")} <b>${itUI("Start")}</b>${itUI(". An admin or manager confirms")} <b>${itUI("Complete")}</b>
+          ${itUI("after the physical work finishes.")}
+          <p><b>${itUI("Haul-out completed:")}</b>
+          ${itUI("the boat remains assigned to its yard space.")}</p>
+          <p><b>${itUI("Launch completed:")}</b>
+          ${itUI("its yard space becomes available.")}</p>
         </div>
       </div>
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">Launch readiness</div>
+      <div class="help-section-title">${itUI("Launch readiness")}</div>
       <p>
-        A launch cannot start while the boat has launch blockers,
-        unfinished launch-critical or unreviewed maintenance, unresolved package reviews, or hasn’t been marked ready. Approved optional work remains visible without blocking launch.
+        ${itUI("A launch cannot start while the boat has launch blockers, unfinished launch-critical or unreviewed maintenance, unresolved package reviews, or hasn’t been marked ready. Approved optional work remains visible without blocking launch.")}
       </p>
 
-      <div class="help-section-title">Interrupted work</div>
+      <div class="help-section-title">${itUI("Interrupted work")}</div>
       <p>
-        Use <b>Stop</b> and give a reason.
-        This records the interruption and adds a blocker
-        without claiming the operation finished.
+        ${itUI("Use")} <b>${itUI("Stop")}</b> ${itUI("and give a reason. This records the interruption and adds a blocker without claiming the operation finished.")}
       </p>
     </div>
   `);
 }
 
-  function configureDialog(){if(!manager()||pending)return;const sheet=dialog(L('Configure yard'),`<p>Enter one zone per line: code, number of spaces. Example: A,150 then B,150 then C,150 creates 450 spaces. Maximum 1000 spaces across 20 zones. Space IDs remain stable when capacity grows.</p><form><label>Zones<textarea name="zones" rows="5" required>${esc(model.yard.zones.map(z=>`${z.id},${z.capacity}`).join('\n')||'A,150\nB,150\nC,150')}</textarea></label><p>Occupied spaces and spaces with notes cannot be removed. This changes yard capacity, not existing boat records.</p><p class="ys-form-error" role="alert"></p><button>${esc(L('Save'))}</button></form>`);
-    sheet.querySelector('form').onsubmit=e=>{e.preventDefault();const rows=new FormData(e.target).get('zones').trim().split(/\n/).map(line=>line.split(',').map(s=>s.trim()));if(rows.some(row=>row.length!==2||!/^\d+$/.test(row[1]))){sheet.querySelector('.ys-form-error').textContent='Use one zone per line: A,150';return;}mutate({action:'CONFIGURE',zones:rows.map(([id,capacity])=>({id:id.toUpperCase(),capacity:Number(capacity)}))});};
+  function configureDialog(){if(!manager()||pending)return;const sheet=dialog(L('Configure yard'),`<p>${itUI("Enter one zone per line: code, number of spaces. Example: A,150 then B,150 then C,150 creates 450 spaces. Maximum 1000 spaces across 20 zones. Space IDs remain stable when capacity grows.")}</p><form><label>${itUI("Zones")}<textarea name="zones" rows="5" required>${esc(model.yard.zones.map(z=>`${z.id},${z.capacity}`).join('\n')||'A,150\nB,150\nC,150')}</textarea></label><p>${itUI("Occupied spaces and spaces with notes cannot be removed. This changes yard capacity, not existing boat records.")}</p><p class="ys-form-error" role="alert"></p><button>${esc(L('Save'))}</button></form>`);
+    sheet.querySelector('form').onsubmit=e=>{e.preventDefault();const rows=new FormData(e.target).get('zones').trim().split(/\n/).map(line=>line.split(',').map(s=>s.trim()));if(rows.some(row=>row.length!==2||!/^\d+$/.test(row[1]))){sheet.querySelector('.ys-form-error').textContent=itUI('Use one zone per line: A,150');return;}mutate({action:'CONFIGURE',zones:rows.map(([id,capacity])=>({id:id.toUpperCase(),capacity:Number(capacity)}))});};
   }
   function confirmAction(title,description,args){const sheet=dialog(title,`<p>${esc(description)}</p><button data-confirm>${esc(title)}</button>`);sheet.querySelector('[data-confirm]').onclick=()=>mutate(args);}
   function openSpace(slot){if(!active()||busy)return;const space=model.yard.spaces[slot.id]||{},occupied=!!space.boatDocId,canWrite=writer()&&!pending;
     const tasks=model.unfinished[String(space.boatId)]||0,launchTasks=(model.launchBlockers||model.unfinished)[String(space.boatId)]||0,known=model.boats.some(b=>b.docId===space.boatDocId),eligible=occupied&&known&&!!space.launchDate&&!space.blockers&&!launchTasks&&!model.maintenanceTruncated;
     const boats=model.boats.filter(b=>b.docId===space.boatDocId||!Object.values(model.yard.spaces).some(s=>s.boatDocId===b.docId));
-    const sheet=dialog(`${L('Yard Storage')} · ${slot.label}`,`<form class="ys-form"><label>${esc(L('Boat'))}<select name="boatDocId" ${!canWrite||occupied||space.unavailable?'disabled':''}><option value="">${esc(L('No boat assigned'))}</option>${occupied&&!known?`<option selected value="${esc(space.boatDocId)}">${esc(space.boatName)} — record needs review</option>`:''}${boats.map(b=>`<option value="${esc(b.docId)}" ${b.docId===space.boatDocId?'selected':''}>${esc(b.name)}</option>`).join('')}</select></label>
+    const sheet=dialog(`${L('Yard Storage')} · ${slot.label}`,`<form class="ys-form"><label>${esc(L('Boat'))}<select name="boatDocId" ${!canWrite||occupied||space.unavailable?'disabled':''}><option value="">${esc(L('No boat assigned'))}</option>${occupied&&!known?`<option selected value="${esc(space.boatDocId)}">${esc(space.boatName)} ${itUI("— record needs review")}</option>`:''}${boats.map(b=>`<option value="${esc(b.docId)}" ${b.docId===space.boatDocId?'selected':''}>${esc(b.name)}</option>`).join('')}</select></label>
     <label>${esc(L('Planned haul-out date'))}<input name="haulDate" type="date" min="2000-01-01" max="2100-12-31" value="${esc(space.haulDate)}" ${!canWrite?'disabled':''}></label>
     <label>${esc(L('Planned launch date'))}<input name="launchDate" type="date" min="2000-01-01" max="2100-12-31" value="${esc(space.launchDate)}" ${!canWrite?'disabled':''}></label>
     <label>${esc(L('Notes'))}<textarea name="notes" maxlength="500" ${!canWrite?'disabled':''}>${esc(space.notes)}</textarea></label>
     <label>${esc(L('Launch blockers'))}<textarea name="blockers" maxlength="500" ${!canWrite?'disabled':''}>${esc(space.blockers)}</textarea></label>
-    ${canWrite&&occupied&&known?'<button type="button" data-add-yard-maintenance>Add maintenance</button>':''}
-    ${occupied?`<p>${model.maintenanceTruncated?'Maintenance review is incomplete.':`${tasks} unfinished maintenance task(s); ${launchTasks} launch-critical/unreviewed tasks or package reviews.`}</p><a href="#/maintenance?boatId=${Number(space.boatId)}">${esc(L('Maintenance'))}</a><p>A manager confirms readiness after reviewing preparation and outstanding work. Save edits before confirming readiness. Recording launch clears the yard space and keeps an audit record.</p>`:''}
+    ${canWrite&&occupied&&known?`<button type="button" data-add-yard-maintenance>${itUI("Add maintenance")}</button>`:''}
+    ${occupied?`<p>${model.maintenanceTruncated?itUI('Maintenance review is incomplete.'):`${tasks} unfinished maintenance task(s); ${launchTasks} launch-critical/unreviewed tasks or package reviews.`}</p><a href="#/maintenance?boatId=${Number(space.boatId)}">${esc(L('Maintenance'))}</a><p>${itUI("A manager confirms readiness after reviewing preparation and outstanding work. Save edits before confirming readiness. Recording launch clears the yard space and keeps an audit record.")}</p>`:''}
     ${canWrite?`<button>${esc(L('Save'))}</button>`:''}</form>
-    <div class="ys-actions">${canWrite&&!occupied?`<button data-availability>${esc(L(space.unavailable?'Make available':'Mark unavailable'))}</button>`:''}
-    ${manager()&&occupied&&!pending&&model.plannerVersion===1?'<button data-plan>Book yard operation</button>':''}
+    <div class="ys-actions">${canWrite&&!occupied?`<button data-availability>${esc(L(space.unavailable?itUI('Make available'):itUI('Mark unavailable')))}</button>`:''}
+    ${manager()&&occupied&&!pending&&model.plannerVersion===1?`<button data-plan>${itUI("Book yard operation")}</button>`:''}
     ${canWrite&&occupied?`<button data-move>${esc(L('Move boat'))}</button><button data-release>${esc(L('Release space'))}</button>`:''}
     ${manager()&&occupied&&!pending?`<button data-ready ${!eligible?'disabled':''}>${esc(L('Confirm ready'))}</button><button data-launch ${!eligible||!space.readyAt?'disabled':''}>${esc(L('Record launch'))}</button>`:''}</div>`);
-    if(occupied&&known){const b=document.createElement('button');b.type='button';b.textContent='View work packages';b.onclick=()=>{modalClose?.();workBoatId=space.boatId;mode='packages';render();};sheet.querySelector('.ys-sheet-body').prepend(b);}
+    if(occupied&&known){const b=document.createElement('button');b.type='button';b.textContent=itUI('View work packages');b.onclick=()=>{modalClose?.();workBoatId=space.boatId;mode='packages';render();};sheet.querySelector('.ys-sheet-body').prepend(b);}
     if(model.stayVersion===1){
       const related=Object.values(model.yard.stays||{}).filter(s=>s.slot===slot.id);
       const notice=document.createElement('div');notice.className='ys-notice';
-      notice.innerHTML=related.map(s=>`<p>${esc(s.boatName)} · ${s.status==='RESERVED'?'Reserved':'In storage'} · ${esc(s.startDate)} → ${esc(s.endDate)}</p>`).join('')||'<p>No dated storage stays for this space.</p>';
-      if(occupied&&!related.some(s=>s.status==='IN_STORAGE'&&s.boatDocId===space.boatDocId))notice.innerHTML+='<p>Existing assignment: actual arrival has not been confirmed as a storage stay.</p>';
-      if(manager()&&!pending){const b=document.createElement('button');b.type='button';b.textContent='Reservations & stays';b.onclick=()=>{modalClose?.();mode='stays';render();};notice.append(b);
-        if(!occupied){const reserve=document.createElement('button');reserve.type='button';reserve.textContent='Reserve this space';reserve.onclick=()=>showStayForm({model,dialog,mutate,slotId:slot.id});notice.append(reserve);}}
+      notice.innerHTML=related.map(s=>`<p>${esc(s.boatName)} · ${s.status==='RESERVED'?itUI('Reserved'):itUI('In storage')} · ${esc(s.startDate)} → ${esc(s.endDate)}</p>`).join('')||`<p>${itUI("No dated storage stays for this space.")}</p>`;
+      if(occupied&&!related.some(s=>s.status==='IN_STORAGE'&&s.boatDocId===space.boatDocId))notice.innerHTML+=`<p>${itUI("Existing assignment: actual arrival has not been confirmed as a storage stay.")}</p>`;
+      if(manager()&&!pending){const b=document.createElement('button');b.type='button';b.textContent=itUI('Reservations & stays');b.onclick=()=>{modalClose?.();mode='stays';render();};notice.append(b);
+        if(!occupied){const reserve=document.createElement('button');reserve.type='button';reserve.textContent=itUI('Reserve this space');reserve.onclick=()=>showStayForm({model,dialog,mutate,slotId:slot.id});notice.append(reserve);}}
       sheet.querySelector('.ys-sheet-body').prepend(notice);
     }
     sheet.querySelector('form').addEventListener('input',()=>sheet.querySelectorAll('[data-ready],[data-launch]').forEach(b=>{b.disabled=true;}));
@@ -252,10 +243,10 @@ function showYardHelp() {
         });
         if(active()){if(typeof closeAdd==='function')modalClose=closeAdd;}
         else closeAdd?.();
-      } catch(e){if(active())dialog('Unable to open maintenance',`<p>${esc(e.message||'Please refresh and try again.')}</p>`);}
+      } catch(e){if(active())dialog(itUI('Unable to open maintenance'),`<p>${esc(e.message||itUI('Please refresh and try again.'))}</p>`);}
     });
     sheet.querySelector('[data-plan]')?.addEventListener('click',()=>showYardJobDialog({model,day:plannerDay,dialog,mutate,slotId:slot.id}));
-    sheet.querySelector('[data-move]')?.addEventListener('click',()=>{const targets=yardSlots(model.yard.zones).filter(s=>s.id!==slot.id&&!model.yard.spaces[s.id]?.boatDocId&&!model.yard.spaces[s.id]?.unavailable&&!model.yard.spaces[s.id]?.notes);const move=dialog(L('Move boat'),`<form><label>${esc(L('Destination'))}<select name="target" required>${targets.map(s=>`<option value="${esc(s.id)}">${esc(s.label)}</option>`).join('')}</select></label><p>Moves preserve dates and work links; readiness must be confirmed again.</p><button ${!targets.length?'disabled':''}>${esc(L('Move boat'))}</button></form>`);move.querySelector('form').onsubmit=e=>{e.preventDefault();mutate({action:'MOVE',slot:slot.id,target:new FormData(e.target).get('target')});};});
+    sheet.querySelector('[data-move]')?.addEventListener('click',()=>{const targets=yardSlots(model.yard.zones).filter(s=>s.id!==slot.id&&!model.yard.spaces[s.id]?.boatDocId&&!model.yard.spaces[s.id]?.unavailable&&!model.yard.spaces[s.id]?.notes);const move=dialog(L('Move boat'),`<form><label>${esc(L('Destination'))}<select name="target" required>${targets.map(s=>`<option value="${esc(s.id)}">${esc(s.label)}</option>`).join('')}</select></label><p>${itUI("Moves preserve dates and work links; readiness must be confirmed again.")}</p><button ${!targets.length?'disabled':''}>${esc(L('Move boat'))}</button></form>`);move.querySelector('form').onsubmit=e=>{e.preventDefault();mutate({action:'MOVE',slot:slot.id,target:new FormData(e.target).get('target')});};});
   }
   const clear=store.subscribe(()=>{if(!active())unmountYardStorageScreen();});
   dispose=()=>{dead=true;workDispose?.();modalClose?.(true);clear();};

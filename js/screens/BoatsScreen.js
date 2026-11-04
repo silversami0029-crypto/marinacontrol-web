@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/BoatsScreen.js
@@ -120,7 +121,7 @@ export function mountBoatsScreen() {
       document.getElementById('boatsList').innerHTML =
         `<div class="boats-empty">
            <h2>${t("Couldn't load boats")}</h2>
-           <p>${err.message || 'Permission denied.'}</p>
+           <p>${err.message || itUI('Permission denied.')}</p>
          </div>`;
       return;
     }
@@ -355,8 +356,8 @@ function openMenu(boat) {
     onNotes:          () => toast(tr('Boat notes coming soon')),
     onAssignCustomer: onAssignCustomer,
     onEdit:           onEditBoat,
-    onPhoto:          () => toast(boat.hasPhoto() ? 'Photo options coming soon' : 'Add photo coming soon'),
-    onVoice:          () => toast(boat.hasVoiceNote() ? 'Voice options coming soon' : 'Add voice note coming soon'),
+    onPhoto:          () => toast(boat.hasPhoto() ? itUI('Photo options coming soon') : itUI('Add photo coming soon')),
+    onVoice:          () => toast(boat.hasVoiceNote() ? itUI('Voice options coming soon') : itUI('Add voice note coming soon')),
     onSetActive:      onSetActive,
     onDelete:         onDelete
   });
@@ -373,7 +374,7 @@ async function onSetActive(boat) {
     toast(tr(`${boat.name} is now active`), { kind: 'success' });
   } catch (err) {
     console.error('[boats] set active failed', err);
-    toast(err.message || 'Failed to set active', { kind: 'error', duration: 5000 });
+    toast(err.message || itUI('Failed to set active'), { kind: 'error', duration: 5000 });
   }
 }
 

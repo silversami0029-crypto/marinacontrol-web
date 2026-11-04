@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { wireBookingDatePicker } from '../ui/BookingDatePicker.js';
 import { marinaCurrency, checkBillingClient, createBillingInvoice } from '../util/BillingData.js';
 import { savedCurrency, currencyCode, currencyDigits, invoiceAmount, money } from '../util/BillingCurrency.js';
@@ -165,7 +166,7 @@ export async function showAddInvoiceSheet(opts = {}) {
         <select class="add-input add-select" id="iv-category">
           ${CATEGORIES.map(c => `
             <option value="${c}">
-              ${c.charAt(0) + c.slice(1).toLowerCase()}
+              ${itUI(c.charAt(0) + c.slice(1).toLowerCase())}
             </option>
           `).join('')}
         </select>
@@ -274,7 +275,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     if(opts.yardPackageInvoice){
       sheet.querySelector('#iv-status').disabled=true;
       const review=document.createElement('label');review.className='add-label';review.style.cssText='display:flex;align-items:flex-start;gap:10px;margin-top:16px';
-      review.innerHTML='<input type="checkbox" data-yard-reviewed style="width:20px;min-width:20px;height:20px;margin-top:3px"><span>I checked the selected customer against '+escapeHtml(opts.yardPackageInvoice.approvedCustomerName)+', the completed work, agreed charges and tax treatment.</span>';
+      review.innerHTML=`<input type="checkbox" data-yard-reviewed style="width:20px;min-width:20px;height:20px;margin-top:3px"><span>${itUI("I checked the selected customer against")} `+escapeHtml(opts.yardPackageInvoice.approvedCustomerName)+', the completed work, agreed charges and tax treatment.</span>';
       sheet.querySelector('.add-scroll').append(review);
       customerSelect.addEventListener('change',()=>{review.querySelector('input').checked=false;});
     }
@@ -298,7 +299,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     e.preventDefault();
     if (save.disabled) return;
 
-    if(opts.yardPackageInvoice&&!sheet.querySelector('[data-yard-reviewed]')?.checked){toast('Confirm the customer, completed work, charges and tax treatment.',{kind:'error'});return;}
+    if(opts.yardPackageInvoice&&!sheet.querySelector('[data-yard-reviewed]')?.checked){toast(itUI('Confirm the customer, completed work, charges and tax treatment.'),{kind:'error'});return;}
     const selectedCustomerId = Number(customerSelect.value);
     const boatId = Number(boatSelect.value);
     const invoiceNumber =

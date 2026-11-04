@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { startHomeBanner } from './HomeBanner.js';
 import { store } from '../store.js';
 import { t, getLocale } from '../i18n.js';
@@ -40,7 +41,7 @@ export function mountHomeScreen() {
   }
   screen.innerHTML = `<section class="mc-home">
     <header class="mc-home-heading"><time class="mc-home-clock" dir="auto"></time><span class="mc-home-eyebrow">${esc(t('MarinaControl'))}</span>
-     <!-- <h1>${esc(store.activeMarina?.name || 'MarinaControl')}</h1> -->
+     <!-- <h1>${esc(store.activeMarina?.name || itUI('MarinaControl'))}</h1> -->
       <p>${esc(t('Your marina at a glance'))}</p></header>
     <div class="mc-home-grid" aria-label="${esc(t('Marina overview'))}">
       ${['bookings','maintenance','safety','berths'].map(key => `<button type="button" class="mc-home-card" data-home-card="${key}">

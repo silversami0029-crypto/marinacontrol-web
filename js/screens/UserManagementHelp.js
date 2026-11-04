@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/UserManagementHelp.js
 
@@ -16,10 +17,10 @@ export function showUserManagementHelp() {
 
       <div class="help-section-title">${tr("How to manage users")}</div>
 
-      ${step('1', 'Add users', 'Add users using the + Add User button. Enter their name, email, password and required role.')}
-      ${step('2', 'Change role', 'Tap an existing user to change their role and adjust their level of access.')}
-      ${step('3', 'Remove', 'Swipe a user left or right to remove them. You cannot delete your own account.')}
-      ${step('4', 'Invite code', 'Use the Marina Invite Code when authorised users need to join the correct marina account. Tap Copy Code to copy it.')}
+      ${step('1', itUI('Add users'), itUI('Add users using the + Add User button. Enter their name, email, password and required role.'))}
+      ${step('2', itUI('Change role'), itUI('Tap an existing user to change their role and adjust their level of access.'))}
+      ${step('3', itUI('Remove'), itUI('Swipe a user left or right to remove them. You cannot delete your own account.'))}
+      ${step('4', itUI('Invite code'), itUI('Use the Marina Invite Code when authorised users need to join the correct marina account. Tap Copy Code to copy it.'))}
 
       <div class="help-divider"></div>
 

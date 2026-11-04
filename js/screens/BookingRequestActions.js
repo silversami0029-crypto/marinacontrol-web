@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { reviewNewBookingPrice } from './BerthingBillingSheet.js';
 import { DECLINE_REASONS } from '../analytics/bookingDemand.js';
 import { wireBookingDatePicker } from '../ui/BookingDatePicker.js';
@@ -402,7 +403,7 @@ export function showRequestMoreMenu(request) {
           <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>
         </svg>
       </div>
-      <div class="sheet-item-text"><div class="sheet-item-title">${t(request.dateProposal?.state === 'PENDING' ? 'Review date proposal' : 'Edit Dates')}</div></div>
+      <div class="sheet-item-text"><div class="sheet-item-title">${t(request.dateProposal?.state === 'PENDING' ? itUI('Review date proposal') : itUI('Edit Dates'))}</div></div>
     </div>
     <div class="sheet-gap-8"></div>
 
@@ -559,7 +560,7 @@ function showDeclineReason(request) {
       await declineBooking({clientId,requestId:String(request._docId),reasonCode:reason.value,note:note.value.trim()});
       busy=false;close();toast(tr('Booking request declined'),{kind:'success'});
     } catch(error) {
-      busy=false;update();sheet.querySelector('[data-error]').textContent=tr(error.message||'Failed to decline request');
+      busy=false;update();sheet.querySelector('[data-error]').textContent=tr(error.message||itUI('Failed to decline request'));
     }
   };
   document.addEventListener('keydown',key);window.addEventListener('hashchange',close);
@@ -593,7 +594,7 @@ function formatShorePower(source) {
   if (source?.shorePowerVoltage != null) values.push(`${source.shorePowerVoltage}V`);
   const phase = String(source?.shorePowerPhase || '').trim().toUpperCase().replace(/[- ]/g, '_');
   if (phase) values.push(phase === 'THREE_PHASE' ? tr('Three-phase') : tr('Single-phase'));
-  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${tr(source.shorePowerConnections === 1 ? 'connection' : 'connections')}`);
+  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${tr(source.shorePowerConnections === 1 ? itUI('connection') : itUI('connections'))}`);
   return values.length ? values.join(' · ') : tr('Not specified');
 }
 function showDateProposal(request) {
@@ -621,7 +622,7 @@ function showDateProposal(request) {
       .dp-sheet .dp-action:disabled{opacity:.45;cursor:not-allowed}
     </style>
     <div style="display:flex;align-items:center;min-height:48px;">
-      <div class="sheet-title" style="flex:1;margin:0;">${tr(pending ? 'Review date proposal' : 'Edit Dates')}</div>
+      <div class="sheet-title" style="flex:1;margin:0;">${tr(pending ? itUI('Review date proposal') : itUI('Edit Dates'))}</div>
       <button type="button" id="dpClose" aria-label="${tr('Close')}" style="background:transparent;border:0;color:inherit;font-size:26px;width:44px;height:44px;">×</button>
     </div>
     <form class="add-form" id="dpForm"><div class="add-scroll">
@@ -630,7 +631,7 @@ function showDateProposal(request) {
         ${p.error ? `<p>${escapeHtml(p.error)}</p>` : ''}
         <label class="add-label" for="dpReply">${tr("Owner's response")}</label>
         <textarea class="add-input" id="dpReply" aria-describedby="dpReplyHint" maxlength="1000" placeholder="${tr('Type or paste the owner’s response here…')}" rows="4">${escapeHtml(matchingReply)}</textarea>
-        <p class="dp-hint" id="dpReplyHint">${tr(matchingReply ? 'WhatsApp reply filled in. Review it, then choose an action below.' : 'Enter the response you received, then choose an action below.')}</p>
+        <p class="dp-hint" id="dpReplyHint">${tr(matchingReply ? itUI('WhatsApp reply filled in. Review it, then choose an action below.') : itUI('Enter the response you received, then choose an action below.'))}</p>
         <p class="dp-hint">${tr('Record acceptance only if the owner agreed to these exact dates. Staff must still approve the booking.')}</p>
         <div class="dp-actions">
           <button type="button" class="dp-action" data-action="ACCEPT" ${p.delivery !== 'SENT' ? 'disabled' : ''}>${tr('Record owner acceptance')}</button>

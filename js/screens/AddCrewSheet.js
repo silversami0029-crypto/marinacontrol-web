@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddCrewSheet.js
 import { store } from '../store.js';
@@ -24,7 +25,7 @@ export function showAddCrewChooser() {
     ${tr("Add Crew")}
   </div>
 
-  <button type="button" id="cr-close" aria-label="Close Crew sheet"
+  <button type="button" id="cr-close" aria-label="${itUI("Close Crew sheet")}"
     style="position:absolute;right:0;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -216,7 +217,7 @@ function showAddCrewForm() {
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to add crew member.';
+      errEl.textContent = err.message || itUI('Failed to add crew member.');
     }
   });
 }

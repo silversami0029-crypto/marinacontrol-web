@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import {confirmMarinaLifecycle, lifecycleText as lt} from './MarinaLifecycleSheet.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker, getLanguage } from '../i18n.js';
@@ -11,7 +12,7 @@ import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/
 const functions = getFunctions(auth.app, 'us-central1');
 let openSheet = null;
 const buttonStyle = 'padding:12px;border:1px solid #737D89;border-radius:8px;background:#151A20;color:#F5F7F9;font:inherit;cursor:pointer;';
-const inviteText = (en, ar) => getLanguage() === 'ar' ? ar : en;
+const inviteText = (en, ar) => getLanguage() === 'ar' ? ar : itUI(en);
 const inputStyle = 'box-sizing:border-box;width:100%;margin-top:5px;padding:11px;border:1px solid #737D89;border-radius:7px;background:#151A20;color:#F5F7F9;font:inherit;';
 
 export function showManageMarinasSheet() {
@@ -232,7 +233,7 @@ export function showManageMarinasSheet() {
     if (busy) return;
     setBusy(true); status(waitingMessage);
     try { validSession(); await action(); }
-    catch (error) { console.error('[manage marinas]', error); status(error.message || 'Unable to complete this action.', true); }
+    catch (error) { console.error('[manage marinas]', error); status(error.message || itUI('Unable to complete this action.'), true); }
     finally { if (sheet.isConnected) setBusy(false); }
   }
   async function loadAndSwitch(id) {
@@ -275,7 +276,7 @@ export function showManageMarinasSheet() {
           <label>${t("Your name")}<input name="displayName" required minlength="2" maxlength="100" value="${esc(store.userProfile?.name || '')}" style="${inputStyle}"></label>
           <p style="margin:0;color:#AEB6C1;">${t("Use the invite code provided by that marina’s administrator. Joining requires a verified email.")}</p>
         `}
-        <button type="submit" style="${buttonStyle}background:#0A8EF7;border-color:#0A8EF7;">${adding ? 'Create Marina' : tr('Join Marina')}</button>
+        <button type="submit" style="${buttonStyle}background:#0A8EF7;border-color:#0A8EF7;">${adding ? itUI('Create Marina') : tr('Join Marina')}</button>
       </form>`;
     status('');
     $('#mmDetails input')?.focus();
@@ -352,7 +353,7 @@ export function showManageMarinasSheet() {
             await call('createMarina', {...row, sourceClientId});
             existing.add(key); added++;
           } catch (error) {
-            errors.push(`${row.name}: ${error.message || 'Creation failed'}`);
+            errors.push(`${row.name}: ${error.message || itUI('Creation failed')}`);
             // Stop on access/session/network errors; their outcome may be uncertain.
             if (['functions/unauthenticated', 'functions/permission-denied', 'functions/unavailable', 'functions/deadline-exceeded', 'functions/internal'].includes(error.code) || store.authUser?.uid !== uid) break;
           }

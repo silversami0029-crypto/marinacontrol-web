@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InventoryHelp.js
 
@@ -29,11 +30,11 @@ export function showInventoryHelp() {
 
       <div class="help-section-title">${tr("How to add inventory?")}</div>
 
-      ${step('1', 'Item name', "Enter item name (e.g., 'Oil Filter', 'Diesel', 'Life Jacket')")}
-      ${step('2', 'Type', 'Select type (Spare Parts, Consumables, Safety Gear, etc.)')}
-      ${step('3', 'Location', 'Specify location (Engine Room, Galley, Bow Locker, etc.)')}
-      ${step('4', 'Quantity', 'Set quantity (how many you have on board)')}
-      ${step('5', 'Notes', 'Add notes (part number, supplier, reorder reminder)')}
+      ${step('1', itUI('Item name'), itUI("Enter item name (e.g., 'Oil Filter', 'Diesel', 'Life Jacket')"))}
+      ${step('2', itUI('Type'), itUI('Select type (Spare Parts, Consumables, Safety Gear, etc.)'))}
+      ${step('3', itUI('Location'), itUI('Specify location (Engine Room, Galley, Bow Locker, etc.)'))}
+      ${step('4', itUI('Quantity'), itUI('Set quantity (how many you have on board)'))}
+      ${step('5', itUI('Notes'), itUI('Add notes (part number, supplier, reorder reminder)'))}
 
       <div class="help-divider"></div>
 

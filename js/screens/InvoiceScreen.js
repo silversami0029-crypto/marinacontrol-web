@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { money, savedCurrency, totalsText } from '../util/BillingCurrency.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InvoiceScreen.js
@@ -96,7 +97,7 @@ export function mountInvoiceScreen() {
     <div class="iv-filters" id="ivFilters">
       <button type="button" class="iv-month-btn" id="ivMonthBtn">${tr("Select month")}</button>
       <select class="iv-status-select" id="ivStatusSelect">
-        ${STATUSES.map(s => `<option value="${s}">${escapeHtml(tr(s === 'All' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()))}</option>`).join('')}
+        ${STATUSES.map(s => `<option value="${s}">${escapeHtml(tr(s === 'All' ? itUI('All') : s.charAt(0) + s.slice(1).toLowerCase()))}</option>`).join('')}
       </select>
     </div>
 
@@ -275,7 +276,7 @@ function subscribeToInvoices(urlCustomerId) {
     document.getElementById('ivList').innerHTML =
       `<div class="boats-empty">
          <h2>${tr("Couldn't load invoices")}</h2>
-         <p>${escapeHtml(err.message || 'Permission denied.')}</p>
+         <p>${escapeHtml(err.message || itUI('Permission denied.'))}</p>
        </div>`;
   });
 }
@@ -365,7 +366,7 @@ function renderList() {
             <div class="iv-number">${escapeHtml(inv.invoiceNumber || '')}</div>
           </div>
 
-          ${(inv.yardPackageId || inv.description) ? `<div class="iv-description">${escapeHtml(inv.yardPackageId ? (inv.yardPackageName || "Yard maintenance") : inv.description)}</div>` : ''}
+          ${(inv.yardPackageId || inv.description) ? `<div class="iv-description">${escapeHtml(inv.yardPackageId ? (inv.yardPackageName || itUI("Yard maintenance")) : inv.description)}</div>` : ''}
 
           <div class="iv-line-3">
             <div class="iv-amount">${escapeHtml(formatMoney(inv.amount, inv.currency))}</div>

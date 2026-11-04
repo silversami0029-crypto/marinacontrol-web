@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 const NS='http://www.w3.org/2000/svg',colours={AVAILABLE:'#22c55e',OCCUPIED:'#ef4444',MAINTENANCE:'#f59e0b',BOOKED:'#3b82f6',UNKNOWN:'#737D89'};
 const el=(tag,attrs={},text)=>{const n=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,String(v));if(text!==undefined)n.textContent=text;return n;};
 export function reconcileBerthLayout(layout,slots){
@@ -6,7 +7,7 @@ export function reconcileBerthLayout(layout,slots){
  return copy;
 }
 export function mountLayoutCanvas(root,{layout,slots,onOpen=()=>{},L=x=>x,cameraState={},zone='',editing=false,selected='',snap=true,onSelect=()=>{},onMove=()=>{},onMoveEnd=()=>{}}){
- root.replaceChildren();root.classList.add('be-canvas');root.tabIndex=0;root.setAttribute('aria-label',editing?'Edit berth layout. Drag a berth or label; use arrow keys for precise movement.':'Berth layout. Drag to pan and select a berth.');
+ root.replaceChildren();root.classList.add('be-canvas');root.tabIndex=0;root.setAttribute('aria-label',editing?itUI('Edit berth layout. Drag a berth or label; use arrow keys for precise movement.'):'Berth layout. Drag to pan and select a berth.');
  const slotMap=new Map(slots.map(s=>[s.id,s]));
  let base={x:0,y:0,w:layout.width,h:layout.height};if(zone){const items=layout.items.filter(i=>slotMap.get(i.id)?.zone===zone);if(items.length){const x=Math.min(...items.map(i=>i.x))-30,y=Math.min(...items.map(i=>i.y))-30;base={x,y,w:Math.max(...items.map(i=>i.x+i.width))-x+30,h:Math.max(...items.map(i=>i.y+i.height))-y+30};}}
  const key=JSON.stringify([layout.width,layout.height,zone,editing]);if(cameraState.key!==key){cameraState.key=key;cameraState.view={...base};}let view={...cameraState.view};

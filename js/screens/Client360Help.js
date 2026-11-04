@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/Client360Help.js
 
@@ -16,13 +17,13 @@ export function showClient360Help() {
 
       <div class="help-section-title">${tr("What you'll see")}</div>
 
-      ${step('1', 'Client Card', 'Client name, email, phone, and membership status.')}
-      ${step('2', 'Action Banner', 'Alerts you to outstanding invoices, expiring documents, and safety items needing attention.')}
-      ${step('3', 'Boat Card', 'Vessel name, HIN, and current service status (Active, Maintenance, Out of Service).')}
-      ${step('4', 'Berth & Booking', 'Assigned berth, arrival date, and expected departure.')}
-      ${step('5', 'Financial Snapshot', 'Outstanding balance, last payment, and account status at a glance.')}
-      ${step('6', 'Recent Activity', 'Timeline of key events: invoice payments, berth assignments, document uploads, and maintenance completions.')}
-      ${step('7', 'Quick Actions', 'One-tap access to: Message Client, Create Invoice, Move Berth, Add Note.')}
+      ${step('1', itUI('Client Card'), itUI('Client name, email, phone, and membership status.'))}
+      ${step('2', itUI('Action Banner'), itUI('Alerts you to outstanding invoices, expiring documents, and safety items needing attention.'))}
+      ${step('3', itUI('Boat Card'), itUI('Vessel name, HIN, and current service status (Active, Maintenance, Out of Service).'))}
+      ${step('4', itUI('Berth & Booking'), itUI('Assigned berth, arrival date, and expected departure.'))}
+      ${step('5', itUI('Financial Snapshot'), itUI('Outstanding balance, last payment, and account status at a glance.'))}
+      ${step('6', itUI('Recent Activity'), itUI('Timeline of key events: invoice payments, berth assignments, document uploads, and maintenance completions.'))}
+      ${step('7', itUI('Quick Actions'), itUI('One-tap access to: Message Client, Create Invoice, Move Berth, Add Note.'))}
 
       <div class="help-divider"></div>
 

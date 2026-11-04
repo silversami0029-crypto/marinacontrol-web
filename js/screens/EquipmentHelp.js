@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/EquipmentHelp.js
 
@@ -31,11 +32,11 @@ export function showEquipmentHelp() {
 
       <div class="help-section-title">${tr("How to add equipment?")}</div>
 
-      ${step('1', 'Type', 'Select equipment type (Engine, Navigation, Safety, etc.)')}
-      ${step('2', 'Manufacturer', 'Enter manufacturer name (Yanmar, Garmin, Icom, etc.)')}
-      ${step('3', 'Location', 'Specify location (Engine Room, Flybridge, Pilothouse, etc.)')}
-      ${step('4', 'Model', 'Add model number (optional but recommended)')}
-      ${step('5', 'Notes', 'Add notes (serial number, installation date, warranty info)')}
+      ${step('1', itUI('Type'), itUI('Select equipment type (Engine, Navigation, Safety, etc.)'))}
+      ${step('2', itUI('Manufacturer'), itUI('Enter manufacturer name (Yanmar, Garmin, Icom, etc.)'))}
+      ${step('3', itUI('Location'), itUI('Specify location (Engine Room, Flybridge, Pilothouse, etc.)'))}
+      ${step('4', itUI('Model'), itUI('Add model number (optional but recommended)'))}
+      ${step('5', itUI('Notes'), itUI('Add notes (serial number, installation date, warranty info)'))}
 
       <div class="help-divider"></div>
 

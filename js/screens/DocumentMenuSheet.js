@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t } from '../i18n.js';
 // js/screens/DocumentMenuSheet.js
 import { store } from '../store.js';
@@ -25,7 +26,7 @@ export function showDocumentMenu(item, { onChanged } = {}) {
 
   <div class="sheet-title" style="text-align:center;">${escapeHtml(item.name || t('Document'))}</div>
 
-  <button type="button" id="iv-close" aria-label="Close invoice sheet"
+  <button type="button" id="iv-close" aria-label="${itUI("Close invoice sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -157,7 +158,7 @@ async function renewDocument(item) {
 
 <div class="sheet-title" style="text-align:center;">${t("Renew Document")}</div>
 
-  <button type="button" id="iv-close" aria-label="Close doc sheet"
+  <button type="button" id="iv-close" aria-label="${itUI("Close doc sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ShiftHelp.js
 
@@ -37,11 +38,11 @@ export function showShiftHelp() {
 
       <div class="help-section-title">${tr("How to schedule a shift?")}</div>
 
-      ${step('1', 'Select crew', 'Select a crew member from your list')}
-      ${step('2', 'Shift type', 'Choose shift type (Morning / Afternoon / Night)')}
-      ${step('3', 'Role', 'Assign a role (Dockhand, Office, Fuel Dock, etc.)')}
-      ${step('4', 'Date', 'Pick the date for the shift')}
-      ${step('5', 'Notes', 'Add notes (special instructions, location, etc.)')}
+      ${step('1', itUI('Select crew'), itUI('Select a crew member from your list'))}
+      ${step('2', itUI('Shift type'), itUI('Choose shift type (Morning / Afternoon / Night)'))}
+      ${step('3', itUI('Role'), itUI('Assign a role (Dockhand, Office, Fuel Dock, etc.)'))}
+      ${step('4', itUI('Date'), itUI('Pick the date for the shift'))}
+      ${step('5', itUI('Notes'), itUI('Add notes (special instructions, location, etc.)'))}
 
       <div class="help-divider"></div>
 

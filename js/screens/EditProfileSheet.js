@@ -1,10 +1,11 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t, getLanguage } from '../i18n.js';
 import { store } from '../store.js';
 import { auth } from '../firebase.js';
 import { loadUserProfile, saveOwnProfile } from '../auth.js';
 import { toast } from '../ui/toast.js';
 
-const label = (en, ar) => getLanguage() === 'ar' ? ar : en;
+const label = (en, ar) => getLanguage() === 'ar' ? ar : itUI(en);
 export async function showEditProfileSheet(onSaved) {
   const uid = auth.currentUser?.uid;
   if (!uid) return;

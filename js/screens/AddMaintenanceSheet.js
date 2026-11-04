@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { store } from '../store.js';
@@ -102,7 +103,7 @@ export async function showAddMaintenanceSheet(opts = {}) {
           )}
         </div>
 
-        ${!isEdit && opts.yardSpaceId ? `<p class="add-label">${escapeHtml('Yard Storage · ' + (opts.yardSpaceLabel || opts.yardSpaceId))}</p>` : ''}
+        ${!isEdit && opts.yardSpaceId ? `<p class="add-label">${escapeHtml(itUI('Yard Storage · ') + (opts.yardSpaceLabel || opts.yardSpaceId))}</p>` : ''}
 
         <label class="add-label"
                for="am-type">${tr("Type")}</label>
@@ -118,7 +119,7 @@ export async function showAddMaintenanceSheet(opts = {}) {
                   ? 'selected'
                   : ''
               }>
-              ${escapeHtml(type)}
+              ${escapeHtml(tr(type))}
             </option>
           `).join('')}
         </select>
@@ -146,8 +147,8 @@ export async function showAddMaintenanceSheet(opts = {}) {
               class="add-save"
               id="am-save">
         ${isEdit
-          ? 'Update Maintenance'
-          : 'Add Maintenance'}
+          ? itUI('Update Maintenance')
+          : itUI('Add Maintenance')}
       </button>
 
     </form>
@@ -264,8 +265,8 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
 
         toast(
           isEdit
-            ? 'Maintenance updated'
-            : 'Maintenance added',
+            ? itUI('Maintenance updated')
+            : itUI('Maintenance added'),
           { kind: 'success' }
         );
 

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/EquipmentHistorySheet.js
 import { store } from '../store.js';
@@ -16,7 +17,7 @@ export async function showEquipmentHistory(item) {
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
     <div class="sheet-title" style="text-align:center;">
-      ${escapeHtml(item.manufacturer || 'Equipment')}
+      ${escapeHtml(item.manufacturer || itUI('Equipment'))}
     </div>
 
     <div class="eq-hist-list" id="eqHistList">
@@ -100,7 +101,7 @@ function formatWhen(ts) {
   const now = Date.now();
   const diff = now - ts;
   const min = 60 * 1000, hr = 60 * min, day = 24 * hr;
-  if (diff < min) return 'just now';
+  if (diff < min) return itUI('just now');
   if (diff < hr) return `${Math.floor(diff / min)}m ago`;
   if (diff < day) return `${Math.floor(diff / hr)}h ago`;
   if (diff < 7 * day) return `${Math.floor(diff / day)}d ago`;

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InventoryHistorySheet.js
 import { store } from '../store.js';
@@ -16,7 +17,7 @@ export async function showInventoryHistory(item) {
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
     <div class="sheet-title" style="text-align:center;">
-      ${escapeHtml(item.name || 'Inventory Item')}
+      ${escapeHtml(item.name || itUI('Inventory Item'))}
     </div>
 
     <div class="eq-hist-list" id="invHistList">
@@ -88,7 +89,7 @@ export async function showInventoryHistory(item) {
           <div class="eq-hist-action">${escapeHtml(r.title)}</div>
           ${r.detail ? `<div class="eq-hist-detail">${escapeHtml(r.detail)}</div>` : ''}
           ${r.reason ? `<div class="eq-hist-detail">${tr("Reason:" )} ${escapeHtml(r.reason)}</div>` : ''}
-          ${r.reference ? `<div class="eq-hist-detail">Ref: ${escapeHtml(r.reference)}</div>` : ''}
+          ${r.reference ? `<div class="eq-hist-detail">${itUI("Ref:")} ${escapeHtml(r.reference)}</div>` : ''}
           <div class="eq-hist-meta">${escapeHtml(r.by)} · ${formatWhen(r.at)}</div>
         </div>
       </div>
@@ -105,7 +106,7 @@ function formatWhen(ts) {
   const now = Date.now();
   const diff = now - ts;
   const min = 60 * 1000, hr = 60 * min, day = 24 * hr;
-  if (diff < min) return 'just now';
+  if (diff < min) return itUI('just now');
   if (diff < hr) return `${Math.floor(diff / min)}m ago`;
   if (diff < day) return `${Math.floor(diff / hr)}h ago`;
   if (diff < 7 * day) return `${Math.floor(diff / day)}d ago`;

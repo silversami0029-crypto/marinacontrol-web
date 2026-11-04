@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/BookingRequestsHelp.js
 
@@ -16,19 +17,19 @@ export function showBookingRequestsHelp() {
 
       <div class="help-section-title">${tr("What you'll see")}</div>
 
-      ${step('1', 'Vessel', 'The boat name requested by the customer')}
-      ${step('2', 'Sender', 'Who sent the request (WhatsApp, email or manual) and their phone number')}
-      ${step('3', 'Dates', 'Requested arrival and departure dates')}
-      ${step('4', 'Message', 'The original message with any special requirements')}
-      ${step('5', 'Status', 'NEW, REVIEWING, APPROVED or DECLINED')}
+      ${step('1', itUI('Vessel'), itUI('The boat name requested by the customer'))}
+      ${step('2', itUI('Sender'), itUI('Who sent the request (WhatsApp, email or manual) and their phone number'))}
+      ${step('3', itUI('Dates'), itUI('Requested arrival and departure dates'))}
+      ${step('4', itUI('Message'), itUI('The original message with any special requirements'))}
+      ${step('5', itUI('Status'), itUI('NEW, REVIEWING, APPROVED or DECLINED'))}
 
       <div class="help-divider"></div>
 
       <div class="help-section-title">${tr("How to handle a request")}</div>
 
-      ${step('1', 'Open', 'Tap a card to see the full request')}
-      ${step('2', 'Approve', 'Assign a compatible berth for the requested dates')}
-      ${step('3', 'More', 'Edit the dates or decline the request')}
+      ${step('1', itUI('Open'), itUI('Tap a card to see the full request'))}
+      ${step('2', itUI('Approve'), itUI('Assign a compatible berth for the requested dates'))}
+      ${step('3', itUI('More'), itUI('Edit the dates or decline the request'))}
 
       <div class="help-divider"></div>
 

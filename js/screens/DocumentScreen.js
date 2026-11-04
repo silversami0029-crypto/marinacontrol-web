@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DocumentScreen.js
 import { store } from '../store.js';
@@ -196,7 +197,7 @@ function subscribeToDocuments(clientId) {
     document.getElementById('docList').innerHTML =
       `<div class="boats-empty">
          <h2>${tr("Couldn't load documents")}</h2>
-         <p>${escapeHtml(err.message || 'Permission denied.')}</p>
+         <p>${escapeHtml(err.message || itUI('Permission denied.'))}</p>
        </div>`;
   });
 }

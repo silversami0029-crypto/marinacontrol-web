@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddInventorySheet.js
 import { store } from '../store.js';
@@ -90,7 +91,7 @@ export function showAddInventorySheet(opts = {}) {
       </div>
 
       <button type="submit" class="add-save" id="inv-save">
-        ${isEdit ? 'Update Item' : '+ Add Item'}
+        ${isEdit ? itUI('Update Item') : itUI('+ Add Item')}
       </button>
     </form>
   `;
@@ -156,7 +157,7 @@ export function showAddInventorySheet(opts = {}) {
     } catch (err) {
       console.error('[inventory save] failed', err);
       save.disabled = false;
-      save.textContent = isEdit ? 'Update Item' : '+ Add Item';
+      save.textContent = isEdit ? itUI('Update Item') : itUI('+ Add Item');
       let errEl = sheet.querySelector('.add-error');
       if (!errEl) {
         errEl = document.createElement('div');

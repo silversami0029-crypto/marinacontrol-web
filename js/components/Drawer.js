@@ -53,6 +53,7 @@ const SECTIONS = [
       { id: 'documents', label: 'Documents', route: '#/documents' },
       { id: 'procedures', label: 'Procedures', route: '#/procedures' },
       { id: 'safety', label: 'Safety Inspections', route: '#/safety' },
+      { id: 'usafe', label: 'USAFE', route: '#/usafe' },
     ]
   },
   {

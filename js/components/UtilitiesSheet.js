@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/UtilitiesSheet.js
 // Utilities sheet — Add Reading dialog
@@ -6,7 +7,7 @@ import { esc } from '../utils.js';
 
 const UTILITY_TYPES = ['ELECTRICITY', 'WATER', 'WASTEWATER'];
 const UNITS = { ELECTRICITY: 'kWh', WATER: 'L', WASTEWATER: 'L' };
-const message = (en, ar) => uiLocale().startsWith('ar') ? ar : en;
+const message = (en, ar) => uiLocale().startsWith('ar') ? ar : itUI(en);
 const MODES = ['CUMULATIVE', 'INTERVAL', 'INSTANTANEOUS'];
 
 /* ============================================================

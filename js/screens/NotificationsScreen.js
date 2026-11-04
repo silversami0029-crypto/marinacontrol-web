@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/NotificationsScreen.js
 import { store } from '../store.js';
@@ -63,7 +64,7 @@ function render() {
   listEl.innerHTML = items.map(n => `
     <button class="nt-card${n.read ? '' : ' is-unread'}" data-id="${escapeHtml(n._docId)}">
       <div class="nt-card-top">
-        <span class="nt-type">${escapeHtml(formatType(n.type))}</span>
+        <span class="nt-type">${escapeHtml(itUI(formatType(n.type)))}</span>
         <span class="nt-time">${relativeTime(Number(n.createdAt || 0))}</span>
       </div>
       <div class="nt-card-title">${escapeHtml(tr(n.title || ''))}</div>
@@ -102,7 +103,7 @@ async function clearRead() {
 function formatType(type) {
   const names = { BOOKING_REQUEST:'Booking request', BOOKING_REPLY:'Owner reply',
     BOOKING_REPLY_REVIEW:'Reply needs review' };
-  return tr(names[type] || String(type || 'Notification').replaceAll('_', ' '));
+  return tr(names[type] || String(type || itUI('Notification')).replaceAll('_', ' '));
 }
 
 function notificationMessage(item) {

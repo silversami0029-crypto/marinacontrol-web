@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/CustomerDirectoryScreen.js
 import { store } from '../store.js';
@@ -176,7 +177,7 @@ export function mountCustomerDirectoryScreen() {
     list.innerHTML =
       `<div class="boats-empty">
          <h2>${tr("Couldn't load customers")}</h2>
-         <p>${err.message || 'Permission denied.'}</p>
+         <p>${err.message || itUI('Permission denied.')}</p>
        </div>`;
   });
 }

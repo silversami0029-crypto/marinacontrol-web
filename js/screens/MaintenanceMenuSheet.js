@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import {showYardJobCosts} from './YardJobCosts.js';
 import {packageManagers} from '../util/YardWorkPackageApi.js';
 import {showMaintenanceLaunchReview} from './MaintenanceLaunchReviewSheet.js';
@@ -38,7 +39,7 @@ export function showMaintenanceMenu(item, { onChanged } = {}) {
 
 </div>
 
-  <button type="button" id="iv-close" aria-label="Close invoice sheet"
+  <button type="button" id="iv-close" aria-label="${itUI("Close invoice sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -95,8 +96,8 @@ export function showMaintenanceMenu(item, { onChanged } = {}) {
         </svg>
       </div>
       <div class="sheet-item-text">
-        <div class="sheet-item-title">${t(isDeferred ? 'Update Defer' : 'Defer')}</div>
-        <div class="sheet-item-subtitle">${t(isDeferred ? 'Change reason, risk, or date' : 'Postpone with a review date')}</div>
+        <div class="sheet-item-title">${t(isDeferred ? itUI('Update Defer') : itUI('Defer'))}</div>
+        <div class="sheet-item-subtitle">${t(isDeferred ? itUI('Change reason, risk, or date') : itUI('Postpone with a review date'))}</div>
       </div>
     </div>
     <div class="sheet-gap-8"></div>
@@ -169,16 +170,16 @@ export function showMaintenanceMenu(item, { onChanged } = {}) {
     ${isCompleted || item.archived === true ? `
       <button type="button" class="sheet-item maintenance-menu-action maintenance-archived" id="mmArchive">
         <div class="sheet-item-icon"><svg class="sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v13H4zM3 3h18v5H3zM9 12h6"/></svg></div>
-        <div class="sheet-item-text"><div class="sheet-item-title">${t(item.archived === true ? 'Restore' : 'Archive')}</div></div>
+        <div class="sheet-item-text"><div class="sheet-item-title">${t(item.archived === true ? itUI('Restore') : itUI('Archive'))}</div></div>
       </button>` : ''}
   `;
   if(packageManagers()&&Number(item.boatId)>0&&!isCompleted&&item.archived!==true){
     const review=document.createElement('button');review.type='button';review.className='sheet-item maintenance-menu-action';review.id='mmLaunchRequirement';
-    review.innerHTML='<div class="sheet-item-icon">⚑</div><div class="sheet-item-text"><div class="sheet-item-title">Launch requirement</div><div class="sheet-item-subtitle">Review required or optional work</div></div>';extra.append(review);
+    review.innerHTML=`<div class="sheet-item-icon">⚑</div><div class="sheet-item-text"><div class="sheet-item-title">${itUI("Launch requirement")}</div><div class="sheet-item-subtitle">${itUI("Review required or optional work")}</div></div>`;extra.append(review);
   }
   if(item.workPackageId&&Number(item.boatId)>0){
     const costs=document.createElement('button');costs.type='button';costs.className='sheet-item maintenance-menu-action';costs.id='mmLogWork';
-    costs.innerHTML='<div class="sheet-item-icon"><svg class="sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="sheet-item-text"><div class="sheet-item-title">'+(item.archived===true?'Job costs':'Log work')+'</div><div class="sheet-item-subtitle">Hours, materials and package costs</div></div>';extra.append(costs);
+    costs.innerHTML='<div class="sheet-item-icon"><svg class="sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="sheet-item-text"><div class="sheet-item-title">'+(item.archived===true?itUI('Job costs'):itUI('Log work'))+`</div><div class="sheet-item-subtitle">${itUI("Hours, materials and package costs")}</div></div>`;extra.append(costs);
   }
   sheet.append(extra);
 

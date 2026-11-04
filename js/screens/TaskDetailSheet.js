@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/TaskDetailSheet.js
 
@@ -20,11 +21,11 @@ export function showTaskDetail(item) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title">${escapeHtml(item.title || 'Task')}</div>
+    <div class="sheet-title">${escapeHtml(item.title || itUI('Task'))}</div>
 
     <div class="md-body">
-      <div class="md-line"><span class="md-label">${tr("Priority:")}</span> <span class="md-value" style="color:${color};font-weight:600;">${escapeHtml(item.priority || 'MEDIUM')}</span></div>
-      <div class="md-line"><span class="md-label">${tr("Status:")}</span> <span class="md-value">${escapeHtml(item.status || 'OPEN')}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Priority:")}</span> <span class="md-value" style="color:${color};font-weight:600;">${escapeHtml(tr(item.priority || 'MEDIUM'))}</span></div>
+      <div class="md-line"><span class="md-label">${tr("Status:")}</span> <span class="md-value">${escapeHtml(tr(item.status || 'OPEN'))}</span></div>
       <div class="md-line"><span class="md-label">${tr("Boat:")}</span> <span class="md-value">${escapeHtml(item.boatName || '—')}</span></div>
       <div class="md-line"><span class="md-label">${tr("Category:")}</span> <span class="md-value">${escapeHtml(tr(item.category || '—'))}</span></div>
       <div class="md-line"><span class="md-label">${tr("Due:")}</span> <span class="md-value">${escapeHtml(dueLabel)}</span></div>

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { getLocale } from '../i18n.js';
 import { store } from '../store.js';
 import { getApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -6,7 +7,7 @@ import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/
 export function showInvoicePaymentFoundation(inv) {
   const clientId = Number(store.activeClientId);
   const arabic = getLocale().startsWith('ar');
-  const label = (en, ar) => arabic ? ar : en;
+  const label = (en, ar) => arabic ? ar : itUI(en);
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
   const sheet = document.createElement('div');

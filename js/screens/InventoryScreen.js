@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InventoryScreen.js
 import { store } from '../store.js';
@@ -201,7 +202,7 @@ function subscribeToInventory(clientId) {
     document.getElementById('invList').innerHTML =
       `<div class="boats-empty">
          <h2>${tr("Couldn't load inventory")}</h2>
-         <p>${escapeHtml(err.message || 'Permission denied.')}</p>
+         <p>${escapeHtml(err.message || itUI('Permission denied.'))}</p>
        </div>`;
   });
 }
@@ -274,7 +275,7 @@ function renderList() {
           ${e.assignedTo ? `<div class="eq-assigned">👤 ${tr("Assigned:")} ${escapeHtml(e.assignedTo)}</div>` : ''}
           <div class="eq-model-line">${tr("Qty:" )} ${e.quantity}${e.unit ? ' ' + escapeHtml(e.unit) : ''} · <span style="color:${state.color};font-weight:600;">${tr(state.label)}</span></div>
           ${e.supplier ? `<div class="eq-serial">${tr("Supplier:" )} ${escapeHtml(e.supplier)}</div>` : ''}
-          ${e.lastUpdated ? `<div class="eq-notes">Updated: ${escapeHtml(e.lastUpdated)}</div>` : ''}
+          ${e.lastUpdated ? `<div class="eq-notes">${itUI("Updated:")} ${escapeHtml(e.lastUpdated)}</div>` : ''}
         </div>
 
         <button class="eq-kebab" data-inv-menu="${e.id}" aria-label="${tr("Menu")}">

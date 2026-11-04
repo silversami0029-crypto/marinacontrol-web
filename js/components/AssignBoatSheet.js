@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/AssignBoatSheet.js
 // Assign boat to berth — mirrors AlertDialog in showAssignDialogLocked()
@@ -22,7 +23,7 @@ export function showAssignBoatSheet(opts) {
   if (!boats || !boats.length) {
     sheet.innerHTML = `
       <div class="assign-handle"></div>
-      <div class="assign-title">Assign Boat to ${esc(berth.berthNumber)}</div>
+      <div class="assign-title">${itUI("Assign Boat to")} ${esc(berth.berthNumber)}</div>
       <div class="assign-divider"></div>
       <div class="assign-empty">${tr("No unassigned boats available.")}<br>${tr("Release a boat from another berth first.")}</div>
       <div class="assign-divider"></div>
@@ -31,7 +32,7 @@ export function showAssignBoatSheet(opts) {
   } else {
     sheet.innerHTML = `
       <div class="assign-handle"></div>
-      <div class="assign-title">Assign Boat to ${esc(berth.berthNumber)}</div>
+      <div class="assign-title">${itUI("Assign Boat to")} ${esc(berth.berthNumber)}</div>
       <div class="assign-divider"></div>
       <div class="assign-list" id="assignBoatList">
         ${boats.map(b => `

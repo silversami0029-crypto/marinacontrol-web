@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ChecklistDetailSheet.js
 import { store } from '../store.js';
@@ -25,8 +26,8 @@ export async function showChecklistDetail(checklist) {
 
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
-    <div class="sheet-title" style="text-align:center;">${escapeHtml(checklist.name || 'Checklist')}</div>
-    <div class="chk-detail-status" style="background:${statusColor};">${escapeHtml(checklist.status.replace('_',' '))}</div>
+    <div class="sheet-title" style="text-align:center;">${escapeHtml(checklist.name || itUI('Checklist'))}</div>
+    <div class="chk-detail-status" style="background:${statusColor};">${escapeHtml(itUI(checklist.status.replace('_',' ')))}</div>
 
     <div class="chk-detail-scroll" id="chkDetailScroll">
       <div class="chk-detail-summary">
@@ -46,7 +47,7 @@ export async function showChecklistDetail(checklist) {
 
       <div class="md-body">
         <div class="md-line"><span class="md-label">${tr("Boat:")}</span> <span class="md-value">${escapeHtml(boatName)}</span></div>
-        <div class="md-line"><span class="md-label">${tr("Type:")}</span> <span class="md-value">${escapeHtml(checklist.type || '—')}</span></div>
+        <div class="md-line"><span class="md-label">${tr("Type:")}</span> <span class="md-value">${escapeHtml(itUI(checklist.type || '—'))}</span></div>
         ${checklist.photoCount > 0 ? `<div class="md-line"><span class="md-label">${tr("Photos:")}</span> <span class="md-value">📷 ${checklist.photoCount}</span></div>` : ''}
         ${checklist.completedBy ? `<div class="md-line"><span class="md-label">${tr("Completed by:")}</span> <span class="md-value">${escapeHtml(checklist.completedBy)}</span></div>` : ''}
         ${checklist.completedAt ? `<div class="md-line"><span class="md-label">${tr("Completed:")}</span> <span class="md-value">${escapeHtml(formatDate(checklist.completedAt))}</span></div>` : ''}

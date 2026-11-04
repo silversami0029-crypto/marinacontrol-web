@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t, getLocale } from '../i18n.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -19,10 +20,10 @@ export function bookingTimelineEvents(r) {
   if (r.latestOwnerReply?.text) add('Owner reply received', r.latestOwnerReply.receivedAt,
     r.latestOwnerReply.reviewRequired ? t('Staff review required') : '');
   if (p?.recordedAt && ['ACCEPTED','REJECTED','WITHDRAWN'].includes(p.state)) {
-    add(p.state === 'ACCEPTED' ? 'Date acceptance recorded' : p.state === 'REJECTED' ? 'Alternative dates rejected' : 'Date proposal withdrawn', p.recordedAt,
+    add(p.state === 'ACCEPTED' ? itUI('Date acceptance recorded') : p.state === 'REJECTED' ? itUI('Alternative dates rejected') : itUI('Date proposal withdrawn'), p.recordedAt,
       p.state === 'ACCEPTED' ? t('Dates accepted — booking approval is separate') : '');
   }
-  if (r.status === 'APPROVED') add(r.approvedBookingUuid ? 'Booking approved' : 'Request approved', r.approvedAt);
+  if (r.status === 'APPROVED') add(r.approvedBookingUuid ? itUI('Booking approved') : itUI('Request approved'), r.approvedAt);
   if (r.status === 'DECLINED') add('Request declined', r.declinedAt);
   if (r.whatsappConfirmationStatus) add('WhatsApp update', r.whatsappConfirmationSentAt || r.whatsappConfirmationUpdatedAt || r.whatsappConfirmationAttemptedAt, t(r.whatsappConfirmationStatus));
   // Preserve workflow order: an absent timestamp is never invented from lastModified.

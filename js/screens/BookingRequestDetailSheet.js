@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { renderBookingTimeline } from './BookingRequestTimeline.js';
 import { getLanguage } from '../i18n.js';
 import { t, t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -16,14 +17,14 @@ export function showBookingRequestDetail(request, berth) {
   const sheet = document.createElement('div');
   sheet.className = 'sheet';
 
-  const arrival   = request.arrivalDate   ? formatDate(request.arrivalDate)   : 'Not specified';
-  const departure = request.departureDate ? formatDate(request.departureDate) : 'Not specified';
-  const vessel    = request.vesselName || 'Unknown vessel';
-  const sender    = request.senderName || 'Unknown sender';
-  const phone     = request.senderPhone || 'Not provided';
+  const arrival   = request.arrivalDate   ? formatDate(request.arrivalDate)   : itUI('Not specified');
+  const departure = request.departureDate ? formatDate(request.departureDate) : itUI('Not specified');
+  const vessel    = request.vesselName || itUI('Unknown vessel');
+  const sender    = request.senderName || itUI('Unknown sender');
+  const phone     = request.senderPhone || itUI('Not provided');
   const source    = request.source || 'UNKNOWN';
   const status    = request.status || 'NEW';
-  const message   = request.message || 'No message';
+  const message   = request.message || itUI('No message');
 
   let berthText = [request.assignedDockName, request.assignedBerthNumber || request.berthNumber].filter(Boolean).join(' ') || (request.requestedBerthId != null ? String(request.requestedBerthId) : tr('Not assigned'));
   if (berth) {
@@ -191,7 +192,7 @@ function escapeHtml(s) {
 }
 function requestStatusLabel(request) {
   const status = String(request.status || 'NEW').toUpperCase();
-  if (status === 'APPROVED' && request.approvedBookingUuid) return getLanguage() === 'ar' ? 'تم الحجز' : 'Booked';
+  if (status === 'APPROVED' && request.approvedBookingUuid) return getLanguage() === 'ar' ? 'تم الحجز' : t('Booked');
   if (status === 'AWAITING_OWNER') return tr('Awaiting owner agreement');
   return tr(status);
 }
@@ -202,6 +203,6 @@ function formatShorePower(source) {
   if (source?.shorePowerVoltage != null) values.push(`${source.shorePowerVoltage}V`);
   const phase = String(source?.shorePowerPhase || '').trim().toUpperCase().replace(/[- ]/g, '_');
   if (phase) values.push(phase === 'THREE_PHASE' ? tr('Three-phase') : tr('Single-phase'));
-  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${tr(source.shorePowerConnections === 1 ? 'connection' : 'connections')}`);
+  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${tr(source.shorePowerConnections === 1 ? itUI('connection') : itUI('connections'))}`);
   return values.length ? values.join(' · ') : tr('Not specified');
 }

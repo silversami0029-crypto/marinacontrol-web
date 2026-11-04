@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { store } from '../store.js';
 import { getLocale } from '../i18n.js';
 import { getActiveTariff } from '../db.js';
@@ -10,7 +11,7 @@ export async function showPedestalInvoicePreview(session, isCurrent = () => true
   const active = () => Number(store.activeClientId) === clientId && store.authUser?.uid === uid && store.activeRole === 'admin' && isCurrent();
   if (!active() || session?.mode !== 'TEST' || Number(session.clientId) !== clientId) throw new Error('Reopen the simulator for the active marina.');
   const ar = getLocale().startsWith('ar');
-  const L = (en, arabic) => ar ? arabic : en;
+  const L = (en, arabic) => ar ? arabic : itUI(en);
   const at = Date.now();
   const types = ['ELECTRICITY','WATER'].filter(type => session.state?.[type.toLowerCase()]?.value != null);
   const tariffs = Object.fromEntries(await Promise.all(types.map(async type => [type, await getActiveTariff(clientId,type,at)])));

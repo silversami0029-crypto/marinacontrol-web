@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DeferMaintenanceSheet.js
@@ -18,7 +19,7 @@ export function showDeferMaintenanceSheet(item, { onChanged } = {}) {
   sheet.innerHTML = `
     <div class="sheet-handle"></div>
     <div class="sheet-title" style="text-align:center;">
-      ${isEditing ? tr('Update Deferral') : 'Defer Maintenance'}
+      ${isEditing ? tr('Update Deferral') : itUI('Defer Maintenance')}
     </div>
 
     <form id="dfForm" class="add-form" novalidate>
@@ -117,7 +118,7 @@ export function showDeferMaintenanceSheet(item, { onChanged } = {}) {
       });
 
       close();
-      toast(isEditing ? 'Deferral updated' : 'Task deferred', { kind: 'success' });
+      toast(isEditing ? itUI('Deferral updated') : itUI('Task deferred'), { kind: 'success' });
       if (onChanged) onChanged();
     } catch (err) {
       console.error('[defer] failed', err);

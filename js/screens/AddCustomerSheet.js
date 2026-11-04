@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddCustomerSheet.js
 import { store } from '../store.js';
@@ -27,7 +28,7 @@ export function showAddCustomerChooser() {
     ${tr("Add Customer")}
   </div>
 
-  <button type="button" id="iv-close" aria-label="Close user sheet"
+  <button type="button" id="iv-close" aria-label="${itUI("Close user sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -204,7 +205,7 @@ function showAddCustomerForm() {
         errEl.className = 'add-error';
         form.insertBefore(errEl, save);
       }
-      errEl.textContent = err.message || 'Failed to add customer.';
+      errEl.textContent = err.message || itUI('Failed to add customer.');
     }
   });
 }

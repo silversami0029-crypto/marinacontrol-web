@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/MaintenanceHelp.js
 
@@ -31,10 +32,10 @@ export function showMaintenanceHelp() {
 
       <div class="help-section-title">${tr("How to add Maintenance?")}</div>
 
-      ${step('1', 'Type', 'Select Maintenance type (Engine Service, Oil Change, etc.)')}
-      ${step('2', 'Date', 'Enter the service date (when work was done or scheduled)')}
-      ${step('3', 'Notes', 'Add notes (what was done, parts replaced, mechanic name)')}
-      ${step('4', 'Complete', 'Mark as completed when done (or leave unchecked for future tasks)')}
+      ${step('1', itUI('Type'), itUI('Select Maintenance type (Engine Service, Oil Change, etc.)'))}
+      ${step('2', itUI('Date'), itUI('Enter the service date (when work was done or scheduled)'))}
+      ${step('3', itUI('Notes'), itUI('Add notes (what was done, parts replaced, mechanic name)'))}
+      ${step('4', itUI('Complete'), itUI('Mark as completed when done (or leave unchecked for future tasks)'))}
 
       <div class="help-divider"></div>
 

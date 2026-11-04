@@ -1,3 +1,4 @@
+import { it } from './i18n-it.js';
 // UI translations only. Stored values and user content are never translated.
 const ar = {
   "Shore power": "كهرباء الرصيف",
@@ -1742,15 +1743,15 @@ Object.assign(ar, {
 });
 const uiPatterns = [["^Overdue by (\\d+) days?$", "متأخر منذ {1} يوم"], ["^Due in (\\d+) days$", "مستحق خلال {1} يوم"], ["^(\\d+) days? ago$", "قبل {1} يوم"], ["^(\\d+) hours? ago$", "قبل {1} ساعة"], ["^(\\d+) minutes? ago$", "قبل {1} دقيقة"], ["^Overdue for review \\((.*)\\)$", "متأخر عن المراجعة ({1})"], ["^Today \\((.*)\\)$", "اليوم ({1})"], ["^Tomorrow \\((.*)\\)$", "غداً ({1})"], ["^In (\\d+) days \\((.*)\\)$", "خلال {1} يوم ({2})"], ["^Quantity updated to (.*)$", "تم تحديث الكمية إلى {1}"], ["^Customer added: (.*)$", "تمت إضافة العميل: {1}"], ["^Crew added: (.*)$", "تمت إضافة فرد الطاقم: {1}"], ["^Received (\\d+) items?$", "تم استلام {1} عنصر"], ["^Imported (\\d+) documents?$", "تم استيراد {1} مستند"], ["^Imported (\\d+) safety items?$", "تم استيراد {1} عنصر سلامة"], ["^Imported (\\d+) crew members?$", "تم استيراد {1} فرد طاقم"], ["^Imported (\\d+) customers?$", "تم استيراد {1} عميل"], ["^Assigned to (.*)$", "تم التعيين إلى {1}"], ["^Delete (\\d+) customers?\\?$", "حذف {1} عميل؟"], ["^Delete (\\d+) users?\\?$", "حذف {1} مستخدم؟"], ["^Delete (\\d+) boats?\\?$", "حذف {1} قارب؟"], ["^Deleted (\\d+) boats?$", "تم حذف {1} قارب"], ["^Deleted (\\d+) berths$", "تم حذف {1} رصيف"], ["^Deleted (.*)$", "تم الحذف: {1}"], ["^Exported (\\d+) berths$", "تم تصدير {1} رصيف"], ["^Berth (.*) set to (.*)$", "تم تغيير حالة الرصيف {1} إلى {2}"], ["^Berth (.*) updated$", "تم تحديث الرصيف {1}"], ["^Berth (.*) deleted$", "تم حذف الرصيف {1}"], ["^Delete berth (.*)\\? This cannot be undone\\.$", "حذف الرصيف {1}؟ لا يمكن التراجع عن هذا الإجراء."], ["^Release (.*) from berth (.*)\\?$", "إخلاء {1} من الرصيف {2}؟"], ["^Role updated(?: to|:) (.*)$", "تم تحديث الدور إلى {1}"], ["^Booking confirmed for (.*) at berth (.*)$", "تم تأكيد حجز {1} في الرصيف {2}"], ["^Decline the berth request for (.*)\\?$", "رفض طلب الرصيف للقارب {1}؟"], ["^This will permanently remove (.*)\\. This cannot be undone\\.$", "سيتم حذف {1} نهائياً. لا يمكن التراجع عن هذا الإجراء."], ["^Are you sure you want to delete \"(.*)\"\\? This action cannot be undone\\.$", "هل تريد حذف «{1}»؟ لا يمكن التراجع عن هذا الإجراء."], ["^Imported (\\d+) Â· skipped (\\d+) Â· failed (\\d+)$", "تم استيراد {1} · تجاوز {2} · فشل {3}"], ["^(.*) • Individual marina$", "{1} • مارينا واحدة"], ["^(.*) • (\\d+) marinas?$", "{1} • {2} مارينا"], ["^(\\d+)% portfolio occupancy$", "إشغال المحفظة {1}%"], ["^Expires (.*)$", "ينتهي في {1}"], ["^No activity matches \"(.*)\"$", "لا يوجد نشاط مطابق لـ «{1}»"], ["^Maintenance completed: (.*)$", "صيانة مكتملة: {1}"], ["^Maintenance outstanding: (.*)$", "صيانة مستحقة: {1}"], ["^Document: (.*)$", "المستند: {1}"], ["^Safety: (.*)$", "السلامة: {1}"], ["^Assigned to berth (.*)$", "معيّن إلى الرصيف {1}"], ["^Due (.*)$", "الاستحقاق: {1}"]];
 let language = 'en';
-try { language = localStorage.getItem('marinacontrol.language') === 'ar' ? 'ar' : 'en'; } catch {}
+try { const saved = localStorage.getItem('marinacontrol.language'); language = ['en', 'ar', 'it'].includes(saved) ? saved : 'en'; } catch {}
 export function getLanguage() { return language; }
-export function getLocale() { return language === 'ar' ? 'ar-QA-u-nu-latn' : 'en-GB'; }
+export function getLocale() { return language === 'ar' ? 'ar-QA-u-nu-latn' : language === 'it' ? 'it-IT' : 'en-GB'; }
 export function t(key, values = {}) {
   key = String(key ?? "");
   const en = {selectedCount:'{count} selected', requestsCount:'Booking Requests: {count}', sync:'Online · Synced {time}',removeNamed:'This will permanently remove "{name}".',removeNamedIrreversible:'This will permanently remove "{name}". This cannot be undone.',deletedNamed:'Deleted: {name}',assignedNamed:'Assigned to {name}',reorderSet:'Reorder level set to {count}',completeNamed:'Marked complete: {name}'};
   Object.assign(en, {'Add Berth Reading':'Add {berth} Reading'});
   Object.assign(en, {"ui.comingSoon": "{label} coming soon", "ui.noMatches": "No matches for \"{query}\"", "ui.count": "{label}: {count}", "ui.boatPill": "{label} · {name}", "ui.minutesAgo": "{count} minutes ago", "ui.hoursAgo": "{count} hours ago", "ui.daysAgo": "{count} days ago", "ui.justNow": "just now"});
-  let text = language === 'ar' ? (ar[key] ?? en[key] ?? key) : (en[key] ?? key);
+  let text = language === 'it' ? (it[key] ?? en[key] ?? key) : language === 'ar' ? (ar[key] ?? en[key] ?? key) : (en[key] ?? key);
   if (language === 'ar' && text === key) {
     for (const [pattern, translated] of uiPatterns) {
       const matches = new RegExp(pattern).exec(String(key));
@@ -1759,12 +1760,14 @@ export function t(key, values = {}) {
       break;
     }
   }
+  if (language === 'it' && text === key) text = italianPattern(key);
   return text.replace(/\{(\w+)\}/g, (match, name) => String(values[name] ?? match));
 }
 export function languagePicker() {
-  return `<label class="language-picker">${language === 'ar' ? 'اللغة' : 'Language'}
-    <select data-language-picker aria-label="${language === 'ar' ? 'لغة الواجهة' : 'Interface language'}">
+  return `<label class="language-picker">${language === 'ar' ? 'اللغة' : language === 'it' ? 'Lingua' : 'Language'}
+    <select data-language-picker aria-label="${language === 'ar' ? 'لغة الواجهة' : language === 'it' ? 'Lingua dell’interfaccia' : 'Interface language'}">
       <option value="en" ${language === 'en' ? 'selected' : ''}>English</option>
+      <option value="it" ${language === 'it' ? 'selected' : ''}>Italiano</option>
       <option value="ar" ${language === 'ar' ? 'selected' : ''}>العربية</option>
     </select></label>`;
 }
@@ -1774,10 +1777,74 @@ export function initLanguage() {
   document.addEventListener('change', event => {
     if (!event.target.matches('[data-language-picker]')) return;
     const next = event.target.value;
-    if (!['ar','en'].includes(next) || next === language) return;
+    if (!['ar','en','it'].includes(next) || next === language) return;
     try { localStorage.setItem('marinacontrol.language', next); }
     catch { event.target.value = language; return; }
     // Reload releases current screen listeners and preserves the route.
     location.reload();
   });
+}
+
+// Translate generated UI sentences without changing interpolated names or records.
+function italianPattern(key) {
+  const patterns = [
+    [/^Overdue by (\d+) days?$/, 'In ritardo di $1 giorni'],
+    [/^Due in (\d+) days$/, 'Scade tra $1 giorni'],
+    [/^(\d+) days? ago$/, (_, n) => `${n} ${Number(n) === 1 ? 'giorno' : 'giorni'} fa`],
+    [/^(\d+) hours? ago$/, (_, n) => `${n} ${Number(n) === 1 ? 'ora' : 'ore'} fa`],
+    [/^(\d+) minutes? ago$/, (_, n) => `${n} ${Number(n) === 1 ? 'minuto' : 'minuti'} fa`],
+    [/^Overdue for review \((.*)\)$/, 'Revisione scaduta ($1)'],
+    [/^Today \((.*)\)$/, 'Oggi ($1)'],
+    [/^Tomorrow \((.*)\)$/, 'Domani ($1)'],
+    [/^In (\d+) days \((.*)\)$/, 'Tra $1 giorni ($2)'],
+    [/^Quantity updated to (.*)$/, 'Quantità aggiornata a $1'],
+    [/^Customer added: (.*)$/, 'Cliente aggiunto: $1'],
+    [/^Crew added: (.*)$/, 'Membro dell’equipaggio aggiunto: $1'],
+    [/^Received (\d+) items?$/, 'Ricevuti $1 articoli'],
+    [/^Imported (\d+) documents?$/, 'Importati $1 documenti'],
+    [/^Imported (\d+) safety items?$/, 'Importate $1 dotazioni di sicurezza'],
+    [/^Imported (\d+) crew members?$/, 'Importati $1 membri dell’equipaggio'],
+    [/^Imported (\d+) customers?$/, 'Importati $1 clienti'],
+    [/^Assigned to (.*)$/, 'Assegnato a $1'],
+    [/^Delete (\d+) customers?\?$/, 'Eliminare $1 clienti?'],
+    [/^Delete (\d+) users?\?$/, 'Eliminare $1 utenti?'],
+    [/^Delete (\d+) boats?\?$/, 'Eliminare $1 imbarcazioni?'],
+    [/^Deleted (\d+) boats?$/, 'Eliminate $1 imbarcazioni'],
+    [/^Deleted (\d+) berths$/, 'Eliminati $1 posti barca'],
+    [/^Deleted (.*)$/, 'Eliminato: $1'],
+    [/^Exported (\d+) berths$/, 'Esportati $1 posti barca'],
+    [/^Berth (.*) set to (.*)$/, (_, berth, status) => `Stato del posto barca ${berth}: ${t(status)}`],
+    [/^Berth (.*) updated$/, 'Posto barca $1 aggiornato'],
+    [/^Berth (.*) deleted$/, 'Posto barca $1 eliminato'],
+    [/^Delete berth (.*)\? This cannot be undone\.$/, 'Eliminare il posto barca $1? L’operazione è irreversibile.'],
+    [/^Release (.*) from berth (.*)\?$/, 'Rimuovere $1 dal posto barca $2?'],
+    [/^Role updated(?: to|:) (.*)$/, (_, role) => `Ruolo aggiornato: ${t(role)}`],
+    [/^Booking confirmed for (.*) at berth (.*)$/, 'Prenotazione confermata per $1 al posto barca $2'],
+    [/^Decline the berth request for (.*)\?$/, 'Rifiutare la richiesta di posto barca per $1?'],
+    [/^This will permanently remove (.*)\. This cannot be undone\.$/, 'Verrà eliminato definitivamente $1. L’operazione è irreversibile.'],
+    [/^Are you sure you want to delete "(.*)"\? This action cannot be undone\.$/, 'Vuoi eliminare «$1»? L’operazione è irreversibile.'],
+    [/^Imported (\d+) (?:Â·|·) skipped (\d+) (?:Â·|·) failed (\d+)$/, 'Importati $1 · ignorati $2 · non riusciti $3'],
+    [/^(.*) • Individual marina$/, '$1 • Singolo marina'],
+    [/^(.*) • (\d+) marinas?$/, '$1 • $2 marina'],
+    [/^(\d+)% portfolio occupancy$/, '$1% occupazione del portafoglio'],
+    [/^Expires (.*)$/, 'Scade $1'],
+    [/^No activity matches "(.*)"$/, 'Nessuna attività corrispondente a «$1»'],
+    [/^Maintenance completed: (.*)$/, 'Manutenzione completata: $1'],
+    [/^Maintenance outstanding: (.*)$/, 'Manutenzione in sospeso: $1'],
+    [/^Document: (.*)$/, 'Documento: $1'],
+    [/^Safety: (.*)$/, 'Sicurezza: $1'],
+    [/^Assigned to berth (.*)$/, 'Assegnato al posto barca $1'],
+    [/^Due (.*)$/, 'Scadenza: $1']
+  ];
+  for (const [pattern, translated] of patterns) if (pattern.test(key)) return key.replace(pattern, translated);
+  return key;
+}
+
+// Only static UI strings use this helper. Existing English/Arabic output is preserved.
+export function italianUI(text) {
+  if (language !== 'it') return text;
+  const key = String(text ?? '');
+  const clean = key.replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  const translated = it[key] ?? t(clean);
+  return key.match(/^\s*/)[0] + String(translated).trim() + key.match(/\s*$/)[0];
 }

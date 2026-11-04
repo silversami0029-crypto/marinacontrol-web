@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/EquipmentScreen.js
 import { store } from '../store.js';
@@ -197,7 +198,7 @@ function subscribeToEquipment(clientId) {
     document.getElementById('eqList').innerHTML =
       `<div class="boats-empty">
          <h2>${tr("Couldn't load equipment")}</h2>
-         <p>${escapeHtml(err.message || 'Permission denied.')}</p>
+         <p>${escapeHtml(err.message || itUI('Permission denied.'))}</p>
        </div>`;
   });
 }
@@ -226,7 +227,7 @@ function renderList() {
   if (!items.length) {
     const q = (document.getElementById('eqSearchInput')?.value || '').trim();
     listEl.innerHTML = q
-      ? `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>No equipment matches "${escapeHtml(q)}"</p></div>`
+      ? `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>${itUI("No equipment matches \"")}${escapeHtml(q)}"</p></div>`
       : `<div class="boats-empty"><h2>${tr("No equipment")}</h2><p>${tr("Tap + to add the first item.")}</p></div>`;
     return;
   }

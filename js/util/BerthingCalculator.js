@@ -1,3 +1,4 @@
+import { getLanguage, getLocale } from '../i18n.js';
 import { decimalProduct, decimalRate, savedCurrency } from './BillingCurrency.js';
 
 export function day(timestamp, zone = Intl.DateTimeFormat().resolvedOptions().timeZone) {
@@ -84,6 +85,13 @@ export function selectRate(rates, berthId, arrival) {
 }
 
 export function stayDescription(terms, berth) {
+  if (getLanguage() === 'it') {
+    const num = value => new Intl.NumberFormat(getLocale(), {maximumFractionDigits: 12}).format(Number(value));
+    return `Ormeggio — ${berth}\n${terms.arrival} – ${terms.departure} (giorno di partenza escluso)\n`
+      + `${nights(terms.arrival, terms.departure)} notti × `
+      + (terms.mode === 'METRE_NIGHT' ? `${num(terms.length)} m × ` : '')
+      + `${terms.currency} ${num(terms.rate)}${terms.mode === 'METRE_NIGHT' ? '/m/notte' : '/notte'} = ${terms.currency} ${num(terms.amount)}`;
+  }
   return `Berthing — ${berth}\n${terms.arrival} to ${terms.departure} (departure day excluded)\n`
     + `${nights(terms.arrival, terms.departure)} nights × `
     + (terms.mode === 'METRE_NIGHT' ? `${terms.length} m × ` : '')

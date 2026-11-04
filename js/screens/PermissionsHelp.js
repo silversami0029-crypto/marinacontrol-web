@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/PermissionsHelp.js
 
@@ -42,9 +43,9 @@ export function showPermissionsHelp() {
 
       <div class="help-section-title">${tr("How to assign a role?")}</div>
 
-      ${step('1', 'Crew Management', 'Go to Crew Management screen')}
-      ${step('2', 'Role dropdown', "Tap on the crew member's role dropdown")}
-      ${step('3', 'Select', 'Select the new role from the list (Admin, Staff, Inspector, View Only)')}
+      ${step('1', itUI('Crew Management'), itUI('Go to Crew Management screen'))}
+      ${step('2', itUI('Role dropdown'), itUI("Tap on the crew member's role dropdown"))}
+      ${step('3', itUI('Select'), itUI('Select the new role from the list (Admin, Staff, Inspector, View Only)'))}
 
       <div class="help-divider"></div>
 

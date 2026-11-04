@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ImportSafetySheet.js
 import { store } from '../store.js';
@@ -90,7 +91,7 @@ function pickAndImportCsv({ boatId, boatName }) {
       runImportWithProgress({ boatId, boatName, rows });
     } catch (err) {
       console.error('[csv safety] read failed', err);
-      showResultModal({ success: 0, skipped: 0, failed: 1, errors: [err.message || 'Failed to read file.'] });
+      showResultModal({ success: 0, skipped: 0, failed: 1, errors: [err.message || itUI('Failed to read file.')] });
     }
   });
 
@@ -295,7 +296,7 @@ async function runImportWithProgress({ boatId, boatName, rows }) {
     console.error('[import safety] failed', err);
     backdrop.remove();
     sheet.remove();
-    showResultModal({ success: 0, skipped: 0, failed: 1, errors: [err.message || 'Import failed.'] });
+    showResultModal({ success: 0, skipped: 0, failed: 1, errors: [err.message || itUI('Import failed.')] });
   }
 }
 
@@ -335,7 +336,7 @@ function showResultModal({ success, skipped, failed, errors = [] }) {
       <div class="import-errors">
         <div class="import-errors-title">${tr("Errors")}</div>
         ${errors.slice(0, 10).map(e => `<div class="import-error-line">• ${escapeHtml(e)}</div>`).join('')}
-        ${errors.length > 10 ? `<div class="import-error-line">…and ${errors.length - 10} more</div>` : ''}
+        ${errors.length > 10 ? `<div class="import-error-line">${itUI("…and")} ${errors.length - 10} ${itUI("more")}</div>` : ''}
       </div>
     ` : ''}
 

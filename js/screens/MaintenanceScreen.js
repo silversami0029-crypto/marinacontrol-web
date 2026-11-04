@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import {readYardWorkPackages,maintenanceScope,launchLabel} from '../util/YardWorkPackageApi.js';
 import { maintenanceColours, maintenanceVisible } from '../util/MaintenanceState.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -271,7 +272,7 @@ function subscribeToMaintenance(clientId, boatId) {
     listEl.innerHTML = `
       <div class="boats-empty">
         <h2>${tr("Couldn't load maintenance")}</h2>
-        <p>${escapeHtml(err.message || 'Permission denied.')}</p>
+        <p>${escapeHtml(err.message || itUI('Permission denied.'))}</p>
       </div>
     `;
   });
@@ -304,7 +305,7 @@ function renderList() {
     const q = (document.getElementById('mtSearchInput')?.value || '').trim();
     let emptyHTML;
     if (q) {
-      emptyHTML = `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>No maintenance matches "${escapeHtml(q)}"</p></div>`;
+      emptyHTML = `<div class="boats-empty"><h2>${tr("No matches")}</h2><p>${itUI("No maintenance matches \"")}${escapeHtml(q)}"</p></div>`;
     } else if (visibility === 'archived') {
       emptyHTML = `<div class="boats-empty"><h2>${tr('No archived maintenance')}</h2></div>`;
     } else if (attentionFilter) {
@@ -336,15 +337,15 @@ function renderList() {
         </div>
 
         <div class="mt-info">
-          <div class="mt-title">${escapeHtml(m.type || 'Maintenance')}</div>
+          <div class="mt-title">${escapeHtml(m.type || itUI('Maintenance'))}</div>
           ${m.archived ? `<div class="mt-assigned maintenance-archived">${tr('Archived')}</div>` : ''}
-          ${m.workPackageName?`<div class="mt-assigned">Work package: ${escapeHtml(m.workPackageName)}</div>`:''}
+          ${m.workPackageName?`<div class="mt-assigned">${itUI("Work package:")} ${escapeHtml(m.workPackageName)}</div>`:''}
           <div class="mt-assigned">${escapeHtml(launchLabel(m))}</div>
           ${m.notes ? `<div class="mt-notes">${escapeHtml(m.notes)}</div>` : ''}
           ${m.assignedTo ? `<div class="mt-assigned">${tr("Assigned:" )} ${escapeHtml(m.assignedTo)}</div>` : ''}
           ${m.source ? `
             <span class="mt-source-badge ${isChecklist ? 'mt-source-checklist' : 'mt-source-manual'}">
-              ${isYard ? escapeHtml('Yard Storage · ' + m.source.slice('YARD_STORAGE:'.length)) : isChecklist ? '📝 Checklist' : '🔧 Manual'}
+              ${isYard ? escapeHtml(itUI('Yard Storage · ') + m.source.slice('YARD_STORAGE:'.length)) : isChecklist ? '📝 Checklist' : '🔧 Manual'}
             </span>
           ` : ''}
           <div class="mt-date" style="color:${state.dateColor};">
@@ -421,7 +422,7 @@ function getRowState(m) {
     return {
       color: maintenanceColours.overdue,
       icon: '!',
-      dateLabel: `Overdue by ${abs} ${abs === 1 ? 'day' : 'days'}`,
+      dateLabel: `Overdue by ${abs} ${abs === 1 ? 'day' : itUI('days')}`,
       dateColor: maintenanceColours.overdue
     };
   }

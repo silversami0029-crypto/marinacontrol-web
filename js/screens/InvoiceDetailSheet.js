@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { money } from '../util/BillingCurrency.js';
 import { checkBillingClient } from '../util/BillingData.js';
 import { showInvoicePaymentFoundation } from './InvoicePaymentFoundationSheet.js';
@@ -62,7 +63,7 @@ export function showInvoiceDetail(inv) {
     </div>
 
     ${!isPaid ? `<button type="button" class="add-save" id="ivMarkPaid" style="margin-top:16px;">${tr("Mark as Paid")}</button>` : ''}
-    <button type="button" class="md-close-btn" id="ivPaymentSetup" style="margin-top:12px;width:100%;min-height:48px;height:auto;padding:12px 16px;box-sizing:border-box;white-space:normal;line-height:1.3;">${uiLocale().startsWith('ar') ? 'إعداد الدفع الإلكتروني' : 'Online Payment Setup'}</button>
+    <button type="button" class="md-close-btn" id="ivPaymentSetup" style="margin-top:12px;width:100%;min-height:48px;height:auto;padding:12px 16px;box-sizing:border-box;white-space:normal;line-height:1.3;">${uiLocale().startsWith('ar') ? 'إعداد الدفع الإلكتروني' : itUI('Online Payment Setup')}</button>
     <button type="button" class="md-close-btn" id="ivDetailClose" style="margin-top:8px;">${tr("Close")}</button>
   `;
 

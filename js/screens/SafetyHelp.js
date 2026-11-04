@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/SafetyHelp.js
 
@@ -47,11 +48,11 @@ export function showSafetyHelp() {
 
       <div class="help-section-title">${tr("How to add safety items?")}</div>
 
-      ${step('1', 'Category', 'Select category (Pyrotechnics, Fire, Medical, etc.)')}
-      ${step('2', 'Title & location', 'Add title and location on the boat')}
-      ${step('3', 'Importance', 'Set importance (CRITICAL, HIGH, MEDIUM, LOW)')}
-      ${step('4', 'Expiry', 'Enter the expiry date directly')}
-      ${step('5', 'Details', 'Add supplier info, serial number, and photo')}
+      ${step('1', itUI('Category'), itUI('Select category (Pyrotechnics, Fire, Medical, etc.)'))}
+      ${step('2', itUI('Title & location'), itUI('Add title and location on the boat'))}
+      ${step('3', itUI('Importance'), itUI('Set importance (CRITICAL, HIGH, MEDIUM, LOW)'))}
+      ${step('4', itUI('Expiry'), itUI('Enter the expiry date directly'))}
+      ${step('5', itUI('Details'), itUI('Add supplier info, serial number, and photo'))}
 
       <div class="help-divider"></div>
 

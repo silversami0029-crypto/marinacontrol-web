@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AdjustQuantitySheet.js
 import { store } from '../store.js';
@@ -21,7 +22,7 @@ export function showAdjustQuantitySheet(item) {
       <div class="add-scroll">
         <label class="add-label">${tr("Item")}</label>
         <div class="add-input" style="padding-top:14px; padding-bottom:14px; color:var(--color-text-secondary);">
-          ${escapeHtml(item.name || 'Item')} — current Qty: ${item.quantity}${item.unit ? ' ' + escapeHtml(item.unit) : ''}
+          ${escapeHtml(item.name || itUI('Item'))} ${itUI("— current Qty:")} ${item.quantity}${item.unit ? ' ' + escapeHtml(item.unit) : ''}
         </div>
 
         <label class="add-label" for="aq-input">${tr("New Quantity")}</label>

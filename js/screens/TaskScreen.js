@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/TaskScreen.js
 import { store } from '../store.js';
@@ -217,7 +218,7 @@ function subscribeToTasks(clientId) {
           createdAt: Number(data.createdAt || 0),
           completedAt: Number(data.completedAt || 0),
           deletedAt: Number(data.deletedAt || 0),
-          repeatType: data.repeatType || 'Never',
+          repeatType: data.repeatType || itUI('Never'),
           scheduleType: data.scheduleType || 'Onetime',
           recurringType: data.recurringType || '',
           interval: Number(data.interval || 1),
@@ -236,7 +237,7 @@ function subscribeToTasks(clientId) {
     document.getElementById('tkList').innerHTML =
       `<div class="boats-empty">
          <h2>${tr("Couldn't load tasks")}</h2>
-         <p>${escapeHtml(err.message || 'Permission denied.')}</p>
+         <p>${escapeHtml(err.message || itUI('Permission denied.'))}</p>
        </div>`;
   });
 }
@@ -306,11 +307,11 @@ function renderList() {
 
   if (!items.length) {
     const q = (document.getElementById('tkSearchInput')?.value || '').trim();
-    let msg = 'No tasks';
+    let msg = itUI('No tasks');
     if (q) msg = `${escapeHtml(tr("ui.noMatches", {query:q}))}`;
-    else if (filterMode === 'OPEN') msg = 'No open tasks';
-    else if (filterMode === 'OVERDUE') msg = 'No overdue tasks';
-    else if (filterMode === 'COMPLETED') msg = 'No completed tasks';
+    else if (filterMode === 'OPEN') msg = itUI('No open tasks');
+    else if (filterMode === 'OVERDUE') msg = itUI('No overdue tasks');
+    else if (filterMode === 'COMPLETED') msg = itUI('No completed tasks');
 
     listEl.innerHTML = `<div class="boats-empty"><h2>${msg}</h2><p>${tr("Tap + to add the first task.")}</p></div>`;
     return;

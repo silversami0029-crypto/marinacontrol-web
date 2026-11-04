@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/FleetScreen.js
 import { store } from '../store.js';
@@ -107,7 +108,7 @@ export function mountFleetScreen() {
   tileStatus = {};
 
   const titleEl = document.getElementById('topbarTitle');
-  if (titleEl) titleEl.textContent = 'MarinaControl';
+  if (titleEl) titleEl.textContent = itUI('MarinaControl');
   screen.innerHTML = `
     <div class="dash-wrap">
 

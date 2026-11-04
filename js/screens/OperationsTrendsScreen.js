@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import {mt} from './maintenanceInsightsText.js';
 import {renderMaintenanceInsights, maintenanceHelpSteps} from './MaintenanceInsightsView.js';
 import { calculateBookingDemand, DECLINE_REASONS, SIZE_BANDS } from '../analytics/bookingDemand.js';
@@ -12,7 +13,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const info = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7" r=".8" fill="currentColor"/></svg>';
 const unusedCross = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 const metrics = ['Booked berth-days','Electricity consumption (kWh)','Water consumption (L)','Maintenance insights','Paid invoices by issue month','Declined booking demand'];
-const utilityText = (en, ar) => getLocale().startsWith('ar') ? ar : en;
+const utilityText = (en, ar) => getLocale().startsWith('ar') ? ar : itUI(en);
 const notes = [
   'Assigned confirmed, checked-in and checked-out bookings. Arrival is included; departure is excluded. Overlapping stays at the same berth count once. Booked dates are not proof of actual occupancy. Unassigned or unknown berths are excluded.',
   'Electricity consumption uses cumulative differences or individual interval amounts in kWh. Values belong to the recording month; cumulative differences belong to the later reading’s month. Instantaneous power is not energy consumption.',
@@ -81,29 +82,29 @@ export async function mountOperationsTrendsScreen() {
       <div class="help-section-title">${metric===3?mt(metrics[metric]):t(metrics[metric])}</div>
       <p class="help-desc">${metric===3?mt('Understand what needs action, what holds work up and where records repeat.'):t('Understand how your marina records contribute to each monthly total.')}</p>
       ${metric===3 ? maintenanceHelpSteps().map(([title,body],i)=>step(String(i+1),title,body)).join('') : metric===0 ? [
-        step('1','One berth-day','One berth booked for one day contributes one berth-day. Several berths booked on the same day each contribute, so a monthly total can exceed 30 or 31.'),
-        step('2','Arrival and departure','Arrival is included; departure is excluded. A booking from 18–21 November contributes 3 berth-days: the 18th, 19th and 20th. Two different berths booked for those dates contribute 6.'),
-        step('3','Monthly allocation','Each booked day belongs to its own month. A 30 November–2 December booking contributes 1 berth-day to November and 1 to December. Only days inside the selected reporting period count.'),
-        step('4','Included bookings','Bookings must link to a known berth and have status CONFIRMED, CHECKED_IN or CHECKED_OUT. Pending enquiries, cancelled bookings, invalid dates and missing berth links do not contribute.'),
-        step('5','Overlapping bookings','Overlapping bookings for the same berth on the same day count once.'),
-        step('6','What the total means','This shows booked demand from recorded reservations. It is not a prediction of new bookings, proof of actual occupancy or an occupancy percentage. A percentage would also require available berth-days for the same period.')
-      ].join('') : step('1','How this metric is calculated',metric===1 ? utilityText(notes[metric],'يُحسب استهلاك الكهرباء من الفروق بين القراءات التراكمية أو كميات الفترة بالكيلوواط ساعة. تُنسب القيم إلى شهر التسجيل، والفروق التراكمية إلى شهر القراءة اللاحقة. القدرة اللحظية ليست استهلاك طاقة.') : metric===2 ? utilityText(notes[metric],'يُحسب استهلاك المياه من الفروق التراكمية أو كميات الفترة. تُحوّل الأمتار المكعبة إلى لترات. تُنسب القيم إلى شهر التسجيل والفروق إلى شهر القراءة اللاحقة. التدفق اللحظي ليس استهلاكاً.') : notes[metric])}
+        step('1',itUI('One berth-day'),itUI('One berth booked for one day contributes one berth-day. Several berths booked on the same day each contribute, so a monthly total can exceed 30 or 31.')),
+        step('2',itUI('Arrival and departure'),itUI('Arrival is included; departure is excluded. A booking from 18–21 November contributes 3 berth-days: the 18th, 19th and 20th. Two different berths booked for those dates contribute 6.')),
+        step('3',itUI('Monthly allocation'),itUI('Each booked day belongs to its own month. A 30 November–2 December booking contributes 1 berth-day to November and 1 to December. Only days inside the selected reporting period count.')),
+        step('4',itUI('Included bookings'),itUI('Bookings must link to a known berth and have status CONFIRMED, CHECKED_IN or CHECKED_OUT. Pending enquiries, cancelled bookings, invalid dates and missing berth links do not contribute.')),
+        step('5',itUI('Overlapping bookings'),itUI('Overlapping bookings for the same berth on the same day count once.')),
+        step('6',itUI('What the total means'),itUI('This shows booked demand from recorded reservations. It is not a prediction of new bookings, proof of actual occupancy or an occupancy percentage. A percentage would also require available berth-days for the same period.'))
+      ].join('') : step('1',itUI('How this metric is calculated'),metric===1 ? utilityText(notes[metric],'يُحسب استهلاك الكهرباء من الفروق بين القراءات التراكمية أو كميات الفترة بالكيلوواط ساعة. تُنسب القيم إلى شهر التسجيل، والفروق التراكمية إلى شهر القراءة اللاحقة. القدرة اللحظية ليست استهلاك طاقة.') : metric===2 ? utilityText(notes[metric],'يُحسب استهلاك المياه من الفروق التراكمية أو كميات الفترة. تُحوّل الأمتار المكعبة إلى لترات. تُنسب القيم إلى شهر التسجيل والفروق إلى شهر القراءة اللاحقة. التدفق اللحظي ليس استهلاكاً.') : notes[metric])}
       ${metric===1||metric===2 ? [
         step('2',utilityText('Interval readings','قراءات الفترة'),utilityText('Each interval entry is consumption for one non-overlapping period, counted once at its recorded date. No interval start/end is stored, so monthly allocation cannot reconstruct the period.','كل إدخال يمثل استهلاك فترة واحدة غير متداخلة ويُحسب مرة واحدة بتاريخ تسجيله. لا يُحفظ بدء الفترة ونهايتها، لذلك لا يمكن إعادة توزيعها بدقة بين الأشهر.')),
         step('3',utilityText('Mixed modes and meter identity','أنماط مختلطة وهوية العداد'),utilityText('Cumulative differences and interval amounts are calculated separately, then added to the same reporting total. Asset ID identifies a meter; without it, berth and reading type identify the series. Separate meters need separate asset IDs.','تُحسب فروق القراءات التراكمية وكميات الفترة بشكل منفصل ثم تُجمع في إجمالي التقرير. يُستخدم معرّف الأصل لهوية العداد، أو الرصيف ونوع القراءة عند غيابه.')),
         step('4',utilityText('Instantaneous readings','القراءات اللحظية'),utilityText('Power (kW) and water flow (L/min) are kept separate. They are never added to kWh or litres; consumption cannot be inferred without a measured duration.','تُحفظ القدرة بالكيلوواط وتدفق المياه باللتر/دقيقة منفصلين ولا تُضاف إلى الاستهلاك. لا يمكن استنتاج الاستهلاك دون مدة قياس.')),
         step('5',utilityText('Checks in this period','التحقق في هذه الفترة'),utilityText('Mixed-mode series calculated separately: ','سلاسل الأنماط المختلطة المحسوبة بشكل منفصل: ')+(result?.mixedModeReadings||0)+'. '+utilityText('Valid instantaneous readings: ','القراءات اللحظية الصالحة: ')+(result?.instantaneousReadings?.filter(v=>String(v.utilityType).toUpperCase()===(metric===1?'ELECTRICITY':'WATER')).length||0))
       ].join('') : ''}
-      ${metric===5?step('2','How to interpret demand','Each declined enquiry counts once by its reference. The reporting period uses its requested arrival date, not its decline date. Vessel length bands are indicative. Missing reasons remain visible as Reason not recorded. Unique vessels are estimates from identifiers or vessel name plus sender; requests without identity are counted separately. No prices or revenue estimates are inferred.'):''}
+      ${metric===5?step('2',itUI('How to interpret demand'),itUI('Each declined enquiry counts once by its reference. The reporting period uses its requested arrival date, not its decline date. Vessel length bands are indicative. Missing reasons remain visible as Reason not recorded. Unique vessels are estimates from identifiers or vessel name plus sender; requests without identity are counted separately. No prices or revenue estimates are inferred.')):''}
       <div class="help-divider"></div>
       <div class="help-section-title">${t('Reporting notes')}</div>
-      ${step('•','Selected period',metric===1||metric===2
-        ? 'Custom dates include both selected days. First and last monthly bars may cover only part of a month. Consumption counts when the later reading falls inside the range; the earlier baseline may be outside it.'
-        : 'Custom dates include both selected days. First and last monthly bars may cover only part of a month.')}
-      ${metric===3 ? step('•','Maintenance status',t(root.querySelector('[data-status]').selectedOptions[0].textContent)+'. '+t('Open includes tasks not completed or deferred. Deferred tasks use their scheduled date, not their review date.')) : ''}
-      ${step('•','Incomplete records','The current month is incomplete. Missing records do not prove zero activity. Future consumption and income are recorded data, not forecasts.')}
-      ${result ? step('•','Records excluded',format(metric===0?result.excludedBookings:metric===3?result.excludedMaintenance:metric===4?result.excludedInvoices:metric===5?demandResult().excluded:result.excludedReadings,0)) : ''}
-      ${result&&(metric===1||metric===2) ? step('•','Reading checks',t('Meter drops skipped')+': '+result.meterDrops+'. '+t('Cross-month reading pairs')+': '+result.crossMonthPairs+'.') : ''}
+      ${step('•',itUI('Selected period'),metric===1||metric===2
+        ? itUI('Custom dates include both selected days. First and last monthly bars may cover only part of a month. Consumption counts when the later reading falls inside the range; the earlier baseline may be outside it.')
+        : itUI('Custom dates include both selected days. First and last monthly bars may cover only part of a month.'))}
+      ${metric===3 ? step('•',itUI('Maintenance status'),t(root.querySelector('[data-status]').selectedOptions[0].textContent)+'. '+t('Open includes tasks not completed or deferred. Deferred tasks use their scheduled date, not their review date.')) : ''}
+      ${step('•',itUI('Incomplete records'),itUI('The current month is incomplete. Missing records do not prove zero activity. Future consumption and income are recorded data, not forecasts.'))}
+      ${result ? step('•',itUI('Records excluded'),format(metric===0?result.excludedBookings:metric===3?result.excludedMaintenance:metric===4?result.excludedInvoices:metric===5?demandResult().excluded:result.excludedReadings,0)) : ''}
+      ${result&&(metric===1||metric===2) ? step('•',itUI('Reading checks'),t('Meter drops skipped')+': '+result.meterDrops+'. '+t('Cross-month reading pairs')+': '+result.crossMonthPairs+'.') : ''}
       <div class="help-divider"></div>
       <div class="help-section-title">${t('Tips')}</div>
       <div class="help-tips">${t('• Reporting dates use UTC. • Only records for the selected marina are included. • Reopen this screen to refresh the data.')}</div>
@@ -145,7 +146,7 @@ export async function mountOperationsTrendsScreen() {
     const overlay=document.createElement('div');
     overlay.className='ot-calendar-overlay';
     overlay.innerHTML=`<section class="ot-calendar" role="dialog" aria-modal="true" aria-labelledby="otCalendarTitle">
-      <div class="ot-header"><h2 id="otCalendarTitle">${t(input.matches('[data-start]')?'Start date':'End date')}</h2><button type="button" class="ot-icon" data-dismiss aria-label="${t('Close')}">${unusedCross}</button></div>
+      <div class="ot-header"><h2 id="otCalendarTitle">${t(input.matches('[data-start]')?itUI('Start date'):itUI('End date'))}</h2><button type="button" class="ot-icon" data-dismiss aria-label="${t('Close')}">${unusedCross}</button></div>
       <div class="ot-calendar-nav"><button type="button" data-prev aria-label="${t('Previous month')}">‹</button><strong data-month aria-live="polite"></strong><button type="button" data-next aria-label="${t('Next month')}">›</button></div>
       <div class="ot-calendar-grid" data-grid></div><button type="button" class="ot-apply" data-today>${t('Today')}</button></section>`;
 
@@ -281,7 +282,7 @@ export async function mountOperationsTrendsScreen() {
     const values = metric===4
       ? (result.paid[currency] || Array(result.months.length).fill(0))
       : result[labels[metric]];
-    const unit = metric===0?t('berth-days'):metric===1?'kWh':metric===2?'L':metric===3?t('tasks'):currency==='UNSPECIFIED'?'':currency;
+    const unit = metric===0?t('berth-days'):metric===1?itUI('kWh'):metric===2?'L':metric===3?t('tasks'):currency==='UNSPECIFIED'?'':currency;
     const value = n => format(n,metric) + (unit?' '+unit:'');
     const missing = i => metric===1?result.electricityPairs[i]===0:metric===2?result.waterPairs[i]===0:false;
     const max = Math.max(1,...values), scale = max*1.12;
@@ -301,7 +302,7 @@ export async function mountOperationsTrendsScreen() {
       return `<line x1="68" x2="${80+values.length*85}" y1="${y}" y2="${y}" stroke="#37414d"/><text x="60" y="${y+4}" text-anchor="end" fill="#aeb6c1" font-size="11">${esc(format(n,metric))}</text>`;
     }).join('');
 
-    root.querySelector('.ot-result').innerHTML=`<div class="ot-total"><span>${t(metric===0?'Booked total':'Recorded total')}</span><strong>${esc(value(values.reduce((a,b)=>a+b,0)))}</strong></div>
+    root.querySelector('.ot-result').innerHTML=`<div class="ot-total"><span>${t(metric===0?itUI('Booked total'):itUI('Recorded total'))}</span><strong>${esc(value(values.reduce((a,b)=>a+b,0)))}</strong></div>
       ${(metric===1||metric===2)&&result.mixedModeReadings ? `<p class="ot-caption">${esc(utilityText('Mixed reading modes need review — see ⓘ.','تحتاج القراءات المختلطة إلى مراجعة — راجع ⓘ.'))}</p>`:''}
       ${metric===4&&currency==='UNSPECIFIED'?`<p class="ot-caption">${t('Invoice currency not specified')}</p>`:''}
       <p class="ot-caption">${esc(dateText(selectedFrom))} – ${esc(dateText(selectedEnd-86400000))}</p>
@@ -320,7 +321,7 @@ export async function mountOperationsTrendsScreen() {
   }
 
   function renderDemand() {
-    const d=demandResult(),reasonName=code=>t(DECLINE_REASONS[code]||'Reason not recorded');
+    const d=demandResult(),reasonName=code=>t(DECLINE_REASONS[code]||itUI('Reason not recorded'));
     const percent=n=>new Intl.NumberFormat(getLocale(),{
       style:'percent',maximumFractionDigits:1
     }).format(d.total?n/d.total:0);

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import {t, getLocale} from '../i18n.js';
 import {store} from '../store.js';
 import {toast} from '../ui/toast.js';
@@ -83,7 +84,7 @@ if (!(dates.expiryDate > 0)) {
       busy=false;close();toast(t('Safety item updated'),{kind:'success'});
     } catch(error) {
       busy=false;sheet.querySelectorAll('button').forEach(button=>button.disabled=false);
-      errorEl.textContent=t(error.message || 'Failed to save.');
+      errorEl.textContent=t(error.message || itUI('Failed to save.'));
     }
   };
 }

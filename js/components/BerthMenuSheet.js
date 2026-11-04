@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t } from '../i18n.js';
 // js/components/BerthMenuSheet.js
 // Berth menu — mirrors bottomsheet_berth_menu.xml
@@ -132,7 +133,7 @@ export function showBerthMenu(berth, handlers = {}) {
 
 
 
-  <button type="button" id="iv-close" aria-label="Close berth sheet"
+  <button type="button" id="iv-close" aria-label="${itUI("Close berth sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from './i18n.js';
 import { savedCurrency, money, currencyDigits } from './util/BillingCurrency.js';
 import { marinaCurrency, checkBillingClient } from './util/BillingData.js';
 import { runTransaction, getDocsFromServer } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -994,7 +995,7 @@ export async function prepareUtilityInvoice(clientId, berth) {
     clientId, boatId, customerId, currency, category: 'UTILITIES',
     amount: Number(items.reduce((sum, c) => sum + Number(c.amount || 0), 0).toFixed(currencyDigits(currency))),
     description: items.map(c =>
-      `${c.utilityType === 'WASTEWATER' ? 'Wastewater' : c.utilityType === 'WATER' ? 'Water' : 'Electricity'}: ` +
+      `${c.utilityType === 'WASTEWATER' ? itUI('Wastewater') : c.utilityType === 'WATER' ? itUI('Water') : itUI('Electricity')}: ` +
       `${Number(c.quantity).toFixed(2)} ${c.unit} @ ` +
       `${currency} ${Number(c.rate).toFixed(4)}/${c.unit} = ${money(c.amount, currency)}`
     ).join('\n'),

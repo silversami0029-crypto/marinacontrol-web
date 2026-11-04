@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { store } from '../store.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { wireBookingDatePicker } from '../ui/BookingDatePicker.js';
@@ -55,8 +56,8 @@ function showError(sheet, error) {
   const el = sheet.querySelector('[data-billing-error]');
   el.hidden = false;
   el.textContent = error.code === 'permission-denied'
-    ? 'Access to berthing data is blocked (PERMISSION_DENIED). Check this marina’s Firestore rules.'
-    : error.message || 'Unable to complete this action';
+    ? itUI('Access to berthing data is blocked (PERMISSION_DENIED). Check this marina’s Firestore rules.')
+    : error.message || itUI('Unable to complete this action');
 }
 
 export function showBerthingRates(berth) {
@@ -103,7 +104,7 @@ export function showBerthingRates(berth) {
       sheet.querySelector('[data-saved-rates]').textContent = rates
         .filter(r => Number(r.berthId) === 0 || Number(r.berthId) === Number(berth.id))
         .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate) || Number(b.createdAt) - Number(a.createdAt))
-        .map(r => `${tr(Number(r.berthId) === 0 ? 'Marina default' : 'This berth')} · ${r.effectiveDate} · ${r.currency} ${r.rate}${r.mode === 'METRE_NIGHT' ? '/m/night' : '/night'}`)
+        .map(r => `${tr(Number(r.berthId) === 0 ? itUI('Marina default') : itUI('This berth'))} · ${r.effectiveDate} · ${r.currency} ${r.rate}${r.mode === 'METRE_NIGHT' ? '/m/night' : '/night'}`)
         .join('\n') || tr('No berthing rate set');
       save.disabled = false;
     } catch (error) {
@@ -249,7 +250,7 @@ export async function reviewNewBookingPrice(booking, berth) {
           <p class="add-section-sub">${tr('Utilities are separate. Confirm this is the agreed price. This does not send a WhatsApp quote or collect payment.')}</p>
           <div class="add-error" data-billing-error role="alert" hidden></div>
         </div>
-        <button type="submit" class="add-save">${tr(terms ? 'Save agreed price' : 'Save without price')}</button>
+        <button type="submit" class="add-save">${tr(terms ? itUI('Save agreed price') : itUI('Save without price'))}</button>
       </form>`, () => { if (!accepted) reject(new Error('Booking approval cancelled')); });
     ui.sheet.querySelector('form').addEventListener('submit', event => {
       event.preventDefault();

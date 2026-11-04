@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t } from '../i18n.js';
 // js/screens/InventoryMenuSheet.js
 import { store } from '../store.js';
@@ -287,11 +288,11 @@ async function setOwner(item, name) {
       itemName: item.name,
       boatId: item.boatId,
       action: 'OWNER_ASSIGNED',
-      title: name ? `Owner assigned: ${name}` : 'Owner unassigned',
+      title: name ? `Owner assigned: ${name}` : itUI('Owner unassigned'),
       detail: name ? `${item.assignedTo || 'None'} → ${name}` : `${item.assignedTo || 'None'} → None`
     });
 
-    toast(name ? t('assignedNamed', {name:name}) : 'Unassigned', { kind: 'success' });
+    toast(name ? t('assignedNamed', {name:name}) : itUI('Unassigned'), { kind: 'success' });
   } catch (err) {
     console.error('[inventory assign] failed', err);
     toast(t('Failed to assign owner'), { kind: 'error' });

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 // A compact dark calendar; selected values stay YYYY-MM-DD, independent of timezone.
 export function monthCells(year, month) {
   const first = new Date(Date.UTC(year, month, 1));
@@ -34,15 +35,15 @@ export function wireSafetyDatePicker(input, {label, locale='en-GB', onChange=()=
       panel.replaceChildren();
       const heading=document.createElement('div');heading.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
       const title=document.createElement('strong');title.textContent=label;heading.append(title);
-      const exit=document.createElement('button');styleButton(exit);exit.textContent='×';exit.style.fontSize='26px';exit.setAttribute('aria-label','Close calendar');exit.onclick=close;heading.append(exit);panel.append(heading);
+      const exit=document.createElement('button');styleButton(exit);exit.textContent='×';exit.style.fontSize='26px';exit.setAttribute('aria-label',itUI('Close calendar'));exit.onclick=close;heading.append(exit);panel.append(heading);
       const navigation=document.createElement('div');navigation.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:12px;';
-      const prev=document.createElement('button');styleButton(prev);prev.textContent='‹';prev.style.fontSize='24px';prev.setAttribute('aria-label','Previous month');prev.onclick=()=>{month--;if(month<0){month=11;year--;}draw();};
-      const next=document.createElement('button');styleButton(next);next.textContent='›';next.style.fontSize='24px';next.setAttribute('aria-label','Next month');next.onclick=()=>{month++;if(month>11){month=0;year++;}draw();};
+      const prev=document.createElement('button');styleButton(prev);prev.textContent='‹';prev.style.fontSize='24px';prev.setAttribute('aria-label',itUI('Previous month'));prev.onclick=()=>{month--;if(month<0){month=11;year--;}draw();};
+      const next=document.createElement('button');styleButton(next);next.textContent='›';next.style.fontSize='24px';next.setAttribute('aria-label',itUI('Next month'));next.onclick=()=>{month++;if(month>11){month=0;year++;}draw();};
       const months=document.createElement('select');const years=document.createElement('select');
       for(let i=0;i<12;i++){const option=document.createElement('option');option.value=i;option.textContent=new Intl.DateTimeFormat(locale,{month:'long',timeZone:'UTC'}).format(new Date(Date.UTC(2026,i,1)));months.append(option);}
       for(let i=Math.min(baseYear-5,year-5);i<=Math.max(baseYear+15,year+5);i++){const option=document.createElement('option');option.value=i;option.textContent=i;years.append(option);}
       for(const select of [months,years])select.style.cssText='background:#263340;color:#F5F7F9;border:1px solid #394450;border-radius:8px;padding:8px;min-width:0;font:inherit;';
-      months.style.flex='1';months.value=month;years.value=year;months.setAttribute('aria-label','Month');years.setAttribute('aria-label','Year');
+      months.style.flex='1';months.value=month;years.value=year;months.setAttribute('aria-label',itUI('Month'));years.setAttribute('aria-label',itUI('Year'));
       months.onchange=()=>{month=Number(months.value);draw();};years.onchange=()=>{year=Number(years.value);draw();};
       navigation.append(prev,months,years,next);panel.append(navigation);
       const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center;';

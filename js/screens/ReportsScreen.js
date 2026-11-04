@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { money, totalsText, currencyTotals, savedCurrency } from '../util/BillingCurrency.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ReportsScreen.js
@@ -118,7 +119,7 @@ async function loadAll() {
     boatSnap.forEach(d => {
       const data = d.data();
       const id = Number(data.id || 0);
-      if (id) boatsCache[id] = data.name || 'Unknown boat';
+      if (id) boatsCache[id] = data.name || itUI('Unknown boat');
     });
   } catch (err) {
     console.error('[reports] load failed', err);
@@ -152,7 +153,7 @@ function renderUnpaid() {
 
   const byBoat = {};
   for (const inv of unpaid) {
-    const bn = inv.boatName || 'Unknown boat';
+    const bn = inv.boatName || itUI('Unknown boat');
     if (!byBoat[bn]) byBoat[bn] = { count: 0, total: [], overdue: 0 };
     byBoat[bn].count++;
     byBoat[bn].total.push(inv);
@@ -202,8 +203,8 @@ function renderUnpaid() {
           <div class="rp-detail-row">
             <div class="rp-detail-emoji">${isOverdue ? '🔴' : '🟡'}</div>
             <div class="rp-detail-info">
-              <div class="rp-detail-title">${escapeHtml(inv.boatName || 'Unknown boat')}</div>
-              <div class="rp-detail-desc">${escapeHtml(inv.description || '')} – Due: ${escapeHtml(fmtDate(inv.dueDate))}</div>
+              <div class="rp-detail-title">${escapeHtml(inv.boatName || itUI('Unknown boat'))}</div>
+              <div class="rp-detail-desc">${escapeHtml(inv.description || '')} ${itUI("– Due:")} ${escapeHtml(fmtDate(inv.dueDate))}</div>
             </div>
             <div class="rp-detail-value">${fmtMoney(inv.amount, inv.currency)}</div>
           </div>
@@ -234,10 +235,10 @@ function renderExpiring() {
   const typeCounts = {};
   const byBoat = {};
   for (const d of expiring) {
-    const type = d.type || 'Other';
+    const type = d.type || itUI('Other');
     typeCounts[type] = (typeCounts[type] || 0) + 1;
 
-    const boatName = boatsCache[Number(d.boatId)] || 'Unknown boat';
+    const boatName = boatsCache[Number(d.boatId)] || itUI('Unknown boat');
     if (!byBoat[boatName]) byBoat[boatName] = [];
     byBoat[boatName].push(d);
   }
@@ -256,7 +257,7 @@ function renderExpiring() {
       ${Object.entries(typeCounts).map(([type, n]) => `
         <div class="rp-status-row">
           <span class="rp-status-label">${escapeHtml(type)}</span>
-          <span class="rp-status-count">${n} expiring</span>
+          <span class="rp-status-count">${n} ${itUI("expiring")}</span>
         </div>
       `).join('')}
 
@@ -278,7 +279,7 @@ function renderExpiring() {
           <div class="rp-detail-row">
             <div class="rp-detail-emoji">${expired ? '🔴' : '🟡'}</div>
             <div class="rp-detail-info">
-              <div class="rp-detail-title">${escapeHtml(boatsCache[Number(d.boatId)] || 'Unknown boat')}</div>
+              <div class="rp-detail-title">${escapeHtml(boatsCache[Number(d.boatId)] || itUI('Unknown boat'))}</div>
               <div class="rp-detail-desc">${escapeHtml(d.name || '')} (${escapeHtml(tr(d.type || ''))})</div>
             </div>
             <div class="rp-detail-value">${tr("Expires" )} ${escapeHtml(fmtDate(e))}</div>
@@ -351,7 +352,7 @@ function renderOccupancy() {
     </div>
     <div class="rp-status-row">
       <span class="rp-status-label">${tr("Avg Stay")}</span>
-      <span class="rp-status-amount">${avgStay.toFixed(1)} days</span>
+      <span class="rp-status-amount">${avgStay.toFixed(1)} ${itUI("days")}</span>
     </div>
 
     ${occupiedBerths.length ? `
@@ -412,7 +413,7 @@ function renderRevenue() {
 
   const byBoat = {};
   for (const inv of filtered) {
-    const bn = inv.boatName || 'Unknown boat';
+    const bn = inv.boatName || itUI('Unknown boat');
     if (!byBoat[bn]) byBoat[bn] = [];
     byBoat[bn].push(inv);
   }
@@ -450,7 +451,7 @@ function renderRevenue() {
       <div class="rp-section-title">${tr("By Status")}</div>
       <div class="rp-status-row">
         <span class="rp-status-emoji">📊</span>
-        <span class="rp-status-label">${filtered.length} ${filtered.length === 1 ? 'invoice' : 'invoices'} · Avg ${escapeHtml(avg)}</span>
+        <span class="rp-status-label">${filtered.length} ${filtered.length === 1 ? 'invoice' : 'invoices'} ${itUI("· Avg")} ${escapeHtml(avg)}</span>
       </div>
 
       <div class="rp-section-title">${tr("By Boat")}</div>
@@ -548,15 +549,15 @@ async function exportReport(tab) {
   }
   const { jsPDF } = window.jspdf;
   const titles = ['Unpaid Invoices', 'Expiring Documents', 'Occupancy', 'Revenue'];
-  const title = titles[tab] || 'Report';
+  const title = titles[tab] || itUI('Report');
   const generated = new Date().toLocaleString(uiLocale());
 
   const doc = new jsPDF();
   doc.setFontSize(18);
-  doc.text(title, 14, 20);
+  doc.text(itUI(title), 14, 20);
 
   doc.setFontSize(10);
-  doc.text(`Generated: ${generated}`, 14, 28);
+  doc.text(`${itUI("Generated:")} ${generated}`, 14, 28);
 
   let y = 42;
   doc.setFontSize(11);
@@ -584,7 +585,7 @@ function getDetailRows(tab) {
     const unpaid = invoicesCache.filter(inv => String(inv.status || '').toUpperCase() !== 'PAID');
     unpaid.forEach(inv => {
       rows.push({
-        left: inv.boatName || 'Unknown boat',
+        left: inv.boatName || itUI('Unknown boat'),
         mid: `${inv.description || ''} – Due: ${fmtDate(inv.dueDate)}`,
         right: fmtMoney(inv.amount, inv.currency)
       });
@@ -598,7 +599,7 @@ function getDetailRows(tab) {
     });
     expiring.forEach(d => {
       rows.push({
-        left: boatsCache[Number(d.boatId)] || 'Unknown boat',
+        left: boatsCache[Number(d.boatId)] || itUI('Unknown boat'),
         mid: `${d.name || ''} (${d.type || ''})`,
         right: `Expires ${fmtDate(toMs(d.expiryDate))}`
       });
@@ -616,7 +617,7 @@ function getDetailRows(tab) {
     const paid = invoicesCache.filter(inv => String(inv.status || '').toUpperCase() === 'PAID');
     const byBoat = {};
     for (const inv of paid) {
-      const bn = inv.boatName || 'Unknown boat';
+      const bn = inv.boatName || itUI('Unknown boat');
       if (!byBoat[bn]) byBoat[bn] = [];
     byBoat[bn].push(inv);
     }

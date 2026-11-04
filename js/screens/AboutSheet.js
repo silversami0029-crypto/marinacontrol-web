@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AboutSheet.js
 
@@ -20,7 +21,7 @@ export function showAboutSheet() {
 
   </div>
 
-  <button type="button" id="iv-close" aria-label="Close about sheet"
+  <button type="button" id="iv-close" aria-label="${itUI("Close about sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -32,7 +33,7 @@ export function showAboutSheet() {
 
     <div class="about-body">
       <div class="about-logo">
-        <img src="assets/logo.png" alt="MarinaControl" onerror="this.style.display='none'">
+        <img src="assets/logo.png" alt="${itUI("MarinaControl")}" onerror="this.style.display='none'">
       </div>
 
       <div class="about-name">${APP_NAME}</div>

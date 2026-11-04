@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t } from '../i18n.js';
 // js/components/TopBar.js
@@ -23,7 +24,7 @@ const TITLES = {
 
 export function renderTopBar(route) {
   const titleEl = document.getElementById('topbarTitle');
-  if (titleEl) titleEl.textContent = store.activeMarina?.name || TITLES[route] || 'MarinaControl';
+  if (titleEl) titleEl.textContent = store.activeMarina?.name || TITLES[route] || itUI('MarinaControl');
 
   wireDrawerButton();
   wireHomeLinks();
@@ -160,7 +161,7 @@ function renderMarinaSelector() {
     button.type = 'button';
     button.id = 'marinaSelector';
     button.className = 'marina-selector';
-    button.setAttribute('aria-label', 'Manage and switch marinas');
+    button.setAttribute('aria-label', itUI('Manage and switch marinas'));
     button.setAttribute('aria-haspopup', 'dialog');
     button.style.cssText = 'display:block;max-width:260px;width:100%;min-width:0;height:32px;padding:4px 8px;border:1px solid #AEB6C1;border-radius:6px;background:#1C222A;color:#F5F7F9;font:inherit;font-size:14px;text-align:start;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;';
     title.after(button);

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ReportsHelp.js
 
@@ -16,10 +17,10 @@ export function showReportsHelp() {
 
       <p class="help-desc">${tr("Generate and export reports to track your fleet's financial health, documents, and occupancy.")}</p>
 
-      ${step('1', 'Unpaid Invoices', 'See all outstanding invoices, overdue amounts, and what each boat owes.')}
-      ${step('2', 'Expiring Documents', 'Track certificates, insurance, and registrations before they expire.')}
-      ${step('3', 'Berth Occupancy', 'View current berth usage, occupancy rates, and average stay duration.')}
-      ${step('4', 'Revenue', 'Filter by category and date range. Tap the chart button for visual breakdown.')}
+      ${step('1', itUI('Unpaid Invoices'), itUI('See all outstanding invoices, overdue amounts, and what each boat owes.'))}
+      ${step('2', itUI('Expiring Documents'), itUI('Track certificates, insurance, and registrations before they expire.'))}
+      ${step('3', itUI('Berth Occupancy'), itUI('View current berth usage, occupancy rates, and average stay duration.'))}
+      ${step('4', itUI('Revenue'), itUI('Filter by category and date range. Tap the chart button for visual breakdown.'))}
 
       <div class="help-divider"></div>
 

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DocumentDetailSheet.js
 
@@ -10,13 +11,13 @@ export function showDocumentDetail(item) {
 
   const now = Date.now();
   const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-  let statusText = 'No expiry';
+  let statusText = itUI('No expiry');
   let statusColor = '#737D89';
 
   if (item.expiryDate) {
-    if (item.expiryDate < now) { statusText = 'Expired'; statusColor = '#F44336'; }
-    else if (item.expiryDate <= now + thirtyDays) { statusText = 'Expiring soon'; statusColor = '#FF9800'; }
-    else { statusText = 'Valid'; statusColor = '#4CAF50'; }
+    if (item.expiryDate < now) { statusText = itUI('Expired'); statusColor = '#F44336'; }
+    else if (item.expiryDate <= now + thirtyDays) { statusText = itUI('Expiring soon'); statusColor = '#FF9800'; }
+    else { statusText = itUI('Valid'); statusColor = '#4CAF50'; }
   }
 
   sheet.innerHTML = `
@@ -26,9 +27,9 @@ export function showDocumentDetail(item) {
 <div class="invoice-sheet-header"
   style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface, #1C222A);">
 
-   <div class="sheet-title">${escapeHtml(item.name || 'Document')}</div>
+   <div class="sheet-title">${escapeHtml(item.name || itUI('Document'))}</div>
 
-  <button type="button" id="iv-close" aria-label="Close invoice sheet"
+  <button type="button" id="iv-close" aria-label="${itUI("Close invoice sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"

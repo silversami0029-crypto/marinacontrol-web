@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 // Read-only marina overview calculations. Dates in safety records are epoch milliseconds.
 export function liveRecord(item) {
   return String(item.status || '').toUpperCase() !== 'DELETED' && !item.deleted && !item.isDeleted;

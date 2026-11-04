@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ReviewMaintenanceSheet.js
@@ -22,8 +23,8 @@ export function showReviewMaintenanceSheet(item, { onChanged } = {}) {
     <div class="add-scroll">
       <div class="rm-info">
         <div class="rm-info-line"><b>${tr("Task:")}</b> ${escapeHtml(tr(item.type || ''))}</div>
-        <div class="rm-info-line"><b>${tr("Reason:")}</b> ${escapeHtml(item.deferReason || 'N/A')}</div>
-        <div class="rm-info-line"><b>${tr("Review Date:")}</b> ${escapeHtml(item.reviewDate || 'N/A')}</div>
+        <div class="rm-info-line"><b>${tr("Reason:")}</b> ${escapeHtml(item.deferReason || itUI('N/A'))}</div>
+        <div class="rm-info-line"><b>${tr("Review Date:")}</b> ${escapeHtml(item.reviewDate || itUI('N/A'))}</div>
       </div>
 
       <div class="add-section-title">${tr("Choose Action")}</div>

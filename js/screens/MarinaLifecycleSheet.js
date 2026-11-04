@@ -1,7 +1,8 @@
+import { italianUI as itUI } from '../i18n.js';
 import {getLanguage} from '../i18n.js';
 import {esc} from '../utils.js';
 
-export const lifecycleText = (en, ar) => getLanguage() === 'ar' ? ar : en;
+export const lifecycleText = (en, ar) => getLanguage() === 'ar' ? ar : itUI(en);
 export function confirmMarinaLifecycle(preview, action) {
   const deleting = action === 'DELETE';
   const restoring = action === 'RESTORE';

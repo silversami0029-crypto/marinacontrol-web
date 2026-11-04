@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { showBerthingCharges } from './BerthingBillingSheet.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { store } from '../store.js';
@@ -73,7 +74,7 @@ export function showBookingDetailsSheet({
     </div>
 
     <div class="bkr-detail-body">
-      <div class="bkr-detail-row"><span>${tr('Vessel')}</span><b>${escapeHtml(booking.vesselName || 'Unknown vessel')}</b></div>
+      <div class="bkr-detail-row"><span>${tr('Vessel')}</span><b>${escapeHtml(booking.vesselName || itUI('Unknown vessel'))}</b></div>
       <div class="bkr-detail-row"><span>${tr('Berth')}</span><b>${escapeHtml(formatBerth(berth))}</b></div>
       <div class="bkr-detail-row"><span>${tr('Arrival')}</span><b>${escapeHtml(formatDate(booking.arrivalDate))}</b></div>
       <div class="bkr-detail-row"><span>${tr('Departure')}</span><b>${escapeHtml(formatDate(booking.departureDate))}</b></div>
@@ -129,7 +130,7 @@ export function showBookingDetailsSheet({
         onChanged?.('CHECKED_IN');
       } catch (err) {
         console.error('[booking check-in] failed', err);
-        toast(tr(err?.message || 'Failed to check in'), { kind: 'error' });
+        toast(tr(err?.message || itUI('Failed to check in')), { kind: 'error' });
         checkInButton.disabled = false;
         checkInButton.textContent = tr('Check In');
       }
@@ -148,7 +149,7 @@ export function showBookingDetailsSheet({
         onChanged?.('CHECKED_OUT');
       } catch (err) {
         console.error('[booking check-out] failed', err);
-        toast(tr(err?.message || 'Failed to check out'), { kind: 'error' });
+        toast(tr(err?.message || itUI('Failed to check out')), { kind: 'error' });
         checkOutButton.disabled = false;
         checkOutButton.textContent = tr('Check Out');
       }
@@ -216,7 +217,7 @@ async function checkOutBooking(booking, berth) {
   await logHistory({
     entityType: 'BOOKING',
     entityId: booking.id || booking.bookingUuid,
-    itemName: booking.vesselName || 'Vessel',
+    itemName: booking.vesselName || itUI('Vessel'),
     boatId: booking.boatId,
     action: 'CHECKED_OUT',
     title: 'Vessel checked out',
@@ -291,7 +292,7 @@ async function checkInBooking(booking, berth) {
   await logHistory({
     entityType: 'BOOKING',
     entityId: booking.id || booking.bookingUuid,
-    itemName: booking.vesselName || 'Vessel',
+    itemName: booking.vesselName || itUI('Vessel'),
     boatId: booking.boatId,
     action: 'CHECKED_IN',
     title: 'Vessel checked in',

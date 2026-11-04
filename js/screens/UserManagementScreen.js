@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/UserManagementScreen.js
 
@@ -225,7 +226,7 @@ async function loadUsers() {
         <h2>${tr("Couldn't load users")}</h2>
         <p>
           ${escapeHtml(
-            error?.message || 'Unable to load marina users.'
+            error?.message || itUI('Unable to load marina users.')
           )}
         </p>
       </div>
@@ -253,7 +254,7 @@ async function loadInviteCode() {
       clientId: Number(store.activeClientId)
     });
 
-    const code = response?.data?.inviteCode || 'Unavailable';
+    const code = response?.data?.inviteCode || itUI('Unavailable');
 
     codeElement.textContent = code;
     copyButton.disabled = code === 'Unavailable';
@@ -267,7 +268,7 @@ async function loadInviteCode() {
 
 async function rotateInviteCode() {
   const confirmed = confirm(
-    'Rotate invite code? The current code will stop working immediately.'
+    itUI('Rotate invite code? The current code will stop working immediately.')
   );
 
   if (!confirmed) return;
@@ -282,7 +283,7 @@ async function rotateInviteCode() {
       clientId: Number(store.activeClientId)
     });
 
-    const code = response?.data?.inviteCode || 'Unavailable';
+    const code = response?.data?.inviteCode || itUI('Unavailable');
 
     document.getElementById('umInviteCode').textContent = code;
 
@@ -354,7 +355,7 @@ function renderUserList(users) {
           <div class="um-role">
             <span class="um-role-label">${tr("Role:")}</span>
             <span class="um-role-value">
-              ${escapeHtml(user.role || 'staff')}
+              ${escapeHtml(itUI(user.role || 'staff'))}
             </span>
           </div>
         </div>
@@ -680,13 +681,13 @@ function showRoleSheet(user) {
   style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface, #1C222A);">
 
  <div class="assign-title" style="width:100%;box-sizing:border-box;padding:0 48px;text-align:center;">
-      Change role for ${escapeHtml(user.name || 'user')}
+      ${itUI("Change role for")} ${escapeHtml(user.name || 'user')}
     </div>
 
 
 
 
-  <button type="button" id="iv-close" aria-label="Close invoice sheet"
+  <button type="button" id="iv-close" aria-label="${itUI("Close invoice sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -789,7 +790,7 @@ function showAddUserSheet() {
     ${tr("Add User")}
   </div>
 
-  <button type="button" id="iv-close" aria-label="Close user sheet"
+  <button type="button" id="iv-close" aria-label="${itUI("Close user sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -850,8 +851,8 @@ function showAddUserSheet() {
                placeholder="${tr("Password")}"
                autocomplete="new-password"
                required minlength="15" maxlength="128"
-               title="Use 15 to 128 characters; spaces are allowed.">
-        <small>Use 15 to 128 characters; spaces are allowed.</small>
+               title="${itUI("Use 15 to 128 characters; spaces are allowed.")}">
+        <small>${itUI("Use 15 to 128 characters; spaces are allowed.")}</small>
 
         <div class="add-section-title"
              style="margin-top:16px;">${tr("User Role")}</div>
@@ -933,7 +934,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
 
     if (password.length < 15 || password.length > 128) {
       sheet.querySelector('#um-password').focus();
-      toast('Password must contain 15 to 128 characters.', { kind: 'error' });
+      toast(itUI('Password must contain 15 to 128 characters.'), { kind: 'error' });
       return;
     }
 
@@ -981,7 +982,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
       }
 
       errorElement.textContent =
-        error?.message || 'Failed to create user.';
+        error?.message || itUI('Failed to create user.');
     }
   });
 }

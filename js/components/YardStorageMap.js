@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import {mountLayoutCanvas,reconcileYardLayout} from './YardLayoutCanvas.js';
 // A virtual layout: stable space IDs are independent of their display position.
 export function yardSlots(zones) {
@@ -42,7 +43,7 @@ export function virtualYardLayout(zones){
 }
 export function mountYardStorageMap(root,{zones,slots,spaces,boats,unfinished,unknown,onOpen,L,cameraState,zone='',publishedLayout=null}){
   if(publishedLayout)return mountLayoutCanvas(root,{layout:reconcileYardLayout(publishedLayout,yardSlots(zones)),slots,spaces,boats,unfinished,unknown,onOpen,L,cameraState,zone});
-  root.replaceChildren();root.className='ys-map-viewport';root.tabIndex=0;root.setAttribute('aria-label','Virtual yard map. Use zoom controls, drag to pan, and select a numbered space.');
+  root.replaceChildren();root.className='ys-map-viewport';root.tabIndex=0;root.setAttribute('aria-label',itUI('Virtual yard map. Use zoom controls, drag to pan, and select a numbered space.'));
   const layout=virtualYardLayout(zones),shown=new Set(slots.map(s=>s.id)),byBoat=new Map(boats.map(b=>[b.docId,b]));
   const selected=zone?layout.blocks.filter(b=>b.id===zone):layout.blocks;
   const minX=Math.min(...selected.map(b=>b.x))-20,minY=Math.min(...selected.map(b=>b.y))-55;
@@ -59,7 +60,7 @@ export function mountYardStorageMap(root,{zones,slots,spaces,boats,unfinished,un
     group.append(svgNode('text',{x:block.x+24,y:block.y+36,fill:'#e8eef5','font-size':24,'font-weight':700},`${L('Zone')} ${block.id} · ${block.capacity}`));
     group.append(svgNode('rect',{x:block.x+474,y:block.y+56,width:72,height:block.height-74,fill:'#303b44',rx:5}));
     group.append(svgNode('line',{x1:block.x+510,y1:block.y+65,x2:block.x+510,y2:block.y+block.height-24,stroke:'#6c7982','stroke-width':2,'stroke-dasharray':'12 12'}));
-    group.append(svgNode('text',{x:block.x+510,y:block.y+block.height+29,'text-anchor':'middle',fill:'#aab8c4','font-size':18},'ACCESS LANE'));
+    group.append(svgNode('text',{x:block.x+510,y:block.y+block.height+29,'text-anchor':'middle',fill:'#aab8c4','font-size':18},itUI('ACCESS LANE')));
     svg.append(group);
   }
   for(const slot of layout.items){

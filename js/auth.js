@@ -1,3 +1,4 @@
+import { italianUI as itUI } from './i18n.js';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 // js/auth.js
 // Wraps Firebase Auth + secure MarinaControl session bootstrap
@@ -117,16 +118,16 @@ export function friendlyError(err) {
   const code = err?.code || '';
 
   switch (code) {
-    case 'auth/invalid-email': return 'Email address is not valid.';
-    case 'auth/user-disabled': return 'This account has been disabled.';
-    case 'auth/user-not-found': return 'No account found with that email.';
-    case 'auth/wrong-password': return 'Incorrect password.';
-    case 'auth/invalid-credential': return 'Email or password is incorrect.';
-    case 'auth/too-many-requests': return 'Too many attempts. Try again later.';
-    case 'auth/network-request-failed': return 'Network error. Check your connection.';
+    case 'auth/invalid-email': return itUI('Email address is not valid.');
+    case 'auth/user-disabled': return itUI('This account has been disabled.');
+    case 'auth/user-not-found': return itUI('No account found with that email.');
+    case 'auth/wrong-password': return itUI('Incorrect password.');
+    case 'auth/invalid-credential': return itUI('Email or password is incorrect.');
+    case 'auth/too-many-requests': return itUI('Too many attempts. Try again later.');
+    case 'auth/network-request-failed': return itUI('Network error. Check your connection.');
     case 'functions/failed-precondition': return err.message || 'Account setup is incomplete.';
     case 'functions/permission-denied': return err.message || 'Account access was denied.';
-    default: return 'Unable to sign in. Please try again.';
+    default: return itUI('Unable to sign in. Please try again.');
   }
 }
 /** Update only the signed-in user's personal fields in their base marina. */

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { renderBookingTimeline } from './BookingRequestTimeline.js';
 import { DECLINE_REASONS } from '../analytics/bookingDemand.js';
 import { mountWhatsAppReplyReview } from './WhatsAppReplyReview.js';
@@ -91,7 +92,7 @@ export function mountBookingRequestsScreen() {
       document.getElementById('bkrList').innerHTML =
         `<div class="boats-empty">
            <h2>${t("Couldn't load requests")}</h2>
-           <p>${esc(err.message || 'Permission denied.')}</p>
+           <p>${esc(err.message || itUI('Permission denied.'))}</p>
          </div>`;
       return;
     }
@@ -224,7 +225,7 @@ function renderRequestCard(r) {
       <div class="bkr-sender">${esc(senderLine)}</div>
       ${r.assignedBerthNumber || r.berthNumber ? `<div class="bkr-sender">${esc(t("Berth"))}: ${esc([r.assignedDockName, r.assignedBerthNumber || r.berthNumber].filter(Boolean).join(" "))}</div>` : ''}
       <div class="bkr-dates">${esc(arrival)} → ${esc(departure)}</div>
-      ${r.status==='DECLINED'?`<div class="bkr-sender">${esc(t('Decline reason'))}: ${esc(t(DECLINE_REASONS[r.declineReasonCode]||'Reason not recorded'))}</div>`:''}
+      ${r.status==='DECLINED'?`<div class="bkr-sender">${esc(t('Decline reason'))}: ${esc(t(DECLINE_REASONS[r.declineReasonCode]||itUI('Reason not recorded')))}</div>`:''}
       <div class="bkr-message">"${esc(message)}"</div>
     </div>
   `;
@@ -278,7 +279,7 @@ async function showDetail(r) {
       <div class="bkr-detail-row"><span>${t("Source")}</span><b>${esc(t(source))}</b></div>
       <div class="bkr-detail-row"><span>${t("Status")}</span><b>${esc(requestStatusLabel(r))}</b></div>
 
-      ${r.status==='DECLINED'?`<div class="bkr-detail-row"><span>${t('Decline reason')}</span><b>${esc(t(DECLINE_REASONS[r.declineReasonCode]||'Reason not recorded'))}</b></div>${r.declineNote?`<div class="bkr-detail-message-label">${t('Internal note')}</div><div class="bkr-detail-message">${esc(r.declineNote)}</div>`:''}`:''}
+      ${r.status==='DECLINED'?`<div class="bkr-detail-row"><span>${t('Decline reason')}</span><b>${esc(t(DECLINE_REASONS[r.declineReasonCode]||itUI('Reason not recorded')))}</b></div>${r.declineNote?`<div class="bkr-detail-message-label">${t('Internal note')}</div><div class="bkr-detail-message">${esc(r.declineNote)}</div>`:''}`:''}
       <div class="bkr-detail-row"><span>${t('Vessel dimensions')}</span><b>${esc([r.vesselLength != null ? `${t('Length')}: ${r.vesselLength} m` : '', r.vesselBeam != null ? `${t('Beam')}: ${r.vesselBeam} m` : '', r.vesselDraft != null ? `${t('Draft')}: ${r.vesselDraft} m` : ''].filter(Boolean).join(' · ') || t('Not provided'))}</b></div>
       <div class="bkr-detail-row"><span>${t('Shore power requested')}</span><b>${esc(formatShorePower(r))}</b></div>
       ${renderBookingTimeline(r)}
@@ -346,7 +347,7 @@ function formatShorePower(source) {
   if (source?.shorePowerVoltage != null) values.push(`${source.shorePowerVoltage}V`);
   const phase = String(source?.shorePowerPhase || '').trim().toUpperCase().replace(/[- ]/g, '_');
   if (phase) values.push(phase === 'THREE_PHASE' ? t('Three-phase') : t('Single-phase'));
-  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${t(source.shorePowerConnections === 1 ? 'connection' : 'connections')}`);
+  if (source?.shorePowerConnections != null) values.push(`${source.shorePowerConnections} ${t(source.shorePowerConnections === 1 ? itUI('connection') : itUI('connections'))}`);
   return values.length ? values.join(' · ') : t('Not specified');
 }
 async function resolveRequestBerth(request, clientId) {
@@ -365,7 +366,7 @@ async function resolveRequestBerth(request, clientId) {
 
 function requestStatusLabel(request) {
   const status = String(request.status || 'NEW').toUpperCase();
-  if (status === 'APPROVED' && request.approvedBookingUuid) return getLanguage() === 'ar' ? 'تم الحجز' : 'Booked';
+  if (status === 'APPROVED' && request.approvedBookingUuid) return getLanguage() === 'ar' ? 'تم الحجز' : t('Booked');
   if (status === 'AWAITING_OWNER') return t('Awaiting owner agreement');
   return t(status);
 }

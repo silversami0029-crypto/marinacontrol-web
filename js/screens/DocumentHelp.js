@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DocumentHelp.js
 
@@ -16,10 +17,10 @@ export function showDocumentHelp() {
 
       <div class="help-section-title">${tr("How to import")}</div>
 
-      ${step('1', 'Template', 'Download the sample CSV template to see the correct format')}
-      ${step('2', 'Fill in', 'Edit the CSV with your document details (name, type, expiry date, notes, file path)')}
-      ${step('3', 'Select', 'Select the CSV file from your device to import')}
-      ${step('4', 'Confirm', 'Review any errors and confirm the import')}
+      ${step('1', itUI('Template'), itUI('Download the sample CSV template to see the correct format'))}
+      ${step('2', itUI('Fill in'), itUI('Edit the CSV with your document details (name, type, expiry date, notes, file path)'))}
+      ${step('3', itUI('Select'), itUI('Select the CSV file from your device to import'))}
+      ${step('4', itUI('Confirm'), itUI('Review any errors and confirm the import'))}
 
       <div class="help-divider"></div>
 

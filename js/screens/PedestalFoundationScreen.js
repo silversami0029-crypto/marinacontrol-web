@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import {showPedestalInvoicePreview} from './PedestalInvoicePreviewSheet.js';
 import {store} from '../store.js';
 import {getLocale} from '../i18n.js';
@@ -38,7 +39,7 @@ const words = {
   'This records a test workflow only. No real staff assignment or notification is sent.':
     'يُسجل هذا مساراً تجريبياً فقط. لا يتم تعيين موظفين فعليين أو إرسال إشعارات.',
 };
-export function pedestalLabel(en) {return getLocale().startsWith('ar') ? words[en] || en : en;}
+export function pedestalLabel(en) {return getLocale().startsWith('ar') ? words[en] || en : itUI(en);}
 const key = () => crypto.randomUUID();
 
 export function mountPedestalFoundationScreen() {
@@ -76,18 +77,18 @@ export function mountPedestalFoundationScreen() {
         ${berths.map(b => `<option value="${esc(b.docId)}" ${b.docId === selectedBerth?'selected':''}>${esc(b.label)}</option>`).join('')}</select></label>
         <button type="button" id="psStart" ${busy || !berths.length || pending ? 'disabled':''}>${esc(L('Start New Test'))}</button>
         ${!berths.length && !busy && !failure ? `<p>${esc(L('No berths available in this marina.'))}</p>`:''}
-        ${truncated ? '<p>First 1,000 berths shown.</p>':''}</div>
+        ${truncated ? `<p>${itUI("First 1,000 berths shown.")}</p>`:''}</div>
       ${s ? `
       <div class="ps-panel ps-overview"><h2>${esc(L('Berth'))}: ${esc(session.berthLabel)}</h2>
         
         <div class="ps-grid"><div><small>${esc(L('Connection'))}</small><strong>${esc(L(s.connection))}</strong></div>
-        <div><small>${esc(L('Equipment'))}</small><strong>${esc(L(open ? 'Fault reported':'No open fault reported'))}</strong></div>
+        <div><small>${esc(L('Equipment'))}</small><strong>${esc(L(open ? itUI('Fault reported'):itUI('No open fault reported')))}</strong></div>
         <div><small>${esc(L('Last contact'))}</small><strong>${esc(stamp(s.lastContactAt))}</strong></div></div>
         
       </div>
       <div class="ps-grid">${['electricity','water'].map(type => {
         const meter = s[type], utility = type.toUpperCase();
-        return `<div class="ps-panel"><h2>${esc(L(type === 'electricity'?'Electricity':'Water'))}</h2>
+        return `<div class="ps-panel"><h2>${esc(L(type === 'electricity'?itUI('Electricity'):itUI('Water')))}</h2>
           
           <p>${esc(L('Meter reading'))}: <strong>${meter.value == null ? '—':esc(number(meter.value))} ${esc(meter.unit)}</strong></p>
           <p>${esc(L('Consumption in this test'))}: <strong>${esc(number(meter.consumption))} ${esc(meter.unit)}</strong></p>
@@ -123,7 +124,7 @@ export function mountPedestalFoundationScreen() {
       <details class="ps-panel"><summary>${esc(L('Recent test events'))} · ${esc(number(session.eventCount))}</summary>
         <div class="ps-actions"><button id="psRefresh" ${busy?'disabled':''}>${esc(L('Refresh Test'))}</button>
         <button id="psReplay" ${busy || pending || !lastEvent?'disabled':''}>${esc(L('Replay Last Event'))}</button></div>
-        <ol class="ps-events">${[...session.events].reverse().map(e => `<li><strong>${esc(L(e.action))}</strong> ${esc(e.utilityType || '')} ${e.value == null?'':esc(number(e.value))}<br><small>${esc(stamp(e.recordedAt))}</small><br><code dir="ltr">${esc(e.eventId)}</code></li>`).join('')}</ol>
+        <ol class="ps-events">${[...session.events].reverse().map(e => `<li><strong>${esc(L(e.action))}</strong> ${esc(itUI(e.utilityType || ''))} ${e.value == null?'':esc(number(e.value))}<br><small>${esc(stamp(e.recordedAt))}</small><br><code dir="ltr">${esc(e.eventId)}</code></li>`).join('')}</ol>
       </details>`:''}`}`;
     root.querySelector('#psBack').onclick = () => {location.hash = '#/berths';};
     root.querySelector('#psHelp').onclick = showHelp;
@@ -145,7 +146,7 @@ export function mountPedestalFoundationScreen() {
       const snapshot = session;
       button.disabled = true;
       try {await showPedestalInvoicePreview(snapshot, () => active() && session === snapshot);}
-      catch (error) {if (active()) {failure = true; status = error.message || 'Unable to preview test invoice.';render();}}
+      catch (error) {if (active()) {failure = true; status = error.message || itUI('Unable to preview test invoice.');render();}}
       finally {if (button.isConnected) button.disabled = busy || !!pending;}
     });
     root.querySelector('#psReplay')?.addEventListener('click', () => run({name:'applyPedestalTestEvent',args:{sessionId:session.sessionId,event:lastEvent}}));
@@ -178,14 +179,14 @@ export function mountPedestalFoundationScreen() {
     const backdrop = document.createElement('div'); backdrop.className = 'help-backdrop';
     const dialog = document.createElement('div'); dialog.className = 'help-dialog'; dialog.role = 'dialog';
     dialog.setAttribute('aria-modal','true'); dialog.setAttribute('aria-label',L('Pedestal Simulator'));
-    const paragraph = (en,ar) => `<p>${esc(getLocale().startsWith('ar')?ar:en)}</p>`;
+    const paragraph = (en,ar) => `<p>${esc(getLocale().startsWith('ar')?ar:itUI(en))}</p>`;
     dialog.innerHTML = `<div class="help-scroll"><div class="help-pill">${esc(L('Pedestal Simulator'))}</div>
-      ${paragraph('This is a vendor-neutral test foundation. No manufacturer API or hardware control is connected.','هذا أساس تجريبي مستقل عن المورد. لا توجد واجهة برمجية لمصنع أو تحكم بالأجهزة.')}
-      ${paragraph('Choose a berth and start a test. Enter 1,000 kWh, then 1,025 kWh: the test consumption becomes 25 kWh. Water uses litres and its own meter.','اختر رصيفاً وابدأ اختباراً. أدخل 1000 ثم 1025 كيلوواط ساعة: يصبح الاستهلاك التجريبي 25 كيلوواط ساعة. تستخدم المياه اللترات وعدّاداً منفصلاً.')}
-      ${paragraph('Report a fault, record an inspection, assign a test repair label and record completion. These steps never create live inspections, tasks or staff notifications.','أبلغ عن عطل وسجّل فحصاً وعيّن اسماً تجريبياً للإصلاح وسجّل الإكمال. لا تُنشئ هذه الخطوات فحوصات أو مهام أو إشعارات فعلية.')}
-      ${paragraph('Replay the last event to demonstrate duplicate protection. Offline records communication loss; a heartbeat restores communication but does not resolve a fault.','أعد إرسال الحدث الأخير لإظهار منع التكرار. يسجل عدم الاتصال فقدان التواصل؛ وتستعيد إشارة الاتصال التواصل دون إغلاق العطل.')}
-      ${paragraph('Meter decreases are rejected. Start a new test for a meter reset. Each test permits 100 events and displays the most recent 30. Elapsed time measures report-to-resolution in this test, not technician labour.','تُرفض القراءات المتناقصة. ابدأ اختباراً جديداً عند إعادة ضبط العداد. يسمح كل اختبار بمئة حدث ويعرض آخر ثلاثين. تقيس المدة وقت الإبلاغ إلى الحل في الاختبار، وليست ساعات عمل الفني.')}
-      ${paragraph('Real integrations will require supplier access, device registration and validation. Live billing will also need readings aligned with vessel berth-assignment intervals.','تتطلب عمليات التكامل الفعلية وصولاً من المورد وتسجيل الأجهزة والتحقق. وتتطلب الفوترة الفعلية مواءمة القراءات مع فترات تخصيص الرصيف للسفن.')}
+      ${paragraph(itUI('This is a vendor-neutral test foundation. No manufacturer API or hardware control is connected.'),'هذا أساس تجريبي مستقل عن المورد. لا توجد واجهة برمجية لمصنع أو تحكم بالأجهزة.')}
+      ${paragraph(itUI('Choose a berth and start a test. Enter 1,000 kWh, then 1,025 kWh: the test consumption becomes 25 kWh. Water uses litres and its own meter.'),'اختر رصيفاً وابدأ اختباراً. أدخل 1000 ثم 1025 كيلوواط ساعة: يصبح الاستهلاك التجريبي 25 كيلوواط ساعة. تستخدم المياه اللترات وعدّاداً منفصلاً.')}
+      ${paragraph(itUI('Report a fault, record an inspection, assign a test repair label and record completion. These steps never create live inspections, tasks or staff notifications.'),'أبلغ عن عطل وسجّل فحصاً وعيّن اسماً تجريبياً للإصلاح وسجّل الإكمال. لا تُنشئ هذه الخطوات فحوصات أو مهام أو إشعارات فعلية.')}
+      ${paragraph(itUI('Replay the last event to demonstrate duplicate protection. Offline records communication loss; a heartbeat restores communication but does not resolve a fault.'),'أعد إرسال الحدث الأخير لإظهار منع التكرار. يسجل عدم الاتصال فقدان التواصل؛ وتستعيد إشارة الاتصال التواصل دون إغلاق العطل.')}
+      ${paragraph(itUI('Meter decreases are rejected. Start a new test for a meter reset. Each test permits 100 events and displays the most recent 30. Elapsed time measures report-to-resolution in this test, not technician labour.'),'تُرفض القراءات المتناقصة. ابدأ اختباراً جديداً عند إعادة ضبط العداد. يسمح كل اختبار بمئة حدث ويعرض آخر ثلاثين. تقيس المدة وقت الإبلاغ إلى الحل في الاختبار، وليست ساعات عمل الفني.')}
+      ${paragraph(itUI('Real integrations will require supplier access, device registration and validation. Live billing will also need readings aligned with vessel berth-assignment intervals.'),'تتطلب عمليات التكامل الفعلية وصولاً من المورد وتسجيل الأجهزة والتحقق. وتتطلب الفوترة الفعلية مواءمة القراءات مع فترات تخصيص الرصيف للسفن.')}
       </div><div class="help-actions"><button class="help-gotit">${esc(L('Got it'))}</button></div>`;
     (document.getElementById('modalRoot') || document.body).append(backdrop,dialog);
     requestAnimationFrame(() => {backdrop.classList.add('is-open');dialog.classList.add('is-open');});

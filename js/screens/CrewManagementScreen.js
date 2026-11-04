@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/CrewManagementScreen.js
 import { store } from '../store.js';
@@ -138,7 +139,7 @@ function subscribeToCrew() {
     document.getElementById('cmList').innerHTML =
       `<div class="boats-empty">
          <h2>${tr("Couldn't load crew")}</h2>
-         <p>${err.message || 'Permission denied.'}</p>
+         <p>${err.message || itUI('Permission denied.')}</p>
        </div>`;
   });
 }
@@ -172,10 +173,10 @@ function renderList() {
       <div class="cm-avatar">${escapeHtml(computeInitials(c.name))}</div>
       <div class="cm-info">
         <div class="cm-name">${escapeHtml(c.name)}</div>
-        ${c.role ? `<div class="cm-role">${escapeHtml(c.role)}</div>` : ''}
+        ${c.role ? `<div class="cm-role">${escapeHtml(tr(c.role))}</div>` : ''}
         ${c.email ? `<div class="cm-email">${escapeHtml(c.email)}</div>` : ''}
         ${c.notes ? `<div class="cm-notes">${escapeHtml(c.notes)}</div>` : ''}
-        ${c.status ? `<div class="cm-status">${escapeHtml(c.status)}</div>` : ''}
+        ${c.status ? `<div class="cm-status">${escapeHtml(itUI(c.status))}</div>` : ''}
       </div>
       <button class="cm-kebab" data-crew-menu="${c.id}" aria-label="${tr("Menu")}">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
@@ -239,7 +240,7 @@ function showCrewDetail(member) {
   
 <div class="sheet-title" style="width:100%;box-sizing:border-box;padding:0 48px;text-align:center;">${escapeHtml(member.name)}</div>
 
-  <button type="button" id="iv-close" aria-label="Close invoice sheet"
+  <button type="button" id="iv-close" aria-label="${itUI("Close invoice sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -250,8 +251,8 @@ function showCrewDetail(member) {
 </div>
 
     <div class="cm-detail-body">
-      <div class="bkr-detail-row"><span>${tr("Role")}</span><b>${escapeHtml(member.role || 'N/A')}</b></div>
-      <div class="bkr-detail-row"><span>${tr("Email")}</span><b>${escapeHtml(member.email || 'N/A')}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Role")}</span><b>${escapeHtml(tr(member.role || itUI('N/A')))}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Email")}</span><b>${escapeHtml(member.email || itUI('N/A'))}</b></div>
       <div class="bkr-detail-row"><span>${tr("Joined")}</span><b>${escapeHtml(joined)}</b></div>
       ${member.notes ? `<div class="bkr-detail-row"><span>${tr("Notes")}</span><b>${escapeHtml(member.notes)}</b></div>` : ''}
     </div>

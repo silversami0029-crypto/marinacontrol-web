@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 // js/ui/confirm.js
 // Delete confirmation bottom sheet — mirrors bottomsheet_delete_boat_confirmation.xml
 
@@ -57,15 +58,15 @@ export function confirmSheet(opts) {
 
       <div class="confirm-warn-circle">${actionIcon || WARN_ICON}</div>
 
-      <div class="confirm-title">${escapeHtml(title)}</div>
-      <div class="confirm-message">${escapeHtml(message)}</div>
+      <div class="confirm-title">${escapeHtml(itUI(title))}</div>
+      <div class="confirm-message">${escapeHtml(itUI(message))}</div>
 
       <div class="confirm-actions">
         <button class="confirm-btn confirm-btn--cancel" type="button">
-          ${escapeHtml(cancelText)}
+          ${escapeHtml(itUI(cancelText))}
         </button>
         <button class="confirm-btn confirm-btn--confirm" type="button">
-          ${actionIcon || TRASH_ICON}<span>${escapeHtml(confirmText)}</span>
+          ${actionIcon || TRASH_ICON}<span>${escapeHtml(itUI(confirmText))}</span>
         </button>
       </div>
     `;

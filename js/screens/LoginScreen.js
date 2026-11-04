@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/LoginScreen.js
 // Mirrors activity_login.xml + LoginActivity.handleSignIn()
@@ -65,7 +66,7 @@ export function mountLoginScreen() {
         <button type="button" class="login-secondary" id="joinBtn">${t("Join Existing Marina")}</button>
 
        <p class="login-terms">${t("By continuing, you agree to the")}<br>
-  <a href="#" onclick="return false;">${t("Terms of Use")}</a>${t("and")}<a href="#" onclick="return false;">${t("Privacy Policy")}</a>
+  <a href="#" onclick="return false;">${t("Terms of Use")}</a> ${t("and")} <a href="#" onclick="return false;">${t("Privacy Policy")}</a>
 </p>
       </div>
     </div>
@@ -97,12 +98,12 @@ function wireLoginForm() {
     const e = email.value.trim();
     if (!e) {
       email.focus();
-      showErr('Enter your email address first.');
+      showErr(itUI('Enter your email address first.'));
       return;
     }
     try {
       await resetPassword(e);
-      showErr('Password reset email sent.', 'ok');
+      showErr(itUI('Password reset email sent.'), 'ok');
     } catch (err) {
       showErr(friendlyError(err));
     }
@@ -110,7 +111,7 @@ function wireLoginForm() {
 
   // Join marina (stub for now)
   join.addEventListener('click', () => {
-    showErr('Join by invite code coming soon.', 'ok');
+    showErr(itUI('Join by invite code coming soon.'), 'ok');
   });
 
   // Submit
@@ -121,8 +122,8 @@ function wireLoginForm() {
     const e1 = email.value.trim();
     const p1 = password.value;
 
-    if (!e1) { email.focus();  showErr('Email is required.'); return; }
-    if (!p1) { password.focus(); showErr('Password is required.'); return; }
+    if (!e1) { email.focus();  showErr(itUI('Email is required.')); return; }
+    if (!p1) { password.focus(); showErr(itUI('Password is required.')); return; }
 
     setLoading(true);
 

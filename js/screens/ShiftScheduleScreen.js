@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ShiftScheduleScreen.js
 import { store } from '../store.js';
@@ -79,7 +80,7 @@ export async function mountShiftScheduleScreen() {
     </div>
 
     <div class="sh-day-head">
-      ${DAY_LABELS.map(d => `<div class="sh-day-head-cell">${d}</div>`).join('')}
+      ${DAY_LABELS.map(d => `<div class="sh-day-head-cell">${tr(d)}</div>`).join('')}
     </div>
 
     <div class="sh-body" id="shBody">
@@ -191,7 +192,7 @@ function subscribeToShifts() {
     console.error('[shift] listen failed', err);
     const body = document.getElementById('shBody');
     if (body) {
-      body.innerHTML = `<div class="boats-empty"><h2>${tr("Couldn't load shifts")}</h2><p>${escapeHtml(err.message || 'Permission denied.')}</p></div>`;
+      body.innerHTML = `<div class="boats-empty"><h2>${tr("Couldn't load shifts")}</h2><p>${escapeHtml(err.message || itUI('Permission denied.'))}</p></div>`;
     }
   });
 }
@@ -216,7 +217,7 @@ function renderGrid() {
         return `
           <button class="sh-cell is-assigned" data-ts="${ts}" data-shift="${shiftType}">
             <div class="sh-cell-name">${escapeHtml(assignment.crewName || '—')}</div>
-            <div class="sh-cell-role">(${escapeHtml(assignment.role || '')})</div>
+            <div class="sh-cell-role">(${escapeHtml(tr(assignment.role || ''))})</div>
           </button>
         `;
       }
@@ -229,7 +230,7 @@ function renderGrid() {
 
     return `
       <div class="sh-row-wrap">
-        <div class="sh-row-title">${shiftType}</div>
+        <div class="sh-row-title">${tr(shiftType)}</div>
         <div class="sh-row">${cells}</div>
       </div>
     `;

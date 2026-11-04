@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 // js/ui/toast.js
 // Small pill toast, bottom-center — mirrors Android Toast
 
@@ -14,7 +15,7 @@ export function toast(message, opts = {}) {
 
   const el = document.createElement('div');
   el.className = `app-toast app-toast--${kind}`;
-  el.textContent = message;
+  el.textContent = itUI(message);
   document.body.appendChild(el);
   current = el;
 

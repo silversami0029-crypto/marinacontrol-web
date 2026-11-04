@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/SafetyScreen.js
 import { store } from '../store.js';
@@ -244,7 +245,7 @@ function subscribeToSafety(clientId) {
     document.getElementById('sfList').innerHTML =
       `<div class="boats-empty">
          <h2>${tr("Couldn't load safety items")}</h2>
-         <p>${escapeHtml(err.message || 'Permission denied.')}</p>
+         <p>${escapeHtml(err.message || itUI('Permission denied.'))}</p>
        </div>`;
   });
 }

@@ -1,3 +1,5 @@
+import { italianUI as itUI } from './i18n.js';
+import { mountUSafeScreen, unmountUSafeScreen } from './screens/USafeScreen.js';
 import { mountYardStorageScreen, unmountYardStorageScreen } from './screens/YardStorageScreen.js';
 import { mountProceduresScreen, unmountProceduresScreen } from './screens/ProceduresScreen.js';
 import { mountEditCustomerScreen, unmountEditCustomerScreen } from './screens/EditCustomerScreen.js';
@@ -42,6 +44,7 @@ initLanguage();
 const PROTECTED = ['/procedures', '/home', '/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/edit-customer','/client-360','/notifications'];
 
 const routes = {
+  '/usafe': mountUSafeScreen,
   '/home':             mountHomeScreen,
   '/login':            mountLoginScreen,
   '/boats':            mountBoatsScreen,
@@ -79,7 +82,7 @@ function renderStub(name) {
   showChrome(true);
   document.getElementById('screen').innerHTML =
     `<div style="padding:32px;color:var(--color-text-secondary);
-                 text-align:center;">${name} — coming soon</div>`;
+                 text-align:center;">${name} ${itUI("— coming soon")}</div>`;
 }
 
 function showChrome(on) {
@@ -107,6 +110,7 @@ function navigate() {
     return;
   }
 
+  unmountUSafeScreen();
   unmountYardStorageScreen();
   unmountProceduresScreen();
   unmountHomeScreen();
@@ -210,6 +214,7 @@ export async function switchMarina(clientId, destinationRoute = null) {
 async function bootstrapUser(firebaseUser) {
   const generation = ++sessionGeneration;
   authReady = false;
+  unmountUSafeScreen();
   unmountYardStorageScreen();
   unmountProceduresScreen();
   unmountHomeScreen();
@@ -223,7 +228,7 @@ async function bootstrapUser(firebaseUser) {
   store.marinas = [];
   store.marinaSwitching = false;
   applyMarina(null);
-  document.getElementById('screen').textContent = 'Loading…';
+  document.getElementById('screen').textContent = itUI('Loading…');
   if (!firebaseUser) { authReady = true; return; }
   try {
     const profile = await loadUserProfile(firebaseUser);

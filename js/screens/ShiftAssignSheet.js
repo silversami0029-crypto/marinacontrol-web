@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ShiftAssignSheet.js
 
@@ -112,7 +113,7 @@ export function showShiftAssignSheet({
                           color:var(--color-text-secondary);
                           font-weight:400;
                         ">
-                          — ${escapeHtml(crew.role)}
+                          — ${escapeHtml(itUI(crew.role))}
                         </span>
                       `
                       : ''
@@ -362,8 +363,8 @@ export function showShiftAssignSheet({
               : 'CREATED',
           title:
             existing
-              ? 'Shift reassigned'
-              : 'Shift assigned',
+              ? itUI('Shift reassigned')
+              : itUI('Shift assigned'),
           detail:
             `${pickedCrew.name} (${pickedRole})`
         });
@@ -372,8 +373,8 @@ export function showShiftAssignSheet({
 
         toast(
           existing
-            ? 'Shift reassigned'
-            : 'Shift assigned',
+            ? itUI('Shift reassigned')
+            : itUI('Shift assigned'),
           { kind: 'success' }
         );
       } catch (error) {

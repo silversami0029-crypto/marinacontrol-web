@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import {mountEditableBerthMap} from './BerthCustomMap.js';
 // Shared plan mapped by berth number; records remain scoped to the active client.
 const PLAN_URL = new URL('../../assets/marina-pier-plan.jpg', import.meta.url).href;
@@ -208,7 +209,7 @@ function mountLegacyBerthPierMap(host, { clientId, t, onOpen }) {
       const booked = berth && !berth.dateProjection && status === 'AVAILABLE' && String(berth.activeBooking?.status || '').toUpperCase() === 'CONFIRMED';
       const colour = !berth ? '#737D89' : booked ? '#3b82f6' : ({AVAILABLE:'#22c55e',OCCUPIED:'#ef4444',MAINTENANCE:'#f59e0b'}[status] || '#737D89');
       const group = document.createElementNS(NS, 'g');
-      const label = `${slot.name} · ${t(booked ? 'Booked' : (status || 'No berth record'))}${berth?.assignedBoatName || berth?.activeBooking?.vesselName ? ` · ${berth.assignedBoatName || berth.activeBooking.vesselName}` : ''}`;
+      const label = `${slot.name} · ${t(booked ? itUI('Booked') : (status || itUI('No berth record')))}${berth?.assignedBoatName || berth?.activeBooking?.vesselName ? ` · ${berth.assignedBoatName || berth.activeBooking.vesselName}` : ''}`;
       if (berth) {
         group.setAttribute('class', 'pier-map-slot');
         group.setAttribute('tabindex', '0');

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { savedCurrency, totalsText } from '../util/BillingCurrency.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/Client360Screen.js
@@ -212,7 +213,7 @@ export async function mountClient360Screen() {
     document.getElementById('c360Body').innerHTML = `
       <div class="boats-empty">
         <h2>${tr("Couldn't load client view")}</h2>
-        <p>${escapeHtml(err.message || 'Unknown error')}</p>
+        <p>${escapeHtml(err.message || itUI('Unknown error'))}</p>
       </div>
     `;
   }
@@ -563,14 +564,14 @@ function buildAlerts() {
       const days = Math.floor((now - due) / (24 * 60 * 60 * 1000));
       alerts.push({
         kind: 'critical',
-        text: `${m.type} overdue by ${days} ${days === 1 ? 'day' : 'days'}`,
+        text: `${m.type} overdue by ${days} ${days === 1 ? 'day' : itUI('days')}`,
         boat: m.boatName
       });
     } else if (due - now <= 7 * 24 * 60 * 60 * 1000) {
       const days = Math.floor((due - now) / (24 * 60 * 60 * 1000));
       alerts.push({
         kind: 'warning',
-        text: `${m.type} due in ${days} ${days === 1 ? 'day' : 'days'}`,
+        text: `${m.type} due in ${days} ${days === 1 ? 'day' : itUI('days')}`,
         boat: m.boatName
       });
     }
@@ -584,7 +585,7 @@ function buildAlerts() {
       : 0;
     alerts.push({
       kind: 'critical',
-      text: `Invoice ${inv.invoiceNumber} overdue${days > 0 ? ` by ${days} ${days === 1 ? 'day' : 'days'}` : ''}`,
+      text: `Invoice ${inv.invoiceNumber} overdue${days > 0 ? ` by ${days} ${days === 1 ? 'day' : itUI('days')}` : ''}`,
       boat: inv.boatName
     });
   }
@@ -598,7 +599,7 @@ function buildAlerts() {
       const days = Math.floor((s.expiryDate - now) / (24 * 60 * 60 * 1000));
       alerts.push({
         kind: 'warning',
-        text: `${s.title} expires in ${days} ${days === 1 ? 'day' : 'days'}`,
+        text: `${s.title} expires in ${days} ${days === 1 ? 'day' : itUI('days')}`,
         boat: s.boatName
       });
     }
@@ -613,7 +614,7 @@ function buildAlerts() {
       const days = Math.floor((d.expiryDate - now) / (24 * 60 * 60 * 1000));
       alerts.push({
         kind: 'warning',
-        text: `${d.name} expires in ${days} ${days === 1 ? 'day' : 'days'}`,
+        text: `${d.name} expires in ${days} ${days === 1 ? 'day' : itUI('days')}`,
         boat: d.boatName
       });
     }
@@ -654,7 +655,7 @@ function buildAlerts() {
     if (prio === 'OVERDUE' || prio === 'CRITICAL') {
       alerts.push({
         kind: 'critical',
-        text: `${t.title} — ${prio === 'OVERDUE' ? tr('overdue') : 'critical priority'}`,
+        text: `${t.title} — ${prio === 'OVERDUE' ? tr('overdue') : itUI('critical priority')}`,
         boat: t.boatName
       });
       continue;
@@ -666,10 +667,10 @@ function buildAlerts() {
     const soon = 3 * 24 * 60 * 60 * 1000;
     if (due < now) {
       const days = Math.floor((now - due) / (24 * 60 * 60 * 1000));
-      alerts.push({ kind: 'critical', text: `${t.title} overdue by ${days} ${days === 1 ? 'day' : 'days'}`, boat: t.boatName });
+      alerts.push({ kind: 'critical', text: `${t.title} overdue by ${days} ${days === 1 ? 'day' : itUI('days')}`, boat: t.boatName });
     } else if (due - now <= soon) {
       const days = Math.floor((due - now) / (24 * 60 * 60 * 1000));
-      alerts.push({ kind: 'warning', text: `${t.title} due in ${days} ${days === 1 ? 'day' : 'days'}`, boat: t.boatName });
+      alerts.push({ kind: 'warning', text: `${t.title} due in ${days} ${days === 1 ? 'day' : itUI('days')}`, boat: t.boatName });
     }
   }
 
@@ -695,7 +696,7 @@ function renderClientCard(c) {
       </div>
       ${c.email ? `<div class="c360-line">${escapeHtml(c.email)}</div>` : ''}
       ${c.phone ? `<div class="c360-line">${escapeHtml(c.phone)}</div>` : ''}
-      ${since ? `<div class="c360-line c360-line-dim">Customer since ${escapeHtml(since)}</div>` : ''}
+      ${since ? `<div class="c360-line c360-line-dim">${itUI("Customer since")} ${escapeHtml(since)}</div>` : ''}
     </div>
   `;
 }
@@ -722,9 +723,9 @@ function renderBoatsCard() {
             <span class="c360-boat-name">${escapeHtml(b.name || tr('Unnamed'))}</span>
             ${b.isActive ? `<span class="c360-active-badge">${tr("ACTIVE")}</span>` : ''}
           </div>
-          <div class="c360-line">HIN: ${escapeHtml(b.hin || '—')}</div>
+          <div class="c360-line">${itUI("HIN:")} ${escapeHtml(b.hin || '—')}</div>
           <div class="c360-line c360-status-${statusClass(b.status)}">
-            ${tr("Status:" )} ${escapeHtml(b.status || 'Unknown')}
+            ${tr("Status:" )} ${escapeHtml(itUI(b.status || 'Unknown'))}
           </div>
         </div>
       `).join('')}
@@ -768,9 +769,9 @@ function renderBerthCard() {
   return `
     <div class="c360-card">
       <div class="c360-card-title">${tr("📍 Berth & Booking")}</div>
-      <div class="c360-line">Berth: ${escapeHtml((b.dockName || '') + ' ' + (b.berthNumber || ''))}</div>
-      ${arrived ? `<div class="c360-line">Arrived: ${escapeHtml(arrived)}</div>` : ''}
-      ${departure ? `<div class="c360-line">Departure: ${escapeHtml(departure)}</div>` : ''}
+      <div class="c360-line">${itUI("Berth:")} ${escapeHtml((b.dockName || '') + ' ' + (b.berthNumber || ''))}</div>
+      ${arrived ? `<div class="c360-line">${itUI("Arrived:")} ${escapeHtml(arrived)}</div>` : ''}
+      ${departure ? `<div class="c360-line">${itUI("Departure:")} ${escapeHtml(departure)}</div>` : ''}
     </div>
   `;
 }
@@ -811,7 +812,7 @@ function renderFinancialCard() {
           <div class="c360-fin-value" style="color:#4CAF50;">${escapeHtml(paid)}</div>
         </div>
       </div>
-      ${overdue.length > 0 ? `<div class="c360-alert-more" style="color:#FF4444;">Overdue: ${escapeHtml(totalsText(overdue))}</div>` : ''}
+      ${overdue.length > 0 ? `<div class="c360-alert-more" style="color:#FF4444;">${itUI("Overdue:")} ${escapeHtml(totalsText(overdue))}</div>` : ''}
     </div>
   `;
 }
@@ -835,7 +836,7 @@ function renderActivityCard() {
       timestamp: t,
       kind: completed ? 'ok' : 'warn',
       title: completed ? tr(`Maintenance completed: ${m.type}`) : tr(`Maintenance outstanding: ${m.type}`),
-      detail: completed ? '' : 'Action required',
+      detail: completed ? '' : itUI('Action required'),
       boat: m.boatName
     });
   }
@@ -848,7 +849,7 @@ function renderActivityCard() {
       timestamp: d.expiryDate,
       kind: expired ? 'err' : 'info',
       title: tr(`Document: ${d.name}`),
-      detail: expired ? 'Expired' : tr(`Expires ${formatShortDate(new Date(d.expiryDate).toISOString().slice(0,10))}`),
+      detail: expired ? itUI('Expired') : tr(`Expires ${formatShortDate(new Date(d.expiryDate).toISOString().slice(0,10))}`),
       boat: d.boatName
     });
   }
@@ -861,7 +862,7 @@ function renderActivityCard() {
       timestamp: s.expiryDate,
       kind: expired ? 'err' : 'info',
       title: tr(`Safety: ${s.title}`),
-      detail: expired ? 'Expired' : tr(`Expires ${formatShortDate(new Date(s.expiryDate).toISOString().slice(0,10))}`),
+      detail: expired ? itUI('Expired') : tr(`Expires ${formatShortDate(new Date(s.expiryDate).toISOString().slice(0,10))}`),
       boat: s.boatName
     });
   }
@@ -887,7 +888,7 @@ function renderActivityCard() {
     : events;
 
   if (!filtered.length) {
-    const msg = q ? tr(`No activity matches "${q}"`) : 'No activity recorded';
+    const msg = q ? tr(`No activity matches "${q}"`) : itUI('No activity recorded');
     return `
       <div class="c360-card">
         <div class="c360-card-title">${tr("📋 Recent Activity")}</div>
@@ -1059,21 +1060,21 @@ function renderSafetyCard() {
           : s.expiryDate < now ? 'err'
           : s.expiryDate <= cutoff ? 'warn'
           : 'ok';
-        const label = !s.expiryDate ? 'No expiry'
-          : s.expiryDate < now ? 'Expired'
-          : s.expiryDate <= cutoff ? 'Expiring soon'
-          : 'Valid';
+        const label = !s.expiryDate ? itUI('No expiry')
+          : s.expiryDate < now ? itUI('Expired')
+          : s.expiryDate <= cutoff ? itUI('Expiring soon')
+          : itUI('Valid');
         return `
           <div class="c360-activity-row">
             <div class="c360-activity-dot c360-dot-${cls}"></div>
             <div class="c360-activity-info">
-              <div class="c360-activity-title">${escapeHtml(s.title || 'Safety item')}</div>
-              <div class="c360-activity-meta">${escapeHtml(s.category)} · ${escapeHtml(s.boatName)} · ${label}</div>
+              <div class="c360-activity-title">${escapeHtml(s.title || itUI('Safety item'))}</div>
+              <div class="c360-activity-meta">${escapeHtml(itUI(s.category))} · ${escapeHtml(s.boatName)} · ${label}</div>
             </div>
           </div>
         `;
       }).join('')}
-      ${currentSafety.length > 5 ? `<div class="c360-alert-more">+${currentSafety.length - 5} more</div>` : ''}
+      ${currentSafety.length > 5 ? `<div class="c360-alert-more">+${currentSafety.length - 5} ${itUI("more")}</div>` : ''}
     </div>
   `;
 }
@@ -1112,21 +1113,21 @@ function renderDocumentsCard() {
           : d.expiryDate < now ? 'err'
           : d.expiryDate <= cutoff ? 'warn'
           : 'ok';
-        const label = !d.expiryDate ? 'No expiry'
-          : d.expiryDate < now ? 'Expired'
-          : d.expiryDate <= cutoff ? 'Expiring soon'
-          : 'Valid';
+        const label = !d.expiryDate ? itUI('No expiry')
+          : d.expiryDate < now ? itUI('Expired')
+          : d.expiryDate <= cutoff ? itUI('Expiring soon')
+          : itUI('Valid');
         return `
           <div class="c360-activity-row">
             <div class="c360-activity-dot c360-dot-${cls}"></div>
             <div class="c360-activity-info">
-              <div class="c360-activity-title">${escapeHtml(d.name || 'Document')}</div>
+              <div class="c360-activity-title">${escapeHtml(d.name || itUI('Document'))}</div>
               <div class="c360-activity-meta">${escapeHtml(tr(d.type))} · ${escapeHtml(d.boatName)} · ${label}</div>
             </div>
           </div>
         `;
       }).join('')}
-      ${currentDocuments.length > 5 ? `<div class="c360-alert-more">+${currentDocuments.length - 5} more</div>` : ''}
+      ${currentDocuments.length > 5 ? `<div class="c360-alert-more">+${currentDocuments.length - 5} ${itUI("more")}</div>` : ''}
     </div>
   `;
 }
@@ -1134,7 +1135,7 @@ function renderDocumentsCard() {
 
 function renderAlerts(alerts) {
   const hasCritical = alerts.some(a => a.kind === 'critical');
-  const title = hasCritical ? '🔴 Critical Alerts' : '🟡 Attention Alerts';
+  const title = hasCritical ? itUI('🔴 Critical Alerts') : itUI('🟡 Attention Alerts');
 
   return `
     <div class="c360-card c360-alerts ${hasCritical ? 'is-critical' : 'is-warning'}">
@@ -1146,7 +1147,7 @@ function renderAlerts(alerts) {
             <span>${escapeHtml(a.text)}${a.boat ? ` · ${escapeHtml(a.boat)}` : ''}</span>
           </div>
         `).join('')}
-        ${alerts.length > 6 ? `<div class="c360-alert-more">+${alerts.length - 6} more</div>` : ''}
+        ${alerts.length > 6 ? `<div class="c360-alert-more">+${alerts.length - 6} ${itUI("more")}</div>` : ''}
       </div>
     </div>
   `;
@@ -1173,13 +1174,13 @@ function renderEquipmentCard() {
           <div class="c360-activity-row">
             <div class="c360-activity-dot c360-dot-${cls}"></div>
             <div class="c360-activity-info">
-              <div class="c360-activity-title">${escapeHtml(e.manufacturer || 'Equipment')} ${e.model ? escapeHtml(e.model) : ''}</div>
+              <div class="c360-activity-title">${escapeHtml(e.manufacturer || itUI('Equipment'))} ${e.model ? escapeHtml(e.model) : ''}</div>
               <div class="c360-activity-meta">${escapeHtml(tr(e.type))} · ${escapeHtml(e.boatName)}</div>
             </div>
           </div>
         `;
       }).join('')}
-      ${currentEquipment.length > 5 ? `<div class="c360-alert-more">+${currentEquipment.length - 5} more</div>` : ''}
+      ${currentEquipment.length > 5 ? `<div class="c360-alert-more">+${currentEquipment.length - 5} ${itUI("more")}</div>` : ''}
     </div>
   `;
 }
@@ -1219,7 +1220,7 @@ function renderTasksCard() {
 
   return `
     <div class="c360-card">
-      <div class="c360-card-title">${tr("✅ Tasks")}<span style="color:var(--color-text-secondary);font-weight:400;font-size:13px;">(${open.length} open)</span></div>
+      <div class="c360-card-title">${tr("✅ Tasks")}<span style="color:var(--color-text-secondary);font-weight:400;font-size:13px;">(${open.length} ${itUI("open)")}</span></div>
       ${ranked.slice(0, 5).map(t => {
         const cls = taskPriorityClass(t.priority);
         const due = t.dueDate ? formatShortDate(t.dueDate) : '';
@@ -1228,12 +1229,12 @@ function renderTasksCard() {
             <div class="c360-activity-dot c360-dot-${cls}"></div>
             <div class="c360-activity-info">
               <div class="c360-activity-title">${escapeHtml(t.title)}</div>
-              <div class="c360-activity-meta">${escapeHtml(t.priority)}${t.category ? ' · ' + escapeHtml(t.category) : ''}${t.boatName ? ' · ' + escapeHtml(t.boatName) : ''}${due ? ' · Due ' + escapeHtml(due) : ''}</div>
+              <div class="c360-activity-meta">${escapeHtml(itUI(t.priority))}${t.category ? ' · ' + escapeHtml(t.category) : ''}${t.boatName ? ' · ' + escapeHtml(t.boatName) : ''}${due ? ' · Due ' + escapeHtml(due) : ''}</div>
             </div>
           </div>
         `;
       }).join('')}
-      ${ranked.length > 5 ? `<div class="c360-alert-more">+${ranked.length - 5} more</div>` : ''}
+      ${ranked.length > 5 ? `<div class="c360-alert-more">+${ranked.length - 5} ${itUI("more")}</div>` : ''}
     </div>
   `;
 }
@@ -1278,13 +1279,13 @@ function renderInventoryCard() {
           <div class="c360-activity-row">
             <div class="c360-activity-dot c360-dot-${st.cls}"></div>
             <div class="c360-activity-info">
-              <div class="c360-activity-title">${escapeHtml(e.name || 'Item')}</div>
-              <div class="c360-activity-meta">${escapeHtml(tr(e.category || '—'))} · ${escapeHtml(e.boatName)} · Qty ${e.quantity}${e.unit ? ' ' + escapeHtml(e.unit) : ''} (${st.label})</div>
+              <div class="c360-activity-title">${escapeHtml(e.name || itUI('Item'))}</div>
+              <div class="c360-activity-meta">${escapeHtml(tr(e.category || '—'))} · ${escapeHtml(e.boatName)} ${itUI("· Qty")} ${e.quantity}${e.unit ? ' ' + escapeHtml(e.unit) : ''} (${st.label})</div>
             </div>
           </div>
         `;
       }).join('')}
-      ${ranked.length > 5 ? `<div class="c360-alert-more">+${ranked.length - 5} more</div>` : ''}
+      ${ranked.length > 5 ? `<div class="c360-alert-more">+${ranked.length - 5} ${itUI("more")}</div>` : ''}
     </div>
   `;
 }

@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ChecklistHelp.js
 
@@ -16,10 +17,10 @@ export function showChecklistHelp() {
 
       <div class="help-section-title">${tr("What you can see")}</div>
 
-      ${step('1', 'Progress', 'How many items are complete out of the total')}
-      ${step('2', 'Results', 'Items passed vs. items that failed')}
-      ${step('3', 'Who completed', 'Name of the crew member who finished the checklist')}
-      ${step('4', 'Item detail', 'Tap a checklist to see the individual items and their results')}
+      ${step('1', itUI('Progress'), itUI('How many items are complete out of the total'))}
+      ${step('2', itUI('Results'), itUI('Items passed vs. items that failed'))}
+      ${step('3', itUI('Who completed'), itUI('Name of the crew member who finished the checklist'))}
+      ${step('4', itUI('Item detail'), itUI('Tap a checklist to see the individual items and their results'))}
 
       <div class="help-divider"></div>
 

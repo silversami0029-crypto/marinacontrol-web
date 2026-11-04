@@ -1,3 +1,4 @@
+import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DashboardScreen.js
 // Portfolio Dashboard — mirrors PortfolioDashboardFragment.java
@@ -313,7 +314,7 @@ function renderContext() {
     return;
   }
 
-  const scope = selectedCountry || 'All countries';
+  const scope = selectedCountry || itUI('All countries');
 
   element.textContent =
     `${scope} • ${visible.length} ` +
@@ -436,7 +437,7 @@ async function renderComparison() {
             await switchMarina(id, '/home');
           } catch (error) {
             console.error('[portfolio] marina navigation failed', error);
-            toast(tr(error.message || 'Could not open marina'), { kind: 'error' });
+            toast(tr(error.message || itUI('Could not open marina')), { kind: 'error' });
           } finally {
             row.disabled = false;
           }
