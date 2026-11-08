@@ -51,7 +51,7 @@ export function mountHomeScreen() {
     </div>
     <section class="mc-home-detail" hidden aria-live="polite"></section>
     <section class="mc-home-quick"><h2>${esc(t('Quick links'))}</h2><div class="mc-home-links">
-      ${[['/berths','Dock Walk'],['/boats','Boats'],['/booking-requests','Booking Requests'],['/operations-trends','Operations Trends']].map(([route,label]) => `<a href="#${route}">${esc(t(label))}<span aria-hidden="true">›</span></a>`).join('')}
+      ${[['/dock-walk','Dock Walk'],['/boats','Boats'],['/booking-requests','Booking Requests'],['/operations-trends','Operations Trends']].map(([route,label]) => `<a href="#${route}">${esc(t(label))}<span aria-hidden="true">›</span></a>`).join('')}
     </div></section>
   </section>`;
   const root = screen.querySelector('.mc-home');

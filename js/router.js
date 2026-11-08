@@ -1,3 +1,4 @@
+import { mountDockWalkScreen, unmountDockWalkScreen } from './screens/DockWalkScreen.js';
 import { italianUI as itUI } from './i18n.js';
 import { mountUSafeScreen, unmountUSafeScreen } from './screens/USafeScreen.js';
 import { mountYardStorageScreen, unmountYardStorageScreen } from './screens/YardStorageScreen.js';
@@ -51,6 +52,7 @@ const routes = {
   '/dashboard':        mountDashboardScreen,
   '/boat-dashboard':   mountBoatDashboardScreen,
   '/berths':           mountBerthsScreen,
+  '/dock-walk':        mountDockWalkScreen,
   '/yard-storage':     mountYardStorageScreen,
   '/booking-requests': mountBookingRequestsScreen,
   '/user-management':  mountUserManagementScreen,
@@ -110,6 +112,7 @@ function navigate() {
     return;
   }
 
+  unmountDockWalkScreen();
   unmountUSafeScreen();
   unmountYardStorageScreen();
   unmountProceduresScreen();
@@ -119,7 +122,7 @@ function navigate() {
   showChrome(route !== '/login');
 
   const isBoatDashboard = route === '/dashboard' && location.hash.includes('boatId=');
-  const highlightRoute  = isBoatDashboard ? '/boats' : route === '/edit-customer' ? '/customer-directory' : route;
+  const highlightRoute  = route === '/dock-walk' ? '/berths' : isBoatDashboard ? '/boats' : route === '/edit-customer' ? '/customer-directory' : route;
 
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.toggle('is-active', btn.dataset.route === highlightRoute);
@@ -214,6 +217,7 @@ export async function switchMarina(clientId, destinationRoute = null) {
 async function bootstrapUser(firebaseUser) {
   const generation = ++sessionGeneration;
   authReady = false;
+  unmountDockWalkScreen();
   unmountUSafeScreen();
   unmountYardStorageScreen();
   unmountProceduresScreen();

@@ -489,7 +489,7 @@ function escapeHtml(s) {
    ============================================================ */
 function openToolbarMenu() {
   showBerthToolbarMenu({
-    onDockWalk:        () => toast(tr('Dock Walk is available in the Android app')),
+    onDockWalk:        () => { location.hash = '#/dock-walk'; },
     onBookingRequests: () => { location.hash = '#/booking-requests'; },
     onImportCsv:       onImportCsv,
     onExportCsv:       onExportCsv,

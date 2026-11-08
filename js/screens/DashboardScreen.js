@@ -1,3 +1,4 @@
+import { countDockWalkIssues } from './DockWalkScreen.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DashboardScreen.js
@@ -68,7 +69,7 @@ export async function mountDashboardScreen() {
 
         <div class="pf-card" id="pfDockCard">
           <div class="pf-card-label">${tr("Dock Walk")}</div>
-          <div class="pf-card-value-sm" id="pfDockValue">0</div>
+          <div class="pf-card-value-sm" id="pfDockValue">—</div>
           <div class="pf-card-sub">${tr("issues found")}</div>
         </div>
       </div>
@@ -110,8 +111,18 @@ export async function mountDashboardScreen() {
 
   document
     .getElementById('pfDockCard')
-    .addEventListener('click', () => {
-      toast(tr('Dock Walk is available in the Android app'));
+    .addEventListener('click', async () => {
+      const marina = selectedMarinaId === -1 ? null : getVisibleMarinas()[0];
+      if (!marina || Number(marina.id) === store.activeClientId) {
+        location.hash = '#/dock-walk?issues=1';
+        return;
+      }
+      try {
+        const { switchMarina } = await import('../router.js');
+        await switchMarina(marina.id, '/dock-walk');
+      } catch (error) {
+        toast(error.message);
+      }
     });
 
   await loadData();
@@ -368,6 +379,8 @@ async function renderComparison() {
 
   const emptyElement =
     document.getElementById('pfEmpty');
+  const dockValue = document.getElementById('pfDockValue');
+  dockValue.textContent = '—';
 
   if (!visible.length) {
     listElement.innerHTML = '';
@@ -379,19 +392,21 @@ async function renderComparison() {
 
   const rows = await Promise.all(
     visible.map(async (marina) => {
-      const stats = await getMarinaStats(marina.id);
-
-      return {
-        marina,
-        stats,
-        issues: 0
-      };
+      const [stats, issues] = await Promise.all([
+        getMarinaStats(marina.id),
+        countDockWalkIssues(marina.id).catch(() => null)
+      ]);
+      return { marina, stats, issues };
     })
   );
 
+  if (!listElement.isConnected || visible.map(m => m.id).join() !== getVisibleMarinas().map(m => m.id).join()) return;
+  dockValue.textContent = rows.some(row => row.issues === null)
+    ? '—' : rows.reduce((total, row) => total + row.issues, 0);
+
   rows.sort((a, b) => {
     if (b.issues !== a.issues) {
-      return b.issues - a.issues;
+      return (b.issues ?? -1) - (a.issues ?? -1);
     }
 
     return a.marina.name.localeCompare(b.marina.name);
@@ -413,7 +428,7 @@ async function renderComparison() {
       <span class="pf-row-issues ${
         row.issues > 0 ? 'has-issues' : ''
       }">
-        ${row.issues}
+        ${row.issues ?? '—'}
       </span>
     </button>
 

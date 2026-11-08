@@ -86,7 +86,7 @@ async function openNotification(item) {
   else if (type.startsWith('INVENTORY')) location.hash = '#/inventory';
   else if (type.startsWith('EQUIPMENT')) location.hash = '#/equipment';
   else if (type.startsWith('DOCUMENT')) location.hash = '#/documents';
-  else if (type.startsWith('DOCK_WALK')) location.hash = '#/berths';
+  else if (type.startsWith('DOCK_WALK')) location.hash = '#/dock-walk';
   else location.hash = '#/maintenance';
 }
 
