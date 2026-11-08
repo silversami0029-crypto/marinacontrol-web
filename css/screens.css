@@ -5886,3 +5886,22 @@ body:not(.drawer-page-hidden) .bottomnav {
   font-size: 11px;
   cursor: pointer;
 }
+
+.dw-grid .berth-card {
+  position: relative;
+  padding-top: 32px;
+}
+
+.dw-grid .dw-card-actions button[data-options] {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  font-size: 20px;
+  line-height: 1;
+}

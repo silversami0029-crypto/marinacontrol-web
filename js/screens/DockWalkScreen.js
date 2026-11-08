@@ -37,6 +37,23 @@ export async function countDockWalkIssues(clientId) {
   return [...latest.values()].filter(record => faults(record).length).length;
 }
 
+// Android keeps these berth attachments on the device. The web copy is browser-local.
+function berthAttachment(key, operation, value) {
+  return new Promise((resolve, reject) => {
+    const open = indexedDB.open('marinacontrol-dock-walk', 1);
+    open.onupgradeneeded = () => open.result.createObjectStore('berth-media');
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const database = open.result;
+      const transaction = database.transaction('berth-media', operation === 'get' ? 'readonly' : 'readwrite');
+      const store = transaction.objectStore('berth-media');
+      const request = operation === 'put' ? store.put(value, key) : store[operation](key);
+      transaction.oncomplete = () => { database.close(); resolve(request.result); };
+      transaction.onabort = () => { database.close(); reject(transaction.error); };
+    };
+  });
+}
+
 export function unmountDockWalkScreen() { cleanup(); cleanup = () => {}; }
 
 export function mountDockWalkScreen() {
@@ -116,12 +133,14 @@ export function mountDockWalkScreen() {
         <div class="dw-card-actions">
           ${writable() ? `<button type="button" data-inspect>${label('Inspect')}</button>` : ''}
           <button type="button" data-history-open>${label('History')}</button>
+          <button type="button" data-options aria-label="${label('Inspection Options')}">⋮</button>
         </div>
       </article>`;
     }).join('') || `<div class="boats-empty">${label('No matching berths')}</div>`;
     list.querySelectorAll('[data-berth]').forEach(card => {
       const berth = filtered[Number(card.dataset.berth)];
       card.querySelector('[data-history-open]').onclick = () => berthSheet(berth);
+      card.querySelector('[data-options]').onclick = () => inspectionOptions(berth);
       const inspect = card.querySelector('[data-inspect]');
       if (inspect) inspect.onclick = () => { if (writable()) inspectionForm(berth); };
     });
@@ -166,6 +185,126 @@ export function mountDockWalkScreen() {
     const output = panel.querySelector('[role=status]');
     if (output) output.textContent = t('Unable to complete this action. Check access and try again.');
   };
+
+  const berthKey = berth => JSON.stringify([uid, clientId, berth.id]);
+
+  function inspectionOptions(berth) {
+    if (!current()) return;
+    const panel = sheet(t('Inspection Options'), row('Berth', berth.berthNumber) +
+      button('history', 'Inspection History') + button('photo', 'Photo') +
+      button('voice', 'Voice Note Options') + button('cctv', 'View CCTV'));
+    on(panel, 'history', () => berthSheet(berth));
+    on(panel, 'photo', () => showBerthMedia(berth, 'photo'));
+    on(panel, 'voice', () => showBerthMedia(berth, 'voice'));
+    on(panel, 'cctv', () => showCctv(berth));
+  }
+
+  async function showBerthMedia(berth, kind) {
+    const photo = kind === 'photo';
+    const title = photo ? 'Berth photo' : 'Voice Note Options';
+    const key = `${berthKey(berth)}:${kind}`;
+    const panel = sheet(t(title), row('Berth', berth.berthNumber) +
+      `<p>${label('Saved in this browser for your account.')}</p><div data-media></div>
+       <p role="status">${label('Loading...')}</p>` + button('back', 'Inspection Options'));
+    on(panel, 'back', () => inspectionOptions(berth));
+    const output = panel.querySelector('[role=status]');
+    try {
+      const file = await berthAttachment(key, 'get');
+      if (!current() || !panel.isConnected) return;
+      output.textContent = '';
+      const body = panel.querySelector('[data-media]');
+      if (file) {
+        const media = document.createElement(photo ? 'img' : 'audio');
+        const url = URL.createObjectURL(file);
+        const close = closeSheet;
+        closeSheet = () => { URL.revokeObjectURL(url); close(); };
+        // Also release the URL when the sheet's own Close button removes it.
+        const observer = new MutationObserver(() => {
+          if (panel.isConnected) return;
+          URL.revokeObjectURL(url);
+          observer.disconnect();
+        });
+        observer.observe(panel.parentNode, { childList: true });
+        media.src = url;
+        if (photo) { media.alt = t(title); media.style.maxWidth = '100%'; }
+        else { media.controls = true; media.style.maxWidth = '100%'; }
+        body.append(media);
+      } else body.textContent = t(photo ? 'No berth photo saved' : 'No voice note saved');
+
+      if (!writable()) return;
+      const form = document.createElement('form');
+      form.className = 'add-form';
+      form.innerHTML = `<label class="add-label">${label(file ? 'Replace attachment' : 'Add attachment')}
+        <input class="add-input" type="file" accept="${photo ? 'image/*' : 'audio/*'}" capture="${photo ? 'environment' : 'user'}" required>
+        </label><button class="add-save" type="submit">${label('Save')}</button>` +
+        (file ? button('delete', 'Delete') : '');
+      body.append(form);
+      const save = form.querySelector('[type=submit]');
+      const remove = form.querySelector('[data-action=delete]');
+      const change = async (operation, value) => {
+        if (!writable() || !panel.isConnected || save.disabled) return;
+        save.disabled = true;
+        if (remove) remove.disabled = true;
+        try {
+          await berthAttachment(key, operation, value);
+          if (current() && panel.isConnected) showBerthMedia(berth, kind);
+        } catch (err) { error(panel, err); }
+        finally { save.disabled = false; if (remove) remove.disabled = false; }
+      };
+      form.onsubmit = event => {
+        event.preventDefault();
+        const chosen = form.querySelector('input').files[0];
+        if (!chosen?.size || !chosen.type.startsWith(photo ? 'image/' : 'audio/') || chosen.size >= 10 * 1024 * 1024) {
+          output.textContent = t(photo ? 'Choose an image under 10 MB.' : 'Choose an audio file under 10 MB.');
+          return;
+        }
+        change('put', chosen);
+      };
+      if (remove) remove.onclick = () => {
+        if (writable() && confirm(t('Delete this berth attachment?'))) change('delete');
+      };
+    } catch (err) { error(panel, err); }
+  }
+
+  function showCctv(berth) {
+    const key = `marinacontrol.cctv:${berthKey(berth)}`;
+    const parseUrl = raw => {
+      try {
+        const url = new URL(raw);
+        return url.protocol === 'https:' && !url.username && !url.password ? url : null;
+      } catch { return null; }
+    };
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; }
+    catch { /* A missing or invalid local setting can be configured again. */ }
+    const url = parseUrl(saved.url);
+    const lastInspection = daily().find(record => record.berthId === berth.id);
+    const panel = sheet(t('View CCTV'), row('Berth', berth.berthNumber) + row('Dock', berth.dockName) +
+      row('Inspection time', dateText(lastInspection?.inspectionDate)) +
+      (url ? `<a class="sheet-item" href="${esc(url.href)}" target="_blank" rel="noopener noreferrer">${esc(saved.name || t('Open CCTV viewer'))}</a>` :
+        `<p>${label('No CCTV viewer configured in this browser.')}</p>`) +
+      (writable() ? `<form class="add-form">
+        <label class="add-label">${label('Camera name')}<input class="add-input" name="camera" value="${esc(saved.name)}"></label>
+        <label class="add-label">${label('HTTPS viewer link')}<input class="add-input" name="url" type="url" value="${esc(url?.href)}" required></label>
+        <button class="add-save" type="submit">${label('Save')}</button>
+      </form>` : '') + '<p role="status"></p>' + button('back', 'Inspection Options'));
+    on(panel, 'back', () => inspectionOptions(berth));
+    const form = panel.querySelector('form');
+    if (form) form.onsubmit = event => {
+      event.preventDefault();
+      if (!writable()) return;
+      const values = new FormData(form);
+      const viewer = parseUrl(values.get('url'));
+      if (!viewer) {
+        panel.querySelector('[role=status]').textContent = t('Enter a valid HTTPS viewer link.');
+        return;
+      }
+      try {
+        localStorage.setItem(key, JSON.stringify({ url: viewer.href, name: values.get('camera').trim() }));
+        showCctv(berth);
+      } catch (err) { error(panel, err); }
+    };
+  }
 
   function berthSheet(berth) {
     const history = historyFor(berth);
