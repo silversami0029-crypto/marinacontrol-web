@@ -1,3 +1,4 @@
+import { isFleetOpenMaintenance } from '../util/MaintenanceState.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/FleetScreen.js
@@ -226,7 +227,7 @@ screen.querySelector('#fleetComplianceCard')
     el.addEventListener('click', () => {
       const type = el.dataset.type;
       if (type === 'documents')        location.hash = '#/documents';
-      else if (type === 'maintenance') location.hash = '#/maintenance';
+      else if (type === 'maintenance') location.hash = '#/maintenance?scope=fleet-open';
       else if (type === 'safety')      location.hash = '#/safety';
       else if (type === 'equipment')   location.hash = '#/equipment';
       else if (type === 'inventory')   location.hash = '#/inventory';
@@ -261,15 +262,7 @@ async function loadFleetCounts() {
         let n = 0;
         snap.forEach(d => {
           const data = d.data();
-          if (src.filterIncomplete) {
-            const status = String(data.status || '').toUpperCase();
-            if (
-              data.completed ||
-              status === 'COMPLETED' ||
-              status === 'DEFERRED' ||
-              status === 'CANCELLED'
-            ) return;
-          }
+          if (src.filterIncomplete && !isFleetOpenMaintenance(data)) return;
           n++;
         });
         counts[type] = n;
@@ -338,8 +331,7 @@ async function computeFleetStatuses(clientId) {
     let overdue = 0, upcoming = 0;
     snap.forEach(d => {
       const x = d.data();
-      if (x.completed || x.status === 'COMPLETED') return;
-      if (x.status === 'DEFERRED' || x.status === 'CANCELLED') return;
+      if (!isFleetOpenMaintenance(x)) return;
       openMaintenance++;
       if (!x.date) return;
       const due = new Date(x.date + 'T00:00:00').getTime();

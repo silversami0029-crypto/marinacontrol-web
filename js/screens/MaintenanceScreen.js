@@ -1,6 +1,6 @@
 import { italianUI as itUI } from '../i18n.js';
 import {readYardWorkPackages,maintenanceScope,launchLabel} from '../util/YardWorkPackageApi.js';
-import { maintenanceColours, maintenanceVisible } from '../util/MaintenanceState.js';
+import { maintenanceColours, maintenanceVisible, isFleetOpenMaintenance } from '../util/MaintenanceState.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/MaintenanceScreen.js
 import { store } from '../store.js';
@@ -132,7 +132,15 @@ export function mountMaintenanceScreen() {
     renderList();
   });
 
-  resolveBoatAndSubscribe(urlBoatId);
+  if (params.get('scope') === 'fleet-open' && !urlBoatId && Number(store.activeClientId) > 0) {
+    currentBoatId = 0;
+    currentBoatName = '';
+    document.getElementById('mtPill').textContent = tr('Open maintenance');
+    document.getElementById('mtVisibility').closest('.mt-visibility').hidden = true;
+    subscribeToMaintenance(Number(store.activeClientId), 0, true);
+  } else {
+    resolveBoatAndSubscribe(urlBoatId);
+  }
 }
 
 /* ============================================================
@@ -199,7 +207,7 @@ async function resolveBoatAndSubscribe(urlBoatId) {
   subscribeToMaintenance(clientId, boatId);
 }
 
-function subscribeToMaintenance(clientId, boatId) {
+function subscribeToMaintenance(clientId, boatId, fleetOpen = false) {
   const q = query(
     collection(db, 'maintenance'),
     where('clientId', '==', Number(clientId))
@@ -242,6 +250,7 @@ function subscribeToMaintenance(clientId, boatId) {
         };
       })
       .filter(item => {
+        if (fleetOpen) return isFleetOpenMaintenance(item);
         const belongsToBoat = item.boatId && Number(item.boatId) === Number(boatId);
         if (!belongsToBoat) return false;
 

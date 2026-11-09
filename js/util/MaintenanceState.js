@@ -24,3 +24,10 @@ export function maintenanceStatusColour(item) {
   if (isMaintenanceCompleted(item)) return maintenanceColours.completed;
   return '';
 }
+
+// Fleet's open-work count and its drill-down use the same scope.
+export function isFleetOpenMaintenance(item) {
+  const status = String(item.status || '').trim().toUpperCase();
+  return maintenanceVisible(item, 'current') &&
+    !isMaintenanceCompleted(item) && !['DEFERRED', 'CANCELLED'].includes(status);
+}

@@ -24,6 +24,9 @@ export function showInvoicePaymentFoundation(inv) {
       <p id="pfValue"></p>
       <p id="pfWarning" style="color:#AEB6C1;"></p>
       <button type="button" id="pfTest" class="add-save" hidden>${label('Start Payment Test','بدء اختبار الدفع')}</button>
+      <button type="button" id="pfBitPay" class="add-save" hidden>${label('Create BitPay Sandbox Link','إنشاء رابط اختبار BitPay')}</button>
+      <a id="pfBitPayLink" target="_blank" rel="noopener noreferrer" hidden>${label('Open BitPay Sandbox Checkout','فتح صفحة اختبار BitPay')}</a>
+      <button type="button" id="pfBitPayCheck" class="add-save" hidden>${label('Check BitPay Test Status','تحقق من حالة اختبار BitPay')}</button>
       <p id="pfNote" style="color:#AEB6C1;">${label('Simulation only. The invoice status and balance stay unchanged.','محاكاة فقط. تبقى حالة الفاتورة ورصيدها دون تغيير.')}</p>
     </div>`;
   document.getElementById('modalRoot').append(backdrop, sheet);
@@ -38,6 +41,11 @@ export function showInvoicePaymentFoundation(inv) {
   sheet.querySelector('#pfClose').addEventListener('click',close);
   const status = sheet.querySelector('#pfStatus');
   const button = sheet.querySelector('#pfTest');
+  const bitPay = sheet.querySelector('#pfBitPay');
+  const bitPayLink = sheet.querySelector('#pfBitPayLink');
+  const bitPayCheck = sheet.querySelector('#pfBitPayCheck');
+  let bitPaySession = null;
+  let bitPayKey = null;
   const functions = getFunctions(getApp(), 'us-central1');
   const call = (name, data) => httpsCallable(functions, name)(data);
   const stillHere = () => !closed && Number(store.activeClientId) === clientId;
@@ -57,8 +65,38 @@ export function showInvoicePaymentFoundation(inv) {
       if (data.legacyCurrency) sheet.querySelector('#pfWarning').textContent =
         label('This existing invoice has no saved currency. GBP is assumed to match the current invoice screen. Confirm currency before enabling real payments.',
           'لا تحتوي هذه الفاتورة على عملة محفوظة. تم افتراض الجنيه الإسترليني لمطابقة شاشة الفواتير الحالية. تأكد من العملة قبل تفعيل الدفع الفعلي.');
+      bitPay.hidden = !data.bitPaySandboxAvailable || !['PENDING','OVERDUE'].includes(data.invoiceStatus.toUpperCase());
       button.hidden = !data.testEnabled || !['PENDING','OVERDUE'].includes(data.invoiceStatus.toUpperCase());
     }).catch(error => {if(stillHere()) showError(error);});
+  bitPay.onclick = async () => {
+    if (!stillHere() || bitPay.disabled) return;
+    bitPay.disabled = true;
+    try {
+      bitPayKey ||= crypto.randomUUID();
+      const {data} = await call('createBitPaySandboxCheckout', {clientId, invoiceDocId: inv._docId, idempotencyKey: bitPayKey});
+      if (!stillHere()) return;
+      const url = new URL(data.checkoutUrl);
+      if (url.origin !== 'https://test.bitpay.com') throw new Error('Invalid sandbox URL');
+      bitPaySession = data.sessionId;
+      bitPayLink.href = url.href;
+      bitPayLink.hidden = bitPayCheck.hidden = false;
+      bitPay.hidden = true;
+      status.textContent = label('Sandbox link ready. Use test funds only.','رابط الاختبار جاهز. استخدم أموال الاختبار فقط.');
+    } catch (error) { if (stillHere()) showError(error); }
+    finally { bitPay.disabled = false; }
+  };
+  bitPayCheck.onclick = async () => {
+    if (!stillHere() || bitPayCheck.disabled || !bitPaySession) return;
+    bitPayCheck.disabled = true;
+    try {
+      const {data} = await call('getBitPaySandboxCheckout', {clientId, sessionId: bitPaySession});
+      if (!stillHere()) return;
+      status.textContent = data.status === 'complete' && !data.exception
+        ? label('BitPay test complete. Your real invoice remains unchanged.','اكتمل اختبار BitPay. الفاتورة الفعلية لم تتغير.')
+        : `${label('BitPay sandbox status','حالة اختبار BitPay')}: ${data.status}${data.exception ? ' · ' + label('Payment exception','استثناء في الدفع') : ''}`;
+    } catch (error) { if (stillHere()) showError(error); }
+    finally { bitPayCheck.disabled = false; }
+  };
   button.addEventListener('click',async () => {
     if (busy || !stillHere()) return;
     busy = true; button.disabled = true;
