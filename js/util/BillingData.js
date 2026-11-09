@@ -3,7 +3,7 @@ import { db } from '../firebase.js';
 import { store } from '../store.js';
 import {
   collection, doc, getDocFromServer, getDocsFromServer, query, where,
-  runTransaction, serverTimestamp
+  runTransaction, serverTimestamp, setDoc
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { countryCurrency, currencyCode, decimalRate, savedCurrency, invoiceAmount } from './BillingCurrency.js';
 import { day, captureTerms, parseTerms, selectRate, termsForDates, termsMatch, nights } from './BerthingCalculator.js';
@@ -56,20 +56,25 @@ export async function saveBerthingRate(clientId, fields) {
   const currency = await marinaCurrency(clientId);
   if (fields.currency !== currency) throw new Error('Marina currency changed. Reopen rates.');
   nights(fields.effectiveDate, day(Date.parse(fields.effectiveDate + 'T00:00:00Z') + 86400000, 'UTC'));
+
   const rate = {
-    rateId, clientId: Number(clientId), berthId: Number(fields.berthId),
-    mode: fields.mode, rate: decimalRate(fields.rate), currency,
-    effectiveDate: fields.effectiveDate, createdAt: Date.now()
+    rateId,
+    clientId: Number(clientId),
+    berthId: Number(fields.berthId),
+    mode: fields.mode,
+    rate: decimalRate(fields.rate),
+    currency,
+    effectiveDate: fields.effectiveDate,
+    createdAt: Date.now()
   };
+
   if (!Number.isSafeInteger(rate.berthId) || rate.berthId < 0 || !['NIGHT', 'METRE_NIGHT'].includes(rate.mode))
     throw new Error('Invalid berthing rate');
-  await debug('SAVE_RATE', clientId, () => runTransaction(db, async tx => {
-    checkBillingClient(clientId);
-    const ref = doc(db, 'berthing_rates', rateId);
-    const prior = await tx.get(ref);
-    if (prior.exists()) throw new Error('Rate identity already exists. Retry.');
-    tx.set(ref, rate);
-  }));
+
+  checkBillingClient(clientId);
+  await debug('SAVE_RATE', clientId, () =>
+    setDoc(doc(db, 'berthing_rates', rateId), rate)
+  );
 }
 
 export async function listBerthingBookings(clientId, berthId) {
