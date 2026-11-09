@@ -868,10 +868,10 @@ function onViewBerth(berth) {
     openReadingHistory(berth);
   });
 
-  sheet.querySelector('#viewBerthingRates').addEventListener('click', () => {
-    close();
-    showBerthingRates(berth);
-  });
+sheet.querySelector('#viewBerthingRates').addEventListener('click', () => {
+  close();
+  showBerthingRates(berth, () => onViewBerth(berth));
+});
 
   sheet.querySelector('#viewBerthingCharges').addEventListener('click', () => {
     close();

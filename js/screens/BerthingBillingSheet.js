@@ -60,7 +60,7 @@ function showError(sheet, error) {
     : error.message || itUI('Unable to complete this action');
 }
 
-export function showBerthingRates(berth) {
+export function showBerthingRates(berth, onClose) {
   const clientId = Number(store.activeClientId);
   const ui = openSheet('Berthing Rates', `
     <form class="add-form" novalidate>
@@ -87,7 +87,7 @@ export function showBerthingRates(berth) {
         <button type="button" class="md-close-btn" data-retry hidden>${tr('Retry')}</button>
       </div>
       <button type="submit" class="add-save" disabled>${tr('Save Rate')}</button>
-    </form>`);
+   </form>`, onClose);
   const { sheet } = ui;
   let currency;
   const save = sheet.querySelector('[type=submit]');
