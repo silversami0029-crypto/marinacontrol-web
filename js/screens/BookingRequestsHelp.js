@@ -36,7 +36,7 @@ export function showBookingRequestsHelp() {
       <div class="help-section-title">${tr("💡 Pro Tips")}</div>
       <div class="help-tips">${tr("• Approving creates a berth booking automatically • The vessel is created in MarinaControl if not already registered • Only compatible berths for the vessel size are offered • Maintenance berths are never offered")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

@@ -275,7 +275,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     if(opts.yardPackageInvoice){
       sheet.querySelector('#iv-status').disabled=true;
       const review=document.createElement('label');review.className='add-label';review.style.cssText='display:flex;align-items:flex-start;gap:10px;margin-top:16px';
-      review.innerHTML=`<input type="checkbox" data-yard-reviewed style="width:20px;min-width:20px;height:20px;margin-top:3px"><span>${itUI("I checked the selected customer against")} `+escapeHtml(opts.yardPackageInvoice.approvedCustomerName)+', the completed work, agreed charges and tax treatment.</span>';
+      review.innerHTML=`<input type="checkbox" data-yard-reviewed style="width:20px;min-width:20px;height:20px;margin-top:3px"><span>${escapeHtml(tr('I checked the selected customer against {customer}, the completed work, agreed charges and tax treatment.', {customer: opts.yardPackageInvoice.approvedCustomerName}))}</span>`;
       sheet.querySelector('.add-scroll').append(review);
       customerSelect.addEventListener('change',()=>{review.querySelector('input').checked=false;});
     }

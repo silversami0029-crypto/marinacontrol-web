@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ReceiveStockSheet.js
@@ -15,7 +16,7 @@ export function showReceiveStockSheet(item) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${tr("Receive Stock")}</div>
 
     <form id="rsForm" class="add-form" novalidate>
@@ -51,6 +52,7 @@ export function showReceiveStockSheet(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   sheet.querySelector('#rsForm').addEventListener('submit', async (e) => {
     e.preventDefault();

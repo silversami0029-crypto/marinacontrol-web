@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AssignOwnerSheet.js
@@ -26,7 +27,7 @@ export async function showAssignOwnerSheet(item, { onChanged } = {}) {
   const current = item.assignedTo || '';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${tr("Assign Owner")}</div>
 
     <div class="ao-scroll">
@@ -61,6 +62,7 @@ export async function showAssignOwnerSheet(item, { onChanged } = {}) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#aoCancel').addEventListener('click', close);
 
   let picked = current;

@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { money, savedCurrency, totalsText } from '../util/BillingCurrency.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -167,7 +168,7 @@ async function showMonthPicker() {
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${tr("Select Month")}</div>
 
     <div class="iv-month-picker" id="ivMonthPicker">
@@ -201,6 +202,7 @@ async function showMonthPicker() {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   sheet.querySelectorAll('.iv-month-cell').forEach(cell => {
     cell.addEventListener('click', () => {

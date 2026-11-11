@@ -30,7 +30,7 @@ export function showClient360Help() {
       <div class="help-section-title">${tr("Tips")}</div>
       <div class="help-tips">${tr("• Use the search icon to find any client by name or email • Tap any card to view more details • Red alert banner shows items needing immediate attention • Swipe back to return to Fleet Dashboard")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

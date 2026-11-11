@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -17,7 +18,7 @@ export function showDeferMaintenanceSheet(item, { onChanged } = {}) {
   const isEditing = item.status === 'DEFERRED';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">
       ${isEditing ? tr('Update Deferral') : itUI('Defer Maintenance')}
     </div>
@@ -67,6 +68,7 @@ export function showDeferMaintenanceSheet(item, { onChanged } = {}) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   if (isEditing) {
     sheet.querySelector('#df-reason').value = item.deferReason || 'Other';

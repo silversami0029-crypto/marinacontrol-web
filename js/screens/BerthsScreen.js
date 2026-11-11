@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { showBerthingRates, showBerthingCharges, showUtilityInvoiceChoices } from './BerthingBillingSheet.js';
 import { money, savedCurrency } from '../util/BillingCurrency.js';
@@ -194,7 +195,7 @@ function showBerthDateFilterSheet() {
   const sheet = document.createElement('div');
   sheet.className = 'sheet berth-date-sheet';
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title">${t('Berth Date View')}</div>
     ${dateViewItem('dateViewToday', 'Today', 'Live berth status')}
     ${dateViewItem('dateViewSingle', 'Select a date', 'View bookings and availability for one day')}
@@ -205,6 +206,7 @@ function showBerthDateFilterSheet() {
 
   const close = () => closeDateSheet(backdrop, sheet);
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('.berth-date-cancel').addEventListener('click', close);
   sheet.querySelector('#dateViewToday').addEventListener('click', () => {
     close();
@@ -247,7 +249,7 @@ function showDateInputSheet(isRange) {
   const today = toDateInputValue(Date.now());
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title">${t(isRange ? itUI('Custom stay dates') : itUI('Select a date'))}</div>
     <div class="berth-date-fields">
       <label><span>${t(isRange ? itUI('Arrival') : itUI('Date'))}</span><input type="date" id="berthDateStart" value="${today}"></label>
@@ -278,6 +280,7 @@ function showDateInputSheet(isRange) {
     closeDateSheet(backdrop, sheet);
   };
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('.berth-date-cancel').addEventListener('click', close);
   sheet.querySelector('#applyBerthDate').addEventListener('click', () => {
     const startValue = sheet.querySelector('#berthDateStart').value;
@@ -579,7 +582,6 @@ async function runBerthImport(rows) {
   const sheet = document.createElement('div');
   sheet.className = 'confirm-sheet is-open';
   sheet.innerHTML = `
-    <div class="confirm-handle"></div>
     <div class="confirm-title">${tr("Importing berths¦")}</div>
     <div class="confirm-message" id="berthImportProgress">${tr("Starting¦")}</div>
     <div class="import-bar-wrap"><div class="import-bar" id="berthImportBar"></div></div>
@@ -596,7 +598,7 @@ async function runBerthImport(rows) {
       (done, skipped, total) => {
         const processed = done + skipped;
         const pct = Math.round((processed / total) * 100);
-        progressEl.textContent = `${processed} of ${total} Â· ${done} added, ${skipped} skipped`;
+        progressEl.textContent = tr('importProgress', {processed, total, done, skipped});
         barEl.style.width = pct + '%';
       }
     );
@@ -868,10 +870,10 @@ function onViewBerth(berth) {
     openReadingHistory(berth);
   });
 
-sheet.querySelector('#viewBerthingRates').addEventListener('click', () => {
-  close();
-  showBerthingRates(berth, () => onViewBerth(berth));
-});
+  sheet.querySelector('#viewBerthingRates').addEventListener('click', () => {
+    close();
+    showBerthingRates(berth);
+  });
 
   sheet.querySelector('#viewBerthingCharges').addEventListener('click', () => {
     close();
@@ -1127,7 +1129,7 @@ function onEditBerth(berth) {
   const status = (berth.status || 'AVAILABLE').toUpperCase();
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${t("Edit Berth")}</div>
 
     <form id="editBerthForm" class="add-form" novalidate>
@@ -1191,6 +1193,7 @@ function onEditBerth(berth) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   const form = sheet.querySelector('#editBerthForm');
   const save = sheet.querySelector('#eb-save');
@@ -1400,7 +1403,7 @@ async function openTariffsSheet(berth) {
   const today = new Date().toISOString().slice(0, 10);
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${t("Utility Rates")} · ${currency}</div>
 
     <form id="tariffsForm" class="add-form" novalidate>
@@ -1466,6 +1469,7 @@ async function openTariffsSheet(berth) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   const modeEl = sheet.querySelector('#tf-waterMode');
   const waterPriceEl = sheet.querySelector('#tf-waterPrice');

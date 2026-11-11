@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ImportDocumentsSheet.js
@@ -13,7 +14,7 @@ export function showImportDocumentsSheet({ boatId, boatName }) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${tr("Import Documents from CSV")}</div>
 
     <div class="csv-info-scroll">
@@ -53,6 +54,7 @@ Boat Registration,Vessel Registration,2026-06-15,,/storage/registration.pdf</pre
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#idCancel').addEventListener('click', close);
   sheet.querySelector('#idChoose').addEventListener('click', () => {
     close();
@@ -138,7 +140,6 @@ async function runImportWithProgress({ boatId, boatName, rows }) {
   const sheet = document.createElement('div');
   sheet.className = 'confirm-sheet is-open';
   sheet.innerHTML = `
-    <div class="confirm-handle"></div>
     <div class="confirm-title">${tr("Importing documents…")}</div>
     <div class="confirm-message" id="importProgress">${tr("Starting…")}</div>
     <div class="import-bar-wrap">
@@ -162,7 +163,7 @@ async function runImportWithProgress({ boatId, boatName, rows }) {
       (done, skipped, total) => {
         const processed = done + skipped;
         const pct = total ? Math.round((processed / total) * 100) : 0;
-        progressEl.textContent = `${processed} of ${total}  ·  ${done} added, ${skipped} skipped`;
+        progressEl.textContent = tr('importProgress', {processed, total, done, skipped});
         barEl.style.width = pct + '%';
       }
     );
@@ -195,7 +196,7 @@ function showResultModal({ success, skipped, failed, errors = [] }) {
   const sheet = document.createElement('div');
   sheet.className = 'confirm-sheet';
   sheet.innerHTML = `
-    <div class="confirm-handle"></div>
+    ${sheetCloseButton()}
     <div class="confirm-title">${tr("Import complete")}</div>
 
     <div class="import-stats">
@@ -239,6 +240,7 @@ function showResultModal({ success, skipped, failed, errors = [] }) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#closeImportResult').addEventListener('click', close);
 }
 

@@ -51,7 +51,7 @@ export function showBerthHelp() {
 
       <div class="help-divider"></div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
 
     </div>
 

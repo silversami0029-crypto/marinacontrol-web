@@ -330,7 +330,7 @@ export function showManageMarinasSheet() {
       try {
         if (file.size > 1024 * 1024) throw new Error(tr('CSV file must be smaller than 1 MB.'));
         prepared = parseMarinaCsv(await file.text());
-        $('#mmPreview').textContent = `${prepared.length} marinas ready to import.`;
+        $('#mmPreview').textContent = tr('marinaImportReady', {count: prepared.length});
         status('');
       } catch (error) { status(error.message, true); $('#mmPreview').textContent = ''; }
     });

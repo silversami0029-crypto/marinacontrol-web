@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t } from '../i18n.js';
 // js/screens/TaskMenuSheet.js
@@ -22,7 +23,7 @@ export function showTaskMenu(item) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${escapeHtml(item.title || t('Task'))}</div>
 
     <div class="sheet-item" id="tmView">
@@ -133,6 +134,7 @@ export function showTaskMenu(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   sheet.querySelector('#tmView').addEventListener('click', () => {
     close(); setTimeout(() => showTaskDetail(item), 250);
@@ -225,7 +227,7 @@ async function showAssignOwner(item) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${t("Assign Owner")}</div>
 
     <div class="ao-scroll">
@@ -260,6 +262,7 @@ async function showAssignOwner(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#toCancel').addEventListener('click', close);
 
   let picked = current;

@@ -49,7 +49,7 @@ export function showShiftHelp() {
       <div class="help-section-title">${tr("💡 Pro Tips")}</div>
       <div class="help-tips">${tr("• Schedule morning shifts the day before • Ensure night shifts have at least 2 staff members • Use notes for specific boat assignments • Review weekly schedule every Friday • Keep a backup contact for each shift")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

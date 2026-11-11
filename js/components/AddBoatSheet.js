@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
@@ -385,7 +386,6 @@ async function runImportWithProgress(rows) {
   const sheet = document.createElement('div');
   sheet.className = 'confirm-sheet is-open';
   sheet.innerHTML = `
-    <div class="confirm-handle"></div>
     <div class="confirm-title">${tr("Importing boats…")}</div>
     <div class="confirm-message" id="importProgress">${tr("Starting…")}</div>
     <div class="import-bar-wrap">
@@ -445,7 +445,7 @@ function showResultModal({ success, skipped, failed, errors = [] }) {
   const sheet = document.createElement('div');
   sheet.className = 'confirm-sheet';
   sheet.innerHTML = `
-    <div class="confirm-handle"></div>
+    ${sheetCloseButton()}
     <div class="confirm-title">${tr("Import complete")}</div>
 
     <div class="import-stats">
@@ -490,6 +490,7 @@ function showResultModal({ success, skipped, failed, errors = [] }) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#closeImportResult').addEventListener('click', close);
 }
 

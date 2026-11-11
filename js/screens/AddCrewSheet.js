@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddCrewSheet.js
@@ -121,7 +122,7 @@ function showAddCrewForm() {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${tr("Add Crew")}</div>
 
     <form id="acsForm" class="add-form" novalidate autocomplete="off">
@@ -184,6 +185,7 @@ function showAddCrewForm() {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   const form = sheet.querySelector('#acsForm');
   const save = sheet.querySelector('#acs-save');

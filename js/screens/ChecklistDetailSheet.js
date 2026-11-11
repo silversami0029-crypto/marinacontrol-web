@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ChecklistDetailSheet.js
@@ -25,7 +26,7 @@ export async function showChecklistDetail(checklist) {
   const boatName = store.boatsFull?.find(b => Number(b.id) === Number(checklist.boatId))?.name || '—';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${escapeHtml(checklist.name || itUI('Checklist'))}</div>
     <div class="chk-detail-status" style="background:${statusColor};">${escapeHtml(itUI(checklist.status.replace('_',' ')))}</div>
 
@@ -77,6 +78,7 @@ export async function showChecklistDetail(checklist) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#chkDetailClose').addEventListener('click', close);
 
   // Load items subcollection

@@ -52,7 +52,7 @@ export function showPermissionsHelp() {
       <div class="help-section-title">${tr("💡 Pro Tips")}</div>
       <div class="help-tips">${tr("• Only Admins can assign or change roles • Staff can complete tasks but cannot change system settings • Inspectors are ideal for safety compliance audits • View Only is best for owners or external auditors • Review roles quarterly as team responsibilities change")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

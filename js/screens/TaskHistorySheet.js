@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/TaskHistorySheet.js
@@ -15,7 +16,7 @@ export async function showTaskHistory(item) {
   sheet.className = 'sheet sheet--tall';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">
       ${escapeHtml(item.title || itUI('Task'))}
     </div>
@@ -40,6 +41,7 @@ export async function showTaskHistory(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#tkHistClose').addEventListener('click', close);
 
   const clientId = Number(store.activeClientId);

@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { t } from '../i18n.js';
 // js/components/BerthToolbarMenu.js
 // Toolbar menu — mirrors bottomsheet_toolbar_berth_menu.xml
@@ -93,7 +94,7 @@ export function showBerthToolbarMenu(handlers = {}) {
   const sheet = document.createElement('div');
   sheet.className = 'sheet berth-menu-sheet';
   sheet.innerHTML = `
-    <div class="berth-menu-handle"></div>
+    ${sheetCloseButton()}
     <div class="berth-menu-title">${t("Berth Actions")}</div>
   `;
 
@@ -152,6 +153,7 @@ export function showBerthToolbarMenu(handlers = {}) {
 
   document.getElementById('modalRoot').append(backdrop, sheet);
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   requestAnimationFrame(() => {
     backdrop.classList.add('is-open');
     sheet.classList.add('is-open');

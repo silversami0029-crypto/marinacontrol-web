@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AssignDocumentOwnerSheet.js
 import { store } from '../store.js';
@@ -21,7 +22,7 @@ export async function showAssignDocumentOwnerSheet(item) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${tr("Assign Owner")}</div>
 
     <div class="ao-scroll">
@@ -56,6 +57,7 @@ export async function showAssignDocumentOwnerSheet(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#doCancel').addEventListener('click', close);
 
   let picked = current;
@@ -124,7 +126,7 @@ async function setOwner(item, name) {
       lastModifiedBy: userId
     });
 
-    toast(name ? `Assigned to ${name}` : tr('Unassigned'), { kind: 'success' });
+    toast(name ? tr('assignedNamed', {name}) : tr('Unassigned'), { kind: 'success' });
   } catch (err) {
     console.error('[assign doc owner] save failed', err);
     toast(tr('Failed to assign owner'), { kind: 'error' });

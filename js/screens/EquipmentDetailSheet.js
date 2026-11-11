@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/EquipmentDetailSheet.js
@@ -10,7 +11,7 @@ export function showEquipmentDetail(item) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title">${escapeHtml(item.manufacturer || itUI('Equipment'))} ${item.model ? escapeHtml(item.model) : ''}</div>
 
     <div class="md-body">
@@ -38,6 +39,7 @@ export function showEquipmentDetail(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#eqDetailClose').addEventListener('click', close);
 }
 

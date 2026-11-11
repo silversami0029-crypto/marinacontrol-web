@@ -59,7 +59,7 @@ export function showSafetyHelp() {
       <div class="help-section-title">${tr("💡 Pro Tips")}</div>
       <div class="help-tips">${tr("• Check flare expiry dates annually (typically 3 years) • Inspect fire extinguishers monthly • Log inspection dates for insurance compliance • Take photos of expiry stamps • Manually set expiry dates when adding items • CRITICAL items alert 90 days before expiry • HIGH items alert 60 days before expiry")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

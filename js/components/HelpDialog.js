@@ -51,13 +51,13 @@ export function showBoatHelp() {
       <h3 class="help-section-title">${tr("Bulk import format")}</h3>
 
       <div class="help-tips">${tr("• The csv is comma seperated")}<br>
-        &nbsp;Header: name,type,model,hin,mmsi,port,status<br>
-        &nbsp;Data: Boat1,Sport,270,AB12,123456789,Monaco,Active
+        &nbsp;${tr("Header:")} name,type,model,hin,mmsi,port,status<br>
+        &nbsp;${tr("Data:")} Boat1,Sport,270,AB12,123456789,Monaco,Active
       </div>
 
       <div class="help-divider"></div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
 
     </div>
 

@@ -27,7 +27,7 @@ export function showDocumentHelp() {
       <div class="help-section-title">${tr("CSV Format Requirements")}</div>
       <div class="help-tips">${tr("• First row must be headers: Document Name, Document Type, Expiry Date, Notes, File Path • Document Type must match available types: Insurance Policy, Vessel Registration, Radio License, Safety Equipment Certificate, etc. • Expiry Date format: YYYY-MM-DD • File Path is optional (leave blank if no file)")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

@@ -1264,7 +1264,7 @@ export const it = {
   "Manage the people who can access your marina account and control the role assigned to each user.": "Gestisci chi può accedere all’account del marina e controlla il ruolo assegnato a ciascun utente.",
   "Manager": "Responsabile",
   "My Boats": "Le mie imbarcazioni",
-  "Need help? support@marinacontrol.com": "Serve aiuto? support@marinacontrol.com",
+  "Need help? support@marinacontrol.co.uk": "Serve aiuto? support@marinacontrol.co.uk",
   "Read-only access. Can view information but cannot edit or delete anything.": "Accesso in sola lettura. Può visualizzare le informazioni, ma non modificarle o eliminarle.",
   "Safety &amp; compliance focus. Can view all data, complete safety checklists, add inspection notes.": "Dedicato a sicurezza e conformità. Può visualizzare tutti i dati, completare le liste di controllo di sicurezza e aggiungere note di ispezione.",
   "Safety Categories": "Categorie di sicurezza",

@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ShiftScheduleScreen.js
@@ -299,7 +300,7 @@ function showCellMenu(existing, shiftType, ts) {
     });
 
     sheet.innerHTML = `
-      <div class="sheet-handle"></div>
+      ${sheetCloseButton()}
       <div class="sheet-title" style="text-align:center;">${shiftType} · ${dateLabel}</div>
 
       <div class="sheet-item" id="shCellChange">
@@ -336,6 +337,7 @@ function showCellMenu(existing, shiftType, ts) {
     };
 
     backdrop.addEventListener('click', () => { close(); resolve(null); });
+    sheet.querySelector('[data-sheet-close]').addEventListener('click', () => { close(); resolve(null); });
     sheet.querySelector('#shCellChange').addEventListener('click', () => { close(); resolve('change'); });
     sheet.querySelector('#shCellRemove').addEventListener('click', () => { close(); resolve('remove'); });
   });

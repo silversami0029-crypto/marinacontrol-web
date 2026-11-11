@@ -42,7 +42,9 @@ export function renderTopBar(route) {
 
 function wireBell() {
   const bell = document.getElementById('btnBell');
-  if (!bell || bell.dataset.wired === '1') return;
+  if (!bell) return;
+  bell.setAttribute('aria-label', t('Notifications'));
+  if (bell.dataset.wired === '1') return;
   bell.dataset.wired = '1';
   bell.style.position = 'relative';
   bell.addEventListener('click', () => { location.hash = '#/notifications'; });

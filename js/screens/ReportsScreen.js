@@ -175,7 +175,7 @@ function renderUnpaid() {
         <div class="rp-status-row">
           <span class="rp-status-dot" style="background:#FF4444;"></span>
           <span class="rp-status-label">${tr("Overdue")}</span>
-          <span class="rp-status-count">${overdue.length} ${overdue.length === 1 ? 'invoice' : 'invoices'}</span>
+          <span class="rp-status-count">${overdue.length} ${tr(overdue.length === 1 ? 'invoice' : 'invoices')}</span>
           <span class="rp-status-amount" style="color:#FF4444;">${fmtMoney(overdueAmt)}</span>
         </div>
       ` : ''}
@@ -183,7 +183,7 @@ function renderUnpaid() {
         <div class="rp-status-row">
           <span class="rp-status-dot" style="background:#FF9800;"></span>
           <span class="rp-status-label">${tr("Pending")}</span>
-          <span class="rp-status-count">${pending.length} ${pending.length === 1 ? 'invoice' : 'invoices'}</span>
+          <span class="rp-status-count">${pending.length} ${tr(pending.length === 1 ? 'invoice' : 'invoices')}</span>
           <span class="rp-status-amount" style="color:#FF9800;">${fmtMoney(pendingAmt)}</span>
         </div>
       ` : ''}
@@ -192,7 +192,7 @@ function renderUnpaid() {
       ${Object.entries(byBoat).map(([boat, s]) => `
         <div class="rp-boat-row">
           <div class="rp-boat-name">${escapeHtml(boat)}</div>
-          <div class="rp-boat-summary">${s.count} ${s.count === 1 ? 'invoice' : 'invoices'} — ${fmtMoney(s.total)}${s.overdue ? ` (${s.overdue} overdue)` : ''}</div>
+          <div class="rp-boat-summary">${s.count} ${tr(s.count === 1 ? 'invoice' : 'invoices')} — ${fmtMoney(s.total)}${s.overdue ? ` (${s.overdue} ${tr("overdue")})` : ''}</div>
         </div>
       `).join('')}
 
@@ -451,7 +451,7 @@ function renderRevenue() {
       <div class="rp-section-title">${tr("By Status")}</div>
       <div class="rp-status-row">
         <span class="rp-status-emoji">📊</span>
-        <span class="rp-status-label">${filtered.length} ${filtered.length === 1 ? 'invoice' : 'invoices'} ${itUI("· Avg")} ${escapeHtml(avg)}</span>
+        <span class="rp-status-label">${filtered.length} ${tr(filtered.length === 1 ? 'invoice' : 'invoices')} ${itUI("· Avg")} ${escapeHtml(avg)}</span>
       </div>
 
       <div class="rp-section-title">${tr("By Boat")}</div>

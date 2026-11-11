@@ -27,7 +27,7 @@ export function showCrewHelp() {
       <div class="help-section-title">${tr("CSV Format Requirements")}</div>
       <div class="help-tips">${tr("• First row must be headers: Name, Email, Role, Role Details • Name and Email are required fields • Role Examples: Captain, Engineer, Deckhand, Steward, Chef • Role Details (optional): Additional notes or certifications")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

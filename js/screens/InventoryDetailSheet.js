@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/InventoryDetailSheet.js
@@ -12,7 +13,7 @@ export function showInventoryDetail(item) {
   const state = computeStatus(item.quantity);
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title">${escapeHtml(item.name || itUI('Inventory Item'))}</div>
 
     <div class="md-body">
@@ -43,6 +44,7 @@ export function showInventoryDetail(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#invDetailClose').addEventListener('click', close);
 }
 

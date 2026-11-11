@@ -92,12 +92,25 @@
 }
 .sheet.is-open { transform: translateY(0); }
 
-.sheet-handle {
-  width: 48px; height: 5px;
-  background: var(--color-text-muted);
-  border-radius: 3px;
-  margin: 0 auto 16px;
+.sheet-close-button {
+  display: grid;
+  place-items: center;
+  align-self: flex-end;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin-inline-start: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-primary, #f5f7f9);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
 }
+.sheet-close-button:hover { background: rgba(241,243,245,.08); }
+.sheet-close-button:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
 .sheet-title {
   font-size: 20px; font-weight: 700;
   color: var(--color-text-primary);
@@ -382,12 +395,6 @@ body {
   z-index: 51;
 }
 .confirm-sheet.is-open { transform: translate(-50%, 0); }
-.confirm-handle {
-  width: 60px; height: 6px;
-  background: var(--color-text-muted);
-  border-radius: 3px;
-  margin: 0 auto 20px;
-}
 .confirm-warn-circle {
   width: 56px; height: 56px; border-radius: 50%;
   background: #FF4444;
@@ -896,12 +903,6 @@ body {
    ASSIGN CUSTOMER SHEET
    ============================================================ */
 .assign-sheet { padding: 10px 0 16px; }
-.assign-handle {
-  width: 40px; height: 4px;
-  background: var(--color-text-muted);
-  border-radius: 2px;
-  margin: 0 auto 12px;
-}
 .assign-title {
   padding: 0 20px 10px;
   font-size: 20px; font-weight: 700;
@@ -1198,12 +1199,6 @@ body {
    ============================================================ */
 .berth-menu-sheet { padding: 10px 0 12px; }
 
-.berth-menu-handle {
-  width: 40px; height: 4px;
-  background: var(--color-text-muted);
-  border-radius: 2px;
-  margin: 0 auto 12px;
-}
 
 .berth-menu-title {
   padding: 0 20px 10px;
@@ -5730,7 +5725,7 @@ body:not(.drawer-page-hidden) .bottomnav {
   flex-direction: column;
   overflow: hidden;
 }
-.billing-sheet > .sheet-handle,
+.billing-sheet > .sheet-close-button,
 .billing-sheet > .sheet-title {
   flex-shrink: 0;
 }
@@ -5885,23 +5880,4 @@ body:not(.drawer-page-hidden) .bottomnav {
   padding: 3px 7px;
   font-size: 11px;
   cursor: pointer;
-}
-
-.dw-grid .berth-card {
-  position: relative;
-  padding-top: 32px;
-}
-
-.dw-grid .dw-card-actions button[data-options] {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 0;
-  font-size: 20px;
-  line-height: 1;
 }

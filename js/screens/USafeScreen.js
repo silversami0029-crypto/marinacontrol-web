@@ -49,7 +49,7 @@ export function mountUSafeScreen() {
     currentSheet?.close();
     const opener = document.activeElement;
     const overlay = document.createElement('div'); overlay.className = 'usafe-overlay';
-    overlay.innerHTML = `<section class="usafe-sheet" role="dialog" aria-modal="true" aria-label="${esc(tr(title))}" tabindex="-1"><div class="usafe-handle"></div><header><h2>${esc(tr(title))}</h2><button type="button" data-close aria-label="${esc(tr('Close'))}">×</button></header><div class="usafe-sheet-body">${body}</div><p class="usafe-error" role="alert"></p></section>`;
+    overlay.innerHTML = `<section class="usafe-sheet" role="dialog" aria-modal="true" aria-label="${esc(tr(title))}" tabindex="-1"><header><h2>${esc(tr(title))}</h2><button type="button" data-close aria-label="${esc(tr('Close'))}">×</button></header><div class="usafe-sheet-body">${body}</div><p class="usafe-error" role="alert"></p></section>`;
     const panel = overlay.firstElementChild; let busy = false, closed = false;
     const result = {overlay, panel, get closed() {return closed;},
       close(force = false) {

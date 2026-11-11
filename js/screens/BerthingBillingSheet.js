@@ -21,7 +21,6 @@ function openSheet(title, body, onClose) {
   const sheet = document.createElement('div');
   sheet.className = 'sheet billing-sheet';
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
     <div style="position:relative;display:flex;align-items:center;min-height:48px;flex-shrink:0;">
       <div class="sheet-title" style="flex:1;margin:0;padding:12px 48px;text-align:center;">${escapeHtml(tr(title))}</div>
       <button type="button" data-billing-close aria-label="${tr('Close')}" style="position:absolute;inset-inline-end:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#F5F7F9;cursor:pointer;">
@@ -60,7 +59,7 @@ function showError(sheet, error) {
     : error.message || itUI('Unable to complete this action');
 }
 
-export function showBerthingRates(berth, onClose) {
+export function showBerthingRates(berth) {
   const clientId = Number(store.activeClientId);
   const ui = openSheet('Berthing Rates', `
     <form class="add-form" novalidate>
@@ -87,7 +86,7 @@ export function showBerthingRates(berth, onClose) {
         <button type="button" class="md-close-btn" data-retry hidden>${tr('Retry')}</button>
       </div>
       <button type="submit" class="add-save" disabled>${tr('Save Rate')}</button>
-   </form>`, onClose);
+    </form>`);
   const { sheet } = ui;
   let currency;
   const save = sheet.querySelector('[type=submit]');
@@ -232,12 +231,45 @@ function showAssignedStay(berth, clientId) {
 }
 
 // Booking approval captures only a price explicitly reviewed by staff.
+export function showBerthingRateMismatch(berth, arrival, mismatch) {
+  const clientId = Number(store.activeClientId);
+  const message = tr('The saved rate for {berth} on {arrival} is in {savedCurrency}, but this marina bills in {billingCurrency}. Save a rate in {billingCurrency} that applies on the arrival date, then retry booking approval.', {
+    berth: berth.berthNumber || tr('Berth'),
+    arrival,
+    savedCurrency: mismatch.savedRateCurrency,
+    billingCurrency: mismatch.marinaBillingCurrency
+  });
+  const ui = openSheet('Berthing rate currency does not match', `
+    <p class="add-section-sub" style="padding:0 16px;overflow-wrap:anywhere;">${escapeHtml(message)}</p>
+    <button type="button" class="add-save" data-open-rates>${tr('Berthing Rates')}</button>
+  `);
+  const ratesButton = ui.sheet.querySelector('[data-open-rates]');
+  ratesButton.addEventListener('click', () => {
+    ui.close();
+    if (Number(store.activeClientId) === clientId) showBerthingRates(berth);
+  });
+  ratesButton.focus();
+}
+
+export class BerthingRateCurrencyMismatch extends Error {
+  constructor(savedRateCurrency, marinaBillingCurrency) {
+    super('Berthing rate currency does not match marina billing currency');
+    this.name = 'BerthingRateCurrencyMismatch';
+    this.savedRateCurrency = savedRateCurrency;
+    this.marinaBillingCurrency = marinaBillingCurrency;
+  }
+}
+
 export async function reviewNewBookingPrice(booking, berth) {
   const clientId = Number(booking.clientId);
   const [rates, currency] = await Promise.all([loadBerthingRates(clientId), marinaCurrency(clientId)]);
   const rate = selectRate(rates, berth.id, day(booking.arrivalDate));
-  if (rate && savedCurrency(rate.currency) !== currency)
-    throw new Error(`Set a ${currency} berthing rate before pricing this new stay. The applicable saved rate is in ${savedCurrency(rate.currency)}.`);
+  if (rate) {
+    const rateCurrency = savedCurrency(rate.currency);
+    if (rateCurrency !== currency) {
+      throw new BerthingRateCurrencyMismatch(rateCurrency, currency);
+    }
+  }
   const terms = rate ? captureTerms(booking, rate) : null;
   return new Promise((resolve, reject) => {
     let accepted = false;

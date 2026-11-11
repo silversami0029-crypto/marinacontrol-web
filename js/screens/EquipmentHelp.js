@@ -43,7 +43,7 @@ export function showEquipmentHelp() {
       <div class="help-section-title">${tr("💡 Pro Tips")}</div>
       <div class="help-tips">${tr("• Include serial numbers for warranty claims • Take photos of equipment nameplates • Add purchase date and cost for insurance • Link Inventory records to each equipment • Update when equipment is serviced or replaced")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

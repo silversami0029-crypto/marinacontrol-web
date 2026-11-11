@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/AssignBoatSheet.js
@@ -22,7 +23,7 @@ export function showAssignBoatSheet(opts) {
 
   if (!boats || !boats.length) {
     sheet.innerHTML = `
-      <div class="assign-handle"></div>
+      ${sheetCloseButton()}
       <div class="assign-title">${itUI("Assign Boat to")} ${esc(berth.berthNumber)}</div>
       <div class="assign-divider"></div>
       <div class="assign-empty">${tr("No unassigned boats available.")}<br>${tr("Release a boat from another berth first.")}</div>
@@ -31,7 +32,7 @@ export function showAssignBoatSheet(opts) {
     `;
   } else {
     sheet.innerHTML = `
-      <div class="assign-handle"></div>
+      ${sheetCloseButton()}
       <div class="assign-title">${itUI("Assign Boat to")} ${esc(berth.berthNumber)}</div>
       <div class="assign-divider"></div>
       <div class="assign-list" id="assignBoatList">
@@ -59,6 +60,7 @@ export function showAssignBoatSheet(opts) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   const list = sheet.querySelector('#assignBoatList');
   if (list) {

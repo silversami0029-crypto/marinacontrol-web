@@ -42,7 +42,7 @@ export function showMaintenanceHelp() {
       <div class="help-section-title">${tr("💡 Pro Tips")}</div>
       <div class="help-tips">${tr("• Schedule regular engine Maintenance every 100-200 hours • Keep oil change records for warranty claims • Attach receipts to track Maintenance costs • Set reminders before peak boating season • Log completed work immediately to maintain accurate history")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

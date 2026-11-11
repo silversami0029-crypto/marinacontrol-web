@@ -931,7 +931,7 @@ function renderActivityCard() {
     : currentMaintenance;
 
   if (!filtered.length) {
-    const msg = q ? tr(`No activity matches "${q}"`) : 'No maintenance recorded';
+    const msg = q ? tr(`No activity matches "${q}"`) : tr('No maintenance recorded');
     return `
       <div class="c360-card">
         <div class="c360-card-title">${tr("📋 Recent Activity")}</div>
@@ -961,7 +961,7 @@ function renderActivityCard() {
             ? 'Deferred'
             : m.status === 'ESCALATED'
               ? 'Escalated'
-              : m.date ? tr(`Due ${formatShortDate(m.date)}`) : 'Active';
+              : m.date ? tr(`Due ${formatShortDate(m.date)}`) : tr('Active');
 
         return `
           <div class="c360-activity-row">

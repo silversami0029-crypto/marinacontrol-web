@@ -41,7 +41,7 @@ export function showInventoryHelp() {
       <div class="help-section-title">${tr("💡 Pro Tips")}</div>
       <div class="help-tips">${tr("• Update quantities after each trip to avoid shortages • Set low quantity alerts for critical spares • Store part numbers in notes for easy reordering • Track inventory across different storage locations • Take photos of items for quick identification")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

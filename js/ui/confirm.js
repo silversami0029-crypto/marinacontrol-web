@@ -1,3 +1,4 @@
+import { sheetCloseButton } from './sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 // js/ui/confirm.js
 // Delete confirmation bottom sheet — mirrors bottomsheet_delete_boat_confirmation.xml
@@ -49,14 +50,15 @@ export function confirmSheet(opts) {
 
     const sheet = document.createElement('div');
     sheet.className = 'confirm-sheet';
+    const neutralAction = action === 'confirm';
     const archiveAction = action === 'archive' || action === 'restore';
     if (archiveAction) sheet.classList.add('confirm-sheet--archive');
     if (action === 'approve') sheet.classList.add('confirm-sheet--approve');
     const actionIcon = action === 'approve' ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>` : archiveAction ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16v13H4zM3 3h18v5H3z"/><path d="${action === 'restore' ? 'M12 17v-6m-3 3 3-3 3 3' : 'M9 12h6'}"/></svg>` : null;
     sheet.innerHTML = `
-      <div class="confirm-handle"></div>
+      ${sheetCloseButton()}
 
-      <div class="confirm-warn-circle">${actionIcon || WARN_ICON}</div>
+      ${neutralAction ? '' : `<div class="confirm-warn-circle">${actionIcon || WARN_ICON}</div>`}
 
       <div class="confirm-title">${escapeHtml(itUI(title))}</div>
       <div class="confirm-message">${escapeHtml(itUI(message))}</div>
@@ -65,8 +67,9 @@ export function confirmSheet(opts) {
         <button class="confirm-btn confirm-btn--cancel" type="button">
           ${escapeHtml(itUI(cancelText))}
         </button>
-        <button class="confirm-btn confirm-btn--confirm" type="button">
-          ${actionIcon || TRASH_ICON}<span>${escapeHtml(itUI(confirmText))}</span>
+        <button class="confirm-btn${neutralAction ? '' : ' confirm-btn--confirm'}" data-confirm-action type="button"
+          ${neutralAction ? 'style="background:var(--color-water-blue,#2196F3);color:var(--color-bg);font-weight:700;"' : ''}>
+          ${neutralAction ? '' : actionIcon || TRASH_ICON}<span>${escapeHtml(itUI(confirmText))}</span>
         </button>
       </div>
     `;
@@ -98,8 +101,8 @@ export function confirmSheet(opts) {
     const onKey = event => {
       if (event.key === 'Escape') close(false);
       if (event.key === 'Tab') {
-        const first = sheet.querySelector('.confirm-btn--cancel');
-        const last = sheet.querySelector('.confirm-btn--confirm');
+        const first = sheet.querySelector('[data-sheet-close]');
+        const last = sheet.querySelector('[data-confirm-action]');
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }
@@ -112,8 +115,9 @@ export function confirmSheet(opts) {
     sheet.querySelector('.confirm-btn--cancel').focus();
 
     sheet.querySelector('.confirm-btn--cancel').addEventListener('click', () => close(false));
-    sheet.querySelector('.confirm-btn--confirm').addEventListener('click', () => close(true));
+    sheet.querySelector('[data-confirm-action]').addEventListener('click', () => close(true));
     backdrop.addEventListener('click', () => close(false));
+    sheet.querySelector('[data-sheet-close]').addEventListener('click', () => close(false));
   });
 }
 

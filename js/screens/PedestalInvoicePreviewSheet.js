@@ -25,7 +25,7 @@ export async function showPedestalInvoicePreview(session, isCurrent = () => true
   sheet.role = 'dialog'; sheet.setAttribute('aria-modal','true'); sheet.setAttribute('aria-labelledby','psInvoiceTitle');
   const date = n => new Intl.DateTimeFormat(getLocale(),{dateStyle:'medium',timeStyle:'short'}).format(n);
   const num = n => new Intl.NumberFormat(getLocale(),{maximumFractionDigits:6}).format(n);
-  sheet.innerHTML = `<div class="sheet-handle"></div>
+  sheet.innerHTML = `
     <div style="position:relative;display:flex;align-items:center;min-height:48px;flex-shrink:0;">
       <div class="sheet-title" id="psInvoiceTitle" style="flex:1;margin:0;padding:12px 48px;text-align:center;">${L('Test Invoice Preview','معاينة فاتورة تجريبية')}</div>
       <button type="button" data-preview-close aria-label="${L('Close','إغلاق')}" style="position:absolute;inset-inline-end:0;top:2px;width:44px;height:44px;border:0;background:transparent;color:var(--color-text-primary,#F5F7F9);font-size:26px;cursor:pointer;">×</button>

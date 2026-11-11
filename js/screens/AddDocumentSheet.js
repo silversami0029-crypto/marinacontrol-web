@@ -47,7 +47,7 @@ export function showAddDocumentSheet(opts = {}) {
     ${isEdit ? tr('Edit Document') : tr('Add Document')}
   </div>
 
-  <button type="button" id="iv-close" aria-label="${tr("Close invoice sheet")}"
+  <button type="button" id="iv-close" aria-label="${tr("Close document sheet")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"

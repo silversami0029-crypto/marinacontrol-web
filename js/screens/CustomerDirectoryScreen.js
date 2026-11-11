@@ -331,7 +331,7 @@ function updateCount() {
   const el = document.getElementById('cdBulkCount');
   if (!el) return;
   const n = selectedIds.size;
-  el.textContent = n === 1 ? '1 selected' : `${n} selected`;
+  el.textContent = tr('selectedCount', {count: n});
 }
 
 function onBulkButtonTap() {

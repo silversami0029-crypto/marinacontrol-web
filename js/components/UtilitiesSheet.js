@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/UtilitiesSheet.js
@@ -21,7 +22,7 @@ export function showAddReadingDialog(berth, onAddReading, options = {}) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${esc(options.title || tr("Add Berth Reading", {berth:berth.berthNumber}))}</div>
 
     <form id="utilForm" class="add-form" novalidate>
@@ -67,6 +68,7 @@ export function showAddReadingDialog(berth, onAddReading, options = {}) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   const typeEl = sheet.querySelector('#utilType');
   const unitEl = sheet.querySelector('#utilUnit');

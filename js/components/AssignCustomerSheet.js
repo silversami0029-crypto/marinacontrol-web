@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/components/AssignCustomerSheet.js
@@ -14,7 +15,7 @@ export function showAssignCustomerSheet(opts) {
 
   if (!customers || !customers.length) {
     sheet.innerHTML = `
-      <div class="assign-handle"></div>
+      ${sheetCloseButton()}
       <div class="assign-title">${itUI("Assign Customer to")} ${esc(boat.name)}</div>
       <div class="assign-divider"></div>
       <div class="assign-empty">${tr("No customers in this marina yet.")}</div>
@@ -27,7 +28,7 @@ export function showAssignCustomerSheet(opts) {
     const currentId = Number(boat.customerId || 0);
 
     sheet.innerHTML = `
-      <div class="assign-handle"></div>
+      ${sheetCloseButton()}
       <div class="assign-title">${itUI("Assign Customer to")} ${esc(boat.name)}</div>
       <div class="assign-divider"></div>
       <div class="assign-list" id="assignList">
@@ -63,6 +64,7 @@ export function showAssignCustomerSheet(opts) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   sheet.querySelector('#assignDirectory')?.addEventListener('click', () => {
     backdrop.remove();

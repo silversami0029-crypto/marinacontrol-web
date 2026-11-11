@@ -30,7 +30,7 @@ export function showUserManagementHelp() {
       <div class="help-note">
         <b>${tr("Important:")}</b>${tr("User Management is restricted to administrators. Only give access and invite codes to authorised marina personnel.")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

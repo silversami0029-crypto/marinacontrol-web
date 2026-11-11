@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -17,7 +18,7 @@ export function showReviewMaintenanceSheet(item, { onChanged } = {}) {
   const today = new Date().toISOString().slice(0, 10);
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${tr("Deferred Review")}</div>
 
     <div class="add-scroll">
@@ -71,6 +72,7 @@ export function showReviewMaintenanceSheet(item, { onChanged } = {}) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#rmCancel').addEventListener('click', close);
 
   const extendBox = sheet.querySelector('#rmExtendBox');

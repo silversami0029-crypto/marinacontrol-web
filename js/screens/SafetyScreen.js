@@ -343,7 +343,7 @@ function renderList() {
           ${item.expiryDate > 0
             ? `<div class="sf-expiry" style="color:${state.dateColor};">${tr("Expires:" )} ${escapeHtml(formatDate(item.expiryDate))}</div>`
             : `<div class="sf-expiry sf-expiry-dim">${tr("No expiry date set")}</div>`}
-          <div class="sf-importance sf-imp-${String(item.importance || '').toLowerCase()}">${escapeHtml(item.importance || 'MEDIUM')}</div>
+          <div class="sf-importance sf-imp-${String(item.importance || '').toLowerCase()}">${escapeHtml(tr(item.importance || 'MEDIUM'))}</div>
           ${item.notes ? `<div class="sf-notes">${escapeHtml(item.notes)}</div>` : ''}
         </div>
 

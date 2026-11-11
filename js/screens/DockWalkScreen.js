@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { store } from '../store.js';
 import { listenForBerths } from '../db.js';
 import { app, db, auth, collection, doc, getDoc, getDocs, setDoc, onSnapshot, query, where } from '../firebase.js';
@@ -155,7 +156,7 @@ export function mountDockWalkScreen() {
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-modal', 'true');
     panel.setAttribute('aria-label', title);
-    panel.innerHTML = `<div class="sheet-handle"></div><div class="sheet-title">${esc(title)}</div>
+    panel.innerHTML = `${sheetCloseButton()}<div class="sheet-title">${esc(title)}</div>
       <div class="md-body">${body}</div><button class="md-close-btn" data-close>${label('Close')}</button>`;
     const previous = document.activeElement;
     const keydown = event => { if (event.key === 'Escape') close(); };
@@ -167,8 +168,9 @@ export function mountDockWalkScreen() {
     closeSheet = close;
     document.getElementById('modalRoot').append(backdrop, panel);
     backdrop.onclick = panel.querySelector('[data-close]').onclick = close;
+    panel.querySelector('[data-sheet-close]').onclick = close;
     document.addEventListener('keydown', keydown);
-    panel.querySelector('[data-close]').focus();
+    panel.querySelector('[data-sheet-close]').focus();
     return panel;
   }
 
@@ -359,7 +361,7 @@ export function mountDockWalkScreen() {
     const panel = sheet(berth.berthNumber, `<form class="add-form">
       ${checks.map(([key, title]) => `<label class="add-label">${label(title)}
         <select class="add-input" name="${key}" required>
-          <option value="">${label('Not Inspected')}</option><option value="OK">OK</option>
+          <option value="">${label('Not Inspected')}</option><option value="OK">${label('OK')}</option>
           <option value="Fault">${label('Fault')}</option>
         </select></label>`).join('')}
       <label class="add-label" data-damage hidden>${label('Damage description')}
@@ -549,7 +551,7 @@ export function mountDockWalkScreen() {
         'Raise a maintenance task only when follow-up work is required.',
         'Use History to confirm when a berth was last inspected.'
       ].map(tip => `<li>${label(tip)}</li>`).join('')}</ul>
-      <p>${label('Need help?')} <a href="mailto:support@marinacontrol.com">support@marinacontrol.com</a></p>`);
+      <p>${label('Need help?')} <a href="mailto:support@marinacontrol.co.uk">support@marinacontrol.co.uk</a></p>`);
   };
   screen.querySelector('[data-audit]').onclick = () => {
     if (!berths || !records || failed) return;

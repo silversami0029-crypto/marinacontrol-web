@@ -27,7 +27,7 @@ export function showReportsHelp() {
       <div class="rp-help-heading">${tr("📄 Exporting Reports")}</div>
       <div class="rp-help-export">${tr("Tap the Export button to generate a PDF report. You can then share it via email, messages, or save it to your device.")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

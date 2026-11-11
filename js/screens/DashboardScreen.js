@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { countDockWalkIssues } from './DockWalkScreen.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -234,7 +235,7 @@ function showMenu(items, onPick) {
   sheet.className = 'sheet assign-sheet';
 
   sheet.innerHTML = `
-    <div class="assign-handle"></div>
+    ${sheetCloseButton()}
     <div class="assign-divider"></div>
 
     <div class="assign-list" id="pfMenuList">
@@ -274,6 +275,7 @@ function showMenu(items, onPick) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   sheet
     .querySelector('#pfMenuCancel')

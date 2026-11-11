@@ -27,7 +27,7 @@ export function showChecklistHelp() {
       <div class="help-section-title">${tr("Status")}</div>
       <div class="help-tips">• <b>${tr("Pending")}</b>${tr("— checklist created, not yet started •")}<b>${tr("In Progress")}</b>${tr("— some items completed •")}<b>${tr("Completed")}</b>${tr("— all items processed")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

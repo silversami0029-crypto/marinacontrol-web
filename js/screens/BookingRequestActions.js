@@ -1,5 +1,5 @@
 import { italianUI as itUI } from '../i18n.js';
-import { reviewNewBookingPrice } from './BerthingBillingSheet.js';
+import { BerthingRateCurrencyMismatch, reviewNewBookingPrice, showBerthingRateMismatch } from './BerthingBillingSheet.js';
 import { DECLINE_REASONS } from '../analytics/bookingDemand.js';
 import { wireBookingDatePicker } from '../ui/BookingDatePicker.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -374,6 +374,10 @@ async function createBooking(request, boat, berth) {
 
     toast(tr(`Booking confirmed for ${boat.name} at berth ${berth.berthNumber || ''}`), { kind: 'success', duration: 4000 });
   } catch (err) {
+    if (err instanceof BerthingRateCurrencyMismatch) {
+      showBerthingRateMismatch(berth, formatDate(request.arrivalDate), err);
+      return;
+    }
     console.error('[approve] booking creation failed', err);
     toast(tr('Failed to create booking'), { kind: 'error' });
   }
@@ -661,7 +665,17 @@ function showDateProposal(request) {
     const responseNote = sheet.querySelector('#dpReply')?.value.trim() || '';
     if (['ACCEPT', 'REJECT'].includes(action) && !responseNote) { toast(tr("Record the owner's reply first"), {kind:'error'}); sheet.querySelector("#dpReply")?.focus(); return; }
     if (action !== 'PROPOSE') {
-      const ok = await confirmSheet({title: tr('Confirm date action'), message: tr(action === 'ACCEPT' ? 'Record the owner’s agreement to these exact dates? Staff must still approve the booking.' : action === 'REJECT' ? 'Record the owner’s rejection of these dates?' : 'Withdraw this proposal internally? Contact the owner separately if needed.'), confirmText:tr('Confirm'), cancelText:tr('Cancel')});
+      const ok = await confirmSheet({
+        title: tr('Confirm date action'),
+        message: tr(action === 'ACCEPT'
+          ? 'Record the owner’s agreement to these exact dates? Staff must still approve the booking.'
+          : action === 'REJECT'
+            ? 'Record the owner’s rejection of these dates?'
+            : 'Withdraw this proposal internally? Contact the owner separately if needed.'),
+        confirmText: tr('Confirm'),
+        cancelText: tr('Cancel'),
+        action: 'confirm'
+      });
       if (!ok || busy) return;
     }
     busy = true; sheet.querySelectorAll('button,input,textarea').forEach(el => el.disabled = true);

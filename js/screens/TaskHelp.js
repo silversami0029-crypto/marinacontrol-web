@@ -26,7 +26,7 @@ export function showTaskHelp() {
       <div class="help-section-title">${tr("Tips")}</div>
       <div class="help-tips">${tr("• Use the filter chips to view All, Open, Overdue or Completed • Overdue tasks appear in red on the Boat Dashboard • Open the kebab menu for View, Edit, Complete, Duplicate and more")}</div>
 
-      <div class="help-footer">${tr("Need help? support@marinacontrol.com")}</div>
+      <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
 
     <div class="help-actions">

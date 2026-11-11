@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { updateMaintenanceTask } from '../util/MaintenanceArchive.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -63,7 +64,7 @@ export async function showAddMaintenanceSheet(opts = {}) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
 
  <div class="maintenance-sheet-header"
   style="position:sticky;top:0;z-index:2;flex-shrink:0;display:flex;align-items:center;min-height:48px;background:var(--color-surface, #1C222A);">
@@ -181,6 +182,7 @@ export async function showAddMaintenanceSheet(opts = {}) {
   unsubscribeContext = store.subscribe(() => { if (!sameSession()) close(); });
   if (!sameSession()) { close(); return; }
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 sheet.querySelector('#iv-close').addEventListener('click', close);
 
   const today = new Date()

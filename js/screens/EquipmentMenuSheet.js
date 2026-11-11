@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t } from '../i18n.js';
 // js/screens/EquipmentMenuSheet.js
@@ -19,7 +20,7 @@ export function showEquipmentMenu(item) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${escapeHtml(item.manufacturer || t('Equipment'))}</div>
 
     <div class="sheet-item" id="emView">
@@ -105,6 +106,7 @@ export function showEquipmentMenu(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
 
   sheet.querySelector('#emView').addEventListener('click', () => {
     close();
@@ -168,7 +170,7 @@ async function showAssignOwner(item) {
   sheet.className = 'sheet';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title" style="text-align:center;">${t("Assign Owner")}</div>
 
     <div class="ao-scroll">
@@ -203,6 +205,7 @@ async function showAssignOwner(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#eoCancel').addEventListener('click', close);
 
   let picked = current;

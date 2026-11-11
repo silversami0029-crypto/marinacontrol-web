@@ -1,3 +1,4 @@
+import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/TaskDetailSheet.js
@@ -20,7 +21,7 @@ export function showTaskDetail(item) {
   const dueLabel = item.dueDate ? formatDate(item.dueDate) : '—';
 
   sheet.innerHTML = `
-    <div class="sheet-handle"></div>
+    ${sheetCloseButton()}
     <div class="sheet-title">${escapeHtml(item.title || itUI('Task'))}</div>
 
     <div class="md-body">
@@ -49,6 +50,7 @@ export function showTaskDetail(item) {
   };
 
   backdrop.addEventListener('click', close);
+  sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#tkDetailClose').addEventListener('click', close);
 }
 
