@@ -146,21 +146,24 @@ function mountLegacyBerthPierMap(host, { clientId, t, onOpen }) {
   const summary = document.getElementById('berthSummary');
   const originalSummaryDisplay = summary?.style.display || '';
   let fitFrame = 0;
-  function fitMap() {
-    cancelAnimationFrame(fitFrame);
-    fitFrame = requestAnimationFrame(() => {
-      if (!host.isConnected || panel.hidden) return;
-      const [, , viewWidth, viewHeight] = baseView;
-      const note = host.querySelector('.pier-map-note');
-      const panelStyle = getComputedStyle(panel);
-      const availableWidth = panel.clientWidth - parseFloat(panelStyle.paddingLeft) - parseFloat(panelStyle.paddingRight);
-      const viewportHeight = window.visualViewport?.height || window.innerHeight;
-      const availableHeight = Math.max(80, viewportHeight - svg.getBoundingClientRect().top - note.getBoundingClientRect().height - 52);
-      const height = Math.min(availableHeight, availableWidth * viewHeight / viewWidth);
-      svg.style.height = `${height}px`;
-      svg.style.width = `${height * viewWidth / viewHeight}px`;
-    });
-  }
+function fitMap() {
+  cancelAnimationFrame(fitFrame);
+  fitFrame = requestAnimationFrame(() => {
+    if (!host.isConnected || panel.hidden) return;
+
+    const [, , viewWidth, viewHeight] = baseView;
+    const panelStyle = getComputedStyle(panel);
+    const availableWidth =
+      panel.clientWidth -
+      parseFloat(panelStyle.paddingLeft) -
+      parseFloat(panelStyle.paddingRight);
+
+    if (availableWidth <= 0) return;
+
+    svg.style.width = `${availableWidth}px`;
+    svg.style.height = `${availableWidth * viewHeight / viewWidth}px`;
+  });
+}
   function onResize() {
     if (!host.isConnected) { window.removeEventListener('resize', onResize); observer.disconnect(); return; }
     fitMap();

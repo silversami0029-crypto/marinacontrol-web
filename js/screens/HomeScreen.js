@@ -10,6 +10,12 @@ let stops = [];
 let generation = 0;
 let clockTimer = null;
 let clockVisibilityHandler = null;
+const clockPreferenceKey = 'marinacontrol.webapp.secondClock';
+const secondClockZones = [
+  ['Asia/Dubai', 'Dubai'],
+  ['Europe/Istanbul', 'Türkiye'],
+  ['America/New_York', 'New York (US Eastern)']
+];
 export function unmountHomeScreen() {
   generation++;
   clearTimeout(clockTimer);
@@ -36,11 +42,20 @@ export function mountHomeScreen() {
   const cssId = 'homeOverviewCss';
   if (!document.getElementById(cssId)) {
     const link = document.createElement('link');
-    link.id = cssId; link.rel = 'stylesheet'; link.href = 'css/home.css?v=20261005-rotation-2';
+    link.id = cssId; link.rel = 'stylesheet'; link.href = 'css/home.css?v=20261111-time-zones';
     document.head.appendChild(link);
   }
   screen.innerHTML = `<section class="mc-home">
-    <header class="mc-home-heading"><time class="mc-home-clock" dir="auto"></time><span class="mc-home-eyebrow">${esc(t('MarinaControl'))}</span>
+    <header class="mc-home-heading">
+      <div class="mc-home-clocks">
+        <span>${esc(t('London'))}</span>
+        <time class="mc-home-clock" data-clock="london" dir="auto"></time>
+        <select class="mc-home-clock-zone" aria-label="${esc(t('Second clock time zone'))}">
+          ${secondClockZones.map(([zone, name]) => `<option value="${zone}">${esc(t(name))}</option>`).join('')}
+        </select>
+        <time class="mc-home-clock" data-clock="secondary" dir="auto"></time>
+      </div>
+      <span class="mc-home-eyebrow">${esc(t('MarinaControl'))}</span>
      <!-- <h1>${esc(store.activeMarina?.name || itUI('MarinaControl'))}</h1> -->
       <p>${esc(t('Your marina at a glance'))}</p></header>
     <div class="mc-home-grid" aria-label="${esc(t('Marina overview'))}">
@@ -56,14 +71,41 @@ export function mountHomeScreen() {
   </section>`;
   const root = screen.querySelector('.mc-home');
   stops.push(startHomeBanner(root.querySelector('.mc-home-heading')));
-  const clock = root.querySelector('.mc-home-clock');
+  const zoneSelect = root.querySelector('.mc-home-clock-zone');
+  const londonClock = root.querySelector('[data-clock="london"]');
+  const secondClock = root.querySelector('[data-clock="secondary"]');
+  const locale = getLocale();
+  const clockFormatters = new Map(
+    ['Europe/London', ...secondClockZones.map(([zone]) => zone)].map(timeZone => [
+      timeZone,
+      new Intl.DateTimeFormat(locale, {
+        timeZone, weekday: 'short', day: 'numeric', month: 'short',
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+      })
+    ])
+  );
+  try {
+    const savedZone = localStorage.getItem(clockPreferenceKey);
+    if (secondClockZones.some(([zone]) => zone === savedZone)) zoneSelect.value = savedZone;
+  } catch {
+    // The selector still works without browser storage.
+  }
+  zoneSelect.addEventListener('change', () => {
+    updateClock();
+    try {
+      localStorage.setItem(clockPreferenceKey, zoneSelect.value);
+    } catch {
+      // The selection still applies until the screen is closed.
+    }
+  });
   function updateClock() {
     clearTimeout(clockTimer);
     if (token !== generation || !root.isConnected) return;
     const now = new Date();
-    const locale = getLocale();
-    clock.dateTime = now.toISOString();
-    clock.textContent = `${new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now)} · ${new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now)}`;
+    londonClock.dateTime = now.toISOString();
+    secondClock.dateTime = londonClock.dateTime;
+    londonClock.textContent = clockFormatters.get('Europe/London').format(now);
+    secondClock.textContent = clockFormatters.get(zoneSelect.value).format(now);
     clockTimer = setTimeout(updateClock, 60000 - (Date.now() % 60000));
   }
   clockVisibilityHandler = () => { if (!document.hidden) updateClock(); };
