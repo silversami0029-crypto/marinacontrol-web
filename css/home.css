@@ -48,6 +48,7 @@
 }
 .mc-home-clock { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .mc-home-clock-zone {
+  field-sizing: content;
   min-width: 0;
   max-width: 100%;
   padding: 4px 6px;
