@@ -1,13 +1,14 @@
 import { italianUI as itUI } from '../i18n.js';
+import { calculateMaintenanceInsights } from '../analytics/maintenanceInsights.js';
 import {mt} from './maintenanceInsightsText.js';
 import {renderMaintenanceInsights, maintenanceHelpSteps} from './MaintenanceInsightsView.js';
-import { calculateBookingDemand, DECLINE_REASONS, SIZE_BANDS } from '../analytics/bookingDemand.js';
+import { calculateBookingDemand, DECLINE_REASONS, SIZE_BANDS } from '../analytics/bookingDemand.js?v=monthly-details';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
 import { confirmSheet } from '../ui/confirm.js';
 import { store } from '../store.js';
 import { t, getLocale } from '../i18n.js';
 import { db, collection, query, where, getDocs } from '../firebase.js';
-import { calculateTrends, monthStart, toMs } from '../analytics/operationsTrends.js';
+import { calculateTrends, monthStart, toMs } from '../analytics/operationsTrends.js?v=monthly-details';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const info = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7" r=".8" fill="currentColor"/></svg>';
@@ -32,7 +33,7 @@ function step(num, title, body) {
 }
 
 export async function mountOperationsTrendsScreen() {
-  const styleURL = new URL('../../css/operations-trends.css', import.meta.url).href;
+  const styleURL = new URL('../../css/operations-trends.css?v=monthly-details-layout', import.meta.url).href;
   if (![...document.querySelectorAll('link[rel="stylesheet"]')].some(link => link.href === styleURL)) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
@@ -51,18 +52,18 @@ export async function mountOperationsTrendsScreen() {
     <div class="c360-pill">${t('Operations Trends')}</div>
     <button type="button" class="c360-icon-btn" data-help aria-label="${t('Help')}">${info}</button>
     <div class="c360-header-spacer"></div></div></div>
-    <div class="ot-filters"><label>${t('Metric')}<select data-metric>${metrics.map((m,i)=>`<option value="${i}">${i===3?mt(m):t(m)}</option>`).join('')}</select></label>
-    <label>${t('Period')}<select data-period><option value="3">${t('Next 3 months')}</option><option value="6" selected>${t('Next 6 months')}</option><option value="12">${t('Next 12 months')}</option><option value="past">${t('Past 12 months')}</option><option value="custom">${t('Custom dates')}</option></select></label>
+    <div class="ot-body"><div class="ot-filters"><label>${t('Metric')}<select data-metric>${metrics.map((m,i)=>`<option value="${i}">${i===3?mt(m):t(m)}</option>`).join('')}</select></label>
+    <label>${t('Period')}<select data-period><option value="3">${t('This month + next 2 months')}</option><option value="6" selected>${t('This month + next 5 months')}</option><option value="12">${t('This month + next 11 months')}</option><option value="today">${t('From today through the next 5 months')}</option><option value="past">${t('Past 12 months')}</option><option value="custom">${t('Custom dates')}</option></select></label>
     <label data-status-label hidden>${t('Maintenance status')}<select data-status><option value="OPEN">${t('Open')}</option><option value="COMPLETED">${t('Completed')}</option><option value="DEFERRED">${t('Deferred')}</option><option value="ALL">${t('All statuses')}</option></select></label>
     <div class="ot-dates" data-dates hidden><label>${t('Start date')}<input type="date" data-start></label><label>${t('End date')}<input type="date" data-end></label><button type="button" class="ot-apply" data-apply>${t('Apply')}</button></div>
     <label data-currency-label hidden>${t('Currency')}<select data-currency></select></label></div>
-    <div data-demand-controls hidden style="margin:12px 0;">
+    <div data-demand-controls class="ot-filters" hidden>
       <label>${t('Data source')} <select data-demand-source><option value="ALL">${t('All records')}</option><option value="REAL">${t('Real enquiries only')}</option><option value="TEST">${t('Simulated enquiries only')}</option></select></label>
       <label>${t('Test mode')} <select data-test-mode><option value="NEW">${t('100 new enquiries')}</option><option value="HISTORY">${t('60 sample declines + 40 new enquiries')}</option></select></label>
       <button type="button" class="ot-apply" data-test>${t('Create 100 test enquiries')}</button>
       <span data-test-message role="status"></span>
     </div>
-    <div class="ot-result" aria-live="polite">${t('Loading marina records…')}</div>`;
+    <div class="ot-result" aria-live="polite">${t('Loading marina records…')}</div></div>`;
 
   let result, helpClose = null, calendarClose = null;
   const current = () => root.isConnected && Number(store.activeClientId) === clientId && location.hash.split('?')[0] === '#/operations-trends';
@@ -261,29 +262,17 @@ export async function mountOperationsTrendsScreen() {
     if(!result || !current()) return;
     const metric = Number(root.querySelector('[data-metric]').value);
     root.querySelector('[data-demand-controls]').hidden=metric!==5;
-    if(metric===5){
-      renderDemand();
-      return;
-    }
-    if(metric===3){
-      root.querySelector('[data-currency-label]').hidden=true;
-      root.querySelector('[data-status-label]').hidden=false;
-      renderMaintenanceInsights(root.querySelector('.ot-result'), {
-        clientId,from:selectedFrom,end:selectedEnd,now:Date.now(),
-        tasks:records?.maintenance||[],berths:records?.berths||[],
-        status:root.querySelector('[data-status]').value
-      });
-      return;
-    }
-
+    const demand = metric===5 ? demandResult() : null;
+    const months = demand?.months ?? result.months;
+    const report = root.querySelector('.ot-result');
     const currency = root.querySelector('[data-currency]').value || 'UNSPECIFIED';
     root.querySelector('[data-currency-label]').hidden=metric!==4;
     root.querySelector('[data-status-label]').hidden=metric!==3;
-    const values = metric===4
+    const values = demand ? demand.monthly : metric===4
       ? (result.paid[currency] || Array(result.months.length).fill(0))
       : result[labels[metric]];
-    const unit = metric===0?t('berth-days'):metric===1?itUI('kWh'):metric===2?'L':metric===3?t('tasks'):currency==='UNSPECIFIED'?'':currency;
-    const value = n => format(n,metric) + (unit?' '+unit:'');
+    const unit = metric===0?t('berth-days'):metric===1?itUI('kWh'):metric===2?'L':metric===3?t('tasks'):metric===5?t('enquiries'):currency==='UNSPECIFIED'?'':currency;
+    const value = n => format(n,metric===5?0:metric) + (unit?' '+unit:'');
     const missing = i => metric===1?result.electricityPairs[i]===0:metric===2?result.waterPairs[i]===0:false;
     const max = Math.max(1,...values), scale = max*1.12;
 
@@ -293,22 +282,98 @@ export async function mountOperationsTrendsScreen() {
     // Native SVG: no chart dependency or extra network requests.
     const bars = values.map((v,i)=>{
       const x=80+i*85, height=v/scale*210;
-      return `<rect x="${x}" y="${240-height}" width="46" height="${height}" rx="4" fill="#2196f3"><title>${esc(monthLabel(result.months[i])+': '+(missing(i)?t('No comparable readings'):value(v)))}</title></rect>
-        <text x="${x+23}" y="270" text-anchor="middle" fill="#aeb6c1" font-size="12">${esc(monthLabel(result.months[i]))}</text>`;
+      const title=esc(monthLabel(months[i])+': '+(missing(i)?t('No comparable readings'):value(v)));
+      return `<g data-booked-bar="${i}" role="button" tabindex="0" aria-label="${title}" >
+        <title>${title}</title><rect x="${x-16}" y="30" width="78" height="252" class="ot-chart-hit" fill="transparent"/>
+        <rect x="${x}" y="${240-height}" width="46" height="${height}" rx="4" class="ot-chart-bar"/>
+        <text x="${x+23}" y="270" text-anchor="middle" class="ot-chart-label" font-size="12">${esc(monthLabel(months[i]))}</text></g>`;
     }).join('');
 
     const ticks=Array.from({length:5},(_,i)=>{
       const n=scale*i/4,y=240-i*52.5;
-      return `<line x1="68" x2="${80+values.length*85}" y1="${y}" y2="${y}" stroke="#37414d"/><text x="60" y="${y+4}" text-anchor="end" fill="#aeb6c1" font-size="11">${esc(format(n,metric))}</text>`;
+      return `<line x1="68" x2="${80+values.length*85}" y1="${y}" y2="${y}" stroke="#37414d"/><text x="60" y="${y+4}" text-anchor="end" class="ot-chart-label" font-size="11">${esc(format(n,metric))}</text>`;
     }).join('');
 
-    root.querySelector('.ot-result').innerHTML=`<div class="ot-total"><span>${t(metric===0?itUI('Booked total'):itUI('Recorded total'))}</span><strong>${esc(value(values.reduce((a,b)=>a+b,0)))}</strong></div>
+    report.innerHTML=`<div class="ot-total"><span>${t(metric===0?itUI('Booked total'):metric===3?'Scheduled tasks':metric===5?'Declined enquiries':itUI('Recorded total'))}</span><strong>${esc(value(values.reduce((a,b)=>a+b,0)))}</strong></div>
       ${(metric===1||metric===2)&&result.mixedModeReadings ? `<p class="ot-caption">${esc(utilityText('Mixed reading modes need review — see ⓘ.','تحتاج القراءات المختلطة إلى مراجعة — راجع ⓘ.'))}</p>`:''}
       ${metric===4&&currency==='UNSPECIFIED'?`<p class="ot-caption">${t('Invoice currency not specified')}</p>`:''}
       <p class="ot-caption">${esc(dateText(selectedFrom))} – ${esc(dateText(selectedEnd-86400000))}</p>
       ${metric===0?`<p class="ot-caption" style="font-size:13px;line-height:1.5;max-width:680px;margin:12px 0 18px;">${t('One berth booked for one day = one berth-day. Totals combine booked days across berths, so a month can exceed 30 or 31. Arrival counts; departure does not. Tap ⓘ for calculation details.')}</p>`:''}
-      <div class="ot-chart" style="overflow-x:auto;"><svg viewBox="0 0 ${chartWidth} 300" style="display:block;width:100%;height:300px;min-width:${values.length>4?chartWidth:0}px;" role="img" aria-label="${esc(t(metrics[metric]))}" direction="ltr">${ticks}${bars}</svg></div>
-      <table class="ot-table"><thead><tr><th>${t('Month')}</th><th>${t('Recorded value')}</th></tr></thead><tbody>${values.map((v,i)=>`<tr><td>${esc(monthLabel(result.months[i]))}</td><td>${esc(missing(i)?t('No comparable readings'):value(v))}</td></tr>`).join('')}</tbody></table>`;
+      <div class="ot-chart"><svg viewBox="0 0 ${chartWidth} 300" style="display:block;width:100%;height:300px;min-width:${values.length>4?chartWidth:0}px;" role="group" aria-label="${esc(t(metrics[metric]))}" direction="ltr">${ticks}${bars}</svg></div>
+      <p class="ot-caption">${t('Select a bar or month to see the records behind its total.')}</p>
+      <table class="ot-table"><thead><tr><th>${t('Month')}</th><th>${t('Recorded value')}</th></tr></thead><tbody>${values.map((v,i)=>`<tr><td><button type="button" data-booked-month="${i}">${esc(monthLabel(months[i]))}</button></td><td>${esc(missing(i)?t('No comparable readings'):value(v))}</td></tr>`).join('')}</tbody></table>`;
+
+    const detail = document.createElement('section');
+    detail.hidden = true;
+    detail.tabIndex = -1;
+    report.append(detail);
+    for (const control of report.querySelectorAll('[data-booked-month],[data-booked-bar]')) {
+      const i = Number(control.dataset.bookedMonth ?? control.dataset.bookedBar);
+      const openDetail = () => {
+        const { columns, rows } = monthDetails(metric, i, currency, demand, value);
+        detail.innerHTML = `<h3>${esc(monthLabel(months[i]))} · ${esc(missing(i)?t('No comparable readings'):value(values[i]))}</h3>
+          ${metric===0&&rows.length?`<p class="ot-caption">${t('Days already counted for the same berth appear under Overlap.')}</p>`:''}
+          ${rows.length?`<div class="ot-table-scroll" tabindex="0" role="region" aria-label="${esc(t('Monthly records'))}"><table class="ot-table"><thead><tr>${columns.map(label=>`<th scope="col">${esc(t(label))}</th>`).join('')}</tr></thead>
+          <tbody>${rows.map(row=>`<tr>${row.map(cell=>`<td>${esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<p>${t('No contributing records in this month.')}</p>`}`;
+        detail.hidden = false;
+        detail.focus({preventScroll:true});
+        const scrollBody = root.querySelector('.ot-body');
+        const detailTop = detail.getBoundingClientRect().top - scrollBody.getBoundingClientRect().top;
+        scrollBody.scrollTop += detailTop - 8;
+      };
+      control.addEventListener('click',openDetail);
+      if (control.hasAttribute('data-booked-bar')) {
+        control.addEventListener('keydown',event=>{
+          if (event.key!=='Enter' && event.key!==' ') return;
+          event.preventDefault();
+          openDetail();
+        });
+      }
+    }
+
+    if (metric===3) {
+      const insights = document.createElement('section');
+      report.append(insights);
+      renderMaintenanceInsights(insights, {
+        clientId,from:selectedFrom,end:selectedEnd,now:Date.now(),
+        tasks:records?.maintenance||[],berths:records?.berths||[],
+        status:root.querySelector('[data-status]').value
+      });
+    }
+    if (demand) renderDemand(report, demand);
+  }
+
+  function monthDetails(metric, i, currency, demand, value) {
+    const berth = id => result.berthNames.get(Number(id))?.berthNumber || id || '—';
+    if (metric===0) return {
+      columns:['Berth','Arrival','Departure','Status','Counted days','Overlap'],
+      rows:result.bookedBreakdown[i].map(row=>[row.berth,dateText(row.arrival),dateText(row.departure),t(row.status),format(row.counted,0),format(row.overlap,0)])
+    };
+    if (metric===1 || metric===2) return {
+      columns:['Berth','Meter','Reading mode','Previous reading date','Previous reading','Recorded date','Recorded reading','Consumption'],
+      rows:result.breakdown[labels[metric]][i].map(segment=>[
+        berth(segment.to.berthId),segment.to.meter,t(segment.mode),
+        segment.from?dateText(segment.from.at):'—',segment.from?value(segment.from.canonicalValue):'—',
+        dateText(segment.at),value(segment.to.canonicalValue),value(segment.quantity)
+      ])
+    };
+    if (metric===3) return {
+      columns:['Task','Berth','Scheduled date','Status'],
+      rows:result.breakdown.maintenance[i].map(({task,time,state})=>[t(task.type || 'Unspecified'),berth(task.berthId),dateText(time),t(state)])
+    };
+    if (metric===4) return {
+      columns:['Invoice','Issue date','Amount'],
+      rows:(result.breakdown.paid[currency]?.[i] || []).map(({invoice,time,amount})=>[
+        invoice.invoiceNumber || invoice.id || invoice._docId,dateText(time),value(amount)
+      ])
+    };
+    return {
+      columns:['Vessel','Requested arrival','Requested departure','Decline reason','Vessel length','Source'],
+      rows:demand.breakdown[i].map(row=>[
+        row.vessel || '—',dateText(row.arrival),row.departure>0?dateText(row.departure):'—',
+        t(DECLINE_REASONS[row.reason] || 'Reason not recorded'),t(row.band),t(row.simulated?'Simulation':'Live')
+      ])
+    };
   }
 
   function demandResult() {
@@ -317,11 +382,11 @@ export async function mountOperationsTrendsScreen() {
       const test=r.isSimulation===true||r.source==='SIMULATION';
       return source==='ALL'||(source==='TEST'?test:!test);
     });
-    return calculateBookingDemand(clientId,selectedFrom,selectedEnd,requests);
+    return calculateBookingDemand(clientId,selectedFrom,selectedEnd,requests,{breakdown:true});
   }
 
-  function renderDemand() {
-    const d=demandResult(),reasonName=code=>t(DECLINE_REASONS[code]||itUI('Reason not recorded'));
+  function renderDemand(report, d) {
+    const reasonName=code=>t(DECLINE_REASONS[code]||itUI('Reason not recorded'));
     const percent=n=>new Intl.NumberFormat(getLocale(),{
       style:'percent',maximumFractionDigits:1
     }).format(d.total?n/d.total:0);
@@ -331,21 +396,16 @@ export async function mountOperationsTrendsScreen() {
       return pairs.map(([label,n])=>`<div style="margin:12px 0;"><div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;"><span>${esc(label)}</span><b style="white-space:nowrap;">${format(n,0)}${shares?` · ${esc(percent(n))}`:''}</b></div><div style="height:8px;margin-top:6px;background:#2b3541;border-radius:5px;"><div style="width:${shares?(d.total?n/d.total*100:0):n/max*100}%;height:100%;background:#2196f3;border-radius:5px;"></div></div></div>`).join('');
     };
     const reasons=Object.entries(d.reasons).sort((a,b)=>b[1]-a[1]);
-    const demandLabel=t('Declined enquiries');
-
-    root.querySelector('.ot-result').innerHTML=`
-      <div class="ot-total"><span>${demandLabel}</span><strong>${format(d.total,0)}</strong></div>
-      <p class="ot-caption"><bdi dir="ltr">${esc(dateText(selectedFrom))} – ${esc(dateText(selectedEnd-86400000))}</bdi></p>
+    report.insertAdjacentHTML('beforeend', `
       <p class="ot-caption">${t('Grouped by requested arrival month. Enquiries are not guaranteed lost bookings or revenue.')}</p>
       <p class="ot-caption">${t('Simulated enquiries')}: ${format(d.simulated,0)} · ${t('Estimated unique vessels')}: ${format(d.uniqueVessels,0)} · ${t('Requests without vessel identity')}: ${format(d.unidentifiedRequests,0)}</p>
       <p class="ot-caption">${t('Estimated unique vessels are not a verified fleet count. Repeated enquiries may refer to the same demand.')}</p>
       <h3>${t('Decline reasons')}</h3><p class="ot-caption">${t('Percentages show the share of declined enquiries in the selected period and data source, including unknown reasons. They are not an overall rejection rate or a revenue percentage.')}</p>${chart(reasons.map(([key,n])=>[reasonName(key),n]),true)}
       ${!d.total?`<p class="ot-caption">${t('No declined enquiries in this period. Decline requests with a reason or load sample history.')}</p>`:''}
-      <h3>${t('Requested arrival month')}</h3>${chart(d.months.map((m,i)=>[monthLabel(m),d.monthly[i]]))}
       <h3>${t('Vessel length')}</h3>${chart(SIZE_BANDS.map(band=>[t(band),d.sizes[band]||0]),true)}
       <h3>${t('Reason by vessel length')}</h3>
-      <div style="overflow-x:auto;"><table class="ot-table"><thead><tr><th>${t('Decline reason')}</th>${SIZE_BANDS.map(band=>`<th>${esc(t(band))}</th>`).join('')}</tr></thead><tbody>${reasons.map(([reason])=>`<tr><td>${esc(reasonName(reason))}</td>${SIZE_BANDS.map(band=>`<td>${format(d.matrix[reason]?.[band]||0,0)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
-      <p class="ot-caption">${t('Records excluded')}: ${format(d.excluded,0)} · ${t('Reason not recorded')}: ${format(d.missingReason,0)}</p>`;
+      <div class="ot-table-scroll" tabindex="0" role="region" aria-label="${esc(t('Reason by vessel length'))}"><table class="ot-table"><thead><tr><th>${t('Decline reason')}</th>${SIZE_BANDS.map(band=>`<th>${esc(t(band))}</th>`).join('')}</tr></thead><tbody>${reasons.map(([reason])=>`<tr><td>${esc(reasonName(reason))}</td>${SIZE_BANDS.map(band=>`<td>${format(d.matrix[reason]?.[band]||0,0)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <p class="ot-caption">${t('Records excluded')}: ${format(d.excluded,0)} · ${t('Reason not recorded')}: ${format(d.missingReason,0)}</p>`);
   }
 
   let records;
@@ -383,15 +443,19 @@ export async function mountOperationsTrendsScreen() {
       }
     } else {
       from=monthStart(now,period==='past'?-11:0);
-      end=monthStart(now,period==='past'?1:Number(period));
+      const today = new Date();
+      if (period==='today') from = Date.UTC(today.getFullYear(),today.getMonth(),today.getDate());
+      end=monthStart(period==='today'?from:now,period==='past'?1:period==='today'?6:Number(period));
       root.querySelector('[data-start]').value=dateText(from);
       root.querySelector('[data-end]').value=dateText(end-86400000);
     }
     selectedFrom=from;
     selectedEnd=end;
-    result=calculateTrends(clientId,from,records,{
-      from,end,status:root.querySelector('[data-status]').value
-    });
+    const status = root.querySelector('[data-status]').value;
+    const maintenance = Number(root.querySelector('[data-metric]').value) === 3
+      ? calculateMaintenanceInsights(clientId,from,end,now,records.maintenance,status).selected
+      : [];
+    result=calculateTrends(clientId,from,{...records,maintenance},{from,end,breakdown:true,status});
     const picker=root.querySelector('[data-currency]'), prior=picker.value;
     const currencies=Object.keys(result.paid).sort();
     if(!currencies.length) currencies.push('UNSPECIFIED');

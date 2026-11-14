@@ -4,7 +4,7 @@ import {app} from '../firebase.js';
 import {getFunctions,httpsCallable} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
 import {showBerthMapEditor} from '../screens/BerthMapEditor.js';
 import {berthSlots} from './BerthMapGeometry.js';
-import {mountLayoutCanvas,reconcileBerthLayout} from './BerthLayoutCanvas.js';
+import {mountLayoutCanvas,reconcileBerthLayout} from './BerthLayoutCanvas.js?v=published-map-proportions';
 import {createBerthMapDialogs} from './BerthMapDialog.js';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dots='<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
@@ -27,7 +27,7 @@ export function mountEditableBerthMap(host,{clientId,t,onOpen,legacy,planSlots,p
  const all=new Map((state.berths||[]).map(b=>[b._docId,b]));for(const b of (store.berthsFull||[]))if(Number(b.clientId)===clientId&&b._docId)all.set(b._docId,b);for(const b of current)if(b._docId)all.set(b._docId,b);
  const allSlots=berthSlots([...all.values()]),visible=new Map(current.filter(b=>b._docId).map(b=>[b._docId,b]));const slots=allSlots.map(s=>({...s,record:visible.get(s.id)||null}));
  const select=host.querySelector('select'),docks=[...new Set(allSlots.map(s=>s.zone))].sort();if(dock&&!docks.includes(dock))dock='';select.innerHTML=`<option value="">${t('All piers / docks')}</option>${docks.map(d=>`<option value="${esc(d)}" ${d===dock?'selected':''}>${esc(d)}</option>`).join('')}`;
- const layout=reconcileBerthLayout(state.published,allSlots);controller=mountLayoutCanvas(host.querySelector('.be-canvas'),{layout,slots,cameraState:camera,zone:dock,L:t,onOpen:s=>{const b=visible.get(s.id);if(b&&active())onOpen(b);}});
+ const layout=reconcileBerthLayout(state.published,allSlots);controller=mountLayoutCanvas(host.querySelector('.be-canvas'),{layout,slots,cameraState:camera,zone:dock,fitPlanWidth:true,L:t,onOpen:s=>{const b=visible.get(s.id);if(b&&active())onOpen(b);}});
  const placed=new Set(state.published.items.map(i=>i.id)),extra=allSlots.filter(s=>!placed.has(s.id)).length;
  host.querySelector('.bm-note').textContent=t('Drag to pan · use +/− or pinch to zoom. Live marker colours follow the selected date view; background colours may indicate berth sizes.')+(extra?` ${extra} ${t('new berths are shown in the extra area; position them in Edit layout.')}`:'');
  }

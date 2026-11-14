@@ -6,17 +6,23 @@ export function reconcileBerthLayout(layout,slots){
  if(missing.length){const x=copy.width+30;copy.items.push(...missing.map((s,i)=>({id:s.id,x:x+(i%8)*100,y:50+Math.floor(i/8)*65,width:85,height:50,rotation:0})));copy.width+=850;copy.height=Math.max(copy.height,100+Math.ceil(missing.length/8)*65);}
  return copy;
 }
-export function mountLayoutCanvas(root,{layout,slots,onOpen=()=>{},L=x=>x,cameraState={},zone='',editing=false,selected='',snap=true,onSelect=()=>{},onMove=()=>{},onMoveEnd=()=>{}}){
+export function mountLayoutCanvas(root,{layout,slots,onOpen=()=>{},L=x=>x,cameraState={},zone='',fitPlanWidth=false,editing=false,selected='',snap=true,onSelect=()=>{},onMove=()=>{},onMoveEnd=()=>{},onBlockSelect,isBlockSelectionArmed=()=>false,onMeasurePlan,hiddenBerths,onPlaceBerth}){
  root.replaceChildren();root.classList.add('be-canvas');root.tabIndex=0;root.setAttribute('aria-label',editing?itUI('Edit berth layout. Drag a berth or label; use arrow keys for precise movement.'):'Berth layout. Drag to pan and select a berth.');
  const slotMap=new Map(slots.map(s=>[s.id,s]));
  let base={x:0,y:0,w:layout.width,h:layout.height};if(zone){const items=layout.items.filter(i=>slotMap.get(i.id)?.zone===zone);if(items.length){const x=Math.min(...items.map(i=>i.x))-30,y=Math.min(...items.map(i=>i.y))-30;base={x,y,w:Math.max(...items.map(i=>i.x+i.width))-x+30,h:Math.max(...items.map(i=>i.y+i.height))-y+30};}}
  const key=JSON.stringify([layout.width,layout.height,zone,editing]);if(cameraState.key!==key){cameraState.key=key;cameraState.view={...base};}let view={...cameraState.view};
  const svg=el('svg',{viewBox:`${view.x} ${view.y} ${view.w} ${view.h}`,preserveAspectRatio:'xMidYMid meet',role:'group'});svg.append(el('rect',{x:0,y:0,width:layout.width,height:layout.height,fill:'#121a20'}));
+ if(fitPlanWidth&&layout.background){
+   root.style.height='auto';
+   svg.style.height='auto';
+   svg.style.aspectRatio=`${base.w} / ${base.h}`;
+ }
  if(layout.background)svg.append(el('image',{href:layout.background,x:0,y:0,width:layout.backgroundWidth||layout.width,height:layout.backgroundHeight||layout.height,preserveAspectRatio:'none','pointer-events':'none'}));
  const nodes=new Map(),targets=new Map();
  function paint(id,item){const node=nodes.get(id);if(!node)return;if(!Number.isFinite(item.width)){node.setAttribute('transform',`translate(${item.x} ${item.y}) rotate(${item.rotation||0})`);node.setAttribute('font-size',item.size);node.textContent=item.text;}else node.setAttribute('transform',`translate(${item.x+item.width/2} ${item.y+item.height/2}) rotate(${item.rotation||0}) translate(${-item.width/2} ${-item.height/2})`);}
  function choose(id){selected=id;for(const[k,n]of nodes){n.classList.toggle('be-selected',k===id);if(n.tagName==='g')n.querySelector('rect')?.setAttribute('stroke-width',k===id?5:2);}onSelect(id);}
  for(const item of layout.items){
+ if(hiddenBerths?.has(item.id))continue;
  const slot=slotMap.get(item.id);if(!slot&& !editing)continue;if(zone&&slot?.zone!==zone)continue;
  const berth=slot?.record,status=String(berth?.status||'').toUpperCase(),booked=!!berth&&!berth.dateProjection&&status==='AVAILABLE'&&String(berth.activeBooking?.status||'').toUpperCase()==='CONFIRMED',state=!berth?'UNKNOWN':booked?'BOOKED':(colours[status]?status:'UNKNOWN');
  const label=slot?.label||item.id,name=berth?.assignedBoatName||berth?.activeBooking?.vesselName||L(state);
@@ -31,11 +37,56 @@ export function mountLayoutCanvas(root,{layout,slots,onOpen=()=>{},L=x=>x,camera
  function world(x,y){const p=svg.createSVGPoint();p.x=x;p.y=y;const matrix=svg.getScreenCTM();return matrix?p.matrixTransform(matrix.inverse()):null;}
  function zoom(factor,x,y){const p=x==null?{x:view.x+view.w/2,y:view.y+view.h/2}:world(x,y);if(!p)return;const w=Math.max(base.w/20,Math.min(base.w*1.5,view.w*factor)),r=w/view.w;view={x:p.x-(p.x-view.x)*r,y:p.y-(p.y-view.y)*r,w,h:view.h*r};commit();}
  function move(id,x,y,finish=false){const item=targets.get(id);if(!item)return;const unit=snap&&finish?10:1;item.x=Math.max(0,Math.min(layout.width-(item.width||0),Math.round(x/unit)*unit));item.y=Math.max(0,Math.min(layout.height-(item.height||0),Math.round(y/unit)*unit));paint(id,item);onMove(id,item);if(finish)onMoveEnd();}
+ let marquee=null, measuringPlan=false;
+ function paintMarquee(end){
+   const {start,rect}=marquee;
+   const bounds={x:Math.min(start.x,end.x),y:Math.min(start.y,end.y),
+     width:Math.abs(start.x-end.x),height:Math.abs(start.y-end.y)};
+   for(const [key,value] of Object.entries(bounds))rect.setAttribute(key,value);
+   return bounds;
+ }
  let pointers=new Map(),last=null,target=null,dragged=false,pinch=0;
- svg.onpointerdown=e=>{if(e.pointerType==='mouse'&&e.button!==0)return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){last={x:e.clientX,y:e.clientY};target=e.target.closest('[data-layout-id]')?.getAttribute('data-layout-id');dragged=false;if(editing&&target)choose(target);}else{target=null;dragged=true;const p=[...pointers.values()];pinch=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);}svg.setPointerCapture(e.pointerId);};
- svg.onpointermove=e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){const p=[...pointers.values()],distance=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(distance&&pinch)zoom(pinch/distance,(p[0].x+p[1].x)/2,(p[0].y+p[1].y)/2);pinch=distance;return;}if(pointers.size!==1||!last)return;if(!dragged&&Math.hypot(e.clientX-last.x,e.clientY-last.y)<3)return;const old=world(last.x,last.y),next=world(e.clientX,e.clientY);if(old&&next){if(editing&&target){const i=targets.get(target);if(i)move(target,i.x+next.x-old.x,i.y+next.y-old.y);}else{view.x+=old.x-next.x;view.y+=old.y-next.y;commit();}}dragged=true;last={x:e.clientX,y:e.clientY};};
- const end=(e,cancel=false)=>{if(pointers.size===1&&target){if(editing&&dragged){const i=targets.get(target);move(target,i.x,i.y,true);}else if(!editing&&!dragged&&!cancel){const s=slotMap.get(target);if(s)onOpen(s);}}pointers.delete(e.pointerId);last=null;target=null;pinch=0;};svg.onpointerup=e=>end(e);svg.onpointercancel=e=>end(e,true);
- svg.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY<0?.85:1.18,e.clientX,e.clientY);},{passive:false});
- svg.addEventListener('keydown',e=>{if(!editing||!selected||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();const i=targets.get(selected);if(!i)return;const step=e.shiftKey?10:1;move(selected,i.x+(e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0),i.y+(e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0));onMoveEnd();});
- return {zoomIn:()=>zoom(.8),zoomOut:()=>zoom(1.25),reset:()=>{view={...base};commit();},select:choose,focus:id=>{const i=targets.get(id);if(!i)return;const ratio=view.h/view.w;view.w=Math.min(base.w,Math.max(240,(i.width||80)*8));view.h=view.w*ratio;view.x=i.x+(i.width||0)/2-view.w/2;view.y=i.y+(i.height||0)/2-view.h/2;commit();}};
+ svg.onpointerdown=e=>{if(e.pointerType==='mouse'&&e.button!==0)return;
+ if(marquee)return;
+ const measuring=!onPlaceBerth&&editing&&onMeasurePlan&&measuringPlan;
+ if(measuring||(!onPlaceBerth&&editing&&!pointers.size&&onBlockSelect&&(isBlockSelectionArmed()||(e.ctrlKey&&e.shiftKey)))){
+   const start=world(e.clientX,e.clientY);if(!start)return;
+   const rect=el('rect',{fill:'#2196f3','fill-opacity':.18,stroke:'#2196f3',
+     'stroke-width':2,'stroke-dasharray':'5 4','vector-effect':'non-scaling-stroke','pointer-events':'none'});
+   marquee={id:e.pointerId,start,rect,measuring};svg.append(rect);paintMarquee(start);
+   e.preventDefault();svg.setPointerCapture(e.pointerId);return;
+ }
+ pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){last={x:e.clientX,y:e.clientY};target=onPlaceBerth?null:e.target.closest('[data-layout-id]')?.getAttribute('data-layout-id');dragged=false;if(editing&&target)choose(target);}else{target=null;dragged=true;const p=[...pointers.values()];pinch=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);}svg.setPointerCapture(e.pointerId);};
+ svg.onpointermove=e=>{
+ if(marquee?.id===e.pointerId){const end=world(e.clientX,e.clientY);if(end)paintMarquee(end);return;}
+ if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){const p=[...pointers.values()],distance=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(distance&&pinch)zoom(pinch/distance,(p[0].x+p[1].x)/2,(p[0].y+p[1].y)/2);pinch=distance;return;}if(pointers.size!==1||!last)return;if(!dragged&&Math.hypot(e.clientX-last.x,e.clientY-last.y)<3)return;const old=world(last.x,last.y),next=world(e.clientX,e.clientY);if(old&&next){if(editing&&target){const i=targets.get(target);if(i)move(target,i.x+next.x-old.x,i.y+next.y-old.y);}else{view.x+=old.x-next.x;view.y+=old.y-next.y;commit();}}dragged=true;last={x:e.clientX,y:e.clientY};};
+ const end=(e,cancel=false)=>{
+ if(marquee?.id===e.pointerId){
+   const end=world(e.clientX,e.clientY), bounds=end?paintMarquee(end):null;
+   const {measuring}=marquee;
+   marquee.rect.remove();marquee=null;
+   if(!cancel&&bounds){
+     if(measuring){setPlanMeasurement(false);onMeasurePlan(bounds);return;}
+     const {x,y,width,height}=bounds;
+     const ids=layout.items.filter(item=>{
+       const cx=item.x+item.width/2, cy=item.y+item.height/2;
+       return nodes.has(item.id)&&cx>=x&&cx<=x+width&&cy>=y&&cy<=y+height;
+     }).map(item=>item.id);
+     onBlockSelect(ids);
+   }
+   return;
+ }
+ if(onPlaceBerth&&pointers.size===1&&pointers.has(e.pointerId)&&!dragged&&!cancel){
+   const position=world(e.clientX,e.clientY);
+   if(position)onPlaceBerth(position);
+ }
+ if(pointers.size===1&&target){if(editing&&dragged){const i=targets.get(target);move(target,i.x,i.y,true);}else if(!editing&&!dragged&&!cancel){const s=slotMap.get(target);if(s)onOpen(s);}}pointers.delete(e.pointerId);last=null;target=null;pinch=0;};svg.onpointerup=e=>end(e);svg.onpointercancel=e=>end(e,true);svg.onlostpointercapture=e=>{if(marquee?.id===e.pointerId)end(e,true);};
+ svg.addEventListener('wheel',e=>{e.preventDefault();if(marquee||measuringPlan)return;zoom(e.deltaY<0?.85:1.18,e.clientX,e.clientY);},{passive:false});
+ svg.addEventListener('keydown',e=>{if(!editing||measuringPlan||!selected||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();const i=targets.get(selected);if(!i)return;const step=e.shiftKey?10:1;move(selected,i.x+(e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0),i.y+(e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0));onMoveEnd();});
+ function setPlanMeasurement(armed){
+   measuringPlan=armed;
+   svg.style.cursor=armed||onPlaceBerth?'crosshair':'';
+   if(armed){pointers.clear();last=null;target=null;pinch=0;}
+ }
+ return {setPlanMeasurement,zoomIn:()=>zoom(.8),zoomOut:()=>zoom(1.25),reset:()=>{view={...base};commit();},select:choose,focus:id=>{const i=targets.get(id);if(!i)return;const ratio=view.h/view.w;view.w=Math.min(base.w,Math.max(240,(i.width||80)*8));view.h=view.w*ratio;view.x=i.x+(i.width||0)/2-view.w/2;view.y=i.y+(i.height||0)/2-view.h/2;commit();}};
 }

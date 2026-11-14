@@ -1,12 +1,37 @@
-.ot-screen{padding:20px;max-width:980px;margin:auto;color:var(--color-text-primary,#f5f7f9)}
+#screen:has(> .ot-screen) {
+  height: calc(100dvh - var(--topbar-h) - var(--bottomnav-h));
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+.ot-screen {
+  display: flex;
+  flex: 0 0 auto;
+  height: 100%;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  padding: 0 8px;
+  color: var(--color-text-primary,#f5f7f9);
+}
+.ot-screen > .c360-header { flex-shrink: 0; }
+.ot-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 4px 24px;
+}
 .ot-header{display:flex;align-items:center;gap:12px;justify-content:space-between}
 .ot-header h1,.ot-header h2{margin:0;font-size:21px}
 .ot-icon{display:grid;place-items:center;min-width:44px;height:44px;border:0;background:transparent;color:#2196f3;cursor:pointer;border-radius:8px}
 .ot-icon:focus-visible{outline:2px solid #2196f3}
 .ot-filters{display:flex;flex-wrap:wrap;gap:14px;margin:20px 0}
 .ot-filters label{display:flex;flex-direction:column;gap:8px;flex:1;min-width:210px;color:#aeb6c1;font-size:13px}
-.ot-filters select{width:100%;padding:12px;background:#1c222a;color:#f5f7f9;border:1px solid #465568;border-radius:8px;font:inherit;font-size:14px}
-.ot-filters [hidden]{display:none}
+.ot-filters select{color-scheme:dark;width:100%;padding:12px;background:#1c222a;color:#f5f7f9;border:1px solid #465568;border-radius:8px;font:inherit;font-size:14px}
+.ot-filters[hidden],.ot-filters [hidden]{display:none}
 .ot-result{background:#1c222a;border:1px solid #37414d;border-radius:12px;padding:18px}
 .ot-total{display:flex;flex-direction:column;gap:8px;color:#aeb6c1}
 .ot-total strong{color:#f5f7f9;font-size:24px}
@@ -17,10 +42,19 @@
 .ot-table th,.ot-table td{padding:12px 4px;text-align:start;border-bottom:1px solid #37414d}
 .ot-table th:last-child,.ot-table td:last-child{text-align:end}
 .ot-table th{color:#aeb6c1}
+.ot-table td{color:var(--color-text-primary,#f5f7f9);overflow-wrap:anywhere}
+.ot-table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+.ot-table-scroll .ot-table{width:max-content;min-width:100%}
+.ot-table-scroll .ot-table td{max-width:18rem}
+.ot-chart-label{fill:#aeb6c1}
+.ot-chart-bar{fill:#2196f3}
+.ot-chart [data-booked-bar]{cursor:pointer}
+.ot-chart [data-booked-bar]:focus-visible .ot-chart-hit{stroke:#8bcaff;stroke-width:2}
+.ot-table-scroll:focus-visible{outline:2px solid #8bcaff;outline-offset:2px}
 .ot-overlay{position:fixed;inset:0;background:#0009;z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px}
 .ot-help{background:#1c222a;color:#f5f7f9;border:1px solid #465568;border-radius:14px;padding:16px;width:100%;max-width:520px;max-height:85dvh;display:flex;flex-direction:column}
 .ot-help-body{overflow:auto;line-height:1.6;font-size:14px}
-@media(max-width:600px){.ot-screen{padding:14px}.ot-overlay{padding:12px;align-items:flex-end}.ot-help{max-height:85dvh}}
+@media(max-width:600px){.ot-screen{padding:0 4px}.ot-overlay{padding:12px;align-items:flex-end}.ot-help{max-height:85dvh}}
 
 .ot-screen .c360-header{position:static;margin-bottom:16px}
 .ot-screen .c360-pill{white-space:normal}
@@ -44,3 +78,7 @@
 .ot-day:focus-visible,.ot-calendar button:focus-visible{outline:2px solid #90caf9;outline-offset:1px}
 .ot-dates input[readonly]{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23aeb6c1' stroke-width='1.8'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:20px;background-position:right 12px center;padding-right:40px}
 [dir=rtl] .ot-dates input[readonly]{background-position:left 12px center;padding-left:40px;padding-right:12px}
+
+.ot-table [data-booked-month]{color:inherit;background:transparent;border:0;padding:0;font:inherit;cursor:pointer}
+.ot-table [data-booked-month]:hover{text-decoration:underline;text-underline-offset:3px}
+.ot-table [data-booked-month]:focus-visible{outline:2px solid #8bcaff;outline-offset:3px}

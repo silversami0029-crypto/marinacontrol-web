@@ -1,11 +1,12 @@
 import { toMs, monthStart } from './operationsTrends.js';
 export const DECLINE_REASONS = {"NO_AVAILABILITY": "No availability for requested dates", "VESSEL_SIZE": "Vessel exceeds berth dimensions or depth", "FACILITIES": "Required facilities unavailable", "MAINTENANCE": "Berth unavailable due to maintenance", "DUPLICATE": "Duplicate request", "OTHER": "Other"};
 export const SIZE_BANDS = ['Under 10 m','10–under 15 m','15–under 25 m','25 m and above','Unknown length'];
-export function calculateBookingDemand(clientId, from, end, requests) {
+export function calculateBookingDemand(clientId, from, end, requests, { breakdown = false } = {}) {
   const months = [];
   for(let m=monthStart(from);m<end;m=monthStart(m,1)) months.push(m);
   const result={months,monthly:months.map(()=>0),reasons:{},sizes:{},matrix:{},total:0,
     requestedDays:0,uniqueVessels:0,unidentifiedRequests:0,excluded:0,simulated:0,missingReason:0};
+  if (breakdown) result.breakdown = months.map(() => []);
   const seen=new Set(),vessels=new Set();
   for(const r of requests || []) {
     if(Number(r.clientId)!==Number(clientId) || String(r.status).toUpperCase()!=='DECLINED') continue;
@@ -25,7 +26,9 @@ export function calculateBookingDemand(clientId, from, end, requests) {
     result.matrix[reason] ||= {};
     result.matrix[reason][band]=(result.matrix[reason][band]||0)+1;
     if(reason==='UNSPECIFIED')result.missingReason++;
-    if(r.isSimulation===true || r.source==='SIMULATION')result.simulated++;
+    const simulated = r.isSimulation===true || r.source==='SIMULATION';
+    if(simulated)result.simulated++;
+    result.breakdown?.[index].push({ vessel: r.vesselName, arrival, departure, reason, band, simulated });
     if(departure>arrival) {
       const utcDay=ms=>{const d=new Date(ms);return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate());};
       result.requestedDays+=Math.max(0,(utcDay(departure)-utcDay(arrival))/86400000);

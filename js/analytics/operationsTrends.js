@@ -28,16 +28,36 @@ export function calculateTrends(clientId, start, records, options = {}) {
     excludedBookings:0, excludedReadings:0, meterDrops:0, crossMonthPairs:0, excludedMaintenance:0, excludedInvoices:0 };
   const tenant = list => (list || []).filter(x => Number(x.clientId) === clientId);
   const idx = n => r.months.findIndex((m,i) => n >= from && n < end && n >= m && n < monthStart(start,i+1));
-  const validBerths = new Set(tenant(records.berths).map(x => Number(x.id)));
+  const validBerths = new Map(tenant(records.berths).map(berth => [Number(berth.id), berth]));
+  const monthRows = () => r.months.map(() => []);
+  if (options.bookingBreakdown || options.breakdown) r.bookedBreakdown = monthRows();
+  if (options.breakdown) {
+    r.breakdown = { electricity: monthRows(), water: monthRows(), maintenance: monthRows(), paid: {} };
+  }
+  r.berthNames = validBerths;
   const occupied = new Set();
   for (const b of tenant(records.berth_bookings)) {
     if (!['CONFIRMED','CHECKED_IN','CHECKED_OUT'].includes(String(b.status).trim().toUpperCase())) continue;
     const a = toMs(b.arrivalDate), z = toMs(b.departureDate);
     if (a <= 0 || z <= a || !validBerths.has(Number(b.berthId))) { r.excludedBookings++; continue; }
+    const berthId = Number(b.berthId);
+    const breakdown = new Map();
     for (let t = Math.max(day(a), from), limit = Math.min(day(z), end); t < limit; t += DAY) {
-      const key = b.berthId + ':' + t;
-      if (!occupied.has(key)) { occupied.add(key); r.booked[idx(t)]++; }
+      const month = idx(t);
+      const key = berthId + ':' + t;
+      const duplicate = occupied.has(key);
+      if (!duplicate) { occupied.add(key); r.booked[month]++; }
+      if (r.bookedBreakdown) {
+        if (!breakdown.has(month)) {
+          breakdown.set(month, { berth: validBerths.get(berthId).berthNumber || berthId,
+            arrival: a, departure: z, status: String(b.status).trim().toUpperCase(),
+            counted: 0, overlap: 0 });
+        }
+        const row = breakdown.get(month);
+        row[duplicate ? 'overlap' : 'counted']++;
+      }
     }
+    for (const [month, row] of breakdown) r.bookedBreakdown[month].push(row);
   }
   const utilities = utilitySegments(clientId, records.utility_readings);
   r.utilityIssues = utilities.issues;
@@ -50,19 +70,23 @@ export function calculateTrends(clientId, start, records, options = {}) {
     if (issue.reason==='METER_DROP') r.meterDrops++;
   }
   for (const segment of utilities.segments) {
-    const i = idx(segment.at); if (i<0) continue;
+    const i = idx(segment.at); if (i<0 || segment.type==='WASTEWATER') continue;
     if (segment.from && monthStart(segment.at)!==monthStart(segment.from.at)) r.crossMonthPairs++;
     const metric = segment.type==='WATER' ? 'water' : 'electricity';
     r[metric][i] += segment.quantity;
     r[metric+'Pairs'][i]++;
+    r.breakdown?.[metric][i].push(segment);
   }
   for (const v of tenant(records.maintenance)) {
-    const state = v.completed === true || String(v.status).toUpperCase() === 'COMPLETED' ? 'COMPLETED' : String(v.status).toUpperCase() === 'DEFERRED' ? 'DEFERRED' : 'OPEN';
+    const state = v.completed === true || String(v.status).trim().toUpperCase() === 'COMPLETED' ? 'COMPLETED' : String(v.status).trim().toUpperCase() === 'DEFERRED' ? 'DEFERRED' : 'OPEN';
     if (options.status && options.status !== 'ALL' && state !== options.status) continue;
     // Android stores the scheduled maintenance date as yyyy-MM-dd.
     const time = typeof v.date === 'string' ? toMs(v.date) : 0;
     if (time <= 0) { r.excludedMaintenance++; continue; }
-    const i = idx(time); if (i >= 0) r.maintenance[i]++;
+    const i = idx(time);
+    if (i < 0) continue;
+    r.maintenance[i]++;
+    r.breakdown?.maintenance[i].push({ task: v, time, state });
   }
   for (const v of tenant(records.invoices)) {
     if (String(v.status || '').trim().toUpperCase() !== 'PAID') continue;
@@ -73,6 +97,10 @@ export function calculateTrends(clientId, start, records, options = {}) {
     const currency = /^[A-Z]{3}$/.test(raw) ? raw : 'UNSPECIFIED';
     if (!r.paid[currency]) r.paid[currency] = Array(count).fill(0);
     r.paid[currency][i] += amount;
+    if (r.breakdown) {
+      r.breakdown.paid[currency] ||= monthRows();
+      r.breakdown.paid[currency][i].push({ invoice: v, time, amount });
+    }
   }
   return r;
 }

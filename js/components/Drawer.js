@@ -47,13 +47,13 @@ const SECTIONS = [
       { id: 'booking-requests', label: 'Booking Requests', route: '#/booking-requests' },
       { id: 'berth-management', label: 'Berth Management', route: '#/berths' },
       { id: 'yard-storage', label: 'Yard Storage', route: '#/yard-storage' },
-      { id: 'pedestal-simulator', label: 'Pedestal Simulator', route: '#/pedestal-simulator' },
+     // { id: 'pedestal-simulator', label: 'Pedestal Simulator', route: '#/pedestal-simulator' },
       { id: 'checklists', label: 'Checklists', route: '#/checklists' },
       { id: 'maintenance', label: 'Maintenance', route: '#/maintenance' },
       { id: 'documents', label: 'Documents', route: '#/documents' },
       { id: 'procedures', label: 'Procedures', route: '#/procedures' },
       { id: 'safety', label: 'Safety Inspections', route: '#/safety' },
-      { id: 'usafe', label: 'USAFE', route: '#/usafe' },
+     // { id: 'usafe', label: 'USAFE', route: '#/usafe' },
     ]
   },
   {
