@@ -1,7 +1,7 @@
 import { italianUI as itUI } from './i18n.js';
 import { savedCurrency, money, currencyDigits } from './util/BillingCurrency.js';
 import { marinaCurrency, checkBillingClient } from './util/BillingData.js';
-import { runTransaction, getDocsFromServer } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { runTransaction, getDocFromServer, getDocsFromServer } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { utilitySegments } from './analytics/utilityConsumption.js';
 // js/db.js
 import {
@@ -662,6 +662,7 @@ export async function getMyMarinas(firebaseUid, userId = 0) {
           String(client.countryCode || '')
             .toUpperCase() || null,
         slug: client.slug || '',
+        clientType: client.clientType,
         isActive: Number(client.isActive ?? 1),
         role: membership.role
       });
@@ -678,6 +679,34 @@ export async function getMyMarinas(firebaseUid, userId = 0) {
   );
 
   return marinas;
+}
+
+export async function resolveAssignedYacht(uid, userId, clientId) {
+  const workspace = await getDocFromServer(doc(db, 'clients', String(clientId)));
+  if (!workspace.exists() || workspace.metadata.hasPendingWrites
+      || workspace.data().clientType !== 'yacht_operator') {
+    throw new Error('Could not verify the yacht workspace.');
+  }
+
+  const membership = await getDocFromServer(doc(db, 'user_marina_memberships', `${uid}_${clientId}`));
+  const assignment = membership.data();
+  if (!assignment || membership.metadata.hasPendingWrites || assignment.firebaseUid !== uid
+      || assignment.userId !== Number(userId) || assignment.clientId !== clientId
+      || assignment.isActive !== 1) {
+    throw new Error('Could not verify your active yacht membership.');
+  }
+  const boatId = assignment.boatId;
+  if (!Number.isSafeInteger(boatId) || boatId <= 0) {
+    throw new Error('Ask your workspace administrator to assign you a yacht.');
+  }
+
+  const boats = await getDocsFromServer(query(collection(db, 'boats'),
+    where('clientId', '==', clientId), where('id', '==', boatId)));
+  if (boats.size !== 1 || boats.docs[0].metadata.hasPendingWrites) {
+    throw new Error('Could not verify the assigned yacht in this workspace.');
+  }
+  const boat = boats.docs[0];
+  return { ...boat.data(), id: boatId, _docId: boat.id };
 }
 
 export async function getMarinaStats(clientId) {
@@ -1173,7 +1202,7 @@ export async function importCustomersFromRows(clientId, userId, rows, onProgress
 /* ============================================================
    CREW BULK IMPORT
    ============================================================ */
-export async function importCrewFromRows(clientId, userId, rows, onProgress) {
+export async function importCrewFromRows(clientId, userId, rows, onProgress, assignedBoatId = 0) {
   const {
     collection, query, where, getDocs, doc, setDoc, serverTimestamp
   } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
@@ -1193,14 +1222,14 @@ export async function importCrewFromRows(clientId, userId, rows, onProgress) {
     const data = d.data();
     const n = (data.name  || '').trim().toLowerCase();
     const e = (data.email || '').trim().toLowerCase();
-    if (n && e) existingKeys.add(`${n}|${e}`);
+    if (n && e && (!assignedBoatId || data.boatId === assignedBoatId)) existingKeys.add(`${n}|${e}`);
     const v = Number(data.id || 0);
     if (v > maxId) maxId = v;
   });
 
   // Find active boat to associate
-  let boatId = 0;
-  try {
+  let boatId = assignedBoatId || 0;
+  if (!boatId) try {
     const boatsSnap = await getDocs(
       query(
         collection(db, 'boats'),

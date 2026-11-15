@@ -8,6 +8,8 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
+const MAINTENANCE_ATTENTION_DAYS = 30;
+
 let dashboardFilter = 'all';   // 'all' | 'attention' | 'critical'
 let hasAnyCritical = false;
 let tileStatus = {};
@@ -120,17 +122,17 @@ const COUNT_SOURCES = {
   equipment:   { collection: 'equipment' },
   inventory:   { collection: 'inventory' },
   tasks:       { collection: 'tasks', filterDeleted: true },
-  checklists:  { collection: 'checklist' },
+  checklists:  { collection: 'checklists' },
   tasks:       { collection: 'tasks' }
 };
 
 /* ============================================================
    MOUNT
    ============================================================ */
-export function mountBoatDashboardScreen() {
+export function mountBoatDashboardScreen(assignedYacht = null) {
   const screen = document.getElementById('screen');
-  const boatId = getBoatIdFromHash();
-  const boat   = store.boatsFull.find(b => b.id === boatId);
+  const boatId = assignedYacht?.id ?? getBoatIdFromHash();
+  const boat = assignedYacht ?? store.boatsFull.find(b => b.id === boatId);
 
   if (!boat) {
     screen.innerHTML = `
@@ -152,18 +154,22 @@ export function mountBoatDashboardScreen() {
 
   screen.innerHTML = `
     <div class="dash-wrap">
-      <div class="dash-header">
+      ${assignedYacht ? '' : `<div class="dash-header">
         <button class="dash-back" id="dashBack" aria-label="${tr("Back")}">
           ${ICONS.back}
         </button>
         <div class="dash-title">${escapeHtml(boat.name)}</div>
-        <button class="dash-info" id="dashInfo" aria-label="${tr("Help")}">
+        <button type="button" class="dash-info" id="dashInfo" aria-label="${tr("Health Indicators")}">
           ${ICONS.info}
         </button>
-      </div>
+      </div>`}
 
-           <div class="dash-health" id="dashHealth">
+      <div class="dash-health" id="dashHealth"${assignedYacht ? ' style="position:relative"' : ''}>
         <div class="dash-health-title">${tr("Boat Health")}</div>
+        ${assignedYacht ? `<button type="button" class="dash-info" id="dashInfo" aria-label="${tr("Health Indicators")}"
+          style="position:absolute;top:5px;right:8px">
+          ${ICONS.info}
+        </button>` : ''}
         <div class="dash-health-body" id="dashHealthBody">
           <div class="dash-health-good">
             <span class="dash-check" style="color:#3DD68C;">✅</span>
@@ -182,12 +188,13 @@ export function mountBoatDashboardScreen() {
     </div>
   `;
 
-  screen.querySelector('#dashBack').addEventListener('click', () => {
+  screen.querySelector('#dashBack')?.addEventListener('click', () => {
     location.hash = '#/boats';
   });
 
-  screen.querySelector('#dashInfo').addEventListener('click', () => {
-    toast(tr('Dashboard help coming soon'));
+  screen.querySelector('#dashInfo').addEventListener('click', event => {
+    event.stopPropagation();
+    showHealthIndicators(screen);
   });
 
   screen.querySelector('#dashHealth').addEventListener('click', () => {
@@ -224,7 +231,7 @@ export function mountBoatDashboardScreen() {
 
   const grid = screen.querySelector('#dashGrid');
   grid.innerHTML = TILES.map(t => `
-    <button class="dash-tile" data-type="${t.type}">
+    <button type="button" class="dash-tile" data-type="${t.type}">
       <div class="dash-tile-icon">${t.icon}</div>
       <div class="dash-tile-text">
         <div class="dash-tile-title" data-label="${t.type}">${tr(t.label)}</div>
@@ -233,11 +240,15 @@ export function mountBoatDashboardScreen() {
     </button>
   `).join('');
 
-  grid.querySelectorAll('.dash-tile').forEach(el => {
+  grid.querySelectorAll('button.dash-tile').forEach(el => {
     el.addEventListener('click', () => {
       const type = el.dataset.type;
       const label = TILES.find(t => t.type === type)?.label || type;
 
+      if (assignedYacht) {
+        location.hash = `#/${type}?boatId=${boatId}`;
+        return;
+      }
       if (type === 'maintenance') { location.hash = '#/maintenance'; return; }
       if (type === 'crew')        { location.hash = '#/crew';        return; }
       if (type === 'documents')   { location.hash = '#/documents';   return; }
@@ -250,7 +261,11 @@ export function mountBoatDashboardScreen() {
     });
   });
 
-  loadCounts(boatId).catch(err => {
+  const healthBody = screen.querySelector('#dashHealthBody');
+  if (assignedYacht) healthBody.textContent = itUI('Loading boat health…');
+
+  loadCounts(boatId, grid, Boolean(assignedYacht)).catch(err => {
+    if (assignedYacht && grid.isConnected) healthBody.textContent = itUI('Boat health is unavailable.');
     console.error('[boat dashboard] counts failed', err);
   });
 }
@@ -258,7 +273,7 @@ export function mountBoatDashboardScreen() {
 /* ============================================================
    COUNT LOADING
    ============================================================ */
-async function loadCounts(boatId) {
+async function loadCounts(boatId, grid, reportUnavailable) {
   const clientId = Number(store.activeClientId);
   if (!clientId) return;
 
@@ -283,21 +298,27 @@ async function loadCounts(boatId) {
         });
         counts[type] = n;
       } catch {
-        counts[type] = 0;
+        counts[type] = reportUnavailable ? null : 0;
       }
     })
   );
 
   const status = await computeStatuses(boatId, clientId);
+  if (!grid.isConnected || Number(store.activeClientId) !== clientId) return;
   tileStatus = status.perTile;
   hasAnyCritical = status.hasAnyCritical;
 
   paintCounts(counts);
-  paintHealth(status);
+  if (reportUnavailable && (status.incomplete || Object.values(counts).includes(null))) {
+    grid.closest('.dash-wrap').querySelector('#dashHealthBody').textContent = itUI('Some dashboard data is unavailable.');
+  } else {
+    paintHealth(status);
+  }
   applyDashboardFilter();
 }
 
 async function computeStatuses(boatId, clientId) {
+  let incomplete = false;
   const perTile = {};
   let criticalCount = 0;
   let attentionCount = 0;
@@ -309,7 +330,7 @@ async function computeStatuses(boatId, clientId) {
       where('boatId', '==', Number(boatId))
     ));
     const now = Date.now();
-    const soon = 7 * 24 * 60 * 60 * 1000;
+    const soon = MAINTENANCE_ATTENTION_DAYS * 24 * 60 * 60 * 1000;
     let overdue = 0, upcoming = 0;
     snap.forEach(d => {
       const x = d.data();
@@ -325,7 +346,7 @@ async function computeStatuses(boatId, clientId) {
     else if (upcoming > 0) perTile.maintenance = 'attention';
     criticalCount += overdue;
     attentionCount += upcoming;
-  } catch {}
+  } catch { incomplete = true; }
 
   try {
     const snap = await getDocs(query(
@@ -348,7 +369,7 @@ async function computeStatuses(boatId, clientId) {
     else if (soon > 0) perTile.safety = 'attention';
     criticalCount += expired;
     attentionCount += soon;
-  } catch {}
+  } catch { incomplete = true; }
 
   try {
     const snap = await getDocs(query(
@@ -371,6 +392,7 @@ async function computeStatuses(boatId, clientId) {
     criticalCount += expired;
     attentionCount += soon;
   } catch (err) {
+    incomplete = true;
     console.warn('[dashboard] documents status failed', err);
   }
 
@@ -392,6 +414,7 @@ async function computeStatuses(boatId, clientId) {
     criticalCount  += outOfStock + critical;
     attentionCount += low;
   } catch (err) {
+    incomplete = true;
     console.warn('[dashboard] inventory status failed', err);
   }
 
@@ -429,6 +452,7 @@ async function computeStatuses(boatId, clientId) {
     criticalCount += fault + outOfService;
     attentionCount += serviceDue;
   } catch (err) {
+    incomplete = true;
     console.warn('[dashboard] equipment status failed', err);
   }
 
@@ -457,11 +481,13 @@ async function computeStatuses(boatId, clientId) {
     criticalCount  += overdue;
     attentionCount += dueSoon;
   } catch (err) {
+    incomplete = true;
     console.warn('[dashboard] tasks status failed', err);
   }
 
 
   return {
+    incomplete,
     perTile,
     hasAnyCritical: criticalCount > 0,
     criticalCount,
@@ -473,8 +499,8 @@ function paintCounts(counts) {
   for (const [type, n] of Object.entries(counts)) {
     const el = document.querySelector(`[data-count="${type}"]`);
     if (!el) continue;
-    if (n > 0) {
-      el.textContent = String(n);
+    if (n === null || n > 0) {
+      el.textContent = n === null ? itUI("Unavailable") : String(n);
       el.hidden = false;
     } else {
       el.hidden = true;
@@ -543,6 +569,57 @@ function applyDashboardFilter() {
     el.hidden = !visible;
     el.style.display = visible ? '' : 'none';
   });
+}
+
+function showHealthIndicators(screen) {
+  const dialog = document.createElement('dialog');
+  dialog.setAttribute('aria-labelledby', 'boatHealthHelpTitle');
+  dialog.style.cssText = 'width:min(560px,calc(100% - 32px));max-height:85dvh;overflow:hidden;margin:auto;padding:0;border:1px solid var(--color-divider);border-radius:16px;background:var(--color-surface);color:var(--color-text-primary);line-height:1.5';
+  const copy = text => escapeHtml(itUI(text));
+  const list = items => `<ul style="margin:6px 0 0;padding-inline-start:22px">${items.map(item => `<li>${copy(item)}</li>`).join('')}</ul>`;
+  const rule = (label, color, items) => `<section style="border:1px solid var(--color-divider);border-inline-start:4px solid ${color};border-radius:8px;padding:10px 12px;margin-top:8px">
+    <h3 style="margin:0;font-size:14px;color:${color}">${copy(label)}</h3>
+    ${list(items)}
+  </section>`;
+  dialog.innerHTML = `
+    <div style="display:grid;grid-template-rows:minmax(0,1fr) auto;max-height:calc(85dvh - 2px)">
+    <div style="overflow:auto;padding:24px">
+    <h2 id="boatHealthHelpTitle" style="margin:0 0 8px;font-size:20px">${copy('Health Indicators')}</h2>
+    <p style="margin:0 0 16px">${copy('The Boat Health panel monitors key operational areas and highlights items that require attention. Colours indicate how urgently to act.')}</p>
+    <h3 style="margin:0;font-size:16px">${copy('Health Rules')}</h3>
+    ${rule('Critical', '#FF7171', [
+      'Maintenance is overdue',
+      'Safety items or documents have expired',
+      'Inventory stock level is 1 or below',
+      'Equipment has a fault or is out of service',
+      'A task is overdue or marked Critical'
+    ])}
+    ${rule('Attention', '#FFBF5C', [
+      `Maintenance is due within ${MAINTENANCE_ATTENTION_DAYS} days`,
+      'Safety items or documents expire within 30 days',
+      'Inventory stock level is above 1 and at most 3',
+      'Equipment is due for service',
+      'A task is due within 3 days'
+    ])}
+    ${rule('OK', '#3DD68C', ['No monitored item currently requires action'])}
+    <h3 style="margin:16px 0 0;font-size:16px">${copy('What is monitored?')}</h3>
+    ${list(['Maintenance', 'Safety', 'Documents', 'Inventory', 'Equipment', 'Tasks'])}
+    <h3 style="margin:16px 0 0;font-size:16px">${copy('Pro Tips')}</h3>
+    ${list([
+      'Act on critical items immediately',
+      'Plan attention items before their due dates',
+      'Keep inventory stock above 3 to avoid low-stock warnings',
+      'Schedule regular maintenance'
+    ])}
+    <div class="help-footer">${copy('Need help?')} <a href="mailto:support@marinacontrol.co.uk">support@marinacontrol.co.uk</a></div>
+    </div>
+    <form method="dialog" class="help-actions">
+      <button type="submit" class="help-gotit" autofocus>${copy('Got it')}</button>
+    </form>
+    </div>`;
+  dialog.addEventListener('close', () => dialog.remove(), { once: true });
+  screen.append(dialog);
+  dialog.showModal();
 }
 
 /* ---------- Helpers ---------- */

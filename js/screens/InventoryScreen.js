@@ -79,7 +79,10 @@ export function mountInventoryScreen() {
 
    /* back arrow*/
 
- document.getElementById('invBack')?.addEventListener('click', () => history.back());
+ document.getElementById('invBack')?.addEventListener('click', () => {
+   if (store.assignedYacht) location.hash = '#/my-yacht';
+   else history.back();
+ });
 
   const invHelpBtn = document.getElementById('invHelp');
   if (invHelpBtn) invHelpBtn.addEventListener('click', showInventoryHelp);
@@ -117,32 +120,37 @@ async function resolveBoatAndSubscribe(urlBoatId) {
     return;
   }
 
-  let boatId = urlBoatId;
+  const yacht = store.assignedYacht;
+  let boatId = yacht?.id || urlBoatId;
 
-  try {
-    if (!boatId && store.activeBoatId) boatId = Number(store.activeBoatId);
+  if (yacht) {
+    currentBoatName = yacht.name || '';
+  } else {
+    try {
+      if (!boatId && store.activeBoatId) boatId = Number(store.activeBoatId);
 
-    if (!boatId) {
-      const snap = await getDocs(query(
-        collection(db, 'boats'),
-        where('clientId', '==', clientId),
-        where('isActive', '==', true)
-      ));
-      if (!snap.empty) {
-        const d = snap.docs[0].data();
-        boatId = Number(d.id || snap.docs[0].id);
-        currentBoatName = d.name || '';
+      if (!boatId) {
+        const snap = await getDocs(query(
+          collection(db, 'boats'),
+          where('clientId', '==', clientId),
+          where('isActive', '==', true)
+        ));
+        if (!snap.empty) {
+          const d = snap.docs[0].data();
+          boatId = Number(d.id || snap.docs[0].id);
+          currentBoatName = d.name || '';
+        }
+      } else {
+        const snap = await getDocs(query(
+          collection(db, 'boats'),
+          where('clientId', '==', clientId),
+          where('id', '==', Number(boatId))
+        ));
+        if (!snap.empty) currentBoatName = snap.docs[0].data().name || '';
       }
-    } else {
-      const snap = await getDocs(query(
-        collection(db, 'boats'),
-        where('clientId', '==', clientId),
-        where('id', '==', Number(boatId))
-      ));
-      if (!snap.empty) currentBoatName = snap.docs[0].data().name || '';
+    } catch (err) {
+      console.error('[inventory] boat lookup failed', err);
     }
-  } catch (err) {
-    console.error('[inventory] boat lookup failed', err);
   }
 
   if (!boatId) {
@@ -165,7 +173,8 @@ async function resolveBoatAndSubscribe(urlBoatId) {
 function subscribeToInventory(clientId) {
   const q = query(
     collection(db, 'inventory'),
-    where('clientId', '==', Number(clientId))
+    where('clientId', '==', Number(clientId)),
+    ...(store.assignedYacht ? [where('boatId', '==', store.assignedYacht.id)] : [])
   );
 
   unsubscribe = onSnapshot(q, (snap) => {
@@ -319,4 +328,8 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
+}
+export function unmountInventoryScreen() {
+  unsubscribe?.();
+  unsubscribe = null;
 }

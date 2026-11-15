@@ -375,9 +375,9 @@ function isDesktopDrawer() {
   return window.matchMedia('(min-width: 768px)').matches;
 }
 
-function syncDrawerLayout() {
+export function syncDrawerLayout() {
   const route = (location.hash || '#/login').replace(/^#/, '').split('?')[0];
-  const hideDrawer = route === '/login';
+  const hideDrawer = route === '/login' || store.activeMarina?.clientType === 'yacht_operator';
 
   document.body.classList.toggle('drawer-page-hidden', hideDrawer);
 

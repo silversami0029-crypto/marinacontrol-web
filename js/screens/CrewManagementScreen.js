@@ -74,7 +74,7 @@ export function mountCrewManagementScreen() {
   `;
 
   document.getElementById('cmBack').addEventListener('click', () => {
-    location.hash = '#/boats';
+    location.hash = store.assignedYacht ? '#/my-yacht' : '#/boats';
   });
 
 const cmHelpBtn = document.getElementById('cmHelp');
@@ -111,7 +111,8 @@ function subscribeToCrew() {
 
   const q = query(
     collection(db, 'crew'),
-    where('clientId', '==', clientId)
+    where('clientId', '==', clientId),
+    ...(store.assignedYacht ? [where('boatId', '==', store.assignedYacht.id)] : [])
   );
 
   unsubscribe = onSnapshot(q, (snap) => {
@@ -380,4 +381,8 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
+}
+export function unmountCrewManagementScreen() {
+  unsubscribe?.();
+  unsubscribe = null;
 }

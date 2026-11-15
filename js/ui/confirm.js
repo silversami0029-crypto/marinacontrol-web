@@ -30,6 +30,7 @@ const TRASH_ICON = `
  * @param {string} opts.message     e.g. "This vessel will be permanently removed."
  * @param {string} [opts.confirmText='Delete']
  * @param {string} [opts.cancelText='Cancel']
+ * @param {string} [opts.icon] Trusted SVG markup for both action icons
  * @returns {Promise<boolean>}      true if confirmed, false if cancelled
  */
 export function confirmSheet(opts) {
@@ -39,6 +40,7 @@ export function confirmSheet(opts) {
     confirmText = 'Delete',
     cancelText  = 'Cancel',
     action = 'delete',
+    icon,
     signal
   } = opts;
 
@@ -54,7 +56,7 @@ export function confirmSheet(opts) {
     const archiveAction = action === 'archive' || action === 'restore';
     if (archiveAction) sheet.classList.add('confirm-sheet--archive');
     if (action === 'approve') sheet.classList.add('confirm-sheet--approve');
-    const actionIcon = action === 'approve' ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>` : archiveAction ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16v13H4zM3 3h18v5H3z"/><path d="${action === 'restore' ? 'M12 17v-6m-3 3 3-3 3 3' : 'M9 12h6'}"/></svg>` : null;
+    const actionIcon = icon ?? (action === 'approve' ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>` : archiveAction ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16v13H4zM3 3h18v5H3z"/><path d="${action === 'restore' ? 'M12 17v-6m-3 3 3-3 3 3' : 'M9 12h6'}"/></svg>` : null);
     sheet.innerHTML = `
       ${sheetCloseButton()}
 

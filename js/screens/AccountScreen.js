@@ -166,11 +166,12 @@ async function onDeleteAccount() {
   }
 }
 
-async function onLogout() {
+export async function onLogout() {
   const ok = await confirmSheet({
     title: t("Log out"),
     message: t("Are you sure you want to log out of MarinaControl?"),
     confirmText: t("Log out"),
+    icon: ICONS.logout,
     cancelText: t("Cancel")
   });
   if (!ok) return;

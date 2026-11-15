@@ -17,26 +17,27 @@ import { mountLoginScreen } from './screens/LoginScreen.js';
 import { watchAuth, loadUserProfile } from './auth.js';
 import { mountReportsScreen } from './screens/ReportsScreen.js';
 import { mountInvoiceScreen } from './screens/InvoiceScreen.js';
-import { mountChecklistScreen } from './screens/ChecklistScreen.js';
+import { mountChecklistScreen, unmountChecklistScreen } from './screens/ChecklistScreen.js';
 import { mountShiftScheduleScreen } from './screens/ShiftScheduleScreen.js';
 import { mountDashboardScreen } from './screens/DashboardScreen.js';
 import { mountAccountScreen } from './screens/AccountScreen.js';
 import { mountBerthsScreen } from './screens/BerthsScreen.js';
-import { listenForCustomers, getMyMarinas } from './db.js';
+import { listenForCustomers, getMyMarinas, resolveAssignedYacht } from './db.js';
 import { mountBookingRequestsScreen } from './screens/BookingRequestsScreen.js';
-import { initDrawer } from './components/Drawer.js';
+import { initDrawer, syncDrawerLayout } from './components/Drawer.js';
+import { mountMyYachtScreen, renderYachtNavigation, unmountMyYachtScreen } from './screens/MyYachtScreen.js';
 import { mountBoatDashboardScreen } from './screens/BoatDashboardScreen.js';
 import { mountUserManagementScreen } from './screens/UserManagementScreen.js';
 import { mountCustomerDirectoryScreen, unmountCustomerDirectoryScreen } from './screens/CustomerDirectoryScreen.js';
-import { mountMaintenanceScreen } from './screens/MaintenanceScreen.js';
+import { mountMaintenanceScreen, unmountMaintenanceScreen } from './screens/MaintenanceScreen.js';
 import { mountClient360Screen } from './screens/Client360Screen.js';
-import { mountCrewManagementScreen } from './screens/CrewManagementScreen.js';
-import { mountDocumentScreen } from './screens/DocumentScreen.js';
-import { mountSafetyScreen } from './screens/SafetyScreen.js';
-import { mountEquipmentScreen } from './screens/EquipmentScreen.js';
-import { mountInventoryScreen } from './screens/InventoryScreen.js';
+import { mountCrewManagementScreen, unmountCrewManagementScreen } from './screens/CrewManagementScreen.js';
+import { mountDocumentScreen, unmountDocumentScreen } from './screens/DocumentScreen.js';
+import { mountSafetyScreen, unmountSafetyScreen } from './screens/SafetyScreen.js';
+import { mountEquipmentScreen, unmountEquipmentScreen } from './screens/EquipmentScreen.js';
+import { mountInventoryScreen, unmountInventoryScreen } from './screens/InventoryScreen.js';
 import { mountPermissionsScreen } from './screens/PermissionsScreen.js';
-import { mountTaskScreen } from './screens/TaskScreen.js';
+import { mountTaskScreen, unmountTaskScreen } from './screens/TaskScreen.js';
 import { mountFleetScreen } from './screens/FleetScreen.js';
 import { mountNotificationsScreen } from './screens/NotificationsScreen.js';
 
@@ -44,9 +45,28 @@ initLanguage();
 
 const PROTECTED = ['/procedures', '/home', '/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/edit-customer','/client-360','/notifications'];
 
+const yachtTools = {
+  '/maintenance': unmountMaintenanceScreen,
+  '/equipment': unmountEquipmentScreen,
+  '/inventory': unmountInventoryScreen,
+  '/safety': unmountSafetyScreen,
+  '/tasks': unmountTaskScreen,
+  '/documents': unmountDocumentScreen,
+  '/checklists': unmountChecklistScreen,
+  '/crew': unmountCrewManagementScreen,
+};
+let unmountYachtTool = null;
+
+function leaveYachtScreen() {
+  unmountMyYachtScreen();
+  unmountYachtTool?.();
+  unmountYachtTool = null;
+}
+
 const routes = {
   '/usafe': mountUSafeScreen,
   '/home':             mountHomeScreen,
+  '/my-yacht':         mountMyYachtScreen,
   '/login':            mountLoginScreen,
   '/boats':            mountBoatsScreen,
   '/dashboard':        mountDashboardScreen,
@@ -107,7 +127,18 @@ function navigate() {
     location.hash = '#/login';
     return;
   }
-  if (authed && route === '/login') {
+  const yachtMode = authed && store.activeMarina.clientType === 'yacht_operator';
+  if (yachtMode) {
+    let destination = route === '/account' ? '#/account' : '#/my-yacht';
+    if (store.assignedYacht && Object.hasOwn(yachtTools, route)) {
+      destination = `#${route}?boatId=${store.assignedYacht.id}`;
+    }
+    if (location.hash !== destination) {
+      location.hash = destination;
+      return;
+    }
+  }
+  if (authed && !yachtMode && (route === '/login' || route === '/my-yacht')) {
     location.hash = '#/home';
     return;
   }
@@ -119,19 +150,24 @@ function navigate() {
   unmountHomeScreen();
   unmountCustomerDirectoryScreen();
   unmountEditCustomerScreen();
-  showChrome(route !== '/login');
+  if (yachtMode) syncDrawerLayout();
+  showChrome(route !== '/login' && !yachtMode);
+  renderYachtNavigation(yachtMode ? route : null);
 
   const isBoatDashboard = route === '/dashboard' && location.hash.includes('boatId=');
   const highlightRoute  = route === '/dock-walk' ? '/berths' : isBoatDashboard ? '/boats' : route === '/edit-customer' ? '/customer-directory' : route;
 
-  document.querySelectorAll('.nav-item').forEach(btn => {
+  document.querySelectorAll('.nav-item[data-route]').forEach(btn => {
     btn.classList.toggle('is-active', btn.dataset.route === highlightRoute);
   });
 
-  if (route !== '/login') renderTopBar(route);
+  if (route !== '/login' && !yachtMode) renderTopBar(route);
 
   document.getElementById('screen')?.classList.remove('rp-screen');
 
+  if (unmountYachtTool) document.getElementById('modalRoot')?.replaceChildren();
+  leaveYachtScreen();
+  if (yachtMode) unmountYachtTool = yachtTools[route] ?? null;
   routes[route]();
 }
 
@@ -158,15 +194,24 @@ function stopCustomers() {
   customerUnsubscribe?.();
   customerUnsubscribe = null;
 }
-function applyMarina(marina) {
+function applyMarina(marina, yacht = null) {
   stopCustomers();
   clearMarinaData();
   store.activeMarina = marina;
+  store.assignedYacht = yacht;
   store.activeClientId = Number(marina?.id || 0);
   store.activeRole = marina?.role || '';
   // Existing screens using userProfile.role also see the selected role.
   store.userProfile = baseProfile ? { ...baseProfile, role: store.activeRole } : null;
   if (!marina) return;
+  if (marina.clientType === 'yacht_operator') {
+    if (yacht) {
+      store.boats = [yacht];
+      store.boatsFull = [yacht];
+      store.activeBoatId = yacht.id;
+    }
+    return;
+  }
   const generation = sessionGeneration;
   const clientId = store.activeClientId;
   customerUnsubscribe = listenForCustomers(clientId, customers => {
@@ -217,6 +262,7 @@ export async function switchMarina(clientId, destinationRoute = null) {
 async function bootstrapUser(firebaseUser) {
   const generation = ++sessionGeneration;
   authReady = false;
+  leaveYachtScreen();
   unmountDockWalkScreen();
   unmountUSafeScreen();
   unmountYardStorageScreen();
@@ -232,6 +278,7 @@ async function bootstrapUser(firebaseUser) {
   store.marinas = [];
   store.marinaSwitching = false;
   applyMarina(null);
+  renderYachtNavigation(null);
   document.getElementById('screen').textContent = itUI('Loading…');
   if (!firebaseUser) { authReady = true; return; }
   try {
@@ -246,10 +293,19 @@ async function bootstrapUser(firebaseUser) {
     const marina = marinas.find(m => Number(m.id) === remembered)
       || marinas.find(m => Number(m.id) === Number(profile.clientId));
     if (!marina) throw new Error('No accessible marina is available');
+    let yacht = null;
+    if (marina.clientType === 'yacht_operator') {
+      try {
+        yacht = await resolveAssignedYacht(firebaseUser.uid, profile.userId, Number(marina.id));
+      } catch (error) {
+        console.warn('Assigned yacht could not be loaded', error);
+      }
+      if (generation !== sessionGeneration) return;
+    }
     baseProfile = profile;
     store.authUser = firebaseUser;
     store.marinas = marinas;
-    applyMarina(marina);
+    applyMarina(marina, yacht);
     try { localStorage.setItem(selectionKey(firebaseUser.uid), String(marina.id)); }
     catch (error) { console.warn('Marina preference could not be saved', error); }
   } catch (error) {

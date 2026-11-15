@@ -169,9 +169,10 @@ async function runImportWithProgress(rows) {
       (done, skipped, total) => {
         const processed = done + skipped;
         const pct = total ? Math.round((processed / total) * 100) : 0;
-        progressEl.textContent = tr('importProgress', {processed, total, done, skipped});
+        progressEl.textContent = `${processed} of ${total}  ·  ${done} added, ${skipped} skipped`;
         barEl.style.width = pct + '%';
-      }
+      },
+      store.assignedYacht?.id
     );
 
     progressEl.textContent = tr('Done');

@@ -115,7 +115,10 @@ if (unsubscribeBoats) {
 
  /* back arrow*/
 
- document.getElementById('chBack')?.addEventListener('click', () => history.back());
+ document.getElementById('chBack')?.addEventListener('click', () => {
+   if (store.assignedYacht) location.hash = '#/my-yacht';
+   else history.back();
+ });
 
   document.getElementById('chHelp')
     ?.addEventListener('click', showChecklistHelp);
@@ -161,8 +164,15 @@ if (unsubscribeBoats) {
       renderList();
     });
 
-  subscribeToBoats();
-subscribeToChecklists();
+  if (store.assignedYacht) {
+    const select = document.getElementById('chBoatSelect');
+    currentBoats = [store.assignedYacht];
+    populateBoatDropdown();
+    select.disabled = true;
+  } else {
+    subscribeToBoats();
+  }
+  subscribeToChecklists();
 }
 
 function subscribeToBoats() {
@@ -203,7 +213,8 @@ function subscribeToChecklists() {
 
   const checklistQuery = query(
     collection(db, 'checklists'),
-    where('clientId', '==', clientId)
+    where('clientId', '==', clientId),
+    ...(store.assignedYacht ? [where('boatId', '==', store.assignedYacht.id)] : [])
   );
 
   unsubscribeChecklists = onSnapshot(
@@ -492,4 +503,11 @@ function escapeHtml(value) {
       "'": '&#39;'
     })[character]
   );
+}
+
+export function unmountChecklistScreen() {
+  unsubscribeChecklists?.();
+  unsubscribeChecklists = null;
+  unsubscribeBoats?.();
+  unsubscribeBoats = null;
 }

@@ -319,6 +319,7 @@ async function resolveActiveBoat(
     Number(store.activeClientId);
 
   if (!clientId) return null;
+  if (store.assignedYacht) return store.assignedYacht.id === preferBoatId ? store.assignedYacht : null;
 
   try {
     if (preferBoatId) {

@@ -80,7 +80,10 @@ export function mountDocumentScreen() {
 
 /* back button */
 
- document.getElementById('docBack')?.addEventListener('click', () => history.back());
+ document.getElementById('docBack')?.addEventListener('click', () => {
+   if (store.assignedYacht) location.hash = '#/my-yacht';
+   else history.back();
+ });
 
   document.getElementById('docHelp').addEventListener('click', showDocumentHelp);
 
@@ -116,35 +119,40 @@ async function resolveBoatAndSubscribe(urlBoatId) {
     return;
   }
 
-  let boatId = urlBoatId;
+  const yacht = store.assignedYacht;
+  let boatId = yacht?.id || urlBoatId;
 
-  try {
-    if (!boatId && store.activeBoatId) boatId = Number(store.activeBoatId);
+  if (yacht) {
+    currentBoatName = yacht.name || '';
+  } else {
+    try {
+      if (!boatId && store.activeBoatId) boatId = Number(store.activeBoatId);
 
-    if (!boatId) {
-      const snap = await getDocs(
-        query(
-          collection(db, 'boats'),
-          where('clientId', '==', clientId),
-          where('isActive', '==', true)
-        )
-      );
-      if (!snap.empty) {
-        boatId = Number(snap.docs[0].data().id || snap.docs[0].id);
-        currentBoatName = snap.docs[0].data().name || '';
+      if (!boatId) {
+        const snap = await getDocs(
+          query(
+            collection(db, 'boats'),
+            where('clientId', '==', clientId),
+            where('isActive', '==', true)
+          )
+        );
+        if (!snap.empty) {
+          boatId = Number(snap.docs[0].data().id || snap.docs[0].id);
+          currentBoatName = snap.docs[0].data().name || '';
+        }
+      } else {
+        const snap = await getDocs(
+          query(
+            collection(db, 'boats'),
+            where('clientId', '==', clientId),
+            where('id', '==', Number(boatId))
+          )
+        );
+        if (!snap.empty) currentBoatName = snap.docs[0].data().name || '';
       }
-    } else {
-      const snap = await getDocs(
-        query(
-          collection(db, 'boats'),
-          where('clientId', '==', clientId),
-          where('id', '==', Number(boatId))
-        )
-      );
-      if (!snap.empty) currentBoatName = snap.docs[0].data().name || '';
+    } catch (err) {
+      console.error('[documents] boat lookup failed', err);
     }
-  } catch (err) {
-    console.error('[documents] boat lookup failed', err);
   }
 
   if (!boatId) {
@@ -167,7 +175,8 @@ async function resolveBoatAndSubscribe(urlBoatId) {
 function subscribeToDocuments(clientId) {
   const q = query(
     collection(db, 'documents'),
-    where('clientId', '==', Number(clientId))
+    where('clientId', '==', Number(clientId)),
+    ...(store.assignedYacht ? [where('boatId', '==', store.assignedYacht.id)] : [])
   );
 
   unsubscribe = onSnapshot(q, (snap) => {
@@ -415,4 +424,8 @@ sheet.querySelector('#documentSheetClose').addEventListener('click', close);
     const m = await import('./ImportDocumentsSheet.js');
     m.showImportDocumentsSheet({ boatId, boatName });
   });
+}
+export function unmountDocumentScreen() {
+  unsubscribe?.();
+  unsubscribe = null;
 }

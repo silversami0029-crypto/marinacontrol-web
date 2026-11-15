@@ -244,8 +244,8 @@ async function createCrew({ name, email, role, notes }) {
   const nextId = maxId + 1;
 
   // Find active boat to associate
-  let boatId = 0;
-  try {
+  let boatId = store.assignedYacht?.id || 0;
+  if (!boatId) try {
     const boatsSnap = await getDocs(
       query(
         collection(db, 'boats'),

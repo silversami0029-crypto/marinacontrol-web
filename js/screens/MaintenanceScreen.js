@@ -96,7 +96,10 @@ export function mountMaintenanceScreen() {
 
 
 
- document.getElementById('mtBack')?.addEventListener('click', () => history.back());
+ document.getElementById('mtBack')?.addEventListener('click', () => {
+   if (store.assignedYacht) location.hash = '#/my-yacht';
+   else history.back();
+ });
 
     document.getElementById('mtHelp').addEventListener('click', showMaintenanceHelp);
 
@@ -120,7 +123,7 @@ export function mountMaintenanceScreen() {
   document.getElementById('mtFabAdd').addEventListener('click', async () => {
     try {
       const m = await import('./AddMaintenanceSheet.js');
-      await m.showAddMaintenanceSheet({});
+      await m.showAddMaintenanceSheet(store.assignedYacht ? { boatId: store.assignedYacht.id } : {});
     } catch (err) {
       console.error('[maintenance fab] failed', err);
       toast(tr('Could not open Add Maintenance'));
@@ -154,37 +157,42 @@ async function resolveBoatAndSubscribe(urlBoatId) {
     return;
   }
 
-  let boatId = urlBoatId;
+  const yacht = store.assignedYacht;
+  let boatId = yacht?.id || urlBoatId;
 
-  try {
-    if (!boatId) {
-      const snap = await getDocs(
-        query(
-          collection(db, 'boats'),
-          where('clientId', '==', clientId),
-          where('isActive', '==', true)
-        )
-      );
-      if (!snap.empty) {
-        const docSnap = snap.docs[0];
-        const data = docSnap.data();
-        boatId = Number(data.id || docSnap.id);
-        currentBoatName = data.name || '';
+  if (yacht) {
+    currentBoatName = yacht.name || '';
+  } else {
+    try {
+      if (!boatId) {
+        const snap = await getDocs(
+          query(
+            collection(db, 'boats'),
+            where('clientId', '==', clientId),
+            where('isActive', '==', true)
+          )
+        );
+        if (!snap.empty) {
+          const docSnap = snap.docs[0];
+          const data = docSnap.data();
+          boatId = Number(data.id || docSnap.id);
+          currentBoatName = data.name || '';
+        }
+      } else {
+        const boatSnap = await getDocs(
+          query(
+            collection(db, 'boats'),
+            where('clientId', '==', clientId),
+            where('id', '==', boatId)
+          )
+        );
+        if (!boatSnap.empty) {
+          currentBoatName = boatSnap.docs[0].data().name || '';
+        }
       }
-    } else {
-      const boatSnap = await getDocs(
-        query(
-          collection(db, 'boats'),
-          where('clientId', '==', clientId),
-          where('id', '==', boatId)
-        )
-      );
-      if (!boatSnap.empty) {
-        currentBoatName = boatSnap.docs[0].data().name || '';
-      }
+    } catch (err) {
+      console.error('[maintenance] boat lookup failed', err);
     }
-  } catch (err) {
-    console.error('[maintenance] boat lookup failed', err);
   }
 
   if (!boatId) {
@@ -210,7 +218,8 @@ async function resolveBoatAndSubscribe(urlBoatId) {
 function subscribeToMaintenance(clientId, boatId, fleetOpen = false) {
   const q = query(
     collection(db, 'maintenance'),
-    where('clientId', '==', Number(clientId))
+    where('clientId', '==', Number(clientId)),
+    ...(store.assignedYacht ? [where('boatId', '==', store.assignedYacht.id)] : [])
   );
 
   unsubscribe = onSnapshot(q, (snap) => {
@@ -268,6 +277,7 @@ function subscribeToMaintenance(clientId, boatId, fleetOpen = false) {
       });
 
     renderList();
+    if (store.assignedYacht) return;
     const launchToken=++launchLoadToken;
     readYardWorkPackages(boatId).then(data=>{
       if(launchToken!==launchLoadToken||Number(store.activeClientId)!==Number(clientId)||!document.getElementById('mtList'))return;
@@ -459,4 +469,9 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
+}
+export function unmountMaintenanceScreen() {
+  unsubscribe?.();
+  unsubscribe = null;
+  launchLoadToken++;
 }
