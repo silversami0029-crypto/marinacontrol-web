@@ -13,8 +13,9 @@ import { Boat } from './models/Boat.js';
 import { BerthBookingRequest } from './models/BerthBookingRequest.js';
 
 /* ---------- READ ---------- */
-export function listenForBoats(clientId, callback) {
-  const q = query(collection(db, 'boats'), where('clientId', '==', clientId));
+export function listenForBoats(clientId, callback, boatId = null) {
+  const q = query(collection(db, 'boats'), where('clientId', '==', clientId),
+    ...(boatId === null ? [] : [where('id', '==', boatId)]));
   return onSnapshot(q, (snap) => {
     const boats = snap.docs.map((d) => {
       const data = d.data();
@@ -76,6 +77,15 @@ export async function setActiveBoat(clientId, selectedBoatId) {
   });
 
   await batch.commit();
+}
+
+export async function setAssignedBoatActive(docId) {
+  await updateDoc(doc(db, 'boats', String(docId)), {
+    isActive: true,
+    lastModified: Date.now(),
+    lastModifiedBy: 'WEB',
+    syncedAt: 0
+  });
 }
 
 /* ---------- WRITE: delete one ---------- */

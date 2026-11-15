@@ -134,13 +134,15 @@ export function showBoatMenu(boat, handlers = {}) {
     onClick: () => { close(); handlers.onNotes?.(boat); }
   }));*/
 
-  sheet.appendChild(item({
-    id: 'btnAssignCustomer',
-    icon: ICONS.person,
-    title: 'Assign customer',
-    subtitle: 'Link this vessel to a customer',
-    onClick: () => { close(); handlers.onAssignCustomer?.(boat); }
-  }));
+  if (handlers.onAssignCustomer) {
+    sheet.appendChild(item({
+      id: 'btnAssignCustomer',
+      icon: ICONS.person,
+      title: 'Assign customer',
+      subtitle: 'Link this vessel to a customer',
+      onClick: () => { close(); handlers.onAssignCustomer(boat); }
+    }));
+  }
 
   // spacer
   sheet.appendChild(Object.assign(document.createElement('div'), { className: 'sheet-gap-16' }));

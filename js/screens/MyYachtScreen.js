@@ -1,5 +1,7 @@
 import { italianUI as itUI } from '../i18n.js';
 import { store } from '../store.js';
+import { renderUserRow } from '../components/Drawer.js';
+import { showAboutSheet } from './AboutSheet.js';
 import { startHomeBanner } from './HomeBanner.js';
 import { startWorkspaceClocks, workspaceClocksMarkup } from './WorkspaceClocks.js';
 import { mountBoatDashboardScreen } from './BoatDashboardScreen.js';
@@ -39,6 +41,22 @@ body.yacht-dashboard-workspace {
   background: var(--color-water-blue, #2196F3);
   color: var(--color-surface);
   font-weight: 600;
+}
+
+#yachtAccountLink {
+  min-width: 0;
+  max-width: 100%;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 14px;
+}
+
+#yachtAccountLink .drawer-user {
+  margin: 0;
+}
+
+#yachtAccountLink[aria-current="page"] .drawer-user {
+  border-color: var(--color-accent);
 }
 
 #yachtWorkspaceHeader {
@@ -168,6 +186,13 @@ body.yacht-dashboard-workspace {
 }
 `;
 
+let unsubscribeYachtProfile;
+
+function updateYachtProfile() {
+  const link = document.getElementById('yachtAccountLink');
+  if (link) link.innerHTML = renderUserRow();
+}
+
 function updateYachtConnectionStatus() {
   const status = document.getElementById('yachtConnectionStatus');
   if (!status) return;
@@ -184,6 +209,8 @@ export function renderYachtNavigation(route) {
     if (nav) {
       window.removeEventListener('online', updateYachtConnectionStatus);
       window.removeEventListener('offline', updateYachtConnectionStatus);
+      unsubscribeYachtProfile?.();
+      unsubscribeYachtProfile = null;
       nav.remove();
     }
     document.getElementById('yachtWorkspaceHeader')?.remove();
@@ -202,12 +229,15 @@ export function renderYachtNavigation(route) {
     nav.id = 'yachtNavigation';
     nav.setAttribute('aria-label', itUI('Yacht workspace'));
     screen.before(nav);
+    unsubscribeYachtProfile = store.subscribe(updateYachtProfile);
     window.addEventListener('online', updateYachtConnectionStatus);
     window.addEventListener('offline', updateYachtConnectionStatus);
   }
 
   nav.replaceChildren();
-  for (const [path, label] of [['/my-yacht', 'Home'], ['/account', 'Account']]) {
+  const links = [['/my-yacht', 'Home'], ['/my-yacht/details', 'Boat Details']];
+  const activePath = route === '/account' || route === '/my-yacht/details' ? route : '/my-yacht';
+  for (const [path, label] of links) {
     const link = document.createElement('a');
     link.href = '#' + path;
     if (path === '/my-yacht') {
@@ -215,12 +245,42 @@ export function renderYachtNavigation(route) {
     }
     link.append(document.createTextNode(itUI(label)));
     link.className = 'nav-item';
-    if (path === (route === '/account' ? '/account' : '/my-yacht')) {
+    if (path === activePath) {
       link.classList.add('is-active');
     }
     if (route === path) link.setAttribute('aria-current', 'page');
     nav.append(link);
   }
+
+  const about = document.createElement('button');
+  about.type = 'button';
+  about.className = 'nav-item';
+  about.textContent = itUI('About');
+  about.setAttribute('aria-haspopup', 'dialog');
+  about.setAttribute('aria-expanded', 'false');
+  about.addEventListener('click', () => {
+    if (about.getAttribute('aria-expanded') === 'true') return;
+    const previous = nav.querySelector('.nav-item.is-active');
+    previous?.classList.remove('is-active');
+    about.classList.add('is-active');
+    about.setAttribute('aria-expanded', 'true');
+    showAboutSheet({
+      yacht: true,
+      onClose: () => {
+        about.classList.remove('is-active');
+        about.setAttribute('aria-expanded', 'false');
+        previous?.classList.add('is-active');
+      }
+    });
+  });
+  nav.append(about);
+
+  const account = document.createElement('a');
+  account.id = 'yachtAccountLink';
+  account.href = '#/account';
+  if (route === '/account') account.setAttribute('aria-current', 'page');
+  nav.append(account);
+  updateYachtProfile();
 
   if (!document.getElementById('yachtWorkspaceHeader')) {
     const header = document.createElement('header');
@@ -277,10 +337,12 @@ export function mountMyYachtScreen() {
     banner.className = 'mc-home yacht-banner';
     banner.innerHTML = `<header class="mc-home-heading">
       ${workspaceClocksMarkup()}
-      <h1></h1>
+      <span class="mc-home-eyebrow"></span>
+      <p></p>
     </header>`;
     const header = banner.querySelector('header');
-    header.querySelector('h1').textContent = yacht.name || itUI('My Yacht');
+    header.querySelector('.mc-home-eyebrow').textContent = itUI('MarinaControl');
+    header.querySelector('p').textContent = itUI('Your yacht at a glance');
     screen.prepend(banner);
     stopBanner = startHomeBanner(header);
     stopClocks = startWorkspaceClocks(header);

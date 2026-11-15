@@ -5,7 +5,11 @@ import { t as tr, getLocale as uiLocale } from '../i18n.js';
 const APP_NAME = 'MarinaControl';
 const EXTERNAL_URL = 'https://sites.google.com/view/fethiyemarina/home/';
 
-export function showAboutSheet() {
+export function showAboutSheet({ yacht = false, onClose } = {}) {
+  const title = yacht ? tr('Yacht Management') : APP_NAME;
+  const description = yacht
+    ? tr('MarinaControl Yacht Management gives yacht owners and crew one place to manage vessel details, maintenance, safety, equipment, inventory, checklists, tasks and documents.')
+    : tr("MarinaControl gives marinas a single place to manage boats, berths, crew and customers — from daily operations to compliance.");
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
 
@@ -36,10 +40,10 @@ export function showAboutSheet() {
         <img src="assets/logo.png" alt="${itUI("MarinaControl")}" onerror="this.style.display='none'">
       </div>
 
-      <div class="about-name">${APP_NAME}</div>
+      <div class="about-name">${title}</div>
  
 
-      <div class="about-desc">${tr("MarinaControl gives marinas a single place to manage boats, berths, crew and customers — from daily operations to compliance.")}</div>
+      <div class="about-desc">${description}</div>
 
       <div class="about-divider"></div>
 
@@ -59,7 +63,11 @@ export function showAboutSheet() {
     sheet.classList.add('is-open');
   });
 
+  let closed = false;
   const close = () => {
+    if (closed) return;
+    closed = true;
+    onClose?.();
     backdrop.classList.remove('is-open');
     sheet.classList.remove('is-open');
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);

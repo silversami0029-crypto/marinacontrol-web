@@ -9,18 +9,38 @@ import { showAssignCustomerSheet } from '../components/AssignCustomerSheet.js';
 import { showBoatHelp }     from '../components/HelpDialog.js';
 import {
   listenForBoats, setActiveBoat, deleteBoatById, deleteBoatDocsByIds,
-  createBoat, findBoatByMmsi, updateBoat, assignCustomerToBoat
+  createBoat, findBoatByMmsi, updateBoat, assignCustomerToBoat,
+  listenForCustomers, setAssignedBoatActive
 } from '../db.js';
+import { Boat } from '../models/Boat.js';
 import { store }        from '../store.js';
 import { toast }        from '../ui/toast.js';
 import { confirmSheet } from '../ui/confirm.js';
 
 let unsubscribe = null;
+let unsubscribeYachtCustomers = null;
+
+export function unmountAssignedYachtBoats() {
+  unsubscribe?.();
+  unsubscribe = null;
+  unsubscribeYachtCustomers?.();
+  unsubscribeYachtCustomers = null;
+}
+
+export function mountAssignedYachtBoats() {
+  if (!store.assignedYacht) {
+    const screen = document.getElementById('screen');
+    screen.innerHTML = '<div class="boats-empty"><h2></h2></div>';
+    screen.querySelector('h2').textContent = t('No assigned boat is available.');
+    return;
+  }
+  mountBoatsScreen(store.assignedYacht);
+}
 let isBulkMode = false;
 const selectedIds = new Set();
 let isSearchOpen = false;
 
-export function mountBoatsScreen() {
+export function mountBoatsScreen(assignedYacht = null) {
   if (!store.activeClientId) {
     document.getElementById('screen').innerHTML =
       `<div class="boats-empty">
@@ -104,7 +124,21 @@ export function mountBoatsScreen() {
     </button>
   `;
 
-  document.getElementById('fabAddBoat').addEventListener('click', openAddBoatSheet);
+  if (assignedYacht) {
+    const add = document.getElementById('fabAddBoat');
+    add.remove();
+    store.boats = [new Boat(assignedYacht)];
+    store.boatsFull = store.boats;
+    renderList();
+    unsubscribeYachtCustomers = listenForCustomers(store.activeClientId, customers => {
+      if (!screen.querySelector('#boatsList') || location.hash !== '#/my-yacht/details') return;
+      store.customers = customers;
+      enrichCustomerNames(store.boatsFull);
+      renderList();
+    });
+  }
+
+  document.getElementById('fabAddBoat')?.addEventListener('click', openAddBoatSheet);
   document.getElementById('helpBtn').addEventListener('click', showBoatHelp);
   document.getElementById('bulkBtn').addEventListener('click', onBulkButtonTap);
   document.getElementById('bulkCancel').addEventListener('click', exitBulkMode);
@@ -117,6 +151,7 @@ export function mountBoatsScreen() {
 
   if (unsubscribe) unsubscribe();
   unsubscribe = listenForBoats(store.activeClientId, (boats, err) => {
+    if (assignedYacht && location.hash !== '#/my-yacht/details') return;
     if (err) {
       document.getElementById('boatsList').innerHTML =
         `<div class="boats-empty">
@@ -126,6 +161,11 @@ export function mountBoatsScreen() {
       return;
     }
 
+    if (assignedYacht) {
+      boats = boats.filter(boat => boat._docId === assignedYacht._docId);
+      store.assignedYacht = boats[0] ?? null;
+      store.activeBoatId = store.assignedYacht?.id ?? 0;
+    }
     enrichCustomerNames(boats);
 
     store.boatsFull = boats;
@@ -142,7 +182,7 @@ export function mountBoatsScreen() {
 
     renderList();
     updateBulkVisibility();
-  });
+  }, assignedYacht?.id ?? null);
 }
 
 function enrichCustomerNames(boats) {
@@ -214,7 +254,7 @@ function renderList() {
          </div>`
       : `<div class="boats-empty">
            <h2>${t("No boats yet")}</h2>
-           <p>${t("Tap \"+ Boat\" to add your first vessel.")}</p>
+           <p>${store.activeMarina?.clientType === 'yacht_operator' ? t("No assigned boat is available.") : t("Tap \"+ Boat\" to add your first vessel.")}</p>
          </div>`;
     listEl.innerHTML = msg;
     return;
@@ -354,7 +394,7 @@ function openMenu(boat) {
   showBoatMenu(boat, {
     onDashboard:      onOpenDashboard,
     onNotes:          () => toast(tr('Boat notes coming soon')),
-    onAssignCustomer: onAssignCustomer,
+    onAssignCustomer: store.activeMarina?.clientType === 'yacht_operator' ? null : onAssignCustomer,
     onEdit:           onEditBoat,
     onPhoto:          () => toast(boat.hasPhoto() ? itUI('Photo options coming soon') : itUI('Add photo coming soon')),
     onVoice:          () => toast(boat.hasVoiceNote() ? itUI('Voice options coming soon') : itUI('Add voice note coming soon')),
@@ -364,13 +404,17 @@ function openMenu(boat) {
 }
 
 function onOpenDashboard(boat) {
-   location.hash = `#/boat-dashboard?boatId=${boat.id}`;
+   location.hash = store.activeMarina?.clientType === 'yacht_operator' ? '#/my-yacht' : `#/boat-dashboard?boatId=${boat.id}`;
 }
 
 async function onSetActive(boat) {
   try {
     toast(tr('Setting active…'), { duration: 1200 });
-    await setActiveBoat(store.activeClientId, boat.id);
+    if (store.activeMarina?.clientType === 'yacht_operator') {
+      await setAssignedBoatActive(boat._docId);
+    } else {
+      await setActiveBoat(store.activeClientId, boat.id);
+    }
     toast(tr(`${boat.name} is now active`), { kind: 'success' });
   } catch (err) {
     console.error('[boats] set active failed', err);
@@ -387,7 +431,7 @@ async function onDelete(boat) {
   });
   if (!ok) return;
   try {
-    await deleteBoatById(String(boat.id));
+    await deleteBoatById(boat._docId ?? String(boat.id));
     toast(tr(`${boat.name} deleted`), { kind: 'success' });
   } catch (err) {
     toast(tr('Failed to delete boat'), { kind: 'error' });
@@ -413,15 +457,15 @@ function onEditBoat(boat) {
   showAddBoatSheet({
     boat,
     onUpdateSingle: async (fields) => {
-      if (fields.mmsi && fields.mmsi !== 'TBC') {
+      if (fields.mmsi && fields.mmsi !== 'TBC' && fields.mmsi !== boat.mmsi) {
         const existingId = await findBoatByMmsi(store.activeClientId, fields.mmsi);
         if (existingId && existingId !== boat.id) {
           throw new Error(`Another boat with MMSI '${fields.mmsi}' already exists.`);
         }
       }
       const userId = store.userProfile?.userId || 0;
-      await updateBoat(String(boat.id), userId, fields);
-      if (fields.isActive && !boat.isActive) {
+      await updateBoat(boat._docId ?? String(boat.id), userId, fields);
+      if (fields.isActive && !boat.isActive && store.activeMarina?.clientType !== 'yacht_operator') {
         await setActiveBoat(store.activeClientId, boat.id);
       }
       toast(tr(`${fields.name} updated`), { kind: 'success' });
@@ -436,7 +480,7 @@ async function onAssignCustomer(boat) {
     customers,
     onAssign: async (customerId) => {
       const userId = store.userProfile?.userId || 0;
-      await assignCustomerToBoat(String(boat.id), customerId, userId);
+      await assignCustomerToBoat(boat._docId ?? String(boat.id), customerId, userId);
       const customer = customers.find(c => c.id === customerId);
       toast(customer ? `${customer.name} assigned to ${boat.name}` : tr('Customer assigned'), { kind: 'success' });
     }

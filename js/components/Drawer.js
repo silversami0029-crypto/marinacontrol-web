@@ -286,7 +286,7 @@ function renderSection(section) {
   `;
 }
 
-function renderUserRow() {
+export function renderUserRow() {
   const profile = store.userProfile || {};
   const name = String(profile.name || store.authUser?.displayName || profile.email || store.authUser?.email || t('User')).trim();
   const email = profile.email || '';

@@ -12,7 +12,7 @@ import { initLanguage } from './i18n.js';
 import { store } from './store.js';
 import { renderTopBar, resetTopBarNotifications } from './components/TopBar.js';
 import { wireBottomNav } from './components/BottomNav.js';
-import { mountBoatsScreen } from './screens/BoatsScreen.js';
+import { mountAssignedYachtBoats, mountBoatsScreen, unmountAssignedYachtBoats } from './screens/BoatsScreen.js';
 import { mountLoginScreen } from './screens/LoginScreen.js';
 import { watchAuth, loadUserProfile } from './auth.js';
 import { mountReportsScreen } from './screens/ReportsScreen.js';
@@ -67,6 +67,7 @@ const routes = {
   '/usafe': mountUSafeScreen,
   '/home':             mountHomeScreen,
   '/my-yacht':         mountMyYachtScreen,
+  '/my-yacht/details': mountAssignedYachtBoats,
   '/login':            mountLoginScreen,
   '/boats':            mountBoatsScreen,
   '/dashboard':        mountDashboardScreen,
@@ -129,7 +130,8 @@ function navigate() {
   }
   const yachtMode = authed && store.activeMarina.clientType === 'yacht_operator';
   if (yachtMode) {
-    let destination = route === '/account' ? '#/account' : '#/my-yacht';
+    const yachtPage = route === '/account' || route === '/my-yacht/details';
+    let destination = yachtPage ? `#${route}` : '#/my-yacht';
     if (store.assignedYacht && Object.hasOwn(yachtTools, route)) {
       destination = `#${route}?boatId=${store.assignedYacht.id}`;
     }
@@ -138,7 +140,7 @@ function navigate() {
       return;
     }
   }
-  if (authed && !yachtMode && (route === '/login' || route === '/my-yacht')) {
+  if (authed && !yachtMode && (route === '/login' || route === '/my-yacht' || route === '/my-yacht/details')) {
     location.hash = '#/home';
     return;
   }
@@ -167,7 +169,9 @@ function navigate() {
 
   if (unmountYachtTool) document.getElementById('modalRoot')?.replaceChildren();
   leaveYachtScreen();
-  if (yachtMode) unmountYachtTool = yachtTools[route] ?? null;
+  if (yachtMode) {
+    unmountYachtTool = route === '/my-yacht/details' ? unmountAssignedYachtBoats : yachtTools[route] ?? null;
+  }
   routes[route]();
 }
 
