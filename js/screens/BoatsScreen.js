@@ -12,6 +12,7 @@ import {
   createBoat, findBoatByMmsi, updateBoat, assignCustomerToBoat,
   listenForCustomers, setAssignedBoatActive
 } from '../db.js';
+import { closeYachtPhoto, hasYachtPhoto, showYachtPhoto } from './YachtPhoto.js';
 import { Boat } from '../models/Boat.js';
 import { store }        from '../store.js';
 import { toast }        from '../ui/toast.js';
@@ -21,6 +22,7 @@ let unsubscribe = null;
 let unsubscribeYachtCustomers = null;
 
 export function unmountAssignedYachtBoats() {
+  closeYachtPhoto();
   unsubscribe?.();
   unsubscribe = null;
   unsubscribeYachtCustomers?.();
@@ -391,12 +393,14 @@ async function confirmBulkDelete() {
 }
 
 function openMenu(boat) {
+  const yachtMode = store.activeMarina?.clientType === 'yacht_operator';
   showBoatMenu(boat, {
     onDashboard:      onOpenDashboard,
     onNotes:          () => toast(tr('Boat notes coming soon')),
-    onAssignCustomer: store.activeMarina?.clientType === 'yacht_operator' ? null : onAssignCustomer,
+    onAssignCustomer: yachtMode ? null : onAssignCustomer,
     onEdit:           onEditBoat,
-    onPhoto:          () => toast(boat.hasPhoto() ? itUI('Photo options coming soon') : itUI('Add photo coming soon')),
+    onPhoto:          yachtMode ? showYachtPhoto : null,
+    photoLabel:       hasYachtPhoto(boat) ? 'Change boat photo' : 'Add boat photo',
     onVoice:          () => toast(boat.hasVoiceNote() ? itUI('Voice options coming soon') : itUI('Add voice note coming soon')),
     onSetActive:      onSetActive,
     onDelete:         onDelete

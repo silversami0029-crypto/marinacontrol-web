@@ -25,7 +25,7 @@ import { mountBerthsScreen } from './screens/BerthsScreen.js';
 import { listenForCustomers, getMyMarinas, resolveAssignedYacht } from './db.js';
 import { mountBookingRequestsScreen } from './screens/BookingRequestsScreen.js';
 import { initDrawer, syncDrawerLayout } from './components/Drawer.js';
-import { mountMyYachtScreen, renderYachtNavigation, unmountMyYachtScreen } from './screens/MyYachtScreen.js';
+import { mountMyYachtScreen, renderYachtNavigation } from './screens/MyYachtScreen.js';
 import { mountBoatDashboardScreen } from './screens/BoatDashboardScreen.js';
 import { mountUserManagementScreen } from './screens/UserManagementScreen.js';
 import { mountCustomerDirectoryScreen, unmountCustomerDirectoryScreen } from './screens/CustomerDirectoryScreen.js';
@@ -58,7 +58,6 @@ const yachtTools = {
 let unmountYachtTool = null;
 
 function leaveYachtScreen() {
-  unmountMyYachtScreen();
   unmountYachtTool?.();
   unmountYachtTool = null;
 }

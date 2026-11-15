@@ -1,10 +1,17 @@
 import { italianUI as itUI } from '../i18n.js';
 import { store } from '../store.js';
+import { toast } from '../ui/toast.js';
 import { renderUserRow } from '../components/Drawer.js';
 import { showAboutSheet } from './AboutSheet.js';
+import {
+  hasYachtPhoto, loadYachtPhoto, resetYachtBannerPhoto,
+  YACHT_PHOTO_DESKTOP_MIN_WIDTH, YACHT_PHOTO_DESKTOP_HEIGHT
+} from './YachtPhoto.js';
 import { startHomeBanner } from './HomeBanner.js';
 import { startWorkspaceClocks, workspaceClocksMarkup } from './WorkspaceClocks.js';
 import { mountBoatDashboardScreen } from './BoatDashboardScreen.js';
+
+const MENU_BULLET = '<span class="drawer-item-bullet" aria-hidden="true">•</span>';
 
 const YACHT_LAYOUT = `
 body.yacht-dashboard-workspace {
@@ -41,6 +48,10 @@ body.yacht-dashboard-workspace {
   background: var(--color-water-blue, #2196F3);
   color: var(--color-surface);
   font-weight: 600;
+}
+
+#yachtNavigation .nav-item.is-active .drawer-item-bullet {
+  color: inherit;
 }
 
 #yachtAccountLink {
@@ -122,10 +133,9 @@ body.yacht-dashboard-workspace {
 }
 
 .yacht-dashboard-workspace .yacht-banner {
-  align-self: stretch;
-  width: 100%;
+  width: auto;
   max-width: none;
-  margin-inline: 0;
+  margin-inline: clamp(12px, 3vw, 32px);
   padding: 16px 0 0;
 }
 
@@ -148,7 +158,11 @@ body.yacht-dashboard-workspace {
   overflow-wrap: anywhere;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: ${YACHT_PHOTO_DESKTOP_MIN_WIDTH}px) {
+  .yacht-dashboard-workspace .yacht-banner .mc-home-heading.has-yacht-photo {
+    min-height: ${YACHT_PHOTO_DESKTOP_HEIGHT}px;
+  }
+
   body.yacht-dashboard-workspace {
     --yacht-sidebar-width: var(--drawer-w, 280px);
     --yacht-workspace-gutter: 24px;
@@ -214,6 +228,7 @@ export function renderYachtNavigation(route) {
       nav.remove();
     }
     document.getElementById('yachtWorkspaceHeader')?.remove();
+    removeYachtBanner();
     return;
   }
 
@@ -229,7 +244,10 @@ export function renderYachtNavigation(route) {
     nav.id = 'yachtNavigation';
     nav.setAttribute('aria-label', itUI('Yacht workspace'));
     screen.before(nav);
-    unsubscribeYachtProfile = store.subscribe(updateYachtProfile);
+    unsubscribeYachtProfile = store.subscribe(() => {
+      updateYachtProfile();
+      syncYachtBanner(screen);
+    });
     window.addEventListener('online', updateYachtConnectionStatus);
     window.addEventListener('offline', updateYachtConnectionStatus);
   }
@@ -242,6 +260,8 @@ export function renderYachtNavigation(route) {
     link.href = '#' + path;
     if (path === '/my-yacht') {
       link.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/></svg>';
+     } else {
+      link.innerHTML = MENU_BULLET;
     }
     link.append(document.createTextNode(itUI(label)));
     link.className = 'nav-item';
@@ -255,7 +275,8 @@ export function renderYachtNavigation(route) {
   const about = document.createElement('button');
   about.type = 'button';
   about.className = 'nav-item';
-  about.textContent = itUI('About');
+  about.innerHTML = MENU_BULLET;
+  about.append(document.createTextNode(itUI('About')));
   about.setAttribute('aria-haspopup', 'dialog');
   about.setAttribute('aria-expanded', 'false');
   about.addEventListener('click', () => {
@@ -307,24 +328,81 @@ export function renderYachtNavigation(route) {
     screen.before(header);
   }
   updateYachtConnectionStatus();
+  syncYachtBanner(screen);
 }
 
 let stopBanner;
 let stopClocks;
+let bannerPhotoPath;
 
-export function unmountMyYachtScreen() {
+function removeYachtBanner() {
   stopBanner?.();
   stopClocks?.();
   stopBanner = null;
   stopClocks = null;
+  bannerPhotoPath = null;
+  document.getElementById('yachtWorkspaceBanner')?.remove();
 }
 
-export function mountMyYachtScreen() {
-  unmountMyYachtScreen();
-  const screen = document.getElementById('screen');
+function startYachtBanner(header, yacht) {
+  let stop = startHomeBanner(header);
+  let disposed = false;
+  let url;
+  if (yacht && hasYachtPhoto(yacht)) {
+    loadYachtPhoto(yacht).then(async blob => {
+      if (!blob || disposed || !header.isConnected) return;
+      url = URL.createObjectURL(blob);
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      if (disposed || !header.isConnected) return;
+      stop();
+      image.alt = '';
+      image.className = 'mc-home-photo is-visible';
+      image.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center 55%';
+      const reset = document.createElement('button');
+      reset.type = 'button';
+      reset.className = 'mc-home-photo-toggle';
+      reset.textContent = itUI('Reset banner');
+      reset.addEventListener('click', async () => {
+        if (reset.disabled || disposed) return;
+        reset.disabled = true;
+        try {
+          await resetYachtBannerPhoto(yacht);
+          if (disposed || !header.isConnected) return;
+          syncYachtBanner(document.getElementById('screen'));
+          toast(itUI('Rotating banner restored'), { kind: 'success' });
+        } catch (error) {
+          if (disposed) return;
+          console.warn('[yacht photo] Could not reset banner', error);
+          toast(itUI('Could not reset the banner. Please try again.'), { kind: 'error' });
+          reset.disabled = false;
+        }
+      });
+      header.classList.add('has-yacht-photo');
+      header.prepend(image);
+      header.append(reset);
+      stop = () => {
+        header.classList.remove('has-yacht-photo');
+        image.remove();
+        reset.remove();
+      };
+    }).catch(() => {});
+  }
+
+  return () => {
+    disposed = true;
+    stop();
+    if (url) URL.revokeObjectURL(url);
+  };
+}
+
+function syncYachtBanner(screen) {
   const yacht = store.assignedYacht;
-  if (yacht) {
-    mountBoatDashboardScreen(yacht);
+  const photoPath = yacht?.yachtPhotoStoragePath ?? null;
+  let banner = document.getElementById('yachtWorkspaceBanner');
+
+  if (!banner) {
     if (!document.getElementById('homeOverviewCss')) {
       const styles = document.createElement('link');
       styles.id = 'homeOverviewCss';
@@ -333,7 +411,8 @@ export function mountMyYachtScreen() {
       document.head.append(styles);
     }
 
-    const banner = document.createElement('div');
+    banner = document.createElement('div');
+    banner.id = 'yachtWorkspaceBanner';
     banner.className = 'mc-home yacht-banner';
     banner.innerHTML = `<header class="mc-home-heading">
       ${workspaceClocksMarkup()}
@@ -343,9 +422,22 @@ export function mountMyYachtScreen() {
     const header = banner.querySelector('header');
     header.querySelector('.mc-home-eyebrow').textContent = itUI('MarinaControl');
     header.querySelector('p').textContent = itUI('Your yacht at a glance');
-    screen.prepend(banner);
-    stopBanner = startHomeBanner(header);
+    screen.before(banner);
     stopClocks = startWorkspaceClocks(header);
+  }
+
+  if (!stopBanner || bannerPhotoPath !== photoPath) {
+    stopBanner?.();
+    bannerPhotoPath = photoPath;
+    stopBanner = startYachtBanner(banner.querySelector('header'), yacht);
+  }
+}
+
+export function mountMyYachtScreen() {
+  const screen = document.getElementById('screen');
+  const yacht = store.assignedYacht;
+  if (yacht) {
+    mountBoatDashboardScreen(yacht);
     return;
   }
 

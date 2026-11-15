@@ -155,21 +155,15 @@ export function showBoatMenu(boat, handlers = {}) {
     onClick: () => { close(); handlers.onEdit?.(boat); }
   }));
 
-  /*sheet.appendChild(item({
-    id: 'btnBoatPhoto',
-    icon: ICONS.photo,
-    title: boat.hasPhoto() ? 'Photo options' : 'Add Photo',
-    subtitle: 'Add & Manage vessel photo',
-    onClick: () => { close(); handlers.onPhoto?.(boat); }
-  }));
-
-  sheet.appendChild(item({
-    id: 'btnBoatVoice',
-    icon: ICONS.mic,
-    title: boat.hasVoiceNote() ? 'Voice options' : 'Add Voice Note',
-    subtitle: 'Add or manage voice note',
-    onClick: () => { close(); handlers.onVoice?.(boat); }
-  }));*/
+  if (handlers.onPhoto) {
+    sheet.appendChild(item({
+      id: 'btnBoatPhoto',
+      icon: ICONS.photo,
+      title: handlers.photoLabel,
+      subtitle: 'View or update the yacht banner photo',
+      onClick: () => { close(); handlers.onPhoto(boat); }
+    }));
+  }
 
   // Set active only if not already active
   if (!boat.isActive) {

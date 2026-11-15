@@ -58,6 +58,7 @@ const ICONS = {
 export function mountAccountScreen() {
   const screen = document.getElementById('screen');
   const profile = store.userProfile || {};
+  const yachtMode = store.activeMarina?.clientType === 'yacht_operator';
 
   const name  = profile.name || store.authUser?.displayName || profile.email || store.authUser?.email || t('User');
   const email = profile.email || store.authUser?.email || '';
@@ -91,11 +92,11 @@ export function mountAccountScreen() {
           <span class="account-item-chevron">${ICONS.chevron}</span>
         </button>
 
-        <button type="button" class="account-item" id="btnManageMarinas">
+        ${yachtMode ? '' : `<button type="button" class="account-item" id="btnManageMarinas">
           <span class="account-item-icon">${ICONS.anchor}</span>
           <span class="account-item-text">${t("Manage Marinas")}</span>
           <span class="account-item-chevron">${ICONS.chevron}</span>
-        </button>
+        </button>`}
 
         <button class="account-item account-item--danger" id="btnDeleteAccount">
           <span class="account-item-icon">${ICONS.delete}</span>
@@ -117,7 +118,7 @@ export function mountAccountScreen() {
     showEditProfileSheet(() => { if (location.hash.split('?')[0] === '#/account') mountAccountScreen(); });
   });
 
-  document.getElementById('btnManageMarinas').addEventListener('click', showManageMarinasSheet);
+  document.getElementById('btnManageMarinas')?.addEventListener('click', showManageMarinasSheet);
   document.getElementById('btnDeleteAccount').addEventListener('click', onDeleteAccount);
   document.getElementById('btnLogout').addEventListener('click', onLogout);
 }

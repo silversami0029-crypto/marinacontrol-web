@@ -23,6 +23,7 @@ export class Boat {
 
     this.voiceNotePath  = raw.voiceNotePath ?? null;
     this.photoPath      = raw.photoPath    ?? null;
+    this.yachtPhotoStoragePath = raw.yachtPhotoStoragePath ?? null;
 
     this.length         = Number(raw.length   ?? 0);
     this.beam           = Number(raw.beam     ?? 0);
