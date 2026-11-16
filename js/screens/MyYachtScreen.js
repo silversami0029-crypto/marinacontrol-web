@@ -152,6 +152,11 @@ body.yacht-dashboard-workspace {
   min-height: 64px;
 }
 
+.yacht-dashboard-workspace .dash-tile:hover,
+.yacht-dashboard-workspace .dash-tile:focus-visible {
+  border-color: var(--color-accent, #2e9bff);
+}
+
 .yacht-dashboard-workspace .dash-tile-title,
 .yacht-dashboard-workspace .dash-tile-count {
   white-space: normal;
