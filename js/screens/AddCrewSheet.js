@@ -4,9 +4,8 @@ import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddCrewSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
-import {
-  collection, query, where, getDocs, doc, setDoc, serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { createCrewMember } from '../db.js';
+import { collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
 export function showAddCrewChooser() {
@@ -229,22 +228,14 @@ function showAddCrewForm() {
    ============================================================ */
 async function createCrew({ name, email, role, notes }) {
   const clientId = Number(store.activeClientId);
-  if (!clientId) throw new Error(tr('No active client'));
-
-  // Next numeric id
-  const snap = await getDocs(
-    query(collection(db, 'crew'), where('clientId', '==', clientId))
-  );
-
-  let maxId = 0;
-  snap.forEach(d => {
-    const v = Number(d.data()?.id || 0);
-    if (v > maxId) maxId = v;
-  });
-  const nextId = maxId + 1;
+  const uid = store.authUser?.uid;
+  const userId = store.userProfile?.userId;
+  if (!clientId || !uid) throw new Error(tr('No active client'));
 
   // Find active boat to associate
-  let boatId = store.assignedYacht?.id || 0;
+  const yachtMode = store.activeMarina?.clientType === 'yacht_operator';
+  let boatId = Number(store.assignedYacht?.id || 0);
+  if (yachtMode && !boatId) throw new Error(tr('No assigned yacht'));
   if (!boatId) try {
     const boatsSnap = await getDocs(
       query(
@@ -258,24 +249,8 @@ async function createCrew({ name, email, role, notes }) {
     }
   } catch { /* ignore */ }
 
-  const now = Date.now();
-  const userId = String(store.userProfile?.userId || 0);
-
-  await setDoc(doc(db, 'crew', String(nextId)), {
-    id: nextId,
-    clientId,
-    boatId,
-    name,
-    email,
-    role: role || '',
-    notes: notes || '',
-    status: 'OFF DUTY',
-    createdAt: now,
-    lastModified: now,
-    lastModifiedBy: userId,
-    syncTime: serverTimestamp(),
-    syncedAt: 0
-  });
-
-  return nextId;
+  if (Number(store.activeClientId) !== clientId || store.authUser?.uid !== uid) {
+    throw new Error(tr('The workspace changed. Open Add Crew again.'));
+  }
+  return createCrewMember(clientId, boatId, userId, { name, email, role, notes });
 }

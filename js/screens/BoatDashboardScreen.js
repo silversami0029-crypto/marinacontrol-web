@@ -245,7 +245,7 @@ export function mountBoatDashboardScreen(assignedYacht = null) {
       const type = el.dataset.type;
       const label = TILES.find(t => t.type === type)?.label || type;
 
-      if (assignedYacht) {
+      if (assignedYacht || type === 'checklists') {
         location.hash = `#/${type}?boatId=${boatId}`;
         return;
       }

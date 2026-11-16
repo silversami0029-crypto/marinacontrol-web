@@ -3,11 +3,10 @@ import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/ChecklistScreen.js
 import { store } from '../store.js';
 import { showChecklistDetail } from './ChecklistDetailSheet.js';
+import { canEditChecklists, showChecklistCreate } from './ChecklistCreateSheet.js';
 import { showChecklistHelp } from './ChecklistHelp.js';
 import {
-  //collection, query, where, onSnapshot, getDocs
-collection, query, where, onSnapshot
-
+  collection, query, where, onSnapshot
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
@@ -49,6 +48,39 @@ if (unsubscribeBoats) {
   isSearchOpen = false;
 
   screen.innerHTML = `
+    <style>
+      body:has(#chList) {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        box-sizing: border-box;
+      }
+      body:has(#chList) > :is(#yachtWorkspaceHeader, #yachtWorkspaceBanner, #yachtNavigation),
+      #screen:has(> #chList) > :is(#chHeader, #chSearchBar, .ch-filters-row) {
+        flex-shrink: 0;
+      }
+      #screen:has(> #chList) {
+        flex: 1 0 0;
+        min-height: 0;
+      }
+      #screen > #chList.eq-list {
+        flex: 1 1 auto;
+        min-height: 7rem;
+        margin-bottom: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+      }
+      #chActions {
+        display: flex;
+        justify-content: flex-end;
+        flex: 0 0 auto;
+        padding: 16px;
+      }
+      #chActions > #chAdd {
+        position: static;
+        transform: none !important;
+      }
+    </style>
     <div class="eq-header" id="chHeader">
       <div class="eq-header-row">
         <button class="eq-icon-btn" id="chBack" aria-label="${tr("Back")}">
@@ -72,6 +104,7 @@ if (unsubscribeBoats) {
         </button>
 
         <div class="eq-header-spacer"></div>
+        <button type="button" class="dash-filter" id="chHistory" aria-pressed="false">${tr("History")}</button>
 
         <button class="eq-icon-btn" id="chSearchToggle" aria-label="${tr("Search")}">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
@@ -111,6 +144,9 @@ if (unsubscribeBoats) {
         <div class="spinner-ring"></div>
       </div>
     </div>
+    ${canEditChecklists() ? `<div id="chActions"><button type="button" class="cm-fab" id="chAdd" aria-label="${tr("Add Checklist")}">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12m-6-6v12"/></svg>
+    </button></div>` : ''}
   `;
 
  /* back arrow*/
@@ -119,6 +155,14 @@ if (unsubscribeBoats) {
    if (store.assignedYacht) location.hash = '#/my-yacht';
    else history.back();
  });
+
+  document.getElementById('chAdd')?.addEventListener('click', () => {
+    showChecklistCreate(currentBoats, boatFilter);
+  });
+  document.getElementById('chHistory').addEventListener('click', () => {
+    const next = filterMode === 'COMPLETED' ? 'ALL' : 'COMPLETED';
+    screen.querySelector(`[data-ch-filter="${next}"]`).click();
+  });
 
   document.getElementById('chHelp')
     ?.addEventListener('click', showChecklistHelp);
@@ -146,6 +190,9 @@ if (unsubscribeBoats) {
   screen.querySelectorAll('[data-ch-filter]').forEach(btn => {
     btn.addEventListener('click', () => {
       filterMode = btn.dataset.chFilter;
+      const historyButton = document.getElementById('chHistory');
+      historyButton.setAttribute('aria-pressed', String(filterMode === 'COMPLETED'));
+      historyButton.classList.toggle('is-active', filterMode === 'COMPLETED');
 
       screen.querySelectorAll('[data-ch-filter]').forEach(button => {
         button.classList.toggle(
@@ -165,6 +212,7 @@ if (unsubscribeBoats) {
     });
 
   if (store.assignedYacht) {
+    boatFilter = Number(store.assignedYacht.id);
     const select = document.getElementById('chBoatSelect');
     currentBoats = [store.assignedYacht];
     populateBoatDropdown();
@@ -229,8 +277,8 @@ function subscribeToChecklists() {
             id: Number(data.id || 0),
             clientId: Number(data.clientId || 0),
             boatId: Number(data.boatId || 0),
-            name: data.name || '',
-            type: data.type || '',
+            name: data.name || data.checklistName || '',
+            type: data.type || data.checklistType || '',
             status: (data.status || 'PENDING').toUpperCase(),
             totalItems: Number(data.totalItems || 0),
             completedItems: Number(data.completedItems || 0),
@@ -243,7 +291,8 @@ function subscribeToChecklists() {
             notes: data.notes || '',
             completedAt: Number(data.completedAt || 0),
             completedBy: data.completedBy || '',
-            createdAt: Number(data.createdAt || 0)
+            createdAt: Number(data.createdAt || 0),
+            revision: Number(data.webChecklistRevision || 0)
           };
         })
         .sort((a, b) => b.createdAt - a.createdAt);
@@ -353,6 +402,7 @@ function renderList() {
     listElement.innerHTML = `
       <div class="boats-empty">
         <h2>${message}</h2>
+        ${canEditChecklists() && !searchText && filterMode === 'ALL' ? `<p>${tr("Tap + to add a checklist.")}</p>` : ''}
       </div>
     `;
     return;

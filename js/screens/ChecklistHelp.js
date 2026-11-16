@@ -1,31 +1,42 @@
-import { italianUI as itUI } from '../i18n.js';
-import { t as tr, getLocale as uiLocale } from '../i18n.js';
-// js/screens/ChecklistHelp.js
+import { t as tr } from '../i18n.js';
 
 export function showChecklistHelp() {
   const backdrop = document.createElement('div');
   backdrop.className = 'help-backdrop';
 
   const dialog = document.createElement('div');
-  dialog.className = 'help-dialog';
+  dialog.className = 'help-dialog ot-help-dialog';
+  dialog.setAttribute('role', 'dialog');
+  dialog.setAttribute('aria-modal', 'true');
+  dialog.setAttribute('aria-labelledby', 'checklistHelpTitle');
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">${tr("📋 Checklists")}</div>
+      <div class="help-pill" id="checklistHelpTitle">${tr("Checklists")}</div>
 
-      <p class="help-desc">${tr("View completion status of all checklists across your boats. Checklists are created and completed in the Android app — the web view is for management oversight.")}</p>
+      <p class="help-desc">${tr("Create and run boat checklists, track progress, and review completed checks.")}</p>
 
-      <div class="help-section-title">${tr("What you can see")}</div>
-
-      ${step('1', itUI('Progress'), itUI('How many items are complete out of the total'))}
-      ${step('2', itUI('Results'), itUI('Items passed vs. items that failed'))}
-      ${step('3', itUI('Who completed'), itUI('Name of the crew member who finished the checklist'))}
-      ${step('4', itUI('Item detail'), itUI('Tap a checklist to see the individual items and their results'))}
+      <div class="help-section-title">${tr("Add Checklist")}</div>
+      <p class="help-desc">${tr("Select + if you have permission to edit checklists.")}</p>
+      ${entry(tr('Use App Template'), tr('Start with an editable departure checklist.'))}
+      ${entry(tr('Import My Own'), tr('Upload a CSV or JSON file with your own checklist items.'))}
 
       <div class="help-divider"></div>
 
-      <div class="help-section-title">${tr("Status")}</div>
-      <div class="help-tips">• <b>${tr("Pending")}</b>${tr("— checklist created, not yet started •")}<b>${tr("In Progress")}</b>${tr("— some items completed •")}<b>${tr("Completed")}</b>${tr("— all items processed")}</div>
+      <div class="help-section-title">${tr("Available Checklist Types")}</div>
+      ${entry(tr('Departure'), tr('Pre-departure safety checks'))}
+      ${entry(tr('Inventory'), tr('Equipment and supplies checks'))}
+      ${entry(tr('Safety'), tr('Safety equipment inspections'))}
+      ${entry(tr('Maintenance'), tr('Routine service checks'))}
+      ${entry(tr('Custom'), tr('Checks tailored to your boat'))}
+
+      <div class="help-divider"></div>
+
+      <div class="help-section-title">${tr("How to use checklists")}</div>
+      ${entry(tr('Results'), tr('Open a checklist and mark each item Pass or Fail.'))}
+      ${entry(tr('Save progress'), tr('Save your results and return to the checklist later.'))}
+      ${entry(tr('Complete checklist'), tr('Record a result for every mandatory item before completing.'))}
+      ${entry(tr('History'), tr('Review completed checklists, their results, and who completed them.'))}
 
       <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
@@ -51,11 +62,10 @@ export function showChecklistHelp() {
   dialog.querySelector('#chkHelpGotIt').addEventListener('click', close);
 }
 
-function step(num, title, body) {
+function entry(title, body) {
   return `
     <div class="help-step">
-      <div class="help-step-num">${num}</div>
-      <div class="help-step-text"><b>${title}</b> — ${body}</div>
+      <div class="help-step-text"><b>${title}</b><span>${body}</span></div>
     </div>
   `;
 }

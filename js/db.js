@@ -1,7 +1,7 @@
 import { italianUI as itUI } from './i18n.js';
 import { savedCurrency, money, currencyDigits } from './util/BillingCurrency.js';
 import { marinaCurrency, checkBillingClient } from './util/BillingData.js';
-import { runTransaction, getDocFromServer, getDocsFromServer } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { runTransaction, getDocFromServer, getDocsFromServer, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { utilitySegments } from './analytics/utilityConsumption.js';
 // js/db.js
 import {
@@ -1212,12 +1212,32 @@ export async function importCustomersFromRows(clientId, userId, rows, onProgress
 /* ============================================================
    CREW BULK IMPORT
    ============================================================ */
-export async function importCrewFromRows(clientId, userId, rows, onProgress, assignedBoatId = 0) {
-  const {
-    collection, query, where, getDocs, doc, setDoc, serverTimestamp
-  } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-  const { db } = await import('./firebase.js');
+let lastCrewId = 0;
 
+export async function createCrewMember(clientId, boatId, userId, { name, email, role, notes }) {
+  const now = Date.now();
+  // Keep the numeric ID used by crew links, independently of the Firestore document ID.
+  const suffix = crypto.getRandomValues(new Uint16Array(1))[0] & 1023;
+  const id = lastCrewId = Math.max(lastCrewId + 1, now * 1024 + suffix);
+  await setDoc(doc(collection(db, 'crew')), {
+    id,
+    clientId: Number(clientId),
+    boatId: Number(boatId),
+    name,
+    email,
+    role: role || '',
+    notes: notes || '',
+    status: 'OFF DUTY',
+    createdAt: now,
+    lastModified: now,
+    lastModifiedBy: String(userId || 0),
+    syncTime: serverTimestamp(),
+    syncedAt: 0
+  });
+  return id;
+}
+
+export async function importCrewFromRows(clientId, userId, rows, onProgress, assignedBoatId = 0) {
   const cid = Number(clientId);
 
   // Load existing crew for duplicate detection
@@ -1226,15 +1246,12 @@ export async function importCrewFromRows(clientId, userId, rows, onProgress, ass
   );
 
   const existingKeys = new Set(); // "name|email" lowercase
-  let maxId = 0;
 
   existingSnap.forEach(d => {
     const data = d.data();
     const n = (data.name  || '').trim().toLowerCase();
     const e = (data.email || '').trim().toLowerCase();
     if (n && e && (!assignedBoatId || data.boatId === assignedBoatId)) existingKeys.add(`${n}|${e}`);
-    const v = Number(data.id || 0);
-    if (v > maxId) maxId = v;
   });
 
   // Find active boat to associate
@@ -1252,7 +1269,6 @@ export async function importCrewFromRows(clientId, userId, rows, onProgress, ass
     }
   } catch { /* ignore */ }
 
-  let nextId = maxId + 1;
   let success = 0;
   let skipped = 0;
   const errors = [];
@@ -1277,27 +1293,8 @@ export async function importCrewFromRows(clientId, userId, rows, onProgress, ass
         continue;
       }
 
-      const now = Date.now();
-      const docRef = doc(db, 'crew', String(nextId));
-
-      await setDoc(docRef, {
-        id: nextId,
-        clientId: cid,
-        boatId,
-        name,
-        email,
-        role,
-        notes,
-        status: 'OFF DUTY',
-        createdAt: now,
-        lastModified: now,
-        lastModifiedBy: String(userId || 0),
-        syncTime: serverTimestamp(),
-        syncedAt: 0
-      });
-
+      await createCrewMember(cid, boatId, userId, { name, email, role, notes });
       existingKeys.add(key);
-      nextId++;
       success++;
     } catch (err) {
       console.error('[import crew] row failed', err);
