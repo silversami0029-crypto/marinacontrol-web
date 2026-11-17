@@ -17,6 +17,13 @@ const SHIFT_TYPES = ['Morning', 'Afternoon', 'Night'];
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 let unsubscribe = null;
+let mountGeneration = 0;
+
+export function unmountShiftScheduleScreen() {
+  mountGeneration++;
+  unsubscribe?.();
+  unsubscribe = null;
+}
 let currentAssignments = [];
 let weekStart = null;   // Date (Mon 00:00 local)
 let crewCache = [];     // [{id, name, role}]
@@ -24,7 +31,9 @@ let crewCache = [];     // [{id, name, role}]
 export async function mountShiftScheduleScreen() {
   const screen = document.getElementById('screen');
 
-  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  unmountShiftScheduleScreen();
+  const generation = mountGeneration;
+  crewCache = [];
   currentAssignments = [];
   weekStart = getMonday(new Date());
 
@@ -116,6 +125,7 @@ export async function mountShiftScheduleScreen() {
       collection(db, 'crew'),
       where('clientId', '==', clientId)
     ));
+    if (generation !== mountGeneration) return;
     crewCache = crewSnap.docs
       .map(d => {
         const data = d.data();
@@ -131,6 +141,7 @@ export async function mountShiftScheduleScreen() {
     console.error('[shift] crew load failed', err);
   }
 
+  if (generation !== mountGeneration) return;
   subscribeToShifts();
   refreshWeek();
 }

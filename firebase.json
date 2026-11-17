@@ -5,7 +5,18 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "**/setup.ps1"
+      "**/setup.ps1",
+      "deploy.ps1",
+      "Firebase-Yacht-Photo-Setup.md",
+      "Firestore-Checklist-Setup.md",
+      "js/backups/**",
+      "js/screens - Copy/**",
+      "css/components - Copy.css",
+      "css/screen-backup.css",
+      "css/theme-back.css",
+      "js/components/BerthPierMap_backup.js",
+      "assets/marina-pier-plan_backup.jpg",
+      "package.json"
     ],
     "rewrites": [
       { "source": "**", "destination": "/index.html" }

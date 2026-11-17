@@ -30,6 +30,11 @@ const CATEGORY_LABELS = {
 };
 
 let unsubscribe = null;
+
+export function unmountInvoiceScreen() {
+  unsubscribe?.();
+  unsubscribe = null;
+}
 let currentItems = [];
 let selectedStatus = 'All';
 let selectedYear = -1;

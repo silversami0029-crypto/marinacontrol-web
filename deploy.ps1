@@ -5,7 +5,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$source  = "C:\Users\lbess\Documents\webapp"
+$source = $PSScriptRoot
 $siteRoot = "C:\Users\lbess\Documents\preview\MarinaControl-Website-Updated"
 $dest = Join-Path $siteRoot "public\webapp"
 $projectId = "firstapp-1bcf1005"
@@ -39,16 +39,34 @@ New-Item -ItemType Directory -Force -Path $dest | Out-Null
 Write-Host "Copying index.html..." -ForegroundColor Yellow
 Copy-Item "$source\index.html" "$dest\index.html" -Force
 
-# Mirror folders so deleted source files are also removed from deployment copy
+# Exclude source-only copies from the website's Hosting directory.
+$excludedDirs = @("backups", "screens - Copy")
+$excludedFiles = @("components - Copy.css", "screen-backup.css", "theme-back.css", "*_backup.*")
+
 foreach ($folder in @("assets", "css", "js")) {
     Write-Host "Synchronising $folder..." -ForegroundColor Yellow
 
-    robocopy "$source\$folder" "$dest\$folder" /MIR /R:2 /W:1 /NFL /NDL /NJH /NJS
+    robocopy "$source\$folder" "$dest\$folder" /MIR /R:2 /W:1 /NFL /NDL /NJH /NJS /XD $excludedDirs /XF $excludedFiles
 
     if ($LASTEXITCODE -ge 8) {
         Write-Host "ERROR: Failed to synchronise $folder." -ForegroundColor Red
         exit $LASTEXITCODE
     }
+}
+
+# Robocopy exclusions can also protect old destination copies from /MIR.
+foreach ($relativePath in @("js\backups", "js\screens - Copy")) {
+    $path = Join-Path $dest $relativePath
+    if (Test-Path -LiteralPath $path) {
+        Remove-Item -LiteralPath $path -Recurse -Force
+    }
+}
+foreach ($folder in @("assets", "css", "js")) {
+    Get-ChildItem -LiteralPath (Join-Path $dest $folder) -File -Recurse -Force |
+        Where-Object {
+            $_.Name -in $excludedFiles -or $_.Name -like "*_backup.*"
+        } |
+        Remove-Item -Force
 }
 
 Write-Host "Copy complete." -ForegroundColor Green

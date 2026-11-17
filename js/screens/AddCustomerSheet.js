@@ -4,10 +4,7 @@ import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddCustomerSheet.js
 import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
-import {
-  collection, query, where, getDocs, doc, setDoc, serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { db } from '../firebase.js';
+import { createCustomer as saveCustomer } from '../db.js';
 
 /* ============================================================
    STEP 1 — CHOOSER SHEET
@@ -95,20 +92,27 @@ export function showAddCustomerChooser() {
     sheet.classList.add('is-open');
   });
 
-  const close = () => {
+  let closing = false;
+  const close = (openNext) => {
+    if (closing) return;
+    closing = true;
     backdrop.classList.remove('is-open');
     sheet.classList.remove('is-open');
-    setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
+    setTimeout(() => {
+      const stillMounted = sheet.isConnected;
+      backdrop.remove();
+      sheet.remove();
+      if (stillMounted) openNext?.();
+    }, 220);
   };
 
-  backdrop.addEventListener('click', close);
-sheet.querySelector('#iv-close').addEventListener('click', close);
-
-sheet.querySelector('#acsBulkImport').addEventListener('click', () => {
-    close();
-    setTimeout(() => {
+  backdrop.addEventListener('click', () => close());
+  sheet.querySelector('#iv-close').addEventListener('click', () => close());
+  sheet.querySelector('#acsAddSingle').addEventListener('click', () => close(showAddCustomerForm));
+  sheet.querySelector('#acsBulkImport').addEventListener('click', () => {
+    close(() => {
       import('./ImportCustomersSheet.js').then(m => m.showImportCustomersSheet());
-    }, 250);
+    });
   });
 }
 
@@ -219,36 +223,5 @@ async function createCustomer({ name, email, phone, notes, isPreferred }) {
   const clientId = Number(store.activeClientId);
   if (!clientId) throw new Error(tr('No active client'));
 
-  // 1. Find next id = max(existing.id) + 1
-  const snap = await getDocs(
-    query(collection(db, 'customers'), where('clientId', '==', clientId))
-  );
-
-  let maxId = 0;
-  snap.forEach(d => {
-    const v = Number(d.data()?.id || 0);
-    if (v > maxId) maxId = v;
-  });
-  const nextId = maxId + 1;
-
-  // 2. Write doc keyed by that id
-  const now = Date.now();
-  const docRef = doc(db, 'customers', String(nextId));
-
-  await setDoc(docRef, {
-    id: nextId,
-    clientId,
-    name,
-    email: email || '',
-    phone: phone || '',
-    notes: notes || '',
-    isPreferred: !!isPreferred,
-    createdDate: now,
-    lastModified: now,
-    lastModifiedBy: String(store.userProfile?.userId || 0),
-    syncTime: serverTimestamp(),
-    syncedAt: 0
-  });
-
-  return nextId;
+  return saveCustomer(clientId, store.userProfile?.userId, { name, email, phone, notes, isPreferred });
 }

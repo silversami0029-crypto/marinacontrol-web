@@ -14,6 +14,11 @@ import { store } from '../store.js';
 import { approveBookingRequest, showRequestMoreMenu } from './BookingRequestActions.js';
 import { showBookingRequestsHelp } from './BookingRequestsHelp.js';
 let unsubscribe = null;
+
+export function unmountBookingRequestsScreen() {
+  unsubscribe?.();
+  unsubscribe = null;
+}
 let searchQuery = '';
 let openRequestDocId = null;
 let detailVersion = 0;

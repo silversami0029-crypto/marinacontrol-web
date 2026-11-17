@@ -58,25 +58,27 @@ export async function setActiveBoat(clientId, selectedBoatId) {
   if (!cid || !selectedId) throw new Error('Invalid client or boat ID');
 
   const q = query(collection(db, 'boats'), where('clientId', '==', cid));
-  const snap = await getDocs(q);
-  const selectedExists = snap.docs.some(d => Number(d.data().id ?? d.id) === selectedId);
+  const snap = await getDocsFromServer(q);
+  await runTransaction(db, async transaction => {
+    const boats = (await Promise.all(snap.docs.map(boat => transaction.get(boat.ref))))
+      .filter(boat => boat.exists() && Number(boat.data().clientId) === cid);
+    if (!boats.some(boat => Number(boat.data().id ?? boat.id) === selectedId)) {
+      throw new Error('Selected boat not found');
+    }
 
-  if (!selectedExists) throw new Error('Selected boat not found');
-
-  const batch = writeBatch(db);
-  const now = Date.now();
-
-  snap.docs.forEach(d => {
-    const boatId = Number(d.data().id ?? d.id);
-    batch.update(d.ref, {
-      isActive: boatId === selectedId,
-      lastModified: now,
-      lastModifiedBy: 'WEB',
-      syncedAt: 0
-    });
+    const now = Date.now();
+    for (const boat of boats) {
+      const data = boat.data();
+      const isActive = Number(data.id ?? boat.id) === selectedId;
+      if (!!data.isActive === isActive) continue;
+      transaction.update(boat.ref, {
+        isActive,
+        lastModified: now,
+        lastModifiedBy: 'WEB',
+        syncedAt: 0
+      });
+    }
   });
-
-  await batch.commit();
 }
 
 export async function setAssignedBoatActive(docId) {
@@ -99,6 +101,20 @@ export async function deleteBoatDocsByIds(docIds) {
   const batch = writeBatch(db);
   docIds.forEach((id) => batch.delete(doc(db, 'boats', String(id))));
   await batch.commit();
+}
+
+// Keep the numeric ID and marina-prefixed document key used by existing records.
+async function createNumberedRecord(collectionName, clientId, firstId, fields) {
+  for (let id = firstId; Number.isSafeInteger(id) && id > 0; id++) {
+    const ref = doc(db, collectionName, `${clientId}_${id}`);
+    const created = await runTransaction(db, async transaction => {
+      if ((await transaction.get(ref)).exists()) return false;
+      transaction.set(ref, { ...fields, id });
+      return true;
+    });
+    if (created) return id;
+  }
+  throw new Error('No valid record ID is available.');
 }
 
 /* ---------- WRITE: create boat ---------- */
@@ -126,9 +142,9 @@ export async function findBoatByMmsi(clientId, mmsi) {
 }
 
 export async function createBoat(clientId, userId, fields) {
-  const newId = await nextBoatId(clientId);
+  const firstId = await nextBoatId(clientId);
   const boatData = {
-    id: newId, clientId: clientId,
+    clientId: clientId,
     name: fields.name, mmsi: fields.mmsi,
     isSample: false, hin: fields.hin, port: fields.port,
     status: fields.status, isActive: !!fields.isActive,
@@ -141,8 +157,7 @@ export async function createBoat(clientId, userId, fields) {
     lastModifiedBy: String(userId ?? ''),
     syncedAt: Date.now(), syncTime: new Date()
   };
-  await setDoc(doc(db, 'boats', `${clientId}_${newId}`), boatData);
-  return newId;
+  return createNumberedRecord('boats', clientId, firstId, boatData);
 }
 
 /* ---------- WRITE: update boat ---------- */
@@ -151,7 +166,7 @@ export async function updateBoat(docId, userId, fields) {
     name: fields.name, mmsi: fields.mmsi, hin: fields.hin,
     port: fields.port, status: fields.status,
     isActive: !!fields.isActive, type: fields.type,
-    engineType: fields.engineType, engineHours: 0,
+    engineType: fields.engineType,
     length: fields.length, beam: fields.beam,
     draft: fields.draft, airDraft: fields.airDraft,
     customerId: fields.customerId,
@@ -210,8 +225,8 @@ export async function importBoatsFromRows(clientId, userId, rows, onProgress) {
       }
       const model = String(row.model || '').trim();
       const name = model ? `${String(row.name).trim()} ${model}` : String(row.name).trim();
-      await setDoc(doc(db, 'boats', `${clientId}_${nextId}`), {
-        id: nextId, clientId: clientId, name: name, mmsi: mmsi,
+      const id = await createNumberedRecord('boats', clientId, nextId, {
+        clientId: clientId, name: name, mmsi: mmsi,
         isSample: false, hin: String(row.hin || 'TBC').trim(),
         port: String(row.port || 'TBC').trim(),
         status: normalizeStatus(row.status),
@@ -223,7 +238,7 @@ export async function importBoatsFromRows(clientId, userId, rows, onProgress) {
         syncedAt: now, syncTime: new Date()
       });
       existingMmsi.add(mmsi);
-      nextId++;
+      nextId = id + 1;
       success++;
       if (onProgress) onProgress(success, skipped, rows.length);
     } catch (err) {
@@ -281,10 +296,9 @@ export async function nextBerthId(clientId) {
 }
 
 export async function createBerth(clientId, userId, fields) {
-  const newId = await nextBerthId(clientId);
+  const firstId = await nextBerthId(clientId);
 
   const data = {
-    id:              newId,
     clientId:        clientId,
     dockName:        fields.dockName,
     berthNumber:     fields.berthNumber,
@@ -309,8 +323,7 @@ export async function createBerth(clientId, userId, fields) {
     syncedAt:        Date.now()
   };
 
-  await setDoc(doc(db, 'berths', `${clientId}_${newId}`), data);
-  return newId;
+  return createNumberedRecord('berths', clientId, firstId, data);
 }
 
 export async function deleteAllBerths(clientId) {
@@ -380,8 +393,7 @@ export async function importBerthsFromRows(clientId, userId, rows, onProgress) {
       const validStatus = ['AVAILABLE','OCCUPIED','MAINTENANCE'].includes(status)
         ? status : 'AVAILABLE';
 
-      await setDoc(doc(db, 'berths', `${clientId}_${nextId}`), {
-        id:               nextId,
+      const id = await createNumberedRecord('berths', clientId, nextId, {
         clientId:         clientId,
         dockName:         dockName,
         berthNumber:      berthNumber,
@@ -407,7 +419,7 @@ export async function importBerthsFromRows(clientId, userId, rows, onProgress) {
       });
 
       existing.add(key);
-      nextId++;
+      nextId = id + 1;
       success++;
 
       if (onProgress) onProgress(success, skipped, rows.length);
@@ -1115,14 +1127,34 @@ export function listenForUsers(clientId, callback) {
 }
 
 /* ============================================================
-   CUSTOMER BULK IMPORT
+   CUSTOMER CREATION AND BULK IMPORT
    ============================================================ */
-export async function importCustomersFromRows(clientId, userId, rows, onProgress) {
-  const {
-    collection, query, where, getDocs, doc, setDoc, serverTimestamp
-  } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-  const { db } = await import('./firebase.js');
+export async function createCustomer(clientId, userId, fields) {
+  const cid = Number(clientId);
+  const snap = await getDocs(query(collection(db, 'customers'), where('clientId', '==', cid)));
+  let maxId = 0;
+  snap.forEach(d => {
+    const id = Number(d.data().id || 0);
+    if (id > maxId) maxId = id;
+  });
 
+  const now = Date.now();
+  return createNumberedRecord('customers', cid, maxId + 1, {
+    clientId: cid,
+    name: fields.name,
+    email: fields.email || '',
+    phone: fields.phone || '',
+    notes: fields.notes || '',
+    isPreferred: !!fields.isPreferred,
+    createdDate: now,
+    lastModified: now,
+    lastModifiedBy: String(userId || 0),
+    syncTime: serverTimestamp(),
+    syncedAt: 0
+  });
+}
+
+export async function importCustomersFromRows(clientId, userId, rows, onProgress) {
   const cid = Number(clientId);
 
   // 1. Load existing customers for duplicate detection
@@ -1177,10 +1209,7 @@ export async function importCustomersFromRows(clientId, userId, rows, onProgress
       }
 
       const now = Date.now();
-      const docRef = doc(db, 'customers', `${cid}_${nextId}`);
-
-      await setDoc(docRef, {
-        id: nextId,
+      const id = await createNumberedRecord('customers', cid, nextId, {
         clientId: cid,
         name,
         email,
@@ -1196,7 +1225,7 @@ export async function importCustomersFromRows(clientId, userId, rows, onProgress
 
       existingNames.add(lowerName);
       if (lowerEmail) existingEmails.add(lowerEmail);
-      nextId++;
+      nextId = id + 1;
       success++;
     } catch (err) {
       console.error('[import customers] row failed', err);

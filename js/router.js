@@ -16,14 +16,14 @@ import { mountAssignedYachtBoats, mountBoatsScreen, unmountAssignedYachtBoats } 
 import { mountLoginScreen } from './screens/LoginScreen.js';
 import { watchAuth, loadUserProfile } from './auth.js';
 import { mountReportsScreen } from './screens/ReportsScreen.js';
-import { mountInvoiceScreen } from './screens/InvoiceScreen.js';
+import { mountInvoiceScreen, unmountInvoiceScreen } from './screens/InvoiceScreen.js';
 import { mountChecklistScreen, unmountChecklistScreen } from './screens/ChecklistScreen.js';
-import { mountShiftScheduleScreen } from './screens/ShiftScheduleScreen.js';
+import { mountShiftScheduleScreen, unmountShiftScheduleScreen } from './screens/ShiftScheduleScreen.js';
 import { mountDashboardScreen } from './screens/DashboardScreen.js';
 import { mountAccountScreen } from './screens/AccountScreen.js';
-import { mountBerthsScreen } from './screens/BerthsScreen.js';
+import { mountBerthsScreen, unmountBerthsScreen } from './screens/BerthsScreen.js';
 import { listenForCustomers, getMyMarinas, resolveAssignedYacht } from './db.js';
-import { mountBookingRequestsScreen } from './screens/BookingRequestsScreen.js';
+import { mountBookingRequestsScreen, unmountBookingRequestsScreen } from './screens/BookingRequestsScreen.js';
 import { initDrawer, syncDrawerLayout } from './components/Drawer.js';
 import { mountMyYachtScreen, renderYachtNavigation } from './screens/MyYachtScreen.js';
 import { mountBoatDashboardScreen } from './screens/BoatDashboardScreen.js';
@@ -36,7 +36,7 @@ import { mountDocumentScreen, unmountDocumentScreen } from './screens/DocumentSc
 import { mountSafetyScreen, unmountSafetyScreen } from './screens/SafetyScreen.js';
 import { mountEquipmentScreen, unmountEquipmentScreen } from './screens/EquipmentScreen.js';
 import { mountInventoryScreen, unmountInventoryScreen } from './screens/InventoryScreen.js';
-import { mountPermissionsScreen } from './screens/PermissionsScreen.js';
+import { mountPermissionsScreen, unmountPermissionsScreen } from './screens/PermissionsScreen.js';
 import { mountTaskScreen, unmountTaskScreen } from './screens/TaskScreen.js';
 import { mountFleetScreen } from './screens/FleetScreen.js';
 import { mountNotificationsScreen } from './screens/NotificationsScreen.js';
@@ -45,7 +45,7 @@ initLanguage();
 
 const PROTECTED = ['/procedures', '/home', '/boats', '/dashboard', '/berths', '/fleet', '/account','/user-management','/customer-directory','/edit-customer','/client-360','/notifications'];
 
-const yachtTools = {
+const yachtToolCleanup = {
   '/maintenance': unmountMaintenanceScreen,
   '/equipment': unmountEquipmentScreen,
   '/inventory': unmountInventoryScreen,
@@ -55,11 +55,21 @@ const yachtTools = {
   '/checklists': unmountChecklistScreen,
   '/crew': unmountCrewManagementScreen,
 };
-let unmountYachtTool = null;
+const screenCleanup = {
+  ...yachtToolCleanup,
+  '/my-yacht/details': unmountAssignedYachtBoats,
+  '/boats': unmountAssignedYachtBoats,
+  '/berths': unmountBerthsScreen,
+  '/booking-requests': unmountBookingRequestsScreen,
+  '/invoices': unmountInvoiceScreen,
+  '/permissions': unmountPermissionsScreen,
+  '/shift-schedule': unmountShiftScheduleScreen,
+};
+let unmountCurrentTool = null;
 
-function leaveYachtScreen() {
-  unmountYachtTool?.();
-  unmountYachtTool = null;
+function leaveToolScreen() {
+  unmountCurrentTool?.();
+  unmountCurrentTool = null;
 }
 
 const routes = {
@@ -131,7 +141,7 @@ function navigate() {
   if (yachtMode) {
     const yachtPage = route === '/account' || route === '/my-yacht/details';
     let destination = yachtPage ? `#${route}` : '#/my-yacht';
-    if (store.assignedYacht && Object.hasOwn(yachtTools, route)) {
+    if (store.assignedYacht && Object.hasOwn(yachtToolCleanup, route)) {
       destination = `#${route}?boatId=${store.assignedYacht.id}`;
     }
     if (location.hash !== destination) {
@@ -166,11 +176,9 @@ function navigate() {
 
   document.getElementById('screen')?.classList.remove('rp-screen');
 
-  if (unmountYachtTool) document.getElementById('modalRoot')?.replaceChildren();
-  leaveYachtScreen();
-  if (yachtMode) {
-    unmountYachtTool = route === '/my-yacht/details' ? unmountAssignedYachtBoats : yachtTools[route] ?? null;
-  }
+  if (unmountCurrentTool) document.getElementById('modalRoot')?.replaceChildren();
+  leaveToolScreen();
+  unmountCurrentTool = screenCleanup[route] ?? null;
   routes[route]();
 }
 
@@ -265,7 +273,7 @@ export async function switchMarina(clientId, destinationRoute = null) {
 async function bootstrapUser(firebaseUser) {
   const generation = ++sessionGeneration;
   authReady = false;
-  leaveYachtScreen();
+  leaveToolScreen();
   unmountDockWalkScreen();
   unmountUSafeScreen();
   unmountYardStorageScreen();

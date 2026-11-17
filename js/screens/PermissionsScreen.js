@@ -10,6 +10,11 @@ import {
 import { db } from '../firebase.js';
 
 let unsubscribe = null;
+
+export function unmountPermissionsScreen() {
+  unsubscribe?.();
+  unsubscribe = null;
+}
 let currentCrew = [];
 let isSearchOpen = false;
 

@@ -40,6 +40,21 @@ let unsubscribe = null;
 let bookingUnsubscribe = null;
 let searchQuery = '';
 let viewUtilUnsub = null;
+let closeReadingHistory = null;
+let utilitiesGeneration = 0;
+
+export function unmountBerthsScreen() {
+  utilitiesGeneration++;
+  unsubscribe?.();
+  unsubscribe = null;
+  bookingUnsubscribe?.();
+  bookingUnsubscribe = null;
+  viewUtilUnsub?.();
+  viewUtilUnsub = null;
+  closeReadingHistory?.();
+  pierMap?.destroy();
+  pierMap = null;
+}
 let berthDateView = { mode: 'TODAY', start: null, end: null, label: 'Viewing: Today' };
 
 export function mountBerthsScreen() {
@@ -52,7 +67,7 @@ export function mountBerthsScreen() {
     return;
   }
 
-  pierMap = null;
+  unmountBerthsScreen();
   searchQuery = '';
   berthDateView = { mode: 'TODAY', start: null, end: null, label: 'Viewing: Today' };
   store.berthBookings = [];
@@ -132,10 +147,12 @@ export function mountBerthsScreen() {
 
   unsubscribe = listenForBerths(store.activeClientId, (berths, err) => {
     if (err) {
-      document.getElementById('berthGrid').innerHTML =
+      const list = document.getElementById('berthGrid');
+      if (!list) return;
+      list.innerHTML =
         `<div class="boats-empty">
            <h2>${t("Couldn't load berths")}</h2>
-           <p>${err.message || itUI('Permission denied.')}</p>
+           <p>${escapeHtml(err.message || itUI('Permission denied.'))}</p>
          </div>`;
       return;
     }
@@ -490,14 +507,18 @@ function escapeHtml(s) {
 /* ============================================================
    TOOLBAR MENU
    ============================================================ */
+function canDeleteBerths() {
+  return ['admin', 'manager'].includes(store.activeRole);
+}
+
 function openToolbarMenu() {
   showBerthToolbarMenu({
     onDockWalk:        () => { location.hash = '#/dock-walk'; },
     onBookingRequests: () => { location.hash = '#/booking-requests'; },
     onImportCsv:       onImportCsv,
     onExportCsv:       onExportCsv,
-    onRestoreDefaults: onRestoreDefaults,
-    onDeleteAll:       onDeleteAll
+    onRestoreDefaults: canDeleteBerths() ? onRestoreDefaults : undefined,
+    onDeleteAll:       canDeleteBerths() ? onDeleteAll : undefined
   });
 }
 
@@ -672,20 +693,23 @@ function escapeCsv(s) {
 
 /* ---------- Restore Defaults ---------- */
 async function onRestoreDefaults() {
+  const clientId = store.activeClientId;
+  if (!canDeleteBerths()) return;
+
   const ok = await confirmSheet({
     title: 'Reset to Default',
     message: 'Delete all berths and create 10 default berths (A1-A10)?',
     confirmText: tr('Reset'),
     cancelText: tr('Cancel')
   });
-  if (!ok) return;
+  if (!ok || !canDeleteBerths() || store.activeClientId !== clientId) return;
 
   try {
     const userId = store.userProfile?.userId || 0;
-    await deleteAllBerths(store.activeClientId);
+    await deleteAllBerths(clientId);
 
     for (let i = 1; i <= 10; i++) {
-      await createBerth(store.activeClientId, userId, {
+      await createBerth(clientId, userId, {
         dockName:     'Main Dock',
         berthNumber:  'A' + i,
         length:       12,
@@ -705,16 +729,19 @@ async function onRestoreDefaults() {
 
 /* ---------- Delete All ---------- */
 async function onDeleteAll() {
+  const clientId = store.activeClientId;
+  if (!canDeleteBerths()) return;
+
   const ok = await confirmSheet({
     title: 'Delete All Berths',
     message: 'Delete ALL berths? This cannot be undone. All berths and their assignments will be removed.',
     confirmText: tr('Delete'),
     cancelText: tr('Cancel')
   });
-  if (!ok) return;
+  if (!ok || !canDeleteBerths() || store.activeClientId !== clientId) return;
 
   try {
-    const count = await deleteAllBerths(store.activeClientId);
+    const count = await deleteAllBerths(clientId);
     toast(tr(`Deleted ${count} berths`), { kind: 'success' });
   } catch (err) {
     console.error('[delete all] failed', err);
@@ -756,7 +783,7 @@ async function openBerthMenu(berth) {
     onViewBerth:      onViewBerth,
     onUtilities:      onViewBerth,
     onEditBerth:      onEditBerth,
-    onDeleteBerth:    onDeleteBerth
+    onDeleteBerth:    canDeleteBerths() ? onDeleteBerth : undefined
   });
 }
 
@@ -902,6 +929,7 @@ function onViewBerth(berth) {
 }
 
 async function renderViewUtilities(berth, containerId) {
+  const generation = ++utilitiesGeneration;
   if (viewUtilUnsub) { try { viewUtilUnsub(); } catch (e) {} viewUtilUnsub = null; }
 
   let elecTariff = null;
@@ -916,6 +944,7 @@ async function renderViewUtilities(berth, containerId) {
     console.warn('[utilities] tariffs unavailable', err);
   }
 
+  if (generation !== utilitiesGeneration || !document.getElementById(containerId)) return;
   viewUtilUnsub = listenForUtilityReadings(
     store.activeClientId,
     berth.id,
@@ -981,6 +1010,7 @@ function renderViewUtilBlock(label, { latest, mixed }, tariff, unit) {
 }
 
 function openReadingHistory(berth) {
+  closeReadingHistory?.();
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
   const sheet = document.createElement('div');
@@ -999,7 +1029,9 @@ function openReadingHistory(berth) {
   requestAnimationFrame(() => { backdrop.classList.add('is-open'); sheet.classList.add('is-open'); });
   let filter = 'ALL', unsub = null, cached = [];
   const close = () => {
-    if (unsub) unsub();
+    unsub?.();
+    unsub = null;
+    if (closeReadingHistory === close) closeReadingHistory = null;
     backdrop.classList.remove('is-open'); sheet.classList.remove('is-open');
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
   };
@@ -1046,6 +1078,7 @@ function openReadingHistory(berth) {
   backdrop.addEventListener('click', close);
   sheet.querySelector('[data-close]').addEventListener('click', close);
   sheet.querySelectorAll('[data-filter]').forEach(button => button.onclick = () => { filter = button.dataset.filter; draw(); });
+  closeReadingHistory = close;
   unsub = listenForUtilityReadings(store.activeClientId, berth.id, (readings, err) => {
     if (err) { sheet.querySelector('[data-history]').innerHTML = `<div class="view-util-empty">${t('Failed to load')}</div>`; return; }
     cached = readings; draw();
@@ -1274,13 +1307,16 @@ function formatShorePower(source) {
 }
 
 async function onDeleteBerth(berth) {
+  const clientId = store.activeClientId;
+  if (!canDeleteBerths()) return;
+
   const ok = await confirmSheet({
     title:   'Delete berth',
     message: tr(`Delete berth ${berth.berthNumber}? This cannot be undone.`),
     confirmText: tr('Delete'),
     cancelText: tr('Cancel')
   });
-  if (!ok) return;
+  if (!ok || !canDeleteBerths() || store.activeClientId !== clientId) return;
 
   try {
     await deleteBerth(berth._docId || berth.id);

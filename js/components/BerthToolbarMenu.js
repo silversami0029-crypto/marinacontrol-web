@@ -134,22 +134,26 @@ export function showBerthToolbarMenu(handlers = {}) {
     onClick: () => { close(); handlers.onExportCsv?.(); }
   }));
 
-  sheet.appendChild(divider());
-
-  sheet.appendChild(row({
-    id: 'menuRestoreDefaults',
-    icon: ICONS.restore,
-    label: 'Reset to Default',
-    onClick: () => { close(); handlers.onRestoreDefaults?.(); }
-  }));
-
-  sheet.appendChild(row({
-    id: 'menuDeleteAll',
-    icon: ICONS.delete,
-    label: 'Delete All Berths',
-    danger: true,
-    onClick: () => { close(); handlers.onDeleteAll?.(); }
-  }));
+  if (handlers.onRestoreDefaults || handlers.onDeleteAll) {
+    sheet.appendChild(divider());
+  }
+  if (handlers.onRestoreDefaults) {
+    sheet.appendChild(row({
+      id: 'menuRestoreDefaults',
+      icon: ICONS.restore,
+      label: 'Reset to Default',
+      onClick: () => { close(); handlers.onRestoreDefaults?.(); }
+    }));
+  }
+  if (handlers.onDeleteAll) {
+    sheet.appendChild(row({
+      id: 'menuDeleteAll',
+      icon: ICONS.delete,
+      label: 'Delete All Berths',
+      danger: true,
+      onClick: () => { close(); handlers.onDeleteAll?.(); }
+    }));
+  }
 
   document.getElementById('modalRoot').append(backdrop, sheet);
   backdrop.addEventListener('click', close);

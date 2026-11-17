@@ -155,10 +155,12 @@ export function mountBoatsScreen(assignedYacht = null) {
   unsubscribe = listenForBoats(store.activeClientId, (boats, err) => {
     if (assignedYacht && location.hash !== '#/my-yacht/details') return;
     if (err) {
-      document.getElementById('boatsList').innerHTML =
+      const list = document.getElementById('boatsList');
+      if (!list) return;
+      list.innerHTML =
         `<div class="boats-empty">
            <h2>${t("Couldn't load boats")}</h2>
-           <p>${err.message || itUI('Permission denied.')}</p>
+           <p>${escapeHtml(err.message || itUI('Permission denied.'))}</p>
          </div>`;
       return;
     }
@@ -442,6 +444,17 @@ async function onDelete(boat) {
   }
 }
 
+async function activateSavedBoat(clientId, boatId) {
+  try {
+    await setActiveBoat(clientId, boatId);
+    return true;
+  } catch (err) {
+    console.error('[boats] activation failed after save', err);
+    toast(tr('Boat saved. Could not change the active boat.'), { kind: 'error' });
+    return false;
+  }
+}
+
 function openAddBoatSheet() {
   showAddBoatSheet({
     onSaveSingle: async (fields) => {
@@ -450,8 +463,9 @@ function openAddBoatSheet() {
         if (existingId) throw new Error(`A boat with MMSI '${fields.mmsi}' already exists.`);
       }
       const userId = store.userProfile?.userId || 0;
-      const newId  = await createBoat(store.activeClientId, userId, fields);
-      if (fields.isActive) await setActiveBoat(store.activeClientId, newId);
+      const clientId = store.activeClientId;
+      const newId = await createBoat(clientId, userId, { ...fields, isActive: false });
+      if (fields.isActive && !(await activateSavedBoat(clientId, newId))) return;
       toast(tr(`${fields.name} added`), { kind: 'success' });
     }
   });
@@ -468,10 +482,10 @@ function onEditBoat(boat) {
         }
       }
       const userId = store.userProfile?.userId || 0;
-      await updateBoat(boat._docId ?? String(boat.id), userId, fields);
-      if (fields.isActive && !boat.isActive && store.activeMarina?.clientType !== 'yacht_operator') {
-        await setActiveBoat(store.activeClientId, boat.id);
-      }
+      const clientId = store.activeClientId;
+      const selectBoat = fields.isActive && !boat.isActive && store.activeMarina?.clientType !== 'yacht_operator';
+      await updateBoat(boat._docId ?? String(boat.id), userId, selectBoat ? { ...fields, isActive: false } : fields);
+      if (selectBoat && !(await activateSavedBoat(clientId, boat.id))) return;
       toast(tr(`${fields.name} updated`), { kind: 'success' });
     }
   });

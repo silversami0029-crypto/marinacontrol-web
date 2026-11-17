@@ -9,6 +9,7 @@ import { store } from '../store.js';
 import { toast } from '../ui/toast.js';
 import { logHistory } from '../util/history.js';
 import { confirmSheet } from '../ui/confirm.js';
+import { hasOverlappingBooking, reserveBerthDates } from '../util/BerthBookingAvailability.js';
 import { checkFit } from '../util/BerthFitChecker.js';
 import {
   collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, getDoc, runTransaction
@@ -58,7 +59,7 @@ export async function approveBookingRequest(request) {
   showBerthPicker(suitable, bookingBoat, request);
   } catch (err) {
     console.error('[approve] failed', err);
-    toast(tr('Failed to create booking'), { kind: 'error' });
+    toast(tr('Could not check berth availability. Please try again.'), { kind: 'error' });
   } finally {
     approvalInProgress.delete(key);
   }
@@ -141,52 +142,17 @@ async function createBoatFromRequest(clientId, request) {
 
 async function findSuitableBerths(clientId, boat, arrival, departure, request) {
   const suitable = [];
+  const berthSnap = await getDocs(query(collection(db, 'berths'), where('clientId', '==', clientId)));
 
-  try {
-    const berthSnap = await getDocs(query(collection(db, 'berths'), where('clientId', '==', clientId)));
-
-    for (const d of berthSnap.docs) {
-      const berth = { _docId: d.id, ...d.data(), id: Number(d.data().id || 0) };
-
-      if (String(berth.status || '').toUpperCase() === 'MAINTENANCE') continue;
-
-      const fit = checkFit(boat, berth, request);
-      if (fit.failures.length > 0) continue;
-
-      const overlap = await countOverlapping(clientId, berth.id, arrival, departure);
-      if (overlap > 0) continue;
-
-      suitable.push({ ...berth, warnings: fit.warnings });
-    }
-  } catch (err) {
-    console.error('[approve] berth scan failed', err);
+  for (const d of berthSnap.docs) {
+    const berth = { ...d.data(), _docId: d.id, id: Number(d.data().id || 0) };
+    if (String(berth.status || '').toUpperCase() === 'MAINTENANCE') continue;
+    const fit = checkFit(boat, berth, request);
+    if (fit.failures.length > 0) continue;
+    if (await hasOverlappingBooking(clientId, berth.id, arrival, departure)) continue;
+    suitable.push({ ...berth, warnings: fit.warnings });
   }
-
   return suitable;
-}
-
-async function countOverlapping(clientId, berthId, arrival, departure) {
-  try {
-    const snap = await getDocs(query(
-      collection(db, 'berth_bookings'),
-      where('clientId', '==', clientId),
-      where('berthId', '==', berthId)
-    ));
-
-    let overlaps = 0;
-    snap.forEach(d => {
-      const b = d.data();
-      const a = Number(b.arrivalDate || 0);
-      const dep = Number(b.departureDate || 0);
-      const s = String(b.status || '').toUpperCase();
-      if (s === 'DECLINED' || s === 'CANCELLED') return;
-      if (a < departure && dep > arrival) overlaps++;
-    });
-    return overlaps;
-  } catch (err) {
-    console.warn('[approve] overlap check failed', err?.code || err?.message || err);
-    return 0;
-  }
 }
 
 function showBerthPicker(berths, boat, request) {
@@ -278,6 +244,7 @@ function showBookingConfirmation(request, boat, berth) {
   document.getElementById('modalRoot').append(backdrop, sheet);
   requestAnimationFrame(() => { backdrop.classList.add('is-open'); sheet.classList.add('is-open'); });
   let busy = false;
+  let confirmedBoat = boat;
   const close = () => {
     if (busy) return;
     backdrop.classList.remove('is-open');
@@ -289,10 +256,13 @@ function showBookingConfirmation(request, boat, berth) {
   sheet.querySelector('[data-cancel]').addEventListener('click', close);
   sheet.querySelector('[data-confirm]').addEventListener('click', async () => {
     if (busy) return;
+    if (Number(store.activeClientId) !== Number(request.clientId)) {
+      toast(tr('Marina changed. Reopen the booking request.'), { kind: 'error' });
+      return;
+    }
     busy = true;
     sheet.querySelectorAll('button').forEach(button => { button.disabled = true; });
-    let confirmedBoat = boat;
-    if (boat._pendingCreate) {
+    if (!confirmedBoat || confirmedBoat._pendingCreate) {
       confirmedBoat = await createBoatFromRequest(Number(store.activeClientId), request);
       if (!confirmedBoat) {
         busy = false;
@@ -302,10 +272,10 @@ function showBookingConfirmation(request, boat, berth) {
       }
       confirmedBoat = boatForCurrentRequest(confirmedBoat, request);
     }
-    await createBooking(request, confirmedBoat, berth);
+    const booked = await createBooking(request, confirmedBoat, berth);
     busy = false;
-    backdrop.remove();
-    sheet.remove();
+    if (booked) close();
+    else sheet.querySelectorAll('button').forEach(button => { button.disabled = false; });
   });
 }
 
@@ -318,11 +288,12 @@ async function createBooking(request, boat, berth) {
 
     const bookingRef = doc(db, 'berth_bookings', bookingUuid);
     const requestRef = doc(db, 'berth_booking_requests', String(request._docId));
+    const berthRef = doc(db, 'berths', berth._docId);
     const bookingData = {
       id: now,
       bookingUuid,
       clientId,
-      berthId: berth.id,
+      berthId: Number(berth.id),
       boatId: boat.id,
       customerId: boat.customerId || null,
       vesselName: boat.name || '',
@@ -348,10 +319,21 @@ async function createBooking(request, boat, berth) {
     };
     bookingData.berthingTerms = await reviewNewBookingPrice(bookingData, berth);
     await runTransaction(db, async transaction => {
-      const snapshot = await transaction.get(requestRef);
+      const [snapshot, berthSnapshot] = await Promise.all([
+        transaction.get(requestRef), transaction.get(berthRef)
+      ]);
       if (!snapshot.exists() || !actionable(snapshot.data())) throw new Error('Request already processed or awaiting owner agreement');
       if (Number(snapshot.data().arrivalDate) !== Number(request.arrivalDate) || Number(snapshot.data().departureDate) !== Number(request.departureDate)) throw new Error('Dates changed. Refresh and check berth availability again.');
       if (Number(snapshot.data().clientId) !== clientId || Number(store.activeClientId) !== clientId) throw new Error('Marina changed');
+      const currentBerth = berthSnapshot.data();
+      if (!currentBerth || Number(currentBerth.clientId) !== clientId ||
+          Number(currentBerth.id ?? berthSnapshot.id) !== Number(berth.id) ||
+          String(currentBerth.status || '').toUpperCase() === 'MAINTENANCE' ||
+          checkFit(boat, currentBerth, request).failures.length) {
+        throw new Error('This berth is no longer suitable. Choose another berth.');
+      }
+      await reserveBerthDates(transaction, berthRef, bookingData);
+      if (Number(store.activeClientId) !== clientId) throw new Error('Marina changed');
       transaction.set(bookingRef, bookingData);
       transaction.update(requestRef, {
         status: 'APPROVED', requestedBerthId: berth.id,
@@ -373,13 +355,14 @@ async function createBooking(request, boat, berth) {
     });
 
     toast(tr(`Booking confirmed for ${boat.name} at berth ${berth.berthNumber || ''}`), { kind: 'success', duration: 4000 });
+    return true;
   } catch (err) {
     if (err instanceof BerthingRateCurrencyMismatch) {
       showBerthingRateMismatch(berth, formatDate(request.arrivalDate), err);
       return;
     }
     console.error('[approve] booking creation failed', err);
-    toast(tr('Failed to create booking'), { kind: 'error' });
+    toast(tr(err?.message || 'Failed to create booking'), { kind: 'error' });
   }
 }
 

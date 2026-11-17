@@ -1,3 +1,4 @@
+import { reserveBerthDates } from './BerthBookingAvailability.js';
 import {createYardInvoiceThroughBilling} from './YardInvoiceBilling.js';
 import { db } from '../firebase.js';
 import { store } from '../store.js';
@@ -184,10 +185,7 @@ export async function recordAssignedStay(clientId, berth, arrival, departure) {
   nights(arrival, departure);
   if (!Number(berth.boatId) || !Number(berth.assignedDate)) throw new Error('Assign a vessel with an assignment date before recording a stay');
   const uuid = assignmentUuid(`WALK_IN:${clientId}:${berth.id}:${berth.boatId}:${berth.assignedDate}`);
-  const existing = await listBerthingBookings(clientId, berth.id);
   const start = new Date(arrival + 'T00:00:00').getTime(), end = new Date(departure + 'T00:00:00').getTime();
-  if (existing.some(b => b.status !== 'CHECKED_OUT' && Number(b.arrivalDate) < end && Number(b.departureDate) > start))
-    throw new Error('An existing booking overlaps this stay. Select that booking instead.');
   const boats = await getDocsFromServer(query(collection(db, 'boats'), where('clientId', '==', Number(clientId))));
   const boat = boats.docs.find(d => Number(d.data().id) === Number(berth.boatId))?.data();
   if (!boat) throw new Error('Assigned vessel not found');
@@ -214,6 +212,8 @@ export async function recordAssignedStay(clientId, berth, arrival, departure) {
     if (!live.exists() || Number(live.data().clientId) !== Number(clientId)
         || Number(live.data().boatId) !== Number(berth.boatId) || Number(live.data().assignedDate) !== Number(berth.assignedDate))
       throw new Error('Berth assignment changed. Reopen berth details.');
+    await reserveBerthDates(tx, berthRef, booking);
+    checkBillingClient(clientId);
     tx.set(ref, { ...booking, syncTime: serverTimestamp() });
   }));
   return { ...booking, _docId: uuid };
