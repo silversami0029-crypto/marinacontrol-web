@@ -148,7 +148,10 @@ export async function showBerthingCharges(berth) {
     for (const booking of bookings) {
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'sheet-item';
-      button.textContent = `${booking.vesselName || tr('Vessel')} · ${day(booking.arrivalDate)} → ${day(booking.departureDate)} · ${tr(booking.status)}`;
+      const label = document.createElement('span');
+      label.className = 'sheet-item-title';
+      label.textContent = `${booking.vesselName || tr('Vessel')} · ${day(booking.arrivalDate)} → ${day(booking.departureDate)} · ${tr(booking.status)}`;
+      button.append(label);
       button.addEventListener('click', () => { ui.close(); showStayReview(berth, booking, clientId); });
       body.append(button);
     }
