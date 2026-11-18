@@ -67,9 +67,28 @@ export function mountHomeScreen() {
     <section class="mc-home-detail" hidden aria-live="polite"></section>
     <section class="mc-home-quick"><h2>${esc(t('Quick links'))}</h2><div class="mc-home-links">
       ${[['/dock-walk','Dock Walk'],['/boats','Boats'],['/booking-requests','Booking Requests'],['/operations-trends','Operations Trends']].map(([route,label]) => `<a href="#${route}">${esc(t(label))}<span aria-hidden="true">›</span></a>`).join('')}
+      <a href="#/home" data-home-handover>${esc(t('Shift handover'))}<span aria-hidden="true">›</span></a>
     </div></section>
   </section>`;
   const root = screen.querySelector('.mc-home');
+  if (['admin','manager'].includes(store.activeRole) && store.activeMarina?.clientType !== 'yacht_operator') {
+    import('./MarinaSetupSheet.js').then(({mountMarinaSetupPrompt}) => {
+      if (token === generation && root.isConnected && clientId === Number(store.activeClientId)) stops.push(mountMarinaSetupPrompt(root));
+    }).catch(error => console.error('[marina setup] prompt unavailable', error));
+  }
+  root.querySelector('[data-home-handover]').addEventListener('click', async event => {
+    event.preventDefault();
+    const link = event.currentTarget;
+    if (link.dataset.loading) return;
+    link.dataset.loading = '1';
+    try {
+      const { showShiftHandover } = await import('./ShiftHandoverSheet.js');
+      if (token === generation && root.isConnected && clientId === Number(store.activeClientId)) stops.push(showShiftHandover());
+    } catch (error) {
+      if (root.isConnected) { const message = document.createElement('p'); message.setAttribute('role', 'alert'); message.textContent = t('Could not open shift handover. Refresh and try again.'); link.after(message); }
+      console.error('[handover] load failed', error);
+    } finally { delete link.dataset.loading; }
+  });
   stops.push(startHomeBanner(root.querySelector('.mc-home-heading')));
   const zoneSelect = root.querySelector('.mc-home-clock-zone');
   const londonClock = root.querySelector('[data-clock="london"]');

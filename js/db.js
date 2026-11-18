@@ -1,3 +1,4 @@
+import { boatImportDetails } from './util/BoatCsv.js';
 import { italianUI as itUI } from './i18n.js';
 import { savedCurrency, money, currencyDigits } from './util/BillingCurrency.js';
 import { marinaCurrency, checkBillingClient } from './util/BillingData.js';
@@ -104,11 +105,16 @@ export async function deleteBoatDocsByIds(docIds) {
 }
 
 // Keep the numeric ID and marina-prefixed document key used by existing records.
-async function createNumberedRecord(collectionName, clientId, firstId, fields) {
+async function createNumberedRecord(collectionName, clientId, firstId, fields, isCurrent = () => true, validateReads = null) {
   for (let id = firstId; Number.isSafeInteger(id) && id > 0; id++) {
     const ref = doc(db, collectionName, `${clientId}_${id}`);
     const created = await runTransaction(db, async transaction => {
-      if ((await transaction.get(ref)).exists()) return false;
+      if (!isCurrent()) throw new Error('The marina or session changed. Restart the import.');
+      const snapshot = await transaction.get(ref);
+      if (!isCurrent()) throw new Error('The marina or session changed. Restart the import.');
+      if (snapshot.exists()) return false;
+      if (validateReads) await validateReads(transaction);
+      if (!isCurrent()) throw new Error('The marina or session changed. Restart the import.');
       transaction.set(ref, { ...fields, id });
       return true;
     });
@@ -194,7 +200,10 @@ function normalizeStatus(raw) {
   return 'In Service';
 }
 
-export async function importBoatsFromRows(clientId, userId, rows, onProgress) {
+export async function importBoatsFromRows(clientId, userId, rows, onProgress, isCurrent = () => true) {
+  clientId = Number(clientId);
+  if (!Number.isSafeInteger(clientId) || clientId <= 0) throw new Error('Select a marina before importing.');
+  if (!isCurrent()) throw new Error('Your marina or session changed. Restart the import.');
   let success = 0, skipped = 0;
   const errors = [];
   const q = query(collection(db, 'boats'), where('clientId', '==', clientId));
@@ -207,20 +216,33 @@ export async function importBoatsFromRows(clientId, userId, rows, onProgress) {
     const n = Number(data.id ?? 0);
     if (n > maxId) maxId = n;
   });
+  const customerIds = new Set();
+  const customerRefs = new Map();
+  if (rows.some(row => Number(row.customerId))) {
+    const customers = await getDocs(query(collection(db, 'customers'), where('clientId', '==', clientId)));
+    customers.forEach(d => {
+      const id = Number(d.data().id ?? d.id);
+      customerIds.add(id);
+      customerRefs.set(id, d.ref);
+    });
+  }
   let nextId = maxId + 1;
   const now = Date.now();
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
+    if (!isCurrent()) {
+      for (let j = i; j < rows.length; j++) errors.push(`Row ${j + 2}: not imported because the marina or session changed.`);
+      break;
+    }
     try {
       if (!row.name || !String(row.name).trim()) {
-        errors.push(`Row ${i + 2}: missing boat name`);
-        continue;
+        throw new Error('missing boat name');
       }
+      const details = boatImportDetails(row, customerIds);
       const mmsi = String(row.mmsi || 'TBC').trim();
       if (mmsi !== 'TBC' && existingMmsi.has(mmsi)) {
         skipped++;
-        if (onProgress) onProgress(success, skipped, rows.length);
         continue;
       }
       const model = String(row.model || '').trim();
@@ -231,18 +253,24 @@ export async function importBoatsFromRows(clientId, userId, rows, onProgress) {
         port: String(row.port || 'TBC').trim(),
         status: normalizeStatus(row.status),
         isActive: false, type: String(row.type || 'Unknown').trim(),
-        engineType: 'Unknown', engineHours: 0,
+        ...details,
         voiceNotePath: null, photoPath: null,
-        length: 0, beam: 0, draft: 0, airDraft: 0, customerId: 0,
         lastModified: now, lastModifiedBy: String(userId ?? ''),
         syncedAt: now, syncTime: new Date()
-      });
+      }, isCurrent, details.customerId ? async transaction => {
+        const customerSnapshot = await transaction.get(customerRefs.get(details.customerId));
+        const customer = customerSnapshot.data();
+        if (!customer || Number(customer.clientId) !== clientId
+            || Number(customer.id ?? customerSnapshot.id) !== details.customerId)
+          throw new Error('The selected customer changed or was removed. Refresh customers before importing.');
+      } : null);
       existingMmsi.add(mmsi);
       nextId = id + 1;
       success++;
-      if (onProgress) onProgress(success, skipped, rows.length);
     } catch (err) {
       errors.push(`Row ${i + 2}: ${err.message || 'unknown error'}`);
+    } finally {
+      if (onProgress) onProgress(success, skipped, rows.length, errors.length);
     }
   }
   return { success, skipped, failed: errors.length, errors };

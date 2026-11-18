@@ -237,7 +237,7 @@ function subscribeToBoats() {
       const data = document.data();
 
       return {
-        id: Number(data.id || 0),
+        id: Number(data.id ?? document.id),
         name: data.name || data.boatName || `Boat ${data.id || ''}`
       };
     }).filter(boat => boat.id > 0)
@@ -457,8 +457,8 @@ function renderList() {
             <div class="chk-boat">
               ${
                 boatName
-                  ? `🚤 ${escapeHtml(boatName)}`
-                  : `<span style="opacity:.5;">${tr("No boat")}</span>`
+                  ? `${escapeHtml(boatName)}`
+                  : `<span style="opacity:.7;">${tr("Boat not assigned")}</span>`
               }
             </div>
 
@@ -529,7 +529,7 @@ function renderList() {
     if (!checklist) return;
 
     row.addEventListener('click', () => {
-      showChecklistDetail(checklist);
+      showChecklistDetail(checklist, currentBoats);
     });
   });
 }
@@ -539,7 +539,7 @@ function getBoatName(boatId) {
     item => Number(item.id) === Number(boatId)
   );
 
-  return boat?.name || '';
+  return boat?.name || (Number(boatId) > 0 ? `${tr('Boat')} #${boatId} — ${tr('name unavailable')}` : '');
 }
 
 function escapeHtml(value) {

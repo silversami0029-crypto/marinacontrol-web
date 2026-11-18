@@ -1,3 +1,4 @@
+import { showAccountDeletionSheet } from './AccountDeletionSheet.js';
 import { showEditProfileSheet } from './EditProfileSheet.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t, getLocale, languagePicker } from '../i18n.js';
@@ -10,7 +11,7 @@ import { auth } from '../firebase.js';
 import { signOut } from '../firebase.js';
 import { confirmSheet } from '../ui/confirm.js';
 import { toast } from '../ui/toast.js';
-import { db, doc, getDoc, deleteDoc } from '../firebase.js';
+import { db, doc, getDoc } from '../firebase.js';
 
 const ICONS = {
   anchor: `
@@ -98,6 +99,12 @@ export function mountAccountScreen() {
           <span class="account-item-chevron">${ICONS.chevron}</span>
         </button>`}
 
+        ${!yachtMode && ['admin','manager'].includes(store.activeRole) ? `<button type="button" class="account-item" id="btnMarinaSetup">
+          <span class="account-item-icon">${ICONS.anchor}</span>
+          <span class="account-item-text">${t('Marina setup')}</span>
+          <span class="account-item-chevron">${ICONS.chevron}</span>
+        </button>` : ''}
+
         <button class="account-item account-item--danger" id="btnDeleteAccount">
           <span class="account-item-icon">${ICONS.delete}</span>
           <span class="account-item-text">${t("Delete Account")}</span>
@@ -119,6 +126,16 @@ export function mountAccountScreen() {
   });
 
   document.getElementById('btnManageMarinas')?.addEventListener('click', showManageMarinasSheet);
+  document.getElementById('btnMarinaSetup')?.addEventListener('click', async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    const clientId = Number(store.activeClientId), uid = store.authUser?.uid;
+    try {
+      const {showMarinaSetup} = await import('./MarinaSetupSheet.js');
+      if (button.isConnected && clientId === Number(store.activeClientId) && uid === store.authUser?.uid) showMarinaSetup(screen.querySelector('.account-wrap'));
+    } catch { toast(t('Could not open Marina setup. Refresh and try again.'), {kind:'error'}); }
+    finally { button.disabled = false; }
+  });
   document.getElementById('btnDeleteAccount').addEventListener('click', onDeleteAccount);
   document.getElementById('btnLogout').addEventListener('click', onLogout);
 }
@@ -135,36 +152,7 @@ function computeInitials(name) {
 }
 
 async function onDeleteAccount() {
-  const ok = await confirmSheet({
-    title: t("Delete Account"),
-    message: t("This will permanently delete your account data. This action cannot be undone."),
-    confirmText: t("Delete"),
-    cancelText: t("Cancel")
-  });
-  if (!ok) return;
-
-  try {
-    const uid = store.authUser?.uid;
-    if (!uid) throw new Error(tr('No authenticated user'));
-
-    // Find the users doc matching this firebaseUid and delete it
-    const { collection, query, where, getDocs } = await import('../firebase.js');
-    const q = query(collection(db, 'users'), where('firebaseUid', '==', uid));
-    const snap = await getDocs(q);
-
-    for (const d of snap.docs) {
-      await deleteDoc(d.ref);
-    }
-
-    toast(tr('Account deleted'), { kind: 'success' });
-
-    // Sign out → router will redirect to /login
-    await signOut(auth);
-
-  } catch (err) {
-    console.error('[delete account] failed', err);
-    toast(tr('Failed to delete account'), { kind: 'error' });
-  }
+  await showAccountDeletionSheet();
 }
 
 export async function onLogout() {

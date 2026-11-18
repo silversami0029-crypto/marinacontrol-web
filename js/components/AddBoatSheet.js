@@ -1,3 +1,5 @@
+import { parseBoatCsv, captureBoatImportContext, isBoatImportContextCurrent } from '../util/BoatCsv.js';
+import { store } from '../store.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -44,6 +46,7 @@ const BASE_STATUS_OPTIONS = ['In Service', 'Off Service', 'Maintenance'];
 export function showAddBoatSheet(opts = {}) {
   const { boat, onSaveSingle, onUpdateSingle, onBulkImport } = opts;
   const isEditMode = !!boat;
+  const importContext = captureBoatImportContext(store);
 
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
@@ -113,7 +116,7 @@ sheet.style.position = 'fixed';
       <div class="sheet-title" style="text-align:center;">${tr("Import from CSV")}</div>
 
       <div class="csv-info-scroll">
-        <p class="csv-info-intro">${tr("Your CSV file should have a")}<b>${tr("header row")}</b>${t("and")}<b>${tr("comma-separated columns")}</b>${tr("in this order:")}</p>
+        <p class="csv-info-intro">${tr("Your CSV file should have a")}<b>${tr("header row")}</b>${t("and")}<b>${tr("comma-separated columns")}</b>${tr("matched by column name (any order):")}</p>
 
         <ul class="csv-info-list">
           <li><b>name</b>${tr("— Boat name")}<span class="csv-req">${tr("(required)")}</span></li>
@@ -123,12 +126,16 @@ sheet.style.position = 'fixed';
           <li><b>mmsi</b>${tr("— MMSI number")}</li>
           <li><b>port</b>${tr("— Home port")}</li>
           <li><b>status</b>${tr("— In Service / Off Service / Maintenance")}</li>
+          <li><b>length, beam, draft, airDraft</b> — Optional dimensions in metres</li>
+          <li><b>customerId</b> — Optional existing customer ID from this marina</li>
+          <li><b>engineType, engineHours</b> — Optional engine details</li>
         </ul>
+        <p>Blank optional numbers are saved as 0 (unknown). Use decimal points; no units or thousands separators. The original seven-column template still works. Invalid rows are reported; matching MMSIs are skipped.</p>
 
         <div class="csv-info-example-label">${tr("Example:")}</div>
-        <pre class="csv-info-example">name,type,model,hin,mmsi,port,status
-Sea Ray,Sport,270,ABC123,123456789,Monaco,Active
-Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
+        <pre class="csv-info-example">name,type,model,hin,mmsi,port,status,length,beam,draft,airDraft,customerId,engineType,engineHours
+Sea Ray,Sport,270,ABC123,123456789,Monaco,In Service,8.2,2.6,0.9,3.1,,Diesel,120
+Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance,8.7,3,0.9,,,,</pre>
       </div>
 
       <div class="csv-info-actions">
@@ -140,7 +147,7 @@ Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
     body.querySelector('#csvCancel').addEventListener('click', () => close());
     body.querySelector('#csvChoose').addEventListener('click', () => {
       close();
-      pickAndImportCsv();
+      pickAndImportCsv(importContext);
     });
   }
 
@@ -291,9 +298,14 @@ Bayliner,Cruiser,285,XYZ789,987654321,Miami,Maintenance</pre>
 }
 
 /* ============================================================
-   CSV IMPORT (unchanged)
+   CSV IMPORT
    ============================================================ */
-function pickAndImportCsv() {
+function pickAndImportCsv(context) {
+  if (!isBoatImportContextCurrent(store, context)) {
+    showResultModal({ success: 0, skipped: 0, failed: 1,
+      errors: [tr('Your marina or session changed. Reopen the boat import.')] });
+    return;
+  }
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.csv,.txt,text/csv';
@@ -306,7 +318,8 @@ function pickAndImportCsv() {
 
     try {
       const text = await file.text();
-      const rows = parseCsv(text);
+      if (!isBoatImportContextCurrent(store, context)) return;
+      const rows = parseBoatCsv(text);
 
       if (!rows.length) {
         showResultModal({
@@ -316,7 +329,7 @@ function pickAndImportCsv() {
         return;
       }
 
-      runImportWithProgress(rows);
+      await runImportWithProgress(rows, context);
     } catch (err) {
       console.error('[csv] read failed', err);
       showResultModal({
@@ -330,53 +343,7 @@ function pickAndImportCsv() {
   input.click();
 }
 
-function parseCsv(text) {
-  const lines = text.split(/\r?\n/);
-  const rows = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line || !line.trim()) continue;
-
-    const parts = splitCsvLine(line);
-    if (parts.length < 3) continue;
-
-    rows.push({
-      name:   parts[0]?.trim() ?? '',
-      type:   parts[1]?.trim() ?? '',
-      model:  parts[2]?.trim() ?? '',
-      hin:    parts[3]?.trim() ?? '',
-      mmsi:   parts[4]?.trim() ?? '',
-      port:   parts[5]?.trim() ?? '',
-      status: parts[6]?.trim() ?? ''
-    });
-  }
-
-  return rows;
-}
-
-function splitCsvLine(line) {
-  const result = [];
-  let cur = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') {
-      if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (c === ',' && !inQuotes) {
-      result.push(cur); cur = '';
-    } else {
-      cur += c;
-    }
-  }
-  result.push(cur);
-  return result;
-}
-
-async function runImportWithProgress(rows) {
-  const { store } = await import('../store.js');
+async function runImportWithProgress(rows, context) {
   const { importBoatsFromRows } = await import('../db.js');
   const { toast } = await import('../ui/toast.js');
 
@@ -400,17 +367,20 @@ async function runImportWithProgress(rows) {
 
   try {
     const userId = store.userProfile?.userId || 0;
+    const clientId = context.clientId;
+    const isCurrent = () => isBoatImportContextCurrent(store, context);
 
     const result = await importBoatsFromRows(
-      store.activeClientId,
+      clientId,
       userId,
       rows,
-      (done, skipped, total) => {
-        const processed = done + skipped;
+      (done, skipped, total, failed = 0) => {
+        const processed = done + skipped + failed;
         const pct = Math.round((processed / total) * 100);
         progressEl.textContent = `${processed} of ${total}  ·  ${done} added, ${skipped} skipped`;
         barEl.style.width = pct + '%';
-      }
+      },
+      isCurrent
     );
 
     progressEl.textContent = tr('Done');
@@ -421,6 +391,7 @@ async function runImportWithProgress(rows) {
     backdrop.remove();
     sheet.remove();
 
+    if (!isCurrent()) return;
     showResultModal(result);
 
     if (result.success > 0) {
@@ -431,6 +402,7 @@ async function runImportWithProgress(rows) {
     console.error('[import] failed', err);
     backdrop.remove();
     sheet.remove();
+    if (!isBoatImportContextCurrent(store, context)) return;
     showResultModal({
       success: 0, skipped: 0, failed: 1,
       errors: [err.message || itUI('Import failed.')]

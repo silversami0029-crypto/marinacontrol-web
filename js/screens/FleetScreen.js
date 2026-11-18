@@ -1,3 +1,4 @@
+import { dateOnlyDaysUntil } from '../util/CalendarDate.js';
 import { isFleetOpenMaintenance } from '../util/MaintenanceState.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -159,6 +160,7 @@ export function mountFleetScreen() {
             <span class="dash-health-label" style="color:#3DD68C;">${tr("All Good")}</span>
           </div>
         </div>
+        <button type="button" class="md-close-btn" id="fleetHandover">${tr('Shift Handover')} ›</button>
       </div>
 
       <div class="dash-filters" id="fleetFilters">
@@ -183,6 +185,18 @@ export function mountFleetScreen() {
  
 
  
+
+  const handoverButton = screen.querySelector('#fleetHandover');
+  handoverButton.addEventListener('click', async () => {
+    handoverButton.disabled = true;
+    const clientId = Number(store.activeClientId), uid = store.authUser?.uid;
+    try {
+      const { showShiftHandover } = await import('./ShiftHandoverSheet.js');
+      if (handoverButton.isConnected && Number(store.activeClientId) === clientId && store.authUser?.uid === uid)
+        showShiftHandover(screen.querySelector('.dash-wrap'));
+    } catch { if (handoverButton.isConnected) toast(tr('Could not open shift handover. Refresh and try again.'), {kind:'error'}); }
+    finally { handoverButton.disabled = false; }
+  });
 
 screen.querySelector('#fleetComplianceCard')
   ?.addEventListener('click', () => {
@@ -326,18 +340,16 @@ async function computeFleetStatuses(clientId) {
       collection(db, 'maintenance'),
       where('clientId', '==', clientId)
     ));
-    const now = Date.now();
-    const soon = 30 * 24 * 60 * 60 * 1000;
     let overdue = 0, upcoming = 0;
     snap.forEach(d => {
       const x = d.data();
       if (!isFleetOpenMaintenance(x)) return;
       openMaintenance++;
       if (!x.date) return;
-      const due = new Date(x.date + 'T00:00:00').getTime();
-      if (isNaN(due)) return;
-      if (due < now) overdue++;
-      else if (due - now <= soon) upcoming++;
+      const days = dateOnlyDaysUntil(x.date);
+      if (days === null) return;
+      if (days < 0) overdue++;
+      else if (days <= 30) upcoming++;
     });
     if (overdue > 0)       perTile.maintenance = 'critical';
     else if (upcoming > 0) perTile.maintenance = 'attention';

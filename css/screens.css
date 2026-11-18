@@ -4765,6 +4765,18 @@ body {
   min-width: 0;
 }
 
+/* Native result menus must retain readable colours when opened on Windows. */
+.chk-result-select {
+  color-scheme: dark;
+  background-color: #1c222a;
+  color: #f5f7f9;
+}
+.chk-result-select option,
+.chk-result-select optgroup {
+  background-color: #1c222a;
+  color: #f5f7f9;
+}
+
 .chk-item-label {
   font-size: 13px;
   line-height: 1.35;

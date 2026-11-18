@@ -33,7 +33,8 @@ const SECTIONS = [
       { id: 'assign-berth',    label: 'Assign Berth',    route: '#/berths' },
       { id: 'create-invoice',  label: 'Create Invoice',  action: 'create-invoice' },
       { id: 'add-task',        label: 'Add Task',        action: 'add-task' },
-      { id: 'log-inspection',  label: 'Log Inspection',  action: 'log-inspection' }
+      { id: 'log-inspection',  label: 'Log Inspection',  action: 'log-inspection' },
+      { id: 'shift-handover',  label: 'Shift Handover',  action: 'shift-handover' }
     ]
   },
   {
@@ -188,6 +189,21 @@ export function initDrawer() {
 
       if (action === 'log-inspection') {
         location.hash = '#/safety';
+        return;
+      }
+
+      if (action === 'shift-handover') {
+        if (item.dataset.loading) return;
+        const clientId = Number(store.activeClientId), uid = store.authUser?.uid;
+        const anchor = document.getElementById('screen')?.firstElementChild;
+        item.dataset.loading = '1';
+        try {
+          const { showShiftHandover } = await import('../screens/ShiftHandoverSheet.js');
+          if (uid && uid === store.authUser?.uid && clientId === Number(store.activeClientId)
+              && !store.marinaSwitching && (!anchor || anchor.isConnected)) showShiftHandover(anchor);
+        } catch {
+          toast(tr('Could not open shift handover. Refresh and try again.'), { kind: 'error' });
+        } finally { delete item.dataset.loading; }
         return;
       }
 

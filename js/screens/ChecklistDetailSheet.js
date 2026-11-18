@@ -1,3 +1,5 @@
+import { checklistItemStatus, createChecklistMaintenance } from '../util/ChecklistMaintenance.js';
+import { showMaintenanceDetail } from './MaintenanceDetailSheet.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -6,7 +8,7 @@ import { canEditChecklists } from './ChecklistCreateSheet.js';
 import { toast } from '../ui/toast.js';
 import { store } from '../store.js';
 import {
-  collection, doc, getDocs, runTransaction
+  collection, doc, getDoc, getDocs, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
@@ -17,10 +19,16 @@ const STATUS_COLORS = {
   CANCELLED: '#737D89'
 };
 
-export async function showChecklistDetail(checklist) {
+export async function showChecklistDetail(checklist, boats = store.boatsFull || []) {
   const uid = store.authUser?.uid;
   const editable = canEditChecklists() && ['IN_PROGRESS', 'PENDING'].includes(checklist.status);
   let saving = false;
+  let closed = false;
+  const hasCurrentContext = () => !closed && sheet.isConnected && uid && uid === store.authUser?.uid
+    && Number(store.activeClientId) === Number(checklist.clientId) && !store.marinaSwitching
+    && (store.activeMarina?.clientType !== 'yacht_operator'
+      || Number(store.assignedYacht?.id) === Number(checklist.boatId));
+  const isCurrent = () => hasCurrentContext() && canEditChecklists();
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
 
@@ -28,7 +36,9 @@ export async function showChecklistDetail(checklist) {
   sheet.className = 'sheet sheet--tall';
 
   const statusColor = STATUS_COLORS[checklist.status] || '#737D89';
-  const boatName = store.boatsFull?.find(b => Number(b.id) === Number(checklist.boatId))?.name || '—';
+  const boatName = boats.find(b => Number(b.id) === Number(checklist.boatId))?.name
+    || (Number(checklist.boatId) > 0
+      ? `${tr('Boat')} #${checklist.boatId} — ${tr('name unavailable')}` : tr('Boat not assigned'));
 
   sheet.innerHTML = `
     ${sheetCloseButton()}
@@ -78,6 +88,7 @@ export async function showChecklistDetail(checklist) {
 
   const close = () => {
     if (saving) return;
+    closed = true;
     backdrop.classList.remove('is-open');
     sheet.classList.remove('is-open');
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
@@ -101,7 +112,8 @@ export async function showChecklistDetail(checklist) {
 
     const items = snap.docs.map(item => ({ ...item.data(), ref: item.ref }))
       .sort((a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0));
-    itemsEl.innerHTML = items.map(data => {
+    if (!hasCurrentContext()) return;
+    itemsEl.innerHTML = items.map((data, index) => {
       const label = data.text || data.itemText || data.label || data.name || data.title ||
         data.description || data.item || '(untitled)';
       const status = checklistItemStatus(data);
@@ -115,14 +127,63 @@ export async function showChecklistDetail(checklist) {
             ${data.category ? `<div class="chk-item-notes">${escapeHtml(data.category)}</div>` : ''}
             <div class="chk-item-label">${escapeHtml(label)}</div>
             ${data.notes ? `<div class="chk-item-notes">${escapeHtml(data.notes)}</div>` : ''}
-            ${editable ? `<select class="add-input" data-checklist-result aria-label="${escapeHtml(label)}">
+            ${editable ? `<select class="add-input chk-result-select" data-checklist-result aria-label="${escapeHtml(label)}">
               ${[['NOT_STARTED','Not started'],['PASS','Pass'],['FAIL','Fail']].map(([value, text]) =>
                 `<option value="${value}"${status === value ? ' selected' : ''}>${escapeHtml(tr(text))}</option>`).join('')}
             </select>` : ''}
+            ${canEditChecklists() && checklist.status !== 'CANCELLED' && (status === 'FAIL' || data.maintenanceTaskCloudId || data.maintenanceTaskId || data.maintenanceId) ? `
+              <div style="margin-top:8px"><button type="button" class="dash-filter" style="border:1px solid var(--color-water-blue, #2196F3);color:var(--color-water-blue, #2196F3)" data-maintenance-item="${index}">${tr(data.maintenanceTaskCloudId ? 'View maintenance' : data.maintenanceTaskId || data.maintenanceId ? 'Maintenance already linked' : 'Create maintenance task')}</button>
+              <div role="status" data-maintenance-message></div></div>` : ''}
           </div>
         </div>
       `;
     }).join('');
+
+    itemsEl.querySelectorAll('[data-maintenance-item]').forEach(button => {
+      button.onclick = async () => {
+        if (saving || !isCurrent()) return;
+        const item = items[Number(button.dataset.maintenanceItem)];
+        const message = button.parentElement.querySelector('[data-maintenance-message]');
+        const controls = [...itemsEl.querySelectorAll('[data-checklist-result]')];
+        if (controls.some((control, index) => control.value !== checklistItemStatus(items[index]))) {
+          message.textContent = tr('Save your checklist changes before opening maintenance.');
+          return;
+        }
+        saving = true;
+        const buttons = [...sheet.querySelectorAll('button, select')];
+        buttons.forEach(control => { control.disabled = true; });
+        message.textContent = '';
+        try {
+          let task;
+          if (item.maintenanceTaskCloudId) {
+            const snapshot = await getDoc(doc(db, 'maintenance', item.maintenanceTaskCloudId));
+            task = snapshot.exists() ? { ...snapshot.data(), _docId: snapshot.id } : null;
+            if (!task || Number(task.clientId) !== Number(checklist.clientId))
+              throw new Error(tr('Linked maintenance is unavailable. Check Maintenance before creating another task.'));
+          } else {
+            const result = await createChecklistMaintenance(checklist, item,
+              store.userProfile?.userId || uid, isCurrent);
+            task = result.task;
+            // Reusing another user's task must not acknowledge their unrelated result edits.
+            if (result.created) checklist.revision = result.revision;
+            item.maintenanceTaskCloudId = task._docId;
+            item.maintenanceTaskId = task.id;
+            button.textContent = tr('View maintenance');
+            if (result.created) toast(tr('Maintenance task created'), { kind: 'success' });
+          }
+          if (isCurrent()) {
+            if (Number(task.boatId) !== Number(checklist.boatId))
+              toast(tr('This linked task has a different boat reference from the checklist. Check both records before making changes.'), { kind: 'error', duration: 8000 });
+            showMaintenanceDetail(task);
+          }
+        } catch (err) {
+          if (isCurrent()) message.textContent = err.message || tr('Could not create maintenance.');
+        } finally {
+          saving = false;
+          buttons.forEach(control => { control.disabled = false; });
+        }
+      };
+    });
 
     if (editable && sheet.isConnected) {
       const actions = document.createElement('div');
@@ -135,10 +196,7 @@ export async function showChecklistDetail(checklist) {
       const error = actions.querySelector('[role=alert]');
       const controls = [...itemsEl.querySelectorAll('[data-checklist-result]')];
       const update = async complete => {
-        if (saving || !sheet.isConnected || uid !== store.authUser?.uid
-            || Number(store.activeClientId) !== checklist.clientId || !canEditChecklists()
-            || (store.activeMarina?.clientType === 'yacht_operator'
-                && Number(store.assignedYacht?.id) !== checklist.boatId)) return;
+        if (saving || !isCurrent()) return;
         const statuses = controls.map(select => select.value);
         if (complete && (items.length !== checklist.totalItems
             || items.some((item, index) => (item.mandatory ?? item.isMandatory ?? true) && statuses[index] === 'NOT_STARTED'))) {
@@ -151,7 +209,7 @@ export async function showChecklistDetail(checklist) {
         busy.forEach(button => { button.disabled = true; });
         try {
           await saveChecklistResults(checklist, items, statuses, complete,
-            store.userProfile?.name || store.authUser?.displayName || '');
+            store.userProfile?.name || store.authUser?.displayName || '', isCurrent);
           saving = false;
           if (sheet.isConnected) {
             close();
@@ -173,18 +231,15 @@ export async function showChecklistDetail(checklist) {
   }
 }
 
-function checklistItemStatus(data) {
-  const status = String(data.status || '').toUpperCase();
-  if (['FAIL', 'FAILED'].includes(status) || data.failed === true || data.result === 'FAIL') return 'FAIL';
-  if (['PASS', 'PASSED', 'COMPLETED'].includes(status) || data.checked === true
-      || data.completed === true || data.passed === true) return 'PASS';
-  return 'NOT_STARTED';
-}
-
-async function saveChecklistResults(checklist, items, statuses, complete, userName) {
+async function saveChecklistResults(checklist, items, statuses, complete, userName, isCurrent) {
+  if (items.length !== statuses.length || items.length !== Number(checklist.totalItems)
+      || statuses.some(status => !['NOT_STARTED', 'PASS', 'FAIL'].includes(status))) {
+    throw new Error(tr('Checklist items changed. Close it and open it again before saving.'));
+  }
   const parent = doc(db, 'checklists', checklist._docId);
   const now = Date.now();
   await runTransaction(db, async transaction => {
+    if (!isCurrent()) throw new Error(tr('Your marina or session changed. Reopen the checklist.'));
     const snapshot = await transaction.get(parent);
     const current = snapshot.data();
     if (!current || Number(current.clientId) !== checklist.clientId || Number(current.boatId) !== checklist.boatId
@@ -193,6 +248,16 @@ async function saveChecklistResults(checklist, items, statuses, complete, userNa
         || Number(current.completedItems || 0) !== checklist.completedItems
         || Number(current.totalItems || 0) !== checklist.totalItems) {
       throw new Error(tr('This checklist changed. Close it and open it again before saving.'));
+    }
+    const freshItems = await Promise.all(items.map(item => transaction.get(item.ref)));
+    if (!isCurrent()) throw new Error(tr('Your marina or session changed. Reopen the checklist.'));
+    if (freshItems.some((fresh, index) => !fresh.exists()
+        || checklistItemStatus(fresh.data()) !== checklistItemStatus(items[index]))) {
+      throw new Error(tr('This checklist changed. Close it and open it again before saving.'));
+    }
+    if (complete && freshItems.some((fresh, index) =>
+      (fresh.data().mandatory ?? fresh.data().isMandatory ?? true) && statuses[index] === 'NOT_STARTED')) {
+      throw new Error(tr('Record a result for every mandatory item before completing.'));
     }
     const passedItems = statuses.filter(status => status === 'PASS').length;
     const failedItems = statuses.filter(status => status === 'FAIL').length;
