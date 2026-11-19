@@ -3,7 +3,6 @@ import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t } from '../i18n.js';
 // js/components/TopBar.js
 import { store } from '../store.js';
-import { formatSyncTime } from '../utils.js';
 import { toggleDrawer, goHome } from './Drawer.js';
 import {
   collection, onSnapshot, query, where
@@ -32,12 +31,33 @@ export function renderTopBar(route) {
   const syncEl = document.getElementById('topbarSync');
   if (!syncEl) return;
 
-  syncEl.textContent = store.syncTime
-    ? t('sync', {time:tr(formatSyncTime(store.syncTime))})
-    : t('Online');
+  renderNetworkStatus();
+  watchNetworkStatus();
 
   wireBell();
   listenForNotifications();
+}
+
+// This is browser connectivity, never a claim that all records have synced.
+let networkStatusWatching = false;
+export function renderNetworkStatus() {
+  const el = document.getElementById('topbarSync');
+  if (!el) return;
+  const offline = navigator.onLine === false;
+  el.textContent = t(offline ? 'Offline' : 'Online');
+  el.title = t('Browser connection status only. Check pending work for sync confirmation.');
+  el.setAttribute('role', 'status');
+  const dot = el.parentElement?.querySelector('.status-dot');
+  if (dot) dot.style.backgroundColor = offline ? '#ff9800' : '#34d399';
+}
+function watchNetworkStatus() {
+  if (networkStatusWatching) return;
+  networkStatusWatching = true;
+  window.addEventListener('online', renderNetworkStatus);
+  window.addEventListener('offline', renderNetworkStatus);
+  window.addEventListener('focus', renderNetworkStatus);
+  // Some environments delay connectivity events; reread the browser signal.
+  setInterval(renderNetworkStatus, 1000);
 }
 
 function wireBell() {

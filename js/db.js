@@ -647,26 +647,34 @@ export async function getMyMarinas(firebaseUid, userId = 0) {
   try {
     const membershipQuery = query(
       collection(db, 'user_marina_memberships'),
-      where('firebaseUid', '==', uid),
-      where('isActive', '==', 1)
+      where('firebaseUid', '==', uid)
     );
 
     const membershipSnapshot =
       await getDocs(membershipQuery);
 
-    membershipSnapshot.docs.forEach(
-      (membershipDocument) => {
-        const data = membershipDocument.data();
-        const clientId = Number(data.clientId || 0);
-
-        if (clientId > 0) {
-          memberships.set(clientId, {
-            clientId,
-            role: data.role || 'staff'
-          });
-        }
+    const byClient = new Map();
+    for (const membershipDocument of membershipSnapshot.docs) {
+      const data = membershipDocument.data(), clientId = data.clientId;
+      if (!Number.isSafeInteger(clientId) || clientId <= 0 || data.firebaseUid !== uid
+          || data.userId !== identity.userId) continue;
+      const canonical = membershipDocument.id === `${uid}_${clientId}`;
+      const legacy = membershipDocument.id === `${identity.userId}_${clientId}`;
+      if (!canonical && !legacy) continue;
+      const group = byClient.get(clientId) || {};
+      group[canonical ? 'canonical' : 'legacy'] = data;
+      byClient.set(clientId, group);
+    }
+    for (const [clientId, group] of byClient) {
+      const data = group.canonical || group.legacy;
+      const conflict = group.canonical && group.legacy &&
+        (group.legacy.isActive !== 1 || group.canonical.role !== group.legacy.role);
+      if (conflict || data.isActive !== 1 || !['admin','manager','staff','inspector','viewer'].includes(data.role)) {
+        memberships.delete(clientId);
+      } else {
+        memberships.set(clientId, {clientId, role: data.role});
       }
-    );
+    }
   } catch (error) {
     console.warn(
       '[portfolio] Additional memberships unavailable; using base marina',

@@ -1,9 +1,11 @@
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { store } from '../store.js';
-import { listenForBerths } from '../db.js';
-import { app, db, auth, collection, doc, getDoc, getDocs, setDoc, onSnapshot, query, where } from '../firebase.js';
+import { Berth } from '../models/Berth.js';
+import { listDockWalkDrafts, saveDockWalkDraft, queueDockWalkDraft, deleteDockWalkDraft, saveDockWalkSnapshot, getDockWalkSnapshot } from '../util/DockWalkLocalStore.js';
+import { dockWalkContextCurrent, validateDockWalkDraft, syncDockWalkPending } from '../util/DockWalkOffline.js';
+import { app, db, auth, collection, doc, getDoc, getDocs, onSnapshot, query, where } from '../firebase.js';
 import { runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { getStorage, ref, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { t } from '../i18n.js';
 import { showMaintenanceDetail } from './MaintenanceDetailSheet.js';
 
@@ -67,6 +69,9 @@ export function mountDockWalkScreen() {
   let records;
   let failed = false;
   let closeSheet = () => {};
+  const context = {uid, clientId:Number(clientId)};
+  let localRows=[], localError='', syncing=false, cacheMode=false;
+  const loadingServer=new Set(['berths','inspections']);
   const current = () => alive && uid && auth.currentUser?.uid === uid &&
     store.activeClientId === clientId && !store.marinaSwitching;
   const writable = () => current() && roles.includes(store.activeRole);
@@ -90,6 +95,13 @@ export function mountDockWalkScreen() {
       <input class="add-input" type="search" aria-label="${label('Search')}" placeholder="${label('Search berth or dock')}">
       <label><input type="checkbox" data-issues> ${label('Issues only')}</label>
     </div>
+    <section style="padding:12px 0" aria-label="${label('Offline inspection status')}">
+      <p role="status" data-offline-status style="color:var(--color-water-blue,#2196F3);overflow-wrap:anywhere"></p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="dash-filter" data-local-work style="border-color:var(--color-water-blue,#2196F3);color:var(--color-water-blue,#2196F3)">${label('Drafts & pending sync')}</button>
+        <button type="button" class="dash-filter" data-sync style="border-color:var(--color-water-blue,#2196F3);color:var(--color-water-blue,#2196F3)">${label('Sync pending inspections')}</button>
+      </div>
+    </section>
     <div class="berth-grid dw-grid" data-list></div>`;
   const list = screen.querySelector('[data-list]');
   const search = screen.querySelector('input[type=search]');
@@ -104,9 +116,49 @@ export function mountDockWalkScreen() {
     return records.filter(row => row.completed && berthIds.has(row.berthId) &&
       row.inspectionDate >= start && row.inspectionDate < end);
   };
+  function renderLocalStatus() {
+    if(!current())return;
+    const pending=localRows.filter(row=>row.state!=='DRAFT').length,drafts=localRows.length-pending;
+    const message=[navigator.onLine===false?t('Offline'):t('Online'), `${drafts} ${t('browser drafts')} · ${pending} ${t('pending sync')}`,
+      syncing?t('Syncing…'):'',cacheMode?t('Showing browser-saved berth/history data; it may be outdated.'):'' ,localError].filter(Boolean).join(' · ');
+    screen.querySelector('[data-offline-status]').textContent=message;
+    screen.querySelector('[data-sync]').disabled=syncing||!pending||navigator.onLine===false||!writable();
+  }
+  async function refreshLocal() {
+    try {const rows=await listDockWalkDrafts(context);if(!current())return;localRows=rows;localError='';render();}
+    catch(err){if(current()){localError=t('Browser storage unavailable. Inspection drafts cannot be protected in this browser.');renderLocalStatus();}}
+  }
+  async function syncPending() {
+    if(syncing||!writable()||navigator.onLine===false)return;
+    syncing=true;renderLocalStatus();
+    try {await syncDockWalkPending(context,()=>{if(current())refreshLocal();});}
+    catch(err){if(current())localError=err.message||t('Unable to sync. Browser copies retained.');}
+    finally {syncing=false;if(current())await refreshLocal();}
+  }
+  function localWork() {
+    if(!current())return;
+    const panel=sheet(t('Drafts & pending sync'),`<p>${label('Stored in this browser for your signed-in account and selected marina. Clearing browser data removes these copies. Reconnect and sync before changing devices.')}</p><div data-local-rows></div><p role="status"></p>`);
+    const body=panel.querySelector('[data-local-rows]');
+    if(!localRows.length){body.textContent=t('No browser drafts or pending inspections.');return;}
+    for(const item of localRows){
+      const article=document.createElement('article');article.style.cssText='padding:12px 0;border-bottom:1px solid #48515d;overflow-wrap:anywhere';
+      article.innerHTML=`<strong>${esc(item.berthNumber||item.berthId)} · ${label(item.state==='DRAFT'?'Draft':'Saved in browser — pending sync')}</strong><p>${esc(dateText(item.inspectionDate||item.updatedAt))}</p><p>${esc(item.values?.notes||'')}</p>${item.lastError?`<p role="alert" style="color:#ff9999">${esc(item.lastError)}</p>`:''}`;
+      if(item.state==='DRAFT'&&writable()){
+        const resume=document.createElement('button');resume.type='button';resume.className='md-close-btn';resume.textContent=t('Resume draft');
+        resume.onclick=()=>{const berth=berths?.find(b=>Number(b.id)===Number(item.berthId));if(berth)inspectionForm(berth,item);else panel.querySelector('[role=status]').textContent=t('Load this berth again while online before resuming its draft.');};article.append(resume);
+      }
+      const remove=document.createElement('button');remove.type='button';remove.className='md-close-btn';remove.textContent=t('Delete local copy');remove.disabled=syncing;
+      remove.onclick=async()=>{
+        if(syncing||!current()||!confirm(t('Delete this browser copy? This cannot undo an inspection already received by the server.')))return;
+        remove.disabled=true;
+        try {await deleteDockWalkDraft(context,item.cloudId);await refreshLocal();if(current()&&panel.isConnected)localWork();}catch(err){error(panel,err);remove.disabled=false;}
+      };article.append(remove);body.append(article);
+    }
+  }
   function render() {
     if (!current()) return;
-    if (failed || !berths || !records) {
+    renderLocalStatus();
+    if (!berths || !records) {
       list.innerHTML = `<div class="boats-empty">${label(failed ? 'Unable to load Dock Walk' : 'Loading...')}</div>`;
       return;
     }
@@ -132,7 +184,7 @@ export function mountDockWalkScreen() {
         <span class="berth-card-boat">${esc(berth.assignedBoatName || t('Empty'))}</span>
         <span class="berth-card-boat dw-card-status">${label(inspected.has(berth.id) ? 'Inspected today' : 'Not inspected today')}${inspected.has(berth.id) ? ' · ' + esc(clock.format(inspected.get(berth.id))) : ''}</span>
         <div class="dw-card-actions">
-          ${writable() ? `<button type="button" data-inspect>${label('Inspect')}</button>` : ''}
+          ${writable() ? `<button type="button" data-inspect>${label(localRows.some(row=>Number(row.berthId)===Number(berth.id))?'Resume / pending':'Inspect')}</button>` : ''}
           <button type="button" data-history-open>${label('History')}</button>
           <button type="button" data-options aria-label="${label('Inspection Options')}">⋮</button>
         </div>
@@ -143,7 +195,11 @@ export function mountDockWalkScreen() {
       card.querySelector('[data-history-open]').onclick = () => berthSheet(berth);
       card.querySelector('[data-options]').onclick = () => inspectionOptions(berth);
       const inspect = card.querySelector('[data-inspect]');
-      if (inspect) inspect.onclick = () => { if (writable()) inspectionForm(berth); };
+      if (inspect) inspect.onclick = () => {
+        if(!writable())return;
+        const saved=localRows.find(row=>Number(row.berthId)===Number(berth.id));
+        if(saved?.state && saved.state!=='DRAFT')localWork();else inspectionForm(berth,saved);
+      };
     });
   }
 
@@ -338,8 +394,13 @@ export function mountDockWalkScreen() {
   }
 
   async function crewOptions(berth, onlyBoat) {
-    const result = await getDocs(scoped('crew'));
-    return [...new Set(result.docs.map(d => d.data())
+    let rows;
+    if(navigator.onLine===false)rows=(await getDockWalkSnapshot(context,'crew'))?.rows||[];
+    else {
+      const result = await getDocs(scoped('crew'));rows=result.docs.map(d=>d.data());
+      await saveDockWalkSnapshot(context,'crew',rows);
+    }
+    return [...new Set(rows
       .filter(crew => !onlyBoat || (berth.boatId > 0 && Number(crew.boatId) === berth.boatId))
       .map(crew => crew.name || crew.fullName).filter(Boolean))].sort();
   }
@@ -356,64 +417,83 @@ export function mountDockWalkScreen() {
     }).catch(err => error(panel, err));
   }
 
-  function inspectionForm(berth) {
-    const cloudId = crypto.randomUUID();
+  function inspectionForm(berth, saved=null) {
+    const cloudId = saved?.cloudId || crypto.randomUUID();
+    let photo=saved?.photo||null, localBusy=false, saveChain=Promise.resolve(), generation=0;
     const panel = sheet(berth.berthNumber, `<form class="add-form">
+      <p>${label('Drafts are saved in this browser for your account. An inspection is not synced until the server confirms it. Clearing browser data removes unsynced work.')}</p>
       ${checks.map(([key, title]) => `<label class="add-label">${label(title)}
         <select class="add-input" name="${key}" required>
           <option value="">${label('Not Inspected')}</option><option value="OK">${label('OK')}</option>
           <option value="Fault">${label('Fault')}</option>
         </select></label>`).join('')}
       <label class="add-label" data-damage hidden>${label('Damage description')}
-        <textarea class="add-input" name="damageDescription"></textarea></label>
-      <label class="add-label">${label('Notes')}<textarea class="add-input" name="notes"></textarea></label>
+        <textarea class="add-input" name="damageDescription" maxlength="8000"></textarea></label>
+      <label class="add-label">${label('Notes')}<textarea class="add-input" name="notes" maxlength="8000"></textarea></label>
       <label class="add-label">${label('Assigned to')}
         <select class="add-input" name="assignedTo"><option value="">${label('Unassigned')}</option></select></label>
       <label class="add-label">${label('Inspection photo')}
         <input class="add-input" type="file" name="photo" accept="image/*"></label>
-      <p role="status"></p>
+      <p data-photo-name></p><div data-photo-preview></div>
+      <button type="button" class="dash-filter" data-remove-photo>${label('Remove photo')}</button>
+      <p role="status">${label(saved?'Browser draft restored.':'No browser draft saved yet.')}</p>
+      <button type="button" class="md-close-btn" data-save-draft>${label('Save draft')}</button>
       <button class="add-save" type="submit">${label('Complete inspection')}</button>
     </form>`);
-    const form = panel.querySelector('form');
-    form.elements.pontoonDamage.onchange = () => {
-      panel.querySelector('[data-damage]').hidden = form.elements.pontoonDamage.value !== 'Fault';
-      if (form.elements.pontoonDamage.value !== 'Fault') form.elements.damageDescription.value = '';
+    const form = panel.querySelector('form'),output=form.querySelector('[role=status]');
+    const values=()=>Object.fromEntries([...checks.map(([key])=>[key,form.elements[key].value]),
+      ['damageDescription',form.elements.damageDescription.value],['notes',form.elements.notes.value],['assignedTo',form.elements.assignedTo.value]]);
+    const draft=()=>({cloudId,berthId:Number(berth.id),berthNumber:berth.berthNumber,values:values(),photo,inspectionDate:saved?.inspectionDate||0});
+    function persist() {
+      if(!writable()||localBusy)return saveChain;
+      const captured=draft(),version=++generation;
+      output.textContent=t('Saving draft in this browser…');
+      saveChain=saveChain.catch(()=>{}).then(async()=>{
+        if(!dockWalkContextCurrent(context))throw new Error('Your marina or session changed.');
+        await saveDockWalkDraft(context,captured);
+        if(current()&&panel.isConnected&&version===generation)output.textContent=t('Draft saved in this browser — not synced.');
+        if(current())await refreshLocal();
+      }).catch(err=>{if(current()&&panel.isConnected)output.textContent=t('Draft could not be saved in this browser. Keep this form open and try again.');throw err;});
+      // Keep the rejection observable to explicit save/submit without unhandled event promises.
+      saveChain.catch(()=>{});return saveChain;
+    }
+    let photoUrl=null;
+    function showPhoto(){
+      if(photoUrl)URL.revokeObjectURL(photoUrl);photoUrl=null;
+      const body=panel.querySelector('[data-photo-preview]');body.replaceChildren();
+      panel.querySelector('[data-photo-name]').textContent=photo?.size?`${t('Photo saved with draft')}: ${photo.name||t('Inspection photo')}`:t('No inspection photo selected');
+      panel.querySelector('[data-remove-photo]').hidden=!photo?.size;
+      if(photo?.size){photoUrl=URL.createObjectURL(photo);const img=document.createElement('img');img.src=photoUrl;img.alt=t('Inspection photo');img.style.maxWidth='100%';body.append(img);}
+    }
+    const observer=new MutationObserver(()=>{if(!panel.isConnected){if(photoUrl)URL.revokeObjectURL(photoUrl);observer.disconnect();}});observer.observe(panel.parentNode,{childList:true});
+    for(const [key,value]of Object.entries(saved?.values||{}))if(form.elements[key]&&key!=='assignedTo')form.elements[key].value=value;
+    if(saved?.values?.assignedTo)form.elements.assignedTo.add(new Option(saved.values.assignedTo,saved.values.assignedTo,true,true));
+    const updateDamage=()=>{panel.querySelector('[data-damage]').hidden=form.elements.pontoonDamage.value!=='Fault';if(form.elements.pontoonDamage.value!=='Fault')form.elements.damageDescription.value='';};updateDamage();
+    form.elements.pontoonDamage.onchange=updateDamage;
+    populateCrew(panel,berth,true,saved?.values?.assignedTo||'');showPhoto();
+    form.addEventListener('input',event=>{if(event.target.name!=='photo')persist();});
+    form.addEventListener('change',event=>{if(event.target.name!=='photo')persist();});
+    form.elements.photo.onchange=()=>{
+      const chosen=form.elements.photo.files[0];if(!chosen)return;
+      if(!chosen.type.startsWith('image/')||chosen.size>=10*1024*1024){output.textContent=t('Choose an image under 10 MB.');form.elements.photo.value='';return;}
+      photo=chosen;showPhoto();persist();
     };
-    populateCrew(panel, berth, true);
-    form.onsubmit = async event => {
-      event.preventDefault();
-      const save = form.querySelector('[type=submit]');
-      if (save.disabled || !writable()) return;
-      const values = new FormData(form);
-      const photo = values.get('photo');
-      if (photo?.size && (!photo.type.startsWith('image/') || photo.size >= 10 * 1024 * 1024)) {
-        form.querySelector('[role=status]').textContent = t('Choose an image under 10 MB.');
-        return;
-      }
-      save.disabled = true;
-      const inspectionDate = Date.now();
-      const item = {
-        id: inspectionDate, cloudId, clientId, berthId: berth.id, berthNumber: berth.berthNumber,
-        inspectorName: store.userProfile?.name || '', inspectionDate, completed: true,
-        ...Object.fromEntries(checks.map(([key]) => [key, values.get(key)])),
-        damageDescription: String(values.get('damageDescription')).trim(),
-        notes: String(values.get('notes')).trim(), assignedTo: values.get('assignedTo') || null,
-        maintenanceTaskId: 0, maintenanceTaskCloudId: null,
-        photoPath: null, photoUrl: null, photoStoragePath: null
-      };
-      try {
-        if (photo?.size) {
-          const path = `tenants/${clientId}/inspections/${cloudId}/evidence.jpg`;
-          const object = ref(getStorage(app), path);
-          await uploadBytes(object, photo, { contentType: photo.type });
-          item.photoUrl = await getDownloadURL(object);
-          item.photoStoragePath = path;
-        }
-        if (!writable() || !panel.isConnected) throw new Error('Session changed');
-        await setDoc(doc(db, 'inspections', cloudId), { ...item, syncedAt: serverTimestamp() });
-        if (current() && panel.isConnected) closeSheet();
-      } catch (err) { error(panel, err); }
-      finally { save.disabled = false; }
+    panel.querySelector('[data-remove-photo]').onclick=()=>{if(localBusy)return;photo=null;form.elements.photo.value='';showPhoto();persist();};
+    panel.querySelector('[data-save-draft]').onclick=()=>persist();
+    form.onsubmit=async event=>{
+      event.preventDefault();if(localBusy||!writable())return;
+      const entry=draft();try{validateDockWalkDraft(entry);}catch(err){output.textContent=err.message;return;}
+      localBusy=true;for(const control of form.querySelectorAll('input,select,textarea,button'))control.disabled=true;
+      try{
+        await saveChain.catch(()=>{});
+        if(!dockWalkContextCurrent(context))throw new Error('Your marina or session changed.');
+        entry.inspectionDate=Date.now();
+        await queueDockWalkDraft(context,entry);
+        await refreshLocal();
+        if(current()&&panel.isConnected)closeSheet();
+        if(navigator.onLine!==false)await syncPending();
+      }catch(err){if(current()&&panel.isConnected){output.textContent=err.message||t('Could not save locally. Keep this form open.');for(const control of form.querySelectorAll('input,select,textarea,button'))control.disabled=false;}}
+      finally{localBusy=false;}
     };
   }
 
@@ -483,6 +563,7 @@ export function mountDockWalkScreen() {
   async function changeInspection(panel, berth, item, action, assignee) {
     const control = panel.querySelector(`[data-action="${action}"]`);
     if (!writable() || control.disabled) return;
+    if(navigator.onLine===false){panel.querySelector('[role=status]').textContent=t('Maintenance creation and assignment need a connection. The recorded inspection is unchanged.');return;}
     control.disabled = true;
     try {
       const existingTask = action === 'save' ? await maintenanceRef(item) : null;
@@ -580,19 +661,40 @@ export function mountDockWalkScreen() {
   };
   search.oninput = issues.onchange = render;
   render();
-  const stopBerths = listenForBerths(clientId, (items, err) => {
-    failed ||= !!err;
-    berths = items;
+  let stopBerths=()=>{},stopInspections=()=>{},listening=false;
+  function startOnlineListeners(){
+    if(listening||!current()||navigator.onLine===false)return;listening=true;
+    stopBerths=onSnapshot(scoped('berths'),{includeMetadataChanges:true},snapshot=>{
+      if(!current())return;
+      const rows=snapshot.docs.map(d=>new Berth({...d.data(),id:Number(d.data().id??d.id),_docId:d.id}));
+      if(!snapshot.metadata?.fromCache||rows.length)berths=rows;
+      if(snapshot.metadata?.fromCache)cacheMode=true;
+      if(!snapshot.metadata?.fromCache){loadingServer.delete('berths');cacheMode=loadingServer.size>0;saveDockWalkSnapshot(context,'berths',rows).catch(()=>{});}
+      render();
+    },err=>{if(!current())return;failed=true;localError=t('Could not refresh berth data. Browser copies may be outdated.');render();});
+    stopInspections=onSnapshot(scoped('inspections'),{includeMetadataChanges:true},snapshot=>{
+      if(!current())return;
+      const rows=snapshot.docs.map(d=>({...d.data(),cloudId:d.id})).sort((a,b)=>(b.inspectionDate||0)-(a.inspectionDate||0));
+      if(!snapshot.metadata?.fromCache||rows.length)records=rows;
+      if(snapshot.metadata?.fromCache)cacheMode=true;
+      if(!snapshot.metadata?.fromCache){loadingServer.delete('inspections');cacheMode=loadingServer.size>0;saveDockWalkSnapshot(context,'inspections',rows).catch(()=>{});}
+      render();
+    },err=>{if(!current())return;failed=true;localError=t('Could not refresh inspection history. Browser copies may be outdated.');render();});
+  }
+  screen.querySelector('[data-local-work]').onclick=localWork;
+  screen.querySelector('[data-sync]').onclick=syncPending;
+  const connection=()=>{if(!current())return;if(navigator.onLine===false)cacheMode=true;renderLocalStatus();if(navigator.onLine!==false){startOnlineListeners();syncPending();}};
+  window.addEventListener('online',connection);window.addEventListener('offline',connection);
+  let lastNetworkState=navigator.onLine;
+  const connectionTimer=setInterval(()=>{if(navigator.onLine!==lastNetworkState){lastNetworkState=navigator.onLine;connection();}},1000);
+  Promise.all([getDockWalkSnapshot(context,'berths'),getDockWalkSnapshot(context,'inspections')]).then(([savedBerths,savedInspections])=>{
+    if(!current())return;
+    if(savedBerths&&loadingServer.has('berths')){berths=savedBerths.rows.map(row=>new Berth(row));cacheMode=true;}
+    if(savedInspections&&loadingServer.has('inspections')){records=savedInspections.rows;cacheMode=true;}
     render();
-  });
-  const stopInspections = onSnapshot(scoped('inspections'), snapshot => {
-    records = snapshot.docs.map(d => ({ ...d.data(), cloudId: d.id }))
-      .sort((a, b) => (b.inspectionDate || 0) - (a.inspectionDate || 0));
-    render();
-  }, err => {
-    console.error('Dock Walk:', err);
-    failed = true;
-    render();
-  });
-  cleanup = () => { alive = false; stopBerths(); stopInspections(); closeSheet(); };
+  }).catch(()=>{if(current()){localError=t('Browser storage unavailable.');renderLocalStatus();}});
+  refreshLocal().then(()=>{if(current())syncPending();});
+  startOnlineListeners();
+  const stopSession=store.subscribe(()=>{if(!current())unmountDockWalkScreen();else{if(!writable())closeSheet();render();}});
+  cleanup=()=>{clearInterval(connectionTimer);alive=false;stopSession();stopBerths();stopInspections();closeSheet();window.removeEventListener('online',connection);window.removeEventListener('offline',connection);};
 }
