@@ -5894,8 +5894,9 @@ body:not(.drawer-page-hidden) .bottomnav {
   cursor: pointer;
 }
 
-/* Keep occupancy context visible inside the report's scrolling body. */
-#screen.rp-screen .rp-body > .rp-occupancy-summary {
+/* Keep each report total visible inside the scrolling report body. */
+#screen.rp-screen .rp-body > .rp-summary,
+#screen.rp-screen .rp-body > .rp-revenue-summary {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -5903,8 +5904,13 @@ body:not(.drawer-page-hidden) .bottomnav {
   box-shadow: 0 -8px 0 0 var(--color-bg, #141a20),
               0 4px 8px rgba(0, 0, 0, .18);
 }
+#screen.rp-screen .rp-body > .rp-revenue-summary {
+  background: var(--color-bg, #141a20);
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
 @media (max-width: 600px) {
-  #screen.rp-screen .rp-occupancy-summary { padding: 10px 12px; }
-  #screen.rp-screen .rp-occupancy-summary .rp-summary-row { margin-bottom: 2px; }
-  #screen.rp-screen .rp-occupancy-summary .rp-summary-value { font-size: 22px; }
+  #screen.rp-screen .rp-summary { padding: 10px 12px; }
+  #screen.rp-screen .rp-summary .rp-summary-row { margin-bottom: 2px; }
+  #screen.rp-screen .rp-summary .rp-summary-value { font-size: 22px; }
 }

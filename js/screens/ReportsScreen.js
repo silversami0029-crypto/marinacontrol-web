@@ -325,7 +325,7 @@ function renderOccupancy() {
   const occupiedBerths = berthsCache.filter(b => String(b.status || '').toUpperCase() === 'OCCUPIED');
 
   body.innerHTML = `
-    <div class="rp-summary rp-occupancy-summary">
+    <div class="rp-summary">
       <div class="rp-summary-row">
         <div class="rp-summary-label">${tr("Occupancy Rate")}</div>
         <button class="rp-info-icon" id="rpHelpIcon" aria-label="${tr("Help")}">ⓘ</button>
@@ -421,6 +421,7 @@ function renderRevenue() {
   const sortedBoats = Object.entries(byBoat).sort(([a], [b]) => a.localeCompare(b));
 
   body.innerHTML = `
+    <div class="rp-revenue-summary">
     <div class="rp-filters">
       <select class="rp-filter-select" id="rpCatFilter">
         <option value="ALL"${revenueFilters.category === 'ALL' ? ' selected' : ''}>${tr("All Categories")}</option>
@@ -445,6 +446,7 @@ function renderRevenue() {
         <button class="rp-info-icon" id="rpHelpIcon" aria-label="${tr("Help")}">ⓘ</button>
       </div>
       <div class="rp-summary-value">${fmtMoney(total)}</div>
+    </div>
     </div>
 
     ${filtered.length ? `
