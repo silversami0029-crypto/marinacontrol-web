@@ -3,7 +3,7 @@ import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/LoginScreen.js
 // Mirrors activity_login.xml + LoginActivity.handleSignIn()
 
-import { login, resetPassword, friendlyError } from '../auth.js';
+import { login, resetPassword, friendlyError, joinMarinaWithCode } from '../auth.js';
 
 const LOGO_SVG = `
 <div class="login-logo-circle">
@@ -109,9 +109,57 @@ function wireLoginForm() {
     }
   });
 
-  // Join marina (stub for now)
   join.addEventListener('click', () => {
-    showErr(itUI('Join by invite code coming soon.'), 'ok');
+    if (document.getElementById('joinMarinaDialog')) return;
+    const dialog = document.createElement('dialog');
+    dialog.id = 'joinMarinaDialog';
+    dialog.style.cssText = 'color:#fff;background:#1c252e;border:1px solid #586675;border-radius:16px;padding:24px;width:min(420px,90vw);box-sizing:border-box';
+    dialog.innerHTML = `
+      <h2>Join Existing Marina</h2>
+      <p>Use an invite code provided by your marina administrator.</p>
+      <form id="joinMarinaForm">
+        <div class="login-field"><input name="inviteCode" placeholder="Invite code" aria-label="Invite code" required></div>
+        <div class="login-field"><input name="displayName" placeholder="Full name" aria-label="Full name" autocomplete="name" required maxlength="100"></div>
+        <div class="login-field"><input name="email" type="email" placeholder="Email" aria-label="Email" autocomplete="email" required></div>
+        <div class="login-field"><input name="password" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" required minlength="6"></div>
+        <p id="joinMarinaError" role="alert" hidden></p>
+        <button type="submit" class="login-submit">Join Marina</button>
+        <button type="button" class="login-secondary" id="cancelJoinMarina" style="margin-top:12px">Cancel</button>
+      </form>`;
+    document.body.append(dialog);
+    const joinForm = dialog.querySelector('form');
+    joinForm.elements.email.value = email.value.trim();
+    const message = dialog.querySelector('#joinMarinaError');
+    const confirm = joinForm.querySelector('[type="submit"]');
+    const cancel = dialog.querySelector('#cancelJoinMarina');
+    let busy = false;
+    dialog.addEventListener('cancel', event => { if (busy) event.preventDefault(); });
+    dialog.addEventListener('close', () => dialog.remove(), { once: true });
+    cancel.addEventListener('click', () => dialog.close());
+    joinForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (busy || !joinForm.reportValidity()) return;
+      const values = Object.fromEntries(new FormData(joinForm));
+      busy = true;
+      message.hidden = true;
+      for (const field of joinForm.elements) field.disabled = true;
+      confirm.textContent = 'Joining…';
+      try {
+        await joinMarinaWithCode(values);
+        // Restart with refreshed claims and reload the authorised marina list.
+        location.reload();
+      } catch (error) {
+        console.error('[join marina]', error.code || 'join-failed');
+        const authError = String(error.code || '').startsWith('auth/');
+        message.textContent = authError ? friendlyError(error)
+          : (error.message || 'Unable to join marina. Please try again.');
+        message.hidden = false;
+        busy = false;
+        for (const field of joinForm.elements) field.disabled = false;
+        confirm.textContent = 'Join Marina';
+      }
+    });
+    dialog.showModal();
   });
 
   // Submit
@@ -141,6 +189,8 @@ function setLoading(on) {
   email.disabled = on;
   password.disabled = on;
   toggle.disabled = on;
+  join.disabled = on;
+  forgot.disabled = on;
 
   if (on) {
     submit.style.display = 'none';

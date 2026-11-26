@@ -325,7 +325,7 @@ function renderOccupancy() {
   const occupiedBerths = berthsCache.filter(b => String(b.status || '').toUpperCase() === 'OCCUPIED');
 
   body.innerHTML = `
-    <div class="rp-summary">
+    <div class="rp-summary rp-occupancy-summary">
       <div class="rp-summary-row">
         <div class="rp-summary-label">${tr("Occupancy Rate")}</div>
         <button class="rp-info-icon" id="rpHelpIcon" aria-label="${tr("Help")}">ⓘ</button>

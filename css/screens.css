@@ -5893,3 +5893,18 @@ body:not(.drawer-page-hidden) .bottomnav {
   font-size: 11px;
   cursor: pointer;
 }
+
+/* Keep occupancy context visible inside the report's scrolling body. */
+#screen.rp-screen .rp-body > .rp-occupancy-summary {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-surface, #1c232b);
+  box-shadow: 0 -8px 0 0 var(--color-bg, #141a20),
+              0 4px 8px rgba(0, 0, 0, .18);
+}
+@media (max-width: 600px) {
+  #screen.rp-screen .rp-occupancy-summary { padding: 10px 12px; }
+  #screen.rp-screen .rp-occupancy-summary .rp-summary-row { margin-bottom: 2px; }
+  #screen.rp-screen .rp-occupancy-summary .rp-summary-value { font-size: 22px; }
+}

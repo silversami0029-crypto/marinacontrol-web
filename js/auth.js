@@ -149,3 +149,47 @@ export async function saveOwnProfile({ name, phone }) {
   await updateDoc(ref, { name, phone, lastModified: Date.now(), syncTime: serverTimestamp() });
   return { ...profile, name, phone };
 }
+
+/** Redeem invites through the same server function used by Android.
+ * A separate Auth instance prevents the router bootstrapping before redemption.
+ */
+export async function joinMarinaWithCode({ inviteCode, displayName, email, password }) {
+  inviteCode = String(inviteCode || '').trim();
+  displayName = String(displayName || '').trim();
+  email = String(email || '').trim();
+  if (!inviteCode || !displayName || !email || !password) {
+    throw new Error('Complete all fields to join a marina.');
+  }
+  const { initializeApp, deleteApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+  const { getAuth, createUserWithEmailAndPassword, sendEmailVerification } =
+    await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+  const inviteApp = initializeApp(auth.app.options, `marina-invite-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const inviteAuth = getAuth(inviteApp);
+  let result;
+  try {
+    let credential;
+    try {
+      credential = await createUserWithEmailAndPassword(inviteAuth, email, password);
+    } catch (error) {
+      if (error.code !== 'auth/email-already-in-use') throw error;
+      credential = await signInWithEmailAndPassword(inviteAuth, email, password);
+    }
+    if (!credential.user.emailVerified) {
+      await sendEmailVerification(credential.user);
+      throw new Error('Verification email sent. Verify your email, then join again.');
+    }
+    await credential.user.getIdToken(true);
+    const redeem = httpsCallable(getFunctions(inviteApp, 'us-central1'), 'redeemMarinaInvite');
+    result = (await redeem({ inviteCode, displayName })).data;
+    if (!result?.client || !result?.user || !result?.membership) {
+      throw new Error('The server returned an incomplete membership. Please contact support before retrying.');
+    }
+  } finally {
+    await signOut(inviteAuth).catch(() => {});
+    await deleteApp(inviteApp).catch(() => {});
+  }
+  // Membership now exists before the primary authentication observer can run.
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  await credential.user.getIdToken(true);
+  return result;
+}
