@@ -76,7 +76,10 @@ export function mountDockWalkScreen() {
     store.activeClientId === clientId && !store.marinaSwitching;
   const writable = () => current() && roles.includes(store.activeRole);
   const scoped = name => query(collection(db, name), where('clientId', '==', clientId));
+  screen.classList.add("dw-screen");
   screen.innerHTML = `
+    <div class="dw-layout">
+    <div class="dw-controls">
     <div class="berth-header">
       <div class="berth-header-row">
         <button class="berth-icon-btn" data-back aria-label="${label('Back')}">‹</button>
@@ -95,14 +98,18 @@ export function mountDockWalkScreen() {
       <input class="add-input" type="search" aria-label="${label('Search')}" placeholder="${label('Search berth or dock')}">
       <label><input type="checkbox" data-issues> ${label('Issues only')}</label>
     </div>
-    <section style="padding:12px 0" aria-label="${label('Offline inspection status')}">
+    <section class="dw-sync-status" aria-label="${label('Offline inspection status')}">
       <p role="status" data-offline-status style="color:var(--color-water-blue,#2196F3);overflow-wrap:anywhere"></p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button type="button" class="dash-filter" data-local-work style="border-color:var(--color-water-blue,#2196F3);color:var(--color-water-blue,#2196F3)">${label('Drafts & pending sync')}</button>
         <button type="button" class="dash-filter" data-sync style="border-color:var(--color-water-blue,#2196F3);color:var(--color-water-blue,#2196F3)">${label('Sync pending inspections')}</button>
       </div>
     </section>
-    <div class="berth-grid dw-grid" data-list></div>`;
+    </div>
+    <div class="dw-scroll" tabindex="0" role="region" aria-label="${label('Berths')}">
+      <div class="berth-grid dw-grid" data-list></div>
+    </div>
+    </div>`;
   const list = screen.querySelector('[data-list]');
   const search = screen.querySelector('input[type=search]');
   const issues = screen.querySelector('[data-issues]');
@@ -696,5 +703,5 @@ export function mountDockWalkScreen() {
   refreshLocal().then(()=>{if(current())syncPending();});
   startOnlineListeners();
   const stopSession=store.subscribe(()=>{if(!current())unmountDockWalkScreen();else{if(!writable())closeSheet();render();}});
-  cleanup=()=>{clearInterval(connectionTimer);alive=false;stopSession();stopBerths();stopInspections();closeSheet();window.removeEventListener('online',connection);window.removeEventListener('offline',connection);};
+  cleanup=()=>{screen.classList.remove("dw-screen");clearInterval(connectionTimer);alive=false;stopSession();stopBerths();stopInspections();closeSheet();window.removeEventListener('online',connection);window.removeEventListener('offline',connection);};
 }

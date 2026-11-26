@@ -5914,3 +5914,41 @@ body:not(.drawer-page-hidden) .bottomnav {
   #screen.rp-screen .rp-summary .rp-summary-row { margin-bottom: 2px; }
   #screen.rp-screen .rp-summary .rp-summary-value { font-size: 22px; }
 }
+
+/* Dock Walk: stationary controls and a separately scrolling berth grid. */
+#screen.dw-screen {
+  height: calc(100dvh - var(--topbar-h) - var(--bottomnav-h));
+  box-sizing: border-box;
+  overflow: hidden;
+  padding-bottom: 8px;
+}
+.dw-layout { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.dw-controls {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 55%;
+  overflow-y: auto;
+  background: var(--color-bg, #141a20);
+}
+.dw-controls .berth-header { margin-top: 0; margin-bottom: 8px; }
+.dw-controls .dw-search { padding-top: 4px; padding-bottom: 4px; }
+.dw-controls .dw-sync-status { padding: 6px 12px 10px; }
+.dw-controls [data-offline-status] { margin: 4px 0 8px; }
+.dw-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.dw-scroll .dw-grid { align-content: start; }
+@media (max-width: 600px) {
+  .dw-controls .berth-header { padding: 8px 10px; margin-bottom: 4px; }
+  .dw-controls .berth-summary { margin-top: 4px; }
+  .dw-controls .dw-search { flex-wrap: wrap; }
+  .dw-controls .dw-search input[type="search"] { flex: 1 1 160px; }
+  .dw-controls .dw-search label { white-space: nowrap; }
+  .dw-controls .dw-sync-status { padding: 4px 10px 6px; }
+  .dw-controls .dash-filter { padding: 6px 10px; font-size: 12px; }
+  .dw-controls [data-offline-status] { font-size: 12px; margin: 2px 0 6px; }
+}
