@@ -44,6 +44,7 @@ let closeReadingHistory = null;
 let utilitiesGeneration = 0;
 
 export function unmountBerthsScreen() {
+  document.getElementById('screen')?.classList.remove('berths-scroll-screen');
   utilitiesGeneration++;
   unsubscribe?.();
   unsubscribe = null;
@@ -73,7 +74,10 @@ export function mountBerthsScreen() {
   store.berthBookings = [];
 
   const screen = document.getElementById('screen');
+  screen.classList.add('berths-scroll-screen');
   screen.innerHTML = `
+    <div class="berths-layout">
+    <div class="berths-controls">
     <div class="berth-header">
       <div class="berth-header-row">
         <div class="berth-pill">${t("Marina Berths")}</div>
@@ -119,9 +123,13 @@ export function mountBerthsScreen() {
       <button type="button" class="search-cancel" id="berthSearchCancel">${t("Cancel")}</button>
     </div>
 
+    </div>
+    <div class="berths-scroll" tabindex="0" role="region" aria-label="${t('Marina Berths')}">
     <div id="berthPierMap"></div>
     <div class="berth-grid" id="berthGrid">
       <div class="boats-loading"><div class="spinner-ring"></div></div>
+    </div>
+    </div>
     </div>
   `;
 

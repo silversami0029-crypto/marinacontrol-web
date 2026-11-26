@@ -5952,3 +5952,32 @@ body:not(.drawer-page-hidden) .bottomnav {
   .dw-controls .dash-filter { padding: 6px 10px; font-size: 12px; }
   .dw-controls [data-offline-status] { font-size: 12px; margin: 2px 0 6px; }
 }
+
+/* Marina Berths: retain summary/date/search while map and grid scroll. */
+#screen.berths-scroll-screen {
+  height: calc(100dvh - var(--topbar-h) - var(--bottomnav-h));
+  box-sizing: border-box;
+  overflow: hidden;
+  padding-bottom: 8px;
+}
+.berths-layout { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.berths-controls {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 55%;
+  overflow-y: auto;
+  background: var(--color-bg, #141a20);
+}
+.berths-controls .berth-header { margin-top: 0; margin-bottom: 8px; }
+.berths-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.berths-scroll .berth-grid { align-content: start; }
+@media (max-width: 600px) {
+  .berths-controls .berth-header { padding: 8px 10px; margin-bottom: 4px; }
+  .berths-controls .berth-summary { margin-top: 4px; }
+}
