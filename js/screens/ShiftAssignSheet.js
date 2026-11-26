@@ -1,3 +1,4 @@
+import { crewJobRoleText } from '../util/CrewRoles.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -114,7 +115,7 @@ export function showShiftAssignSheet({
                           color:var(--color-text-secondary);
                           font-weight:400;
                         ">
-                          — ${escapeHtml(itUI(crew.role))}
+                          — ${escapeHtml(itUI(crewJobRoleText(crew.role)))}
                         </span>
                       `
                       : ''

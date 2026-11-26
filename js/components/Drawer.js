@@ -85,7 +85,7 @@ const SECTIONS = [
     items: [
       { id: 'user-mgmt', label: 'User Management', route: '#/user-management' },
       { id: 'crew-mgmt', label: 'Crew Management', route: '#/crew' },
-      { id: 'permissions', label: 'Permissions & Roles', route: '#/permissions' },
+      { id: 'permissions', label: 'Crew Roles', route: '#/permissions' },
       { id: 'shift-schedule', label: 'Shift Schedule', route: '#/shift-schedule' }
     ]
   },

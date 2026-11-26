@@ -1,3 +1,4 @@
+import { crewRoleOptions } from '../util/CrewRoles.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -139,26 +140,9 @@ function showAddCrewForm() {
                type="email" placeholder="${tr("Email")}"
                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 
-        <label class="add-label" for="acs-role">${tr("Role")}</label>
+        <label class="add-label" for="acs-role">${tr("Job role")}</label>
         <select class="add-input add-select" id="acs-role" name="acs-role">
-          <option value="">${tr("Select role…")}</option>
-          <option value="Captain">${tr("Captain")}</option>
-          <option value="First Mate">${tr("First Mate")}</option>
-          <option value="Mate">${tr("Mate")}</option>
-          <option value="Deck Officer">${tr("Deck Officer")}</option>
-          <option value="Deckhand">${tr("Deckhand")}</option>
-          <option value="Engineer">${tr("Engineer")}</option>
-          <option value="Chief Engineer">${tr("Chief Engineer")}</option>
-          <option value="Navigator">${tr("Navigator")}</option>
-          <option value="Boatswain">${tr("Boatswain")}</option>
-          <option value="Steward">${tr("Steward")}</option>
-          <option value="Stewardess">${tr("Stewardess")}</option>
-          <option value="Cook">${tr("Cook")}</option>
-          <option value="Marina Staff">${tr("Marina Staff")}</option>
-          <option value="Harbor Master">${tr("Harbor Master")}</option>
-          <option value="Pilot">${tr("Pilot")}</option>
-          <option value="Guest">${tr("Guest")}</option>
-          <option value="Owner">${tr("Owner")}</option>
+          ${crewRoleOptions('', tr)}
         </select>
 
         <label class="add-label" for="acs-notes">${tr("Notes")}</label>

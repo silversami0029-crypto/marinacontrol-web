@@ -1,3 +1,4 @@
+import { crewJobRoleText } from '../util/CrewRoles.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -175,7 +176,7 @@ function renderList() {
       <div class="cm-avatar">${escapeHtml(computeInitials(c.name))}</div>
       <div class="cm-info">
         <div class="cm-name">${escapeHtml(c.name)}</div>
-        ${c.role ? `<div class="cm-role">${escapeHtml(tr(c.role))}</div>` : ''}
+        <div class="cm-role">${escapeHtml(tr(crewJobRoleText(c.role)))}</div>
         ${c.email ? `<div class="cm-email">${escapeHtml(c.email)}</div>` : ''}
         ${c.notes ? `<div class="cm-notes">${escapeHtml(c.notes)}</div>` : ''}
         ${c.status ? `<div class="cm-status">${escapeHtml(itUI(c.status))}</div>` : ''}
@@ -253,7 +254,7 @@ function showCrewDetail(member) {
 </div>
 
     <div class="cm-detail-body">
-      <div class="bkr-detail-row"><span>${tr("Role")}</span><b>${escapeHtml(tr(member.role || itUI('N/A')))}</b></div>
+      <div class="bkr-detail-row"><span>${tr("Job role")}</span><b>${escapeHtml(tr(crewJobRoleText(member.role)))}</b></div>
       <div class="bkr-detail-row"><span>${tr("Email")}</span><b>${escapeHtml(member.email || itUI('N/A'))}</b></div>
       <div class="bkr-detail-row"><span>${tr("Joined")}</span><b>${escapeHtml(joined)}</b></div>
       ${member.notes ? `<div class="bkr-detail-row"><span>${tr("Notes")}</span><b>${escapeHtml(member.notes)}</b></div>` : ''}

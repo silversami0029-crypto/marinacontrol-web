@@ -1,3 +1,4 @@
+import { CREW_JOB_ROLES, crewRoleOptions } from '../util/CrewRoles.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/PermissionsScreen.js
@@ -18,8 +19,7 @@ export function unmountPermissionsScreen() {
 let currentCrew = [];
 let isSearchOpen = false;
 
-/* Android parity: PermissionsAdapter roles */
-const ROLES = ['Admin', 'Staff', 'Inspector', 'View Only'];
+// Crew job roles never grant application access.
 
 export function mountPermissionsScreen() {
   const screen = document.getElementById('screen');
@@ -38,7 +38,7 @@ export function mountPermissionsScreen() {
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <div class="cm-pill">${tr("Permissions & Roles")}</div>
+        <div class="cm-pill">${tr("Crew Roles")}</div>
         <button class="cm-icon-btn" id="pmHelp" aria-label="${tr("Help")}">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                stroke="currentColor" stroke-width="1.8"
@@ -60,7 +60,7 @@ export function mountPermissionsScreen() {
       </div>
     </div>
 
-    <p class="help-desc" style="margin:12px 18px">${tr("These are crew role labels. Sign-in access is managed in User Management.")}</p>
+    <p class="help-desc" style="margin:12px 18px">${tr("Set crew job roles here. Manage sign-in permissions in User Management.")}</p>
 
     <div class="boats-search-bar" id="pmSearchBar" hidden>
       <input id="pmSearchInput" type="text" placeholder="${tr("Search crew...")}" autocomplete="off">
@@ -73,7 +73,7 @@ export function mountPermissionsScreen() {
   `;
 
   document.getElementById('pmBack').addEventListener('click', () => {
-    location.hash = '#/boats';
+    location.hash = '#/crew';
   });
 
   const pmHelpBtn = document.getElementById('pmHelp');
@@ -112,7 +112,9 @@ function subscribeToCrew() {
     where('clientId', '==', clientId)
   );
 
+  const uid = store.authUser?.uid;
   unsubscribe = onSnapshot(q, (snap) => {
+    if (Number(store.activeClientId) !== clientId || store.authUser?.uid !== uid || !document.getElementById('pmList')) return;
     currentCrew = snap.docs
       .map(d => {
         const data = d.data();
@@ -166,6 +168,8 @@ function renderList() {
     return;
   }
 
+  const clientId = Number(store.activeClientId), uid = store.authUser?.uid;
+  const canEdit = ['admin', 'manager', 'staff', 'inspector'].includes(store.activeRole);
   listEl.innerHTML = crew.map(c => `
     <div class="cm-row" data-crew-id="${escapeAttr(c.id)}">
       <div class="cm-avatar">${escapeHtml(computeInitials(c.name))}</div>
@@ -174,8 +178,8 @@ function renderList() {
         ${c.email ? `<div class="cm-email">${escapeHtml(c.email)}</div>` : ''}
       </div>
       <div class="pm-role-cell">
-        <select class="pm-role-select" data-role-for="${escapeAttr(c._docId)}">
-          ${ROLES.map(r => `<option value="${escapeAttr(r)}"${r === c.role ? ' selected' : ''}>${escapeHtml(tr(r))}</option>`).join('')}
+        <select class="pm-role-select" aria-label="${escapeAttr(tr('Job role') + ': ' + c.name)}" data-role-for="${escapeAttr(c._docId)}"${canEdit ? '' : ' disabled'}>
+          ${crewRoleOptions(c.role, tr)}
         </select>
       </div>
       <div class="cm-row-divider"></div>
@@ -188,21 +192,26 @@ function renderList() {
       const docId = sel.dataset.roleFor;
       const newRole = sel.value;
       const member = currentCrew.find(c => c._docId === docId);
-      if (!member) return;
+      if (!member || !canEdit || sel.disabled || Number(member.clientId) !== clientId ||
+          Number(store.activeClientId) !== clientId || store.authUser?.uid !== uid || store.marinaSwitching) return;
+      if (newRole && !CREW_JOB_ROLES.includes(newRole)) return;
       if (newRole === member.role) return;
 
-      const oldRole = member.role || 'None';
+      const oldRole = member.role || '';
+      sel.disabled = true;
 
       try {
         await updateDoc(doc(db, 'crew', String(docId)), {
           role: newRole
         });
         member.role = newRole;
-        toast(tr(`Role updated: ${newRole}`), { kind: 'success' });
+        toast(tr(`Job role updated: ${newRole || 'Not set'}`), { kind: 'success' });
       } catch (err) {
         console.error('[permissions] role update failed', err);
-        toast(tr('Failed to update role'), { kind: 'error' });
-        sel.value = oldRole === 'None' ? '' : oldRole;
+        toast(tr('Failed to update job role'), { kind: 'error' });
+        sel.value = oldRole;
+      } finally {
+        if (sel.isConnected) sel.disabled = !canEdit;
       }
     });
   });

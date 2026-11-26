@@ -11,53 +11,18 @@ export function showPermissionsHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">${tr("🔐 Permissions &amp; Roles")}</div>
-
-      <p class="help-desc">${tr("Control what each crew member can see and do in the app. Assign roles to manage access levels.")}</p>
-
-      <div class="help-section-title">${tr("Available Roles")}</div>
-
-      <div class="pm-help-roles">
-        <div class="pm-help-role">
-          <div class="pm-help-role-name">${tr("👑 Admin")}</div>
-          <div class="pm-help-role-body">${tr("Full access. Can add/remove crew, manage all settings, view all data, assign roles.")}</div>
-        </div>
-
-        <div class="pm-help-role">
-          <div class="pm-help-role-name">${tr("👤 Staff")}</div>
-          <div class="pm-help-role-body">${tr("Standard access. Can view and edit assigned tasks, complete checklists, add photos.")}</div>
-        </div>
-
-        <div class="pm-help-role">
-          <div class="pm-help-role-name">${tr("🔍 Inspector")}</div>
-          <div class="pm-help-role-body">${tr("Safety &amp; compliance focus. Can view all data, complete safety checklists, add inspection notes.")}</div>
-        </div>
-
-        <div class="pm-help-role">
-          <div class="pm-help-role-name">${tr("👁️ View Only")}</div>
-          <div class="pm-help-role-body">${tr("Read-only access. Can view information but cannot edit or delete anything.")}</div>
-        </div>
-      </div>
-
+      <div class="help-pill">${tr("Crew Roles")}</div>
+      <p class="help-desc">${tr("Crew job roles describe what a person does, such as Dock Master, Technician, Captain or Engineer. They do not grant access to MarinaControl.")}</p>
+      <div class="help-section-title">${tr("Assign a job role")}</div>
+      ${step('1', tr('Choose a crew member'), tr('Find their name in Crew Roles.'))}
+      ${step('2', tr('Select their job role'), tr('Choose the job they actually perform. Leave it unset if you do not know.'))}
       <div class="help-divider"></div>
-
-      <div class="help-section-title">${tr("How to assign a role?")}</div>
-
-      ${step('1', itUI('Crew Management'), itUI('Go to Crew Management screen'))}
-      ${step('2', itUI('Role dropdown'), itUI("Tap on the crew member's role dropdown"))}
-      ${step('3', itUI('Select'), itUI('Select the new role from the list (Admin, Staff, Inspector, View Only)'))}
-
-      <div class="help-divider"></div>
-
-      <div class="help-section-title">${tr("💡 Pro Tips")}</div>
-      <div class="help-tips">${tr("• Only Admins can assign or change roles • Staff can complete tasks but cannot change system settings • Inspectors are ideal for safety compliance audits • View Only is best for owners or external auditors • Review roles quarterly as team responsibilities change")}</div>
-
+      <p class="help-desc">${tr("Previous labels such as Admin are shown for review. They are not automatically changed into job titles.")}</p>
+      <div class="help-section-title">${tr("Sign-in permissions")}</div>
+      <p class="help-desc">${tr("An administrator manages sign-in accounts and access roles in User Management. A crew record does not automatically create a sign-in account, even when the email addresses match.")}</p>
       <div class="help-footer">${tr("Need help? support@marinacontrol.co.uk")}</div>
     </div>
-
-    <div class="help-actions">
-      <button type="button" class="help-gotit" id="pmHelpGotIt">${tr("Got it")}</button>
-    </div>
+    <div class="help-actions"><button type="button" class="help-gotit" id="pmHelpGotIt">${tr("Got it")}</button></div>
   `;
 
   document.getElementById('modalRoot').append(backdrop, dialog);
