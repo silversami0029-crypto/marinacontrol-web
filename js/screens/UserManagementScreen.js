@@ -667,6 +667,8 @@ async function confirmBulkDelete() {
    ============================================================ */
 
 function showRoleSheet(user) {
+  let updating = false;
+  const clientId = Number(store.activeClientId);
   const backdrop = document.createElement('div');
   backdrop.className = 'sheet-backdrop';
 
@@ -714,6 +716,8 @@ function showRoleSheet(user) {
 
     <div class="assign-divider"></div>
 
+    <p id="umRoleStatus" role="status" aria-live="polite" aria-atomic="true"
+       style="margin:8px 16px;color:var(--color-water-blue,#2196F3);overflow-wrap:anywhere" hidden></p>
     <button class="assign-cancel" id="umRoleCancel">${tr("Cancel")}</button>
   `;
 
@@ -729,6 +733,7 @@ function showRoleSheet(user) {
   });
 
   const close = () => {
+    if (updating) return;
     backdrop.classList.remove('is-open');
     sheet.classList.remove('is-open');
 
@@ -745,26 +750,42 @@ function showRoleSheet(user) {
     .querySelector('#umRoleCancel')
     .addEventListener('click', close);
 
+  const status = sheet.querySelector('#umRoleStatus');
+  const controls = sheet.querySelectorAll('button');
   sheet.querySelectorAll('.assign-row').forEach(button => {
     button.addEventListener('click', async () => {
+      if (updating) return;
       const newRole = button.dataset.role;
+      if (newRole === user.role) { close(); return; }
 
-      close();
-
-      if (newRole === user.role) return;
-
-         try {
+      updating = true;
+      sheet.setAttribute('aria-busy', 'true');
+      controls.forEach(control => { control.disabled = true; });
+      status.hidden = false;
+      status.style.color = 'var(--color-water-blue,#2196F3)';
+      status.textContent = tr('Updating role…');
+      try {
         const callable = httpsCallable(functions, 'updateMarinaUserRole');
-        await callable({
-          clientId: Number(store.activeClientId),
-          userId:   Number(user.id),
-          role:     newRole
-        });
+        await callable({ clientId, userId: Number(user.id), role: newRole });
+        status.textContent = tr('Role updated');
         toast(tr(`Role updated to ${newRole}`), { kind: 'success' });
-        await loadUsers();
+        if (Number(store.activeClientId) === clientId) await loadUsers();
+        updating = false;
+        sheet.removeAttribute('aria-busy');
+        close();
       } catch (err) {
         console.error('[role] update failed', err);
-        toast(tr('Failed to update role'), { kind: 'error' });
+        updating = false;
+        sheet.removeAttribute('aria-busy');
+        controls.forEach(control => { control.disabled = false; });
+        status.style.color = '#ff9999';
+        const serverMessage = String(err?.message || '').trim();
+        const knownError = ['functions/failed-precondition', 'functions/permission-denied',
+          'functions/invalid-argument', 'functions/not-found', 'functions/unauthenticated'].includes(err?.code);
+        const message = knownError && serverMessage
+          ? tr(serverMessage) : tr('Failed to update role. Please try again.');
+        status.textContent = message;
+        toast(message, { kind: 'error' });
       }
     });
   });
