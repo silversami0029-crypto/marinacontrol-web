@@ -186,6 +186,7 @@ export function mountDockWalkScreen() {
       const state = latest && faults(latest).length ? 'maintenance' :
         berth.status === 'OCCUPIED' ? 'occupied' : berth.status === 'MAINTENANCE' ? 'maintenance' : 'available';
       return `<article class="berth-card berth-card--${state}${inspected.has(berth.id) ? ' dw-inspected' : ''}" data-berth="${i}">
+        <button type="button" class="dw-card-menu" data-options aria-label="${label('Inspection Options')} — ${esc(berth.berthNumber)}">⋮</button>
         <span class="berth-card-num">${esc(berth.berthNumber)}</span>
         <span class="berth-card-boat">${esc(berth.dockName)}</span>
         <span class="berth-card-boat">${esc(berth.assignedBoatName || t('Empty'))}</span>
@@ -193,7 +194,6 @@ export function mountDockWalkScreen() {
         <div class="dw-card-actions">
           ${writable() ? `<button type="button" data-inspect>${label(localRows.some(row=>Number(row.berthId)===Number(berth.id))?'Resume / pending':'Inspect')}</button>` : ''}
           <button type="button" data-history-open>${label('History')}</button>
-          <button type="button" data-options aria-label="${label('Inspection Options')}">⋮</button>
         </div>
       </article>`;
     }).join('') || `<div class="boats-empty">${label('No matching berths')}</div>`;

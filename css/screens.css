@@ -5981,3 +5981,39 @@ body:not(.drawer-page-hidden) .bottomnav {
   .berths-controls .berth-header { padding: 8px 10px; margin-bottom: 4px; }
   .berths-controls .berth-summary { margin-top: 4px; }
 }
+
+/* Dock Walk overflow menu: quiet corner control with a full hit area. */
+.dw-grid .berth-card .dw-card-menu {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #0B1F33;
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.dw-grid .dw-card-menu:focus-visible {
+  outline: 2px solid #0B1F33;
+  outline-offset: -4px;
+  border-radius: 6px;
+}
+.dw-grid .berth-card > .berth-card-num {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 30px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-wrap: anywhere;
+}

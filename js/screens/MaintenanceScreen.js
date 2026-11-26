@@ -135,12 +135,14 @@ export function mountMaintenanceScreen() {
     renderList();
   });
 
-  if (params.get('scope') === 'fleet-open' && !urlBoatId && Number(store.activeClientId) > 0) {
+  const fleetScope = params.get('scope');
+  if (['fleet', 'fleet-open'].includes(fleetScope) && !urlBoatId && Number(store.activeClientId) > 0) {
     currentBoatId = 0;
     currentBoatName = '';
-    document.getElementById('mtPill').textContent = tr('Open maintenance');
-    document.getElementById('mtVisibility').closest('.mt-visibility').hidden = true;
-    subscribeToMaintenance(Number(store.activeClientId), 0, true);
+    const openOnly = fleetScope === 'fleet-open';
+    document.getElementById('mtPill').textContent = tr(openOnly ? 'Open maintenance' : 'Fleet maintenance');
+    document.getElementById('mtVisibility').closest('.mt-visibility').hidden = openOnly;
+    subscribeToMaintenance(Number(store.activeClientId), 0, openOnly);
   } else {
     resolveBoatAndSubscribe(urlBoatId);
   }
@@ -260,6 +262,8 @@ function subscribeToMaintenance(clientId, boatId, fleetOpen = false) {
       })
       .filter(item => {
         if (fleetOpen) return isFleetOpenMaintenance(item);
+        // A zero boat ID denotes the marina-wide fleet view; tenant access stays in the query.
+        if (!boatId) return true;
         const belongsToBoat = item.boatId && Number(item.boatId) === Number(boatId);
         if (!belongsToBoat) return false;
 
@@ -277,7 +281,7 @@ function subscribeToMaintenance(clientId, boatId, fleetOpen = false) {
       });
 
     renderList();
-    if (store.assignedYacht) return;
+    if (store.assignedYacht || !boatId) return;
     const launchToken=++launchLoadToken;
     readYardWorkPackages(boatId).then(data=>{
       if(launchToken!==launchLoadToken||Number(store.activeClientId)!==Number(clientId)||!document.getElementById('mtList'))return;

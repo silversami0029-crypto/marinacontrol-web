@@ -241,7 +241,7 @@ screen.querySelector('#fleetComplianceCard')
     el.addEventListener('click', () => {
       const type = el.dataset.type;
       if (type === 'documents')        location.hash = '#/documents';
-      else if (type === 'maintenance') location.hash = '#/maintenance?scope=fleet-open';
+      else if (type === 'maintenance') location.hash = '#/maintenance?scope=fleet';
       else if (type === 'safety')      location.hash = '#/safety';
       else if (type === 'equipment')   location.hash = '#/equipment';
       else if (type === 'inventory')   location.hash = '#/inventory';

@@ -34,6 +34,7 @@ const SECTIONS = [
       { id: 'create-invoice',  label: 'Create Invoice',  action: 'create-invoice' },
       { id: 'add-task',        label: 'Add Task',        action: 'add-task' },
       { id: 'log-inspection',  label: 'Log Inspection',  action: 'log-inspection' },
+      { id: 'dock-walk',       label: 'Dock Walk',       route: '#/dock-walk' },
       { id: 'shift-handover',  label: 'Shift Handover',  action: 'shift-handover' }
     ]
   },
