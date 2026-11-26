@@ -1,3 +1,4 @@
+import { isDockMaster, dockMasterRouteAllowed } from './roles.js';
 import { mountDockWalkScreen, unmountDockWalkScreen } from './screens/DockWalkScreen.js';
 import { italianUI as itUI } from './i18n.js';
 import { mountUSafeScreen, unmountUSafeScreen } from './screens/USafeScreen.js';
@@ -137,6 +138,10 @@ function navigate() {
     location.hash = '#/login';
     return;
   }
+  if (authed && isDockMaster() && !dockMasterRouteAllowed(route)) {
+    location.hash = '#/dock-walk';
+    return;
+  }
   const yachtMode = authed && store.activeMarina.clientType === 'yacht_operator';
   if (yachtMode) {
     const yachtPage = route === '/account' || route === '/my-yacht/details';
@@ -164,6 +169,9 @@ function navigate() {
   if (yachtMode) syncDrawerLayout();
   showChrome(route !== '/login' && !yachtMode);
   renderYachtNavigation(yachtMode ? route : null);
+  document.querySelectorAll('.nav-item[data-route]').forEach(button => {
+    button.style.display = isDockMaster() && !dockMasterRouteAllowed(button.dataset.route) ? 'none' : '';
+  });
 
   const isBoatDashboard = route === '/dashboard' && location.hash.includes('boatId=');
   const highlightRoute  = route === '/dock-walk' ? '/berths' : isBoatDashboard ? '/boats' : route === '/edit-customer' ? '/customer-directory' : route;
@@ -214,7 +222,7 @@ function applyMarina(marina, yacht = null) {
   store.activeRole = marina?.role || '';
   // Existing screens using userProfile.role also see the selected role.
   store.userProfile = baseProfile ? { ...baseProfile, role: store.activeRole } : null;
-  if (!marina) return;
+  if (!marina || isDockMaster()) return;
   if (marina.clientType === 'yacht_operator') {
     if (yacht) {
       store.boats = [yacht];
@@ -332,6 +340,7 @@ async function bootstrapUser(firebaseUser) {
 watchAuth(async firebaseUser => {
   await bootstrapUser(firebaseUser);
   if (!authReady) return;
+  initDrawer();
   if (!location.hash) location.hash = '#/login';
   navigate();
 });

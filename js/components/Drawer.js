@@ -1,3 +1,4 @@
+import { isDockMaster, roleLabel } from '../roles.js';
 import { procedureLabel } from '../screens/ProcedureLabels.js';
 import { pedestalLabel } from '../screens/PedestalFoundationScreen.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -126,7 +127,8 @@ export function initDrawer() {
   const scroll = drawer.querySelector('.drawer-scroll');
   if (!scroll) return;
 
-  scroll.innerHTML =
+  scroll.innerHTML = isDockMaster() ? ['dock-walk', 'berths'].map((route, i) =>
+    `<button class="drawer-item" type="button" data-item-id="${route}" data-route="#/${route}" style="min-height:48px"><span class="drawer-item-label">${escapeHtml(t(i ? 'Berths' : 'Dock Walk'))}</span></button>`).join('') + renderUserRow() :
     `<button class="drawer-item" type="button" data-item-id="home"
       data-route="#/home" style="min-height:44px;margin-bottom:8px;">
       <svg class="drawer-section-icon" viewBox="0 0 24 24" fill="none"
@@ -309,7 +311,7 @@ export function renderUserRow() {
   const email = profile.email || '';
   const role = store.activeRole || profile.role || '';
   const initials = computeInitials(name);
-  const subtitle = role ? t(role) : email;
+  const subtitle = role ? t(roleLabel(role)) : email;
 
   return `
     <div class="drawer-user">
@@ -362,7 +364,7 @@ export function applySelection() {
 export function goHome() {
   lastSelectedId = 'home';
   if (!isDesktopDrawer()) closeDrawer();
-  location.hash = '#/home';
+  location.hash = isDockMaster() ? '#/dock-walk' : '#/home';
   applySelection();
 }
 

@@ -7,7 +7,7 @@ import { listDockWalkDrafts, deleteDockWalkDraft, dockWalkDraftError } from './D
 export const dockWalkCheckKeys=['lightingOk','shorePowerOk','waterOk','bollardsOk','pontoonDamage'];
 export const dockWalkContextCurrent=context=>!!context.uid && auth.currentUser?.uid===context.uid && store.authUser?.uid===context.uid
   && Number(store.activeClientId)===Number(context.clientId) && !store.marinaSwitching
-  && store.activeMarina?.clientType!=='yacht_operator' && ['admin','manager','staff','inspector'].includes(store.activeRole);
+  && store.activeMarina?.clientType!=='yacht_operator' && ['admin','manager','staff','inspector','dockmaster'].includes(store.activeRole);
 export function validateDockWalkDraft(draft){
   if(!dockWalkCheckKeys.every(key=>['OK','Fault'].includes(draft.values?.[key])))throw new Error('Complete all five inspection checks.');
   for(const key of ['notes','damageDescription'])if(String(draft.values?.[key]||'').length>8000)throw new Error('Notes and damage description must be 8000 characters or fewer.');

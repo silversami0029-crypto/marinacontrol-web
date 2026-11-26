@@ -1,3 +1,4 @@
+import { isDockMaster } from '../roles.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { showBerthingRates, showBerthingCharges, showUtilityInvoiceChoices } from './BerthingBillingSheet.js';
@@ -133,7 +134,8 @@ export function mountBerthsScreen() {
     </div>
   `;
 
-  document.getElementById('berthHelp').addEventListener('click', showBerthHelp);
+  if (isDockMaster()) document.getElementById('berthMenuBtn').hidden = true;
+  document.getElementById('berthHelp').addEventListener('click', () => isDockMaster() ? toast(t('View berth occupancy and vessel details. Use Dock Walk to record inspection checks and faults.')) : showBerthHelp());
   document.getElementById('berthMenuBtn').addEventListener('click', openToolbarMenu);
   document.getElementById('berthDateFilter').addEventListener('click', showBerthDateFilterSheet);
 
@@ -520,6 +522,7 @@ function canDeleteBerths() {
 }
 
 function openToolbarMenu() {
+  if (isDockMaster()) return;
   showBerthToolbarMenu({
     onDockWalk:        () => { location.hash = '#/dock-walk'; },
     onBookingRequests: () => { location.hash = '#/booking-requests'; },
@@ -761,6 +764,7 @@ async function onDeleteAll() {
    BERTH MENU
    ============================================================ */
 async function openBerthMenu(berth) {
+  if (isDockMaster()) { showDockMasterBerth(berth); return; }
   let activeBooking = berth.dateProjection ? berth.selectedPeriodBooking : null;
 
   if (!berth.dateProjection) {
@@ -1607,4 +1611,24 @@ async function openTariffsSheet(berth) {
       errEl.textContent = err.message || itUI('Failed to save rates.');
     }
   });
+}
+
+function showDockMasterBerth(berth) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'sheet-backdrop is-open';
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet berth-details-sheet is-open';
+  sheet.setAttribute('role', 'dialog');
+  sheet.setAttribute('aria-modal', 'true');
+  const rows = [['Berth', berth.berthNumber], ['Dock', berth.dockName],
+    ['Status', berth.status], ['Boat', berth.assignedBoatName || t('Empty')],
+    ['Size', `${berth.length || 0}m × ${berth.width || 0}m`], ['Depth', `${berth.depth || 0}m`]];
+  sheet.innerHTML = `<div class="assign-title">${t('Berth Details')}</div>` + rows.map(([key,value]) =>
+    `<div class="bkr-detail-row"><span>${escapeHtml(t(key))}</span><b>${escapeHtml(String(value || '—'))}</b></div>`).join('') +
+    `<button type="button" class="add-save" data-dock-walk>${t('Dock Walk')}</button><button type="button" class="assign-cancel" data-close>${t('Close')}</button>`;
+  const close = () => { backdrop.remove(); sheet.remove(); };
+  backdrop.onclick = close;
+  sheet.querySelector('[data-close]').onclick = close;
+  sheet.querySelector('[data-dock-walk]').onclick = () => { close(); location.hash = '#/dock-walk'; };
+  document.getElementById('modalRoot').append(backdrop, sheet);
 }

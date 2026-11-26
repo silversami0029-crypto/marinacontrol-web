@@ -60,6 +60,8 @@ export function mountPermissionsScreen() {
       </div>
     </div>
 
+    <p class="help-desc" style="margin:12px 18px">${tr("These are crew role labels. Sign-in access is managed in User Management.")}</p>
+
     <div class="boats-search-bar" id="pmSearchBar" hidden>
       <input id="pmSearchInput" type="text" placeholder="${tr("Search crew...")}" autocomplete="off">
       <button type="button" class="search-cancel" id="pmSearchCancel">${tr("Cancel")}</button>

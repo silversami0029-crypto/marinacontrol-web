@@ -1,3 +1,4 @@
+import { isDockMaster } from '../roles.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { store } from '../store.js';
 import { Berth } from '../models/Berth.js';
@@ -13,7 +14,7 @@ const checks = [
   ['lightingOk', 'Lighting'], ['shorePowerOk', 'Shore Power'], ['waterOk', 'Water'],
   ['bollardsOk', 'Bollards'], ['pontoonDamage', 'Pontoon']
 ];
-const roles = ['admin', 'manager', 'staff', 'inspector'];
+const roles = ['admin', 'manager', 'staff', 'inspector', 'dockmaster'];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 }[c]));
@@ -438,6 +439,7 @@ export function mountDockWalkScreen() {
 
   function populateCrew(panel, berth, onlyBoat, selected = '') {
     const select = panel.querySelector('[name=assignedTo]');
+    if (isDockMaster()) { select.closest('label')?.setAttribute('hidden', ''); select.disabled = true; return Promise.resolve(); }
     select.disabled = true;
     return crewOptions(berth, onlyBoat).then(names => {
       if (!current() || !panel.isConnected) return;
@@ -454,9 +456,9 @@ export function mountDockWalkScreen() {
     const panel = sheet(berth.berthNumber, `<form class="add-form">
       <p>${label('Drafts are saved in this browser for your account. An inspection is not synced until the server confirms it. Clearing browser data removes unsynced work.')}</p>
       ${checks.map(([key, title]) => `<label class="add-label">${label(title)}
-        <select class="add-input" name="${key}" required>
-          <option value="">${label('Not Inspected')}</option><option value="OK">${label('OK')}</option>
-          <option value="Fault">${label('Fault')}</option>
+        <select class="add-input" name="${key}" data-check-status required>
+          <option value="">⚪ ${label('Not Inspected')}</option><option value="OK">🟢 ${label('OK')}</option>
+          <option value="Fault">🔴 ${label('Fault')}</option>
         </select></label>`).join('')}
       <label class="add-label" data-damage hidden>${label('Damage description')}
         <textarea class="add-input" name="damageDescription" maxlength="8000"></textarea></label>
@@ -499,6 +501,15 @@ export function mountDockWalkScreen() {
     const observer=new MutationObserver(()=>{if(!panel.isConnected){if(photoUrl)URL.revokeObjectURL(photoUrl);observer.disconnect();}});observer.observe(panel.parentNode,{childList:true});
     for(const [key,value]of Object.entries(saved?.values||{}))if(form.elements[key]&&key!=='assignedTo')form.elements[key].value=value;
     if(saved?.values?.assignedTo)form.elements.assignedTo.add(new Option(saved.values.assignedTo,saved.values.assignedTo,true,true));
+    const colourCheck = select => {
+      const colour = select.value === 'OK' ? '#3DD68C' : select.value === 'Fault' ? '#FF8585' : '#B8C3CF';
+      select.style.color = colour;
+      select.style.borderInlineStart = `4px solid ${colour}`;
+    };
+    form.querySelectorAll('[data-check-status]').forEach(select => {
+      colourCheck(select);
+      select.addEventListener('change', () => colourCheck(select));
+    });
     const updateDamage=()=>{panel.querySelector('[data-damage]').hidden=form.elements.pontoonDamage.value!=='Fault';if(form.elements.pontoonDamage.value!=='Fault')form.elements.damageDescription.value='';};updateDamage();
     form.elements.pontoonDamage.onchange=updateDamage;
     populateCrew(panel,berth,true,saved?.values?.assignedTo||'');showPhoto();
@@ -547,9 +558,9 @@ export function mountDockWalkScreen() {
       row('Damage description', item.damageDescription) + row('Notes', item.notes) +
       row('Assigned to', item.assignedTo || t('Unassigned')) +
       (item.photoStoragePath === expectedPhoto ? button('photo', 'Inspection photo') : '') +
-      (linked ? button('maintenance', 'View maintenance') :
-        writable() && faults(item).length ? button('create', 'Create maintenance task') : '') +
-      (writable() ? button('assign', 'Assign to crew') : '') +
+      (!isDockMaster() && (linked ? button('maintenance', 'View maintenance') :
+        writable() && faults(item).length ? button('create', 'Create maintenance task') : '')) +
+      (!isDockMaster() && writable() ? button('assign', 'Assign to crew') : '') +
       button('history', 'Inspection history') + '<p role="status"></p>');
     on(panel, 'history', () => berthSheet(berth));
     on(panel, 'photo', async () => {
@@ -593,7 +604,7 @@ export function mountDockWalkScreen() {
 
   async function changeInspection(panel, berth, item, action, assignee) {
     const control = panel.querySelector(`[data-action="${action}"]`);
-    if (!writable() || control.disabled) return;
+    if (isDockMaster() || !writable() || control.disabled) return;
     if(navigator.onLine===false){panel.querySelector('[role=status]').textContent=t('Maintenance creation and assignment need a connection. The recorded inspection is unchanged.');return;}
     control.disabled = true;
     try {
@@ -646,11 +657,11 @@ export function mountDockWalkScreen() {
     const steps = [
       'Select Inspect on a berth card to begin an inspection.',
       'Check lighting, shore power, water, bollards and the pontoon. Add notes or a damage description where needed.',
-      'Open a recorded fault and select Create maintenance task when follow-up is required.',
+      ...(isDockMaster() ? ['Record faults with notes and photos so a manager can arrange follow-up.'] : ['Open a recorded fault and select Create maintenance task when follow-up is required.']),
       'Select History on a berth card to review previous inspections, findings, notes and damage records.',
-      'Open Progress to see today’s inspected berths, remaining berths, issues, maintenance tasks raised today and latest inspection details.'
+      isDockMaster() ? 'Open Progress to see inspected berths, remaining berths and issues.' : 'Open Progress to see today’s inspected berths, remaining berths, issues, maintenance tasks raised today and latest inspection details.'
     ];
-    sheet(t('Dock Walk'), `<p class="help-desc">${label('Inspect marina berths, record infrastructure issues, review inspection history, and raise maintenance tasks directly from the Dock Walk workflow.')}</p>
+    sheet(t('Dock Walk'), `<p class="help-desc">${label(isDockMaster() ? 'Inspect berths, record faults and review inspection history.' : 'Inspect marina berths, record infrastructure issues, review inspection history, and raise maintenance tasks directly from the Dock Walk workflow.')}</p>
       ${steps.map((step, index) => `<div class="help-step"><div class="help-step-num">${index + 1}</div>
         <div class="help-step-text">${label(step)}</div></div>`).join('')}
       <div class="help-divider"></div>
@@ -660,7 +671,7 @@ export function mountDockWalkScreen() {
         'Select OK when no problem is found.',
         'Select Fault when a problem is identified.',
         'Mark Pontoon as Fault for visible structural damage.',
-        'Raise a maintenance task only when follow-up work is required.',
+        ...(isDockMaster() ? [] : ['Raise a maintenance task only when follow-up work is required.']),
         'Use History to confirm when a berth was last inspected.'
       ].map(tip => `<li>${label(tip)}</li>`).join('')}</ul>
       <p>${label('Need help?')} <a href="mailto:support@marinacontrol.co.uk">support@marinacontrol.co.uk</a></p>`);
@@ -682,6 +693,7 @@ export function mountDockWalkScreen() {
       row('Last inspection', dateText(records[0]?.inspectionDate)) + row('Inspector', records[0]?.inspectorName) +
       `<p data-maintenance-count role="status">${label('Loading...')}</p>`);
     const count = panel.querySelector('[data-maintenance-count]');
+    if (isDockMaster()) { count.remove(); return; }
     getDocs(query(scoped('maintenance'), where('date', '==', day))).then(snapshot => {
       if (!current() || !panel.isConnected) return;
       const total = snapshot.docs.filter(entry => entry.data().source === 'Dock Walk Inspection').length;

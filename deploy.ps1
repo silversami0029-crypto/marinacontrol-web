@@ -6,7 +6,7 @@
 $ErrorActionPreference = "Stop"
 
 $source = $PSScriptRoot
-$siteRoot = "C:\Users\lbess\Documents\preview\MarinaControl-Website-Updated"
+$siteRoot = "C:\Users\lbess\Documents\MarinaControlWebsite\MarinaControlWebsite"
 $dest = Join-Path $siteRoot "public\webapp"
 $projectId = "firstapp-1bcf1005"
 

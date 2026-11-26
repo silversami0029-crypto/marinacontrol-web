@@ -1,3 +1,4 @@
+import { isDockMaster, roleLabel } from '../roles.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t } from '../i18n.js';
@@ -34,8 +35,11 @@ export function renderTopBar(route) {
   renderNetworkStatus();
   watchNetworkStatus();
 
-  wireBell();
-  listenForNotifications();
+  const dockMaster = isDockMaster();
+  const bell = document.getElementById('btnBell');
+  if (bell) { bell.hidden = dockMaster; bell.style.display = dockMaster ? 'none' : ''; }
+  if (dockMaster) { notificationUnsubscribe?.(); notificationUnsubscribe = null; notificationKey = ''; store.notifications = []; updateBadge(); }
+  else { wireBell(); listenForNotifications(); }
 }
 
 // This is browser connectivity, never a claim that all records have synced.
@@ -195,7 +199,7 @@ function renderMarinaSelector() {
     });
   }
   title.hidden = !!store.activeMarina;
-  button.textContent = `${store.activeMarina?.name || t('Marinas')} · ${t(store.activeRole || 'staff')} ▾`;
+  button.textContent = `${store.activeMarina?.name || t('Marinas')} · ${t(roleLabel(store.activeRole || 'staff'))} ▾`;
   button.hidden = !store.activeMarina;
   button.style.display = button.hidden ? 'none' : 'block';
   button.disabled = store.marinaSwitching;

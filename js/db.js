@@ -669,7 +669,7 @@ export async function getMyMarinas(firebaseUid, userId = 0) {
       const data = group.canonical || group.legacy;
       const conflict = group.canonical && group.legacy &&
         (group.legacy.isActive !== 1 || group.canonical.role !== group.legacy.role);
-      if (conflict || data.isActive !== 1 || !['admin','manager','staff','inspector','viewer'].includes(data.role)) {
+      if (conflict || data.isActive !== 1 || !['admin','manager','staff','inspector','viewer','dockmaster'].includes(data.role)) {
         memberships.delete(clientId);
       } else {
         memberships.set(clientId, {clientId, role: data.role});

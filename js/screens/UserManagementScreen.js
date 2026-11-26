@@ -1,3 +1,4 @@
+import { roleLabel } from '../roles.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/UserManagementScreen.js
@@ -18,8 +19,8 @@ let isBulkMode = false;
 const selectedIds = new Set();
 let currentUsers = [];
 
-const ADD_ROLES = ['staff', 'manager', 'inspector', 'viewer'];
-const ALL_ROLES = ['admin', 'manager', 'staff', 'inspector', 'viewer'];
+const ADD_ROLES = ['staff', 'manager', 'inspector', 'viewer', 'dockmaster'];
+const ALL_ROLES = ['admin', 'manager', 'staff', 'inspector', 'viewer', 'dockmaster'];
 
 /* ============================================================
    MOUNT
@@ -355,7 +356,7 @@ function renderUserList(users) {
           <div class="um-role">
             <span class="um-role-label">${tr("Role:")}</span>
             <span class="um-role-value">
-              ${escapeHtml(itUI(user.role || 'staff'))}
+              ${escapeHtml(itUI(roleLabel(user.role || 'staff')))}
             </span>
           </div>
         </div>
@@ -704,7 +705,7 @@ function showRoleSheet(user) {
     <div class="assign-list">
       ${ALL_ROLES.map(role => `
         <button class="assign-row" data-role="${role}">
-          <span class="assign-name">${role}</span>
+          <span class="assign-name">${roleLabel(role)}</span>
 
           ${role === user.role
             ? '<span class="assign-current">✓</span>'
@@ -885,7 +886,7 @@ function showAddUserSheet() {
 
           ${ADD_ROLES.map(role => `
             <option value="${role}">
-              ${role}
+              ${roleLabel(role)}
             </option>
           `).join('')}
         </select>
