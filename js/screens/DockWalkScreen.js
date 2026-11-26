@@ -239,8 +239,19 @@ export function mountDockWalkScreen() {
 
   const row = (key, value) => `<div class="md-line"><span class="md-label">${label(key)}</span>
     <span class="md-value">${esc(value || '—')}</span></div>`;
-  const button = (action, key) => `<button type="button" class="sheet-item" data-action="${action}">
-    <span class="sheet-item-title">${label(key)}</span></button>`;
+  const button = (action, key) => {
+    const paths = {
+      back: '<path d="M19 12H5m7-7-7 7 7 7"/>',
+      delete: '<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/>',
+      photo: '<rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12" r="4"/>',
+      history: '<path d="M3 11a9 9 0 1 1 3 7M3 4v7h7M12 7v5l3 2"/>',
+      save: '<path d="M5 12l4 4L19 6"/>'
+    };
+    return `<button type="button" class="sheet-item dw-submenu-action" data-action="${action}">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[action] || '<path d="M5 12h14m-6-6 6 6-6 6"/>'}</svg>
+      <span class="dw-option-text"><span class="sheet-item-title">${label(key)}</span>
+      ${action === 'back' ? `<span class="sheet-item-subtitle">${label('Return to inspection actions')}</span>` : ''}</span></button>`;
+  };
   const on = (panel, action, fn) => {
     const control = panel.querySelector(`[data-action="${action}"]`);
     if (control) control.onclick = fn;
@@ -255,9 +266,22 @@ export function mountDockWalkScreen() {
 
   function inspectionOptions(berth) {
     if (!current()) return;
+    const icons = {
+      history: '<path d="M3 11a9 9 0 1 1 3 7M3 4v7h7M12 7v5l3 2"/>',
+      photo: '<rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M8 5l1-3h6l1 3"/>',
+      voice: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/>',
+      cctv: '<rect x="3" y="5" width="12" height="14" rx="2"/><path d="M15 10l6-4v12l-6-4"/>'
+    };
+    const option = (action, title, subtitle) => `<button type="button" class="sheet-item dw-option-row" data-action="${action}">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[action]}</svg>
+      <span class="dw-option-text"><span class="sheet-item-title">${label(title)}</span>
+      <span class="sheet-item-subtitle">${label(subtitle)}</span></span></button>`;
     const panel = sheet(t('Inspection Options'), row('Berth', berth.berthNumber) +
-      button('history', 'Inspection History') + button('photo', 'Photo') +
-      button('voice', 'Voice Note Options') + button('cctv', 'View CCTV'));
+      option('history', 'Inspection History', 'Review previous inspections') +
+      option('photo', 'Photo', 'View or add a berth photo') +
+      option('voice', 'Voice Note Options', 'View or add a voice note') +
+      option('cctv', 'View CCTV', 'Open the berth camera viewer'));
+    panel.classList.add('dw-options-sheet');
     on(panel, 'history', () => berthSheet(berth));
     on(panel, 'photo', () => showBerthMedia(berth, 'photo'));
     on(panel, 'voice', () => showBerthMedia(berth, 'voice'));

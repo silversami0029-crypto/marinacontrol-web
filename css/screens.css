@@ -6017,3 +6017,63 @@ body:not(.drawer-page-hidden) .bottomnav {
   justify-content: center;
   overflow-wrap: anywhere;
 }
+
+/* Match Inspection Options to the standard action-sheet layout. */
+.dw-options-sheet > .sheet-title {
+  text-align: center;
+  padding-inline: 44px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.dw-options-sheet .md-body { padding-inline: 0; }
+.dw-options-sheet .dw-option-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 8px 0;
+  padding: 12px 16px;
+  min-height: 66px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-bg, #141a20);
+  color: var(--color-text-secondary, #acb8c8);
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+}
+.dw-option-row > svg { flex: 0 0 24px; }
+.dw-option-text { display: flex; flex-direction: column; min-width: 0; }
+.dw-options-sheet .dw-option-text .sheet-item-title,
+.dw-options-sheet .dw-option-text .sheet-item-subtitle { display: block; white-space: normal; }
+.dw-options-sheet .dw-option-row:focus-visible { outline: 2px solid #2196F3; outline-offset: 2px; }
+
+/* Consistent headings and navigation actions across Dock Walk submenus. */
+.dw-sheet > .sheet-title {
+  text-align: center;
+  padding-inline: 44px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.dw-sheet .dw-submenu-action {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 66px;
+  margin: 8px 0;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--color-bg, #141a20);
+  color: var(--color-text-secondary, #acb8c8);
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+}
+.dw-submenu-action > svg { flex: 0 0 24px; }
+.dw-sheet .dw-submenu-action .sheet-item-title,
+.dw-sheet .dw-submenu-action .sheet-item-subtitle { display: block; white-space: normal; }
+.dw-sheet .dw-submenu-action:focus-visible { outline: 2px solid #2196F3; outline-offset: 2px; }
