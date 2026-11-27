@@ -1,4 +1,4 @@
-import { isDockMaster, roleLabel, isStaffWorkUser } from '../roles.js';
+import { isDockMaster, roleLabel, isStaffWorkUser, isInspectorUser } from '../roles.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 import { t } from '../i18n.js';
@@ -92,7 +92,7 @@ function listenForNotifications() {
     if (key !== notificationKey || clientId !== Number(store.activeClientId)) return;
     const merged = new Map();
     results.forEach(items => items.forEach(n => merged.set(n._docId, n)));
-    store.notifications = [...merged.values()].filter(n => !isStaffWorkUser() || n.type === 'STAFF_WORK').sort((a,b) => Number(b.createdAt || 0)-Number(a.createdAt || 0));
+    store.notifications = [...merged.values()].filter(n => isInspectorUser() ? n.type === 'INSPECTION_WORK' : !isStaffWorkUser() || n.type === 'STAFF_WORK').sort((a,b) => Number(b.createdAt || 0)-Number(a.createdAt || 0));
     updateBadge();
     store.emit();
   };
@@ -105,7 +105,7 @@ function listenForNotifications() {
   };
   // Stable identity for booking alerts; keep legacy name-based alerts.
   listen('recipientUid', uid);
-  if (recipient && !isStaffWorkUser()) listen('recipient', recipient);
+  if (recipient && !isStaffWorkUser() && !isInspectorUser()) listen('recipient', recipient);
   notificationUnsubscribe = () => stops.forEach(stop => stop());
 }
 

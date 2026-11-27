@@ -1,4 +1,4 @@
-import { isDockMaster, roleLabel, isStaffWorkUser } from '../roles.js';
+import { isDockMaster, roleLabel, isStaffWorkUser, isInspectorUser } from '../roles.js';
 import { procedureLabel } from '../screens/ProcedureLabels.js';
 import { pedestalLabel } from '../screens/PedestalFoundationScreen.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -51,6 +51,7 @@ const SECTIONS = [
       { id: 'berth-management', label: 'Berth Management', route: '#/berths' },
       { id: 'yard-storage', label: 'Yard Storage', route: '#/yard-storage' },
      // { id: 'pedestal-simulator', label: 'Pedestal Simulator', route: '#/pedestal-simulator' },
+      { id: 'inspection-review', label: 'Inspection Review', route: '#/inspection-review' },
       { id: 'checklists', label: 'Checklists', route: '#/checklists' },
       { id: 'dock-walk-review', label: 'Dock Walk review', route: '#/dock-walk-review' },
       { id: 'maintenance', label: 'Maintenance', route: '#/maintenance' },
@@ -96,6 +97,7 @@ const SECTIONS = [
     title: 'REPORTS',
     icon: ICONS.reports,
     items: [
+      { id: 'inspection-report', label: 'Inspections', route: '#/reports?tab=4' },
       { id: 'daily-report', label: 'Daily Report',     route: '#/reports?tab=0' },
       { id: 'operations-trends', label: 'Operations Trends', route: '#/operations-trends' },
       { id: 'occupancy',    label: 'Occupancy Trends', route: '#/reports?tab=2' },
@@ -129,7 +131,7 @@ export function initDrawer() {
   const scroll = drawer.querySelector('.drawer-scroll');
   if (!scroll) return;
 
-  scroll.innerHTML = isStaffWorkUser() ? `<button class="drawer-item" type="button" data-item-id="my-work" data-route="#/my-work" style="min-height:48px"><span class="drawer-item-label">${escapeHtml(t('My Work'))}</span></button>` + renderUserRow() : isDockMaster() ? ['dock-walk', 'berths'].map((route, i) =>
+  scroll.innerHTML = isInspectorUser() ? ['my-inspections','procedures'].map((route,i)=>`<button class="drawer-item" type="button" data-item-id="${route}" data-route="#/${route}" style="min-height:48px"><span class="drawer-item-label">${escapeHtml(t(i?'Procedures':'My Inspections'))}</span></button>`).join('') + renderUserRow() : isStaffWorkUser() ? `<button class="drawer-item" type="button" data-item-id="my-work" data-route="#/my-work" style="min-height:48px"><span class="drawer-item-label">${escapeHtml(t('My Work'))}</span></button>` + renderUserRow() : isDockMaster() ? ['dock-walk', 'berths'].map((route, i) =>
     `<button class="drawer-item" type="button" data-item-id="${route}" data-route="#/${route}" style="min-height:48px"><span class="drawer-item-label">${escapeHtml(t(i ? 'Berths' : 'Dock Walk'))}</span></button>`).join('') + renderUserRow() :
     `<button class="drawer-item" type="button" data-item-id="home"
       data-route="#/home" style="min-height:44px;margin-bottom:8px;">
@@ -290,7 +292,7 @@ function renderSection(section) {
         ${ICONS.chevron}
       </button>
       <div class="drawer-section-items">
-        ${section.items.filter(item => (!['staff-work','dock-walk-review'].includes(item.id) || ['admin','manager'].includes(store.activeRole)) && (item.id !== 'user-mgmt' || store.activeRole === 'admin')).map(item => `
+        ${section.items.filter(item => (!['staff-work','dock-walk-review','inspection-review','inspection-report'].includes(item.id) || ['admin','manager'].includes(store.activeRole)) && (item.id !== 'user-mgmt' || store.activeRole === 'admin')).map(item => `
           <button
             class="drawer-item"
             type="button"
@@ -366,7 +368,7 @@ export function applySelection() {
 export function goHome() {
   lastSelectedId = 'home';
   if (!isDesktopDrawer()) closeDrawer();
-  location.hash = isDockMaster() ? '#/dock-walk' : isStaffWorkUser() ? '#/my-work' : '#/home';
+  location.hash = isInspectorUser() ? '#/my-inspections' : isDockMaster() ? '#/dock-walk' : isStaffWorkUser() ? '#/my-work' : '#/home';
   applySelection();
 }
 

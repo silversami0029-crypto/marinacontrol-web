@@ -1,7 +1,8 @@
+import {mountInspectionWorkScreen,unmountInspectionWorkScreen} from './screens/InspectionWorkScreen.js';
 import {sessionTimeout} from './util/SessionTimeout.js';
 import {mountDockWalkReviewScreen,unmountDockWalkReviewScreen} from './screens/DockWalkReviewScreen.js';
 import { mountStaffWorkScreen, unmountStaffWorkScreen } from './screens/StaffWorkScreen.js';
-import { isDockMaster, dockMasterRouteAllowed, isStaffWorkUser, staffWorkRouteAllowed } from './roles.js';
+import { isDockMaster, dockMasterRouteAllowed, isStaffWorkUser, staffWorkRouteAllowed, isInspectorUser, inspectorRouteAllowed } from './roles.js';
 import { mountDockWalkScreen, unmountDockWalkScreen } from './screens/DockWalkScreen.js';
 import { italianUI as itUI } from './i18n.js';
 import { mountUSafeScreen, unmountUSafeScreen } from './screens/USafeScreen.js';
@@ -19,7 +20,7 @@ import { wireBottomNav } from './components/BottomNav.js';
 import { mountAssignedYachtBoats, mountBoatsScreen, unmountAssignedYachtBoats } from './screens/BoatsScreen.js';
 import { mountLoginScreen } from './screens/LoginScreen.js';
 import { watchAuth, loadUserProfile, reportSessionError, getCurrentAuthUser } from './auth.js';
-import { mountReportsScreen } from './screens/ReportsScreen.js';
+import { mountReportsScreen, unmountReportsScreen } from './screens/ReportsScreen.js';
 import { mountInvoiceScreen, unmountInvoiceScreen } from './screens/InvoiceScreen.js';
 import { mountChecklistScreen, unmountChecklistScreen } from './screens/ChecklistScreen.js';
 import { mountShiftScheduleScreen, unmountShiftScheduleScreen } from './screens/ShiftScheduleScreen.js';
@@ -60,6 +61,9 @@ const yachtToolCleanup = {
   '/crew': unmountCrewManagementScreen,
 };
 const screenCleanup = {
+  '/reports': unmountReportsScreen,
+  '/my-inspections': unmountInspectionWorkScreen,
+  '/inspection-review': unmountInspectionWorkScreen,
   '/my-work': unmountStaffWorkScreen,
   '/staff-work': unmountStaffWorkScreen,
   '/dock-walk-review': unmountDockWalkReviewScreen,
@@ -80,6 +84,8 @@ function leaveToolScreen() {
 }
 
 const routes = {
+  '/my-inspections': mountInspectionWorkScreen,
+  '/inspection-review': mountInspectionWorkScreen,
   '/my-work': mountStaffWorkScreen,
   '/staff-work': mountStaffWorkScreen,
   '/dock-walk-review': mountDockWalkReviewScreen,
@@ -151,6 +157,8 @@ function navigate() {
     location.hash = '#/dock-walk';
     return;
   }
+  if (authed && isInspectorUser() && !inspectorRouteAllowed(route)) { location.hash = '#/my-inspections'; return; }
+  if (authed && route === '/inspection-review' && !['admin','manager'].includes(store.activeRole)) { location.hash = '#/home'; return; }
   if (authed && isStaffWorkUser() && !staffWorkRouteAllowed(route)) { location.hash = '#/my-work'; return; }
   if (authed && ['/staff-work','/dock-walk-review'].includes(route) && !['admin','manager'].includes(store.activeRole)) { location.hash = isStaffWorkUser() ? '#/my-work' : '#/home'; return; }
   if (authed && route === '/user-management' && store.activeRole !== 'admin') { location.hash = '#/home'; return; }
@@ -182,7 +190,7 @@ function navigate() {
   showChrome(route !== '/login' && !yachtMode);
   renderYachtNavigation(yachtMode ? route : null);
   document.querySelectorAll('.nav-item[data-route]').forEach(button => {
-    button.style.display = (isDockMaster() && !dockMasterRouteAllowed(button.dataset.route)) || (isStaffWorkUser() && !staffWorkRouteAllowed(button.dataset.route)) ? 'none' : '';
+    button.style.display = (isInspectorUser() && !inspectorRouteAllowed(button.dataset.route)) || (isDockMaster() && !dockMasterRouteAllowed(button.dataset.route)) || (isStaffWorkUser() && !staffWorkRouteAllowed(button.dataset.route)) ? 'none' : '';
   });
 
   const isBoatDashboard = route === '/dashboard' && location.hash.includes('boatId=');
@@ -234,7 +242,7 @@ function applyMarina(marina, yacht = null) {
   store.activeRole = marina?.role || '';
   // Existing screens using userProfile.role also see the selected role.
   store.userProfile = baseProfile ? { ...baseProfile, role: store.activeRole } : null;
-  if (!marina || isDockMaster() || isStaffWorkUser()) return;
+  if (!marina || isDockMaster() || isStaffWorkUser() || isInspectorUser()) return;
   if (marina.clientType === 'yacht_operator') {
     if (yacht) {
       store.boats = [yacht];

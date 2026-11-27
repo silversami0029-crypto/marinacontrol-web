@@ -1,3 +1,4 @@
+import {mountInspectionReport,unmountInspectionReport} from './InspectionReportView.js';
 import { italianUI as itUI } from '../i18n.js';
 import { money, totalsText, currencyTotals, savedCurrency } from '../util/BillingCurrency.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -10,7 +11,9 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { db } from '../firebase.js';
 
-const TABS = ['Unpaid', 'Expiring', 'Occupancy', 'Revenue'];
+const TABS = ['Unpaid', 'Expiring', 'Occupancy', 'Revenue', 'Inspections'];
+let reportGeneration=0;
+export function unmountReportsScreen(){reportGeneration++;unmountInspectionReport();document.getElementById('screen')?.classList.remove('rp-screen');}
 let currentTab = 0;
 let invoicesCache = [];
 let documentsCache = [];
@@ -22,12 +25,14 @@ let revenueFilters = { category: 'ALL', dateRange: 'ALL' };
 
 export async function mountReportsScreen() {
 
+  unmountReportsScreen();const generation=reportGeneration;invoicesCache=[];documentsCache=[];berthsCache=[];boatsCache={};
+  const canReport=['admin','manager'].includes(store.activeRole)&&store.activeMarina?.clientType!=='yacht_operator';
   const screen = document.getElementById('screen');
   screen.classList.add('rp-screen');
 
   const params = new URLSearchParams(location.hash.split('?')[1] || '');
   currentTab = Number(params.get('tab') || 0);
-  if (currentTab < 0 || currentTab > 3) currentTab = 0;
+  if (!Number.isInteger(currentTab) || currentTab < 0 || currentTab > 4 || currentTab===4&&!canReport) currentTab = 0;
 
   screen.innerHTML = `
     <div class="rp-header" id="rpHeader">
@@ -54,7 +59,7 @@ export async function mountReportsScreen() {
     </div>
 
     <div class="rp-tabs" id="rpTabs">
-      ${TABS.map((label, i) => `
+      ${TABS.map((label, i) => i===4&&!canReport?'': `
         <button type="button" class="rp-tab${i === currentTab ? ' is-active' : ''}" data-rp-tab="${i}">${tr(label)}</button>
       `).join('')}
     </div>
@@ -95,11 +100,12 @@ export async function mountReportsScreen() {
   // Single handler — always exports whichever tab is active
   document.getElementById('rpExport')?.addEventListener('click', () => exportReport(currentTab));
 
-  await loadAll();
-  renderTab();
+  if(currentTab===4){renderTab();return;}
+  await loadAll(generation);
+  if(generation===reportGeneration)renderTab();
 }
 
-async function loadAll() {
+async function loadAll(generation) {
   const clientId = Number(store.activeClientId);
   if (!clientId) return;
 
@@ -111,6 +117,7 @@ async function loadAll() {
       getDocs(query(collection(db, 'boats'),      where('clientId', '==', clientId)))
     ]);
 
+    if(generation!==reportGeneration||clientId!==Number(store.activeClientId))return;
     invoicesCache = invSnap.docs.map(d => ({ _docId: d.id, ...d.data() }));
     documentsCache = docSnap.docs.map(d => ({ _docId: d.id, ...d.data() }));
     berthsCache = berthSnap.docs.map(d => ({ _docId: d.id, ...d.data() }));
@@ -127,6 +134,8 @@ async function loadAll() {
 }
 
 function renderTab() {
+  unmountInspectionReport();const footer=document.getElementById('rpExport');if(footer)footer.hidden=false;
+  if(currentTab===4)return mountInspectionReport(document.getElementById('rpBody'));
   if (currentTab === 0) return renderUnpaid();
   if (currentTab === 1) return renderExpiring();
   if (currentTab === 2) return renderOccupancy();
@@ -550,7 +559,7 @@ async function exportReport(tab) {
     });
   }
   const { jsPDF } = window.jspdf;
-  const titles = ['Unpaid Invoices', 'Expiring Documents', 'Occupancy', 'Revenue'];
+  const titles = ['Unpaid Invoices', 'Expiring Documents', 'Occupancy', 'Revenue', 'Inspections'];
   const title = titles[tab] || itUI('Report');
   const generated = new Date().toLocaleString(uiLocale());
 

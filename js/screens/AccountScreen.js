@@ -1,4 +1,4 @@
-import { isStaffWorkUser } from '../roles.js';
+import { isStaffWorkUser, isInspectorUser } from '../roles.js';
 import { showAccountDeletionSheet } from './AccountDeletionSheet.js';
 import { showEditProfileSheet } from './EditProfileSheet.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -94,7 +94,7 @@ export function mountAccountScreen() {
           <span class="account-item-chevron">${ICONS.chevron}</span>
         </button>
 
-        ${yachtMode || isStaffWorkUser() ? '' : `<button type="button" class="account-item" id="btnManageMarinas">
+        ${yachtMode || isStaffWorkUser() || isInspectorUser() ? '' : `<button type="button" class="account-item" id="btnManageMarinas">
           <span class="account-item-icon">${ICONS.anchor}</span>
           <span class="account-item-text">${t("Manage Marinas")}</span>
           <span class="account-item-chevron">${ICONS.chevron}</span>

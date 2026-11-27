@@ -22,6 +22,7 @@ export function showReportsHelp() {
       ${step('3', itUI('Berth Occupancy'), itUI('View current berth usage, occupancy rates, and average stay duration.'))}
       ${step('4', itUI('Revenue'), itUI('Filter by category and date range. Tap the chart button for visual breakdown.'))}
 
+      ${step('5',itUI('Inspections'),itUI('Managers and administrators can filter inspection records, review failed checks and export CSV/PDF. Approval does not mean failed equipment was repaired. Open an inspection for its full notes and photos.'))}
       <div class="help-divider"></div>
 
       <div class="rp-help-heading">${tr("📄 Exporting Reports")}</div>

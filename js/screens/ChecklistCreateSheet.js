@@ -13,7 +13,7 @@ const DEPARTURE_ITEMS = [
   ['Navigation', 'Check navigation equipment and communications']
 ];
 
-export const canEditChecklists = () => ['admin', 'manager', 'staff', 'inspector'].includes(store.activeRole);
+export const canEditChecklists = () => (['admin', 'manager'].includes(store.activeRole) || store.activeMarina?.clientType === 'yacht_operator' && ['staff', 'inspector'].includes(store.activeRole));
 
 function parseCsv(text) {
   const rows = [];

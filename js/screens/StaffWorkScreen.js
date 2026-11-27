@@ -1,3 +1,4 @@
+import {clearFieldError,revealFieldErrors} from '../util/WorkFormFeedback.js';
 import {showStaffWorkHelp} from './StaffWorkHelp.js';
 import {store} from '../store.js';
 import {t} from '../i18n.js';
@@ -29,7 +30,7 @@ function dialog(title,html) {
   const close=()=>{backdrop.remove();sheet.remove();};backdrop.onclick=()=>{if(!sheet.dataset.busy)close();};sheet.querySelector('[data-sheet-close]').onclick=()=>{if(!sheet.dataset.busy)close();};
   return {sheet,close};
 }
-function status(sheet,message) {const el=sheet.querySelector('[data-work-status]');if(el)el.textContent=String(message||'');}
+function status(sheet,message) {const el=sheet.querySelector('[data-work-status]');if(el){el.textContent=String(message||'');el.dataset.kind='';}}
 async function busy(sheet,fn) {
   const focused=document.activeElement;
   sheet.dataset.busy='1';const controls=[...sheet.querySelectorAll('button,input,select,textarea')];controls.forEach(c=>c.disabled=true);status(sheet,t('Saving…'));
@@ -84,6 +85,7 @@ export function mountStaffWorkScreen(){
 }
 export async function openStaffWorkDetail(workId,onChanged=()=>{}) {
   const {sheet,close}=dialog(t('Work details'),`<p>${L('Loading…')}</p>`);
+  let noteDraft='';
   async function render(){
     const result=await staffWork('DETAIL',{workId});if(!sheet.isConnected)return;
     const item=result.item,manage=result.canManage;
@@ -91,21 +93,24 @@ export async function openStaffWorkDetail(workId,onChanged=()=>{}) {
       ${item.location?`<p>${esc(item.location)}</p>`:''}${item.dueDate?`<p>${L('Due')}: ${esc(item.dueDate)}</p>`:''}<p style="white-space:pre-wrap">${esc(item.instructions)}</p>
       ${item.managerNote?`<p><strong>${L('Manager feedback')}:</strong> ${esc(item.managerNote)}</p>`:''}
       ${manage&&!['COMPLETED','ARCHIVED','DEFERRED'].includes(item.stage)?`<p>${['LINK_CHANGED','ACCESS_CHANGED'].includes(item.delivery)?L('The crew account link or access changed. Check Crew account links, then reassign this task to the current Staff login.'):''}</p><button type="button" class="dash-filter" data-work-reassign>${L('Assign / reassign work')}</button>`:''}
-      <label>${L('Update / completion note')}<textarea data-work-note maxlength="4000" rows="4" style="${style}"></textarea></label>
+      ${['ASSIGNED','IN_PROGRESS','BLOCKED'].includes(item.stage)||manage&&item.stage==='AWAITING_REVIEW'?`<label>${L(!manage&&item.stage==='IN_PROGRESS'?'Completion note — required to submit':manage&&item.stage==='AWAITING_REVIEW'?'Review note — required when returning':'Update note')}<textarea data-work-note maxlength="4000" rows="4" placeholder="${L(manage?'Explain what needs changing if returning the work.':'Summarise the work done and anything needing attention.')}" style="${style}">${esc(noteDraft)}</textarea></label><p style="font-size:14px;color:#B9C4CF">${L(manage?'Add feedback before returning work for follow-up.':'Enter a note before submitting, reporting a blocker or adding an update.')}</p>`:''}
       <div>${!manage&&['ASSIGNED','BLOCKED'].includes(item.stage)?button('START','Start / resume work'):''}
       ${!manage&&['ASSIGNED','IN_PROGRESS'].includes(item.stage)?button('BLOCK','Report a blocker'):''}
       ${!manage&&item.stage==='IN_PROGRESS'?button('SUBMIT','Submit for review'):''}
-      ${!['COMPLETED','WITHDRAWN','ARCHIVED','DEFERRED','RECORDED_ONLY','UNASSIGNED'].includes(item.stage)?button('NOTE','Add note'):''}
+      ${['ASSIGNED','IN_PROGRESS','BLOCKED'].includes(item.stage)?button('NOTE','Add note'):''}
       ${manage&&item.stage==='AWAITING_REVIEW'?button('APPROVE','Approve completion')+button('RETURN','Return for follow-up'):''}</div>
-      ${!manage&&!['COMPLETED','WITHDRAWN','ARCHIVED','DEFERRED','RECORDED_ONLY','UNASSIGNED'].includes(item.stage)?`<label>${L('Add photo')}<input data-work-photo type="file" accept="image/*" style="${style}"></label>`:''}
+      ${!manage&&['ASSIGNED','IN_PROGRESS','BLOCKED'].includes(item.stage)?`<label>${L('Add photo')}<input data-work-photo type="file" accept="image/*" style="${style}"></label>`:''}
       <p data-work-status role="status" aria-live="polite"></p><h4>${L('Updates and evidence')}</h4><div>${result.events.map(event=>`<div style="padding:12px 0;border-top:1px solid #737D89"><strong>${esc(stageLabel(event.action))}</strong><p style="white-space:pre-wrap">${esc(event.note)}</p><small>${esc(new Date(event.createdAt).toLocaleString())}</small>${event.photo?`<div><button type="button" class="dash-filter" data-event-photo="${esc(event.docId)}">${L('View photo')}</button></div>`:''}</div>`).join('')||L('No updates yet.')}</div>`;
     sheet.querySelector('[data-work-reassign]')?.addEventListener('click',()=>{close();openStaffWorkAssign({kind:item.kind,sourceDocId:item.sourceDocId,crewDocumentId:item.crewDocumentId,title:item.title},onChanged);});
-    sheet.querySelectorAll('[data-work-action]').forEach(b=>b.onclick=()=>busy(sheet,async()=>{
-      const note=sheet.querySelector('[data-work-note]').value;
-      await staffWork('UPDATE',{workId,revision:item.revision,command:b.dataset.workAction,note});await render();onChanged();
-    }));
+    sheet.querySelector('[data-work-note]')?.addEventListener('input',event=>{noteDraft=event.target.value;clearFieldError(event.target);});
+    sheet.querySelectorAll('[data-work-action]').forEach(b=>b.onclick=()=>{
+      const field=sheet.querySelector('[data-work-note]'),command=b.dataset.workAction;
+      const messages={SUBMIT:'Add a completion note before submitting for review.',NOTE:'Enter an update before adding a note.',BLOCK:'Explain what is stopping this work.',RETURN:'Explain what the staff member needs to change.'};
+      if(messages[command]&&!field.value.trim()){revealFieldErrors(sheet,[[field,messages[command]]]);return;}
+      noteDraft=field.value;busy(sheet,async()=>{await staffWork('UPDATE',{workId,revision:item.revision,command,note:noteDraft});noteDraft='';await render();onChanged();});
+    });
     sheet.querySelector('[data-work-photo]')?.addEventListener('change',event=>busy(sheet,async()=>{
-      const file=event.target.files[0];if(!file)return;
+      const file=event.target.files[0];if(!file)return;noteDraft=sheet.querySelector('[data-work-note]').value;
       const base64=await jpegEvidence(file);await staffWork('UPLOAD_PHOTO',{workId,revision:item.revision,base64,note:sheet.querySelector('[data-work-note]').value});await render();onChanged();
     }));
     sheet.querySelectorAll('[data-event-photo]').forEach(b=>b.onclick=()=>busy(sheet,async()=>{
@@ -127,11 +132,10 @@ export async function openStaffWorkLinks(crewDocumentId='') {
       <p>${L('Linking does not transfer old work. Assign or reassign work after linking to send a task alert.')}</p>${button('link','Save link')}<p data-work-status role="status"></p>`;
     const crewSelect=sheet.querySelector('[data-link-crew]'),userSelect=sheet.querySelector('[data-link-user]');
     const sync=()=>{userSelect.value=setup.crew.find(c=>c.docId===crewSelect.value)?.linkedUid||'';};crewSelect.onchange=sync;sync();
-    sheet.querySelector('[data-work-action]').onclick=()=>busy(sheet,async()=>{
-      if(!crewSelect.value)throw Error(t('Choose a crew record.'));
-      await staffWork('LINK_CREW',{crewDocumentId:crewSelect.value,targetUid:userSelect.value});
-      setup.crew.find(c=>c.docId===crewSelect.value).linkedUid=userSelect.value;
-    });
+    sheet.querySelector('[data-work-action]').onclick=()=>{
+      if(!crewSelect.value){revealFieldErrors(sheet,[[crewSelect,'Choose a crew record.']]);return;}
+      busy(sheet,async()=>{await staffWork('LINK_CREW',{crewDocumentId:crewSelect.value,targetUid:userSelect.value});setup.crew.find(c=>c.docId===crewSelect.value).linkedUid=userSelect.value;});
+    };
   }catch(error){status(sheet,error.message);}
 }
 export async function openStaffWorkAssign(source={},onChanged=()=>{}) {
@@ -145,10 +149,9 @@ export async function openStaffWorkAssign(source={},onChanged=()=>{}) {
     sheet.querySelector('[data-work-body]').innerHTML=`<label>${L('Task')}<select data-assign-source style="${style}"><option value="">${L('Choose task')}</option>${sources.map((s,i)=>`<option value="${i}"${i===chosen?' selected':''}>${esc(s.title)} · ${esc(s.kind)}</option>`).join('')}</select></label>
       <label>${L('Crew')}<select data-assign-crew style="${style}"><option value="">${L('Unassign')}</option>${setup.crew.map(c=>`<option value="${esc(c.docId)}"${c.docId===source.crewDocumentId?' selected':''}>${esc(c.name)} · ${c.linkedUid?L('Linked sign-in'):L('No sign-in alerts')}</option>`).join('')}</select></label>
       <p>${L('Without a linked Staff account, the assignment records responsibility but sends no in-app alert.')}</p>${setup.limited?`<p>${L('This picker shows a limited source list. Open Assign Owner from a specific maintenance task to select it directly.')}</p>`:''}${button('assign','Save assignment')}<p data-work-status role="status"></p>`;
-    sheet.querySelector('[data-work-action]').onclick=()=>busy(sheet,async()=>{
-      const selected=sheet.querySelector('[data-assign-source]').value;if(selected==='')throw Error(t('Choose a task.'));
-      const row=sources[Number(selected)];
-      await staffWork('ASSIGN',{kind:row.kind,sourceDocId:row.docId,crewDocumentId:sheet.querySelector('[data-assign-crew]').value||null});onChanged();close();
-    });
+    sheet.querySelector('[data-work-action]').onclick=()=>{
+      const field=sheet.querySelector('[data-assign-source]');if(field.value===''){revealFieldErrors(sheet,[[field,'Choose a task to assign.']]);return;}
+      const row=sources[Number(field.value)];busy(sheet,async()=>{await staffWork('ASSIGN',{kind:row.kind,sourceDocId:row.docId,crewDocumentId:sheet.querySelector('[data-assign-crew]').value||null});onChanged();close();});
+    };
   }catch(error){status(sheet,error.message);}
 }
