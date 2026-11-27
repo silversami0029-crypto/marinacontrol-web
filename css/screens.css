@@ -208,7 +208,7 @@ body {
 .login-logo-circle {
   width: 80px; height: 80px;
   border-radius: 50%;
-  background: #FFFFFF;
+  background: transparent;
   display: grid; place-items: center;
   overflow: hidden;
 }
