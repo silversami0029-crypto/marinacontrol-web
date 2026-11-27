@@ -1,3 +1,5 @@
+import { openStaffWorkLinks } from './StaffWorkScreen.js';
+import { canManageWork } from '../util/StaffWorkApi.js';
 import { crewJobRoleText } from '../util/CrewRoles.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
@@ -261,6 +263,7 @@ function showCrewDetail(member) {
     </div>
 
     <div class="csv-info-actions">
+      ${canManageWork() ? `<button type="button" class="csv-btn" id="cmLinkAccount">${tr('Link Staff sign-in account')}</button>` : ''}
       <button type="button" class="csv-btn csv-btn--cancel" id="cmCloseDetail">${tr("Close")}</button>
     </div>
   `;
@@ -279,6 +282,7 @@ function showCrewDetail(member) {
 
   backdrop.addEventListener('click', close);
   sheet.querySelector('#cmCloseDetail').addEventListener('click', close);
+  sheet.querySelector('#cmLinkAccount')?.addEventListener('click',()=>{close();openStaffWorkLinks(member._docId);});
   sheet.querySelector('#iv-close').addEventListener('click', close);
 }
 

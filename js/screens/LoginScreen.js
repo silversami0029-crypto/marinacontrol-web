@@ -3,7 +3,7 @@ import { t, getLocale, languagePicker } from '../i18n.js';
 // js/screens/LoginScreen.js
 // Mirrors activity_login.xml + LoginActivity.handleSignIn()
 
-import { login, resetPassword, friendlyError, joinMarinaWithCode } from '../auth.js';
+import { login, resetPassword, friendlyError, joinMarinaWithCode, getSessionError, getCurrentAuthUser, resumeLogin, requestVerificationEmail, logout } from '../auth.js';
 
 const LOGO_SVG = `
 <div class="login-logo-circle">
@@ -52,7 +52,13 @@ export function mountLoginScreen() {
             <button type="button" id="forgotBtn">${t("Reset password?")}</button>
           </div>
 
-          <div class="login-error" id="loginError" hidden></div>
+          <div class="login-error" id="loginError" hidden role="status" aria-live="polite"></div>
+          <div id="sessionActions" hidden>
+            <p id="sessionAccount"></p>
+            <button type="button" class="login-secondary" id="verifyEmail" hidden>${t("Send verification email")}</button>
+            <button type="button" class="login-secondary" id="resumeSession">${t("Retry opening marina")}</button>
+            <button type="button" class="login-secondary" id="useAnotherAccount">${t("Use another account")}</button>
+          </div>
 
           <button type="submit" class="login-submit" id="loginSubmit">${t("Sign In")}</button>
 
@@ -85,6 +91,22 @@ function wireLoginForm() {
   const toggle   = document.getElementById('pwToggle');
   const forgot   = document.getElementById('forgotBtn');
   const join     = document.getElementById('joinBtn');
+
+  const sessionActions=document.getElementById('sessionActions'),verify=document.getElementById('verifyEmail'),resume=document.getElementById('resumeSession');
+  function updateSessionActions(){
+    const user=getCurrentAuthUser();
+    if(user&&!email.value)email.value=user.email||'';
+    sessionActions.hidden=!user||email.value.trim().toLowerCase()!==String(user.email||'').toLowerCase();
+    document.getElementById('sessionAccount').textContent=user?t('Signed in as')+' '+user.email:'';
+    verify.hidden=!user||user.emailVerified;resume.textContent=t(user&&!user.emailVerified?"I've verified my email — continue":"Retry opening marina");
+    if(user&&!email.value)email.value=user.email||'';
+  }
+  function signedIn(){window.dispatchEvent(new CustomEvent('marina:login-complete'));}
+  verify.onclick=async()=>{verify.disabled=true;try{await requestVerificationEmail();showErr(t('Verification email sent. Check your inbox, verify the address, then return here and continue.'),'ok');}catch(error){showErr(friendlyError(error));}finally{verify.disabled=false;}};
+  resume.onclick=async()=>{setLoading(true);try{await resumeLogin();signedIn();}catch(error){showErr(friendlyError(error));}finally{setLoading(false);updateSessionActions();}};
+  document.getElementById('useAnotherAccount').onclick=async()=>{try{await logout();sessionActions.hidden=true;email.value='';password.value='';errEl.hidden=true;}catch(error){showErr(friendlyError(error));}};
+  email.addEventListener('input',updateSessionActions);
+  const previousError=getSessionError();if(previousError)showErr(friendlyError(previousError));updateSessionActions();
 
   // Password visibility toggle
   toggle.addEventListener('click', () => {
@@ -177,10 +199,11 @@ function wireLoginForm() {
 
     try {
       await login(e1, p1);
-      // Router will pick up the auth state change and reroute.
+      signedIn();
     } catch (err) {
-      setLoading(false);
       showErr(friendlyError(err));
+    } finally {
+      setLoading(false);updateSessionActions();
     }
   });
 
@@ -191,6 +214,7 @@ function setLoading(on) {
   toggle.disabled = on;
   join.disabled = on;
   forgot.disabled = on;
+  resume.disabled=on;verify.disabled=on;
 
   if (on) {
     submit.style.display = 'none';

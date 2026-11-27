@@ -1,3 +1,5 @@
+import {sessionTimeout} from './util/SessionTimeout.js';
+import {sendEmailVerification} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { italianUI as itUI } from './i18n.js';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 // js/auth.js
@@ -18,55 +20,51 @@ import {
 const functions = getFunctions(auth.app, 'us-central1');
 const bootstrapSession = httpsCallable(functions, 'bootstrapSession');
 
-let sessionPromise = null;
-
-async function ensureSession(user) {
-  if (!user) return null;
-
-  const currentToken = await user.getIdTokenResult();
-  if (Number(currentToken.claims.clientId) > 0) return currentToken;
-
-  if (!sessionPromise) {
-    sessionPromise = (async () => {
-      await bootstrapSession();
-      return user.getIdTokenResult(true);
-    })().finally(() => {
-      sessionPromise = null;
-    });
-  }
-
-  return sessionPromise;
+let sessionJob=null,sessionError=null,observerGeneration=0;
+export const getSessionError=()=>sessionError;
+export const getCurrentAuthUser=()=>auth.currentUser;
+export function reportSessionError(error){if(error&&!error.code)error.code='auth/session-setup';sessionError=error||null;}
+function accountChanged(user){
+ if(auth.currentUser?.uid!==user.uid){const e=Error('The signed-in account changed. Try again.');e.code='auth/session-changed';throw e;}
 }
-
-/** Sign in and establish the secure MarinaControl session. */
-export async function login(email, password) {
-  const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
-  await ensureSession(cred.user);
-  return cred.user;
+async function ensureSession(user,force=false){
+ if(!user)return null;accountChanged(user);
+ if(force&&sessionJob?.uid===user.uid)sessionJob=null;
+ if(!sessionJob||sessionJob.uid!==user.uid){
+  const job={uid:user.uid,promise:null};
+  job.promise=sessionTimeout((async()=>{
+   const token=await user.getIdTokenResult(force);accountChanged(user);
+   if(token.claims.email_verified!==true){const e=Error('Verify your email before opening your marina. Use Send verification email below.');e.code='auth/email-not-verified';throw e;}
+   // Bootstrap once per signed-in session, even when old claims already exist.
+   await bootstrapSession();accountChanged(user);
+   const fresh=await user.getIdTokenResult(true);accountChanged(user);return fresh;
+  })()).catch(error=>{if(sessionJob===job)sessionJob=null;throw error;});
+  sessionJob=job;
+ }
+ return sessionJob.promise;
 }
-
-/** Sign out current user. */
-export async function logout() {
-  await signOut(auth);
+export async function login(email,password){
+ sessionError=null;
+ try{const cred=await sessionTimeout(signInWithEmailAndPassword(auth,email.trim(),password));await ensureSession(cred.user);return cred.user;}
+ catch(error){if(!auth.currentUser||String(auth.currentUser.email||'').toLowerCase()===email.trim().toLowerCase())sessionError=error;throw error;}
 }
-
-/** Send password reset email. */
-export async function resetPassword(email) {
-  await sendPasswordResetEmail(auth, email.trim());
+export async function resumeLogin(){
+ const user=auth.currentUser;if(!user)throw Error('Sign in first.');sessionError=null;
+ try{await sessionTimeout(user.reload());await ensureSession(user,true);return user;}catch(error){if(auth.currentUser?.uid===user.uid)sessionError=error;throw error;}
 }
-
-/** Watch authentication after ensuring tenant claims exist. */
-export function watchAuth(cb) {
-  return onAuthStateChanged(auth, async user => {
-    if (user) {
-      try {
-        await ensureSession(user);
-      } catch (err) {
-        console.error('[auth] session bootstrap failed', err);
-      }
-    }
-    cb(user);
-  });
+export async function requestVerificationEmail(){
+ const user=auth.currentUser;if(!user)throw Error('Sign in with your password first.');
+ await sessionTimeout(sendEmailVerification(user));
+}
+export async function logout(){sessionJob=null;sessionError=null;await signOut(auth);}
+export async function resetPassword(email){await sessionTimeout(sendPasswordResetEmail(auth,email.trim()));}
+export function watchAuth(cb){
+ return onAuthStateChanged(auth,async user=>{
+  const generation=++observerGeneration;
+  if(!user){sessionJob=null;sessionError=null;}
+  try{if(user)await ensureSession(user);if(generation===observerGeneration){sessionError=null;cb(user,null);}}
+  catch(error){if(generation!==observerGeneration)return;sessionError=error;console.error('[auth] session setup failed',error.code||error.message);cb(null,error);}
+ });
 }
 
 /** Load the signed-in user's tenant-scoped profile. */
@@ -83,7 +81,7 @@ export async function loadUserProfile(firebaseUser) {
     where('clientId', '==', clientId)
   );
 
-  const snap = await getDocs(q);
+  const snap = await sessionTimeout(getDocs(q));
 
   if (snap.empty) {
     const q2 = query(
@@ -92,7 +90,7 @@ export async function loadUserProfile(firebaseUser) {
       where('clientId', '==', clientId)
     );
 
-    const snap2 = await getDocs(q2);
+    const snap2 = await sessionTimeout(getDocs(q2));
     if (snap2.empty) return null;
     return normalizeProfile(snap2.docs[0].data(), snap2.docs[0].id, firebaseUser);
   }
@@ -118,6 +116,13 @@ export function friendlyError(err) {
   const code = err?.code || '';
 
   switch (code) {
+    case 'auth/session-setup': return err.message || itUI('Your sign-in was accepted, but marina setup could not finish. Retry opening your marina.');
+    case 'permission-denied': return itUI('Your sign-in was accepted, but marina access was denied. Ask your administrator to check your account.');
+    case 'auth/session-timeout': return itUI('Sign-in setup timed out. Retry opening your marina; you do not need to reset your password.');
+    case 'auth/email-not-verified': return itUI('Your password was accepted. Verify your email before opening your marina.');
+    case 'auth/session-changed': return itUI('The signed-in account changed. Sign in again.');
+    case 'functions/deadline-exceeded':
+    case 'functions/unavailable': return itUI('Marina setup is temporarily unavailable. Please retry.');
     case 'auth/invalid-email': return itUI('Email address is not valid.');
     case 'auth/user-disabled': return itUI('This account has been disabled.');
     case 'auth/user-not-found': return itUI('No account found with that email.');

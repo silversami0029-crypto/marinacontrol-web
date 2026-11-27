@@ -1,3 +1,4 @@
+const canReviewDockWalk=()=>['admin','manager'].includes(store.activeRole);
 import { isDockMaster } from '../roles.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { store } from '../store.js';
@@ -439,7 +440,7 @@ export function mountDockWalkScreen() {
 
   function populateCrew(panel, berth, onlyBoat, selected = '') {
     const select = panel.querySelector('[name=assignedTo]');
-    if (isDockMaster()) { select.closest('label')?.setAttribute('hidden', ''); select.disabled = true; return Promise.resolve(); }
+    if (!canReviewDockWalk()) { select.value=''; select.closest('label')?.setAttribute('hidden', ''); select.disabled = true; return Promise.resolve(); }
     select.disabled = true;
     return crewOptions(berth, onlyBoat).then(names => {
       if (!current() || !panel.isConnected) return;
@@ -559,8 +560,8 @@ export function mountDockWalkScreen() {
       row('Assigned to', item.assignedTo || t('Unassigned')) +
       (item.photoStoragePath === expectedPhoto ? button('photo', 'Inspection photo') : '') +
       (!isDockMaster() && (linked ? button('maintenance', 'View maintenance') :
-        writable() && faults(item).length ? button('create', 'Create maintenance task') : '')) +
-      (!isDockMaster() && writable() ? button('assign', 'Assign to crew') : '') +
+        canReviewDockWalk() && writable() && faults(item).length ? button('create', 'Review issue') : '')) +
+      '' +
       button('history', 'Inspection history') + '<p role="status"></p>');
     on(panel, 'history', () => berthSheet(berth));
     on(panel, 'photo', async () => {
@@ -589,7 +590,7 @@ export function mountDockWalkScreen() {
         }
       } catch (err) { error(panel, err); }
     });
-    on(panel, 'create', () => changeInspection(panel, berth, item, 'create'));
+    on(panel, 'create', () => { closeSheet(); location.hash='#/dock-walk-review?inspectionId='+encodeURIComponent(item._docId||item.cloudId||''); });
     on(panel, 'assign', () => {
       const assign = sheet(t('Assign to crew'), `<label class="add-label">${label('Assigned to')}
         <select class="add-input" name="assignedTo"><option value="">${label('Unassigned')}</option></select>
@@ -604,7 +605,7 @@ export function mountDockWalkScreen() {
 
   async function changeInspection(panel, berth, item, action, assignee) {
     const control = panel.querySelector(`[data-action="${action}"]`);
-    if (isDockMaster() || !writable() || control.disabled) return;
+    if (!canReviewDockWalk() || !writable() || control.disabled) return;
     if(navigator.onLine===false){panel.querySelector('[role=status]').textContent=t('Maintenance creation and assignment need a connection. The recorded inspection is unchanged.');return;}
     control.disabled = true;
     try {

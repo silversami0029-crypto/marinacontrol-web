@@ -1,3 +1,5 @@
+import { openStaffWorkAssign } from './StaffWorkScreen.js';
+import { canManageWork } from '../util/StaffWorkApi.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t } from '../i18n.js';
@@ -121,6 +123,11 @@ export function showTaskMenu(item) {
     </div>
   `;
 
+  if (canManageWork() && !isCompleted) {
+    const assign = document.createElement('button'); assign.type='button';assign.className='sheet-item';assign.textContent=t('Assign work');
+    assign.onclick=()=>{ backdrop.remove();sheet.remove();openStaffWorkAssign({kind:'tasks',sourceDocId:item._docId,title:item.title}); };
+    sheet.append(assign);
+  }
   document.getElementById('modalRoot').append(backdrop, sheet);
   requestAnimationFrame(() => {
     backdrop.classList.add('is-open');
@@ -249,6 +256,11 @@ async function showAssignOwner(item) {
     </div>
   `;
 
+  if (canManageWork() && !isCompleted) {
+    const assign = document.createElement('button'); assign.type='button';assign.className='sheet-item';assign.textContent=t('Assign work');
+    assign.onclick=()=>{ backdrop.remove();sheet.remove();openStaffWorkAssign({kind:'tasks',sourceDocId:item._docId,title:item.title}); };
+    sheet.append(assign);
+  }
   document.getElementById('modalRoot').append(backdrop, sheet);
   requestAnimationFrame(() => {
     backdrop.classList.add('is-open');

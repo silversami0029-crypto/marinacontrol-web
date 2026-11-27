@@ -1,3 +1,4 @@
+import { isStaffWorkUser } from '../roles.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/NotificationsScreen.js
@@ -31,6 +32,7 @@ export function mountNotificationsScreen() {
     <div id="ntList" class="nt-list"></div>
     <button id="ntClear" class="nt-clear">${tr("Remove read notifications")}</button>`;
 
+  if(isStaffWorkUser()) document.querySelector('.nt-filters').hidden=true;
   document.getElementById('ntBack').onclick = () => history.back();
   document.getElementById('ntMarkAll').onclick = markAllRead;
   document.getElementById('ntClear').onclick = clearRead;
@@ -51,7 +53,7 @@ function render() {
   const listEl = document.getElementById('ntList');
   if (!listEl) return;
   const items = store.notifications.filter(n =>
-    filter === 'ALL' || String(n.type || '').startsWith(filter));
+    filter === 'ALL' || (filter === 'TASK' && n.type === 'STAFF_WORK') || String(n.type || '').startsWith(filter));
 
   const clearButton = document.getElementById('ntClear');
   if (clearButton) clearButton.disabled = !store.notifications.some(n => n.read);
@@ -80,6 +82,8 @@ async function openNotification(item) {
   if (!item) return;
   if (!item.read) await updateDoc(doc(db, 'notifications', item._docId), { read: true });
   const type = String(item.type || '');
+  if(type === 'DOCK_WALK_REVIEW') { location.hash = '#/dock-walk-review?inspectionId=' + encodeURIComponent(item.inspectionId || ''); return; }
+  if(type === 'STAFF_WORK') { location.hash = (isStaffWorkUser() ? '#/my-work' : '#/staff-work') + '?workId=' + encodeURIComponent(item.workItemId || ''); return; }
   if (type.startsWith('BOOKING')) {
     location.hash = '#/booking-requests';
   }
@@ -101,6 +105,8 @@ async function clearRead() {
 }
 
 function formatType(type) {
+  if(type==='DOCK_WALK_REVIEW') return tr('Dock Walk review');
+  if(type==='STAFF_WORK') return tr('Work update');
   const names = { BOOKING_REQUEST:'Booking request', BOOKING_REPLY:'Owner reply',
     BOOKING_REPLY_REVIEW:'Reply needs review' };
   return tr(names[type] || String(type || itUI('Notification')).replaceAll('_', ' '));

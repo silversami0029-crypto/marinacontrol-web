@@ -1,4 +1,7 @@
-import { isDockMaster, dockMasterRouteAllowed } from './roles.js';
+import {sessionTimeout} from './util/SessionTimeout.js';
+import {mountDockWalkReviewScreen,unmountDockWalkReviewScreen} from './screens/DockWalkReviewScreen.js';
+import { mountStaffWorkScreen, unmountStaffWorkScreen } from './screens/StaffWorkScreen.js';
+import { isDockMaster, dockMasterRouteAllowed, isStaffWorkUser, staffWorkRouteAllowed } from './roles.js';
 import { mountDockWalkScreen, unmountDockWalkScreen } from './screens/DockWalkScreen.js';
 import { italianUI as itUI } from './i18n.js';
 import { mountUSafeScreen, unmountUSafeScreen } from './screens/USafeScreen.js';
@@ -15,7 +18,7 @@ import { renderTopBar, resetTopBarNotifications } from './components/TopBar.js';
 import { wireBottomNav } from './components/BottomNav.js';
 import { mountAssignedYachtBoats, mountBoatsScreen, unmountAssignedYachtBoats } from './screens/BoatsScreen.js';
 import { mountLoginScreen } from './screens/LoginScreen.js';
-import { watchAuth, loadUserProfile } from './auth.js';
+import { watchAuth, loadUserProfile, reportSessionError, getCurrentAuthUser } from './auth.js';
 import { mountReportsScreen } from './screens/ReportsScreen.js';
 import { mountInvoiceScreen, unmountInvoiceScreen } from './screens/InvoiceScreen.js';
 import { mountChecklistScreen, unmountChecklistScreen } from './screens/ChecklistScreen.js';
@@ -57,6 +60,9 @@ const yachtToolCleanup = {
   '/crew': unmountCrewManagementScreen,
 };
 const screenCleanup = {
+  '/my-work': unmountStaffWorkScreen,
+  '/staff-work': unmountStaffWorkScreen,
+  '/dock-walk-review': unmountDockWalkReviewScreen,
   ...yachtToolCleanup,
   '/my-yacht/details': unmountAssignedYachtBoats,
   '/boats': unmountAssignedYachtBoats,
@@ -74,6 +80,9 @@ function leaveToolScreen() {
 }
 
 const routes = {
+  '/my-work': mountStaffWorkScreen,
+  '/staff-work': mountStaffWorkScreen,
+  '/dock-walk-review': mountDockWalkReviewScreen,
   '/usafe': mountUSafeScreen,
   '/home':             mountHomeScreen,
   '/my-yacht':         mountMyYachtScreen,
@@ -142,6 +151,9 @@ function navigate() {
     location.hash = '#/dock-walk';
     return;
   }
+  if (authed && isStaffWorkUser() && !staffWorkRouteAllowed(route)) { location.hash = '#/my-work'; return; }
+  if (authed && ['/staff-work','/dock-walk-review'].includes(route) && !['admin','manager'].includes(store.activeRole)) { location.hash = isStaffWorkUser() ? '#/my-work' : '#/home'; return; }
+  if (authed && route === '/user-management' && store.activeRole !== 'admin') { location.hash = '#/home'; return; }
   const yachtMode = authed && store.activeMarina.clientType === 'yacht_operator';
   if (yachtMode) {
     const yachtPage = route === '/account' || route === '/my-yacht/details';
@@ -170,7 +182,7 @@ function navigate() {
   showChrome(route !== '/login' && !yachtMode);
   renderYachtNavigation(yachtMode ? route : null);
   document.querySelectorAll('.nav-item[data-route]').forEach(button => {
-    button.style.display = isDockMaster() && !dockMasterRouteAllowed(button.dataset.route) ? 'none' : '';
+    button.style.display = (isDockMaster() && !dockMasterRouteAllowed(button.dataset.route)) || (isStaffWorkUser() && !staffWorkRouteAllowed(button.dataset.route)) ? 'none' : '';
   });
 
   const isBoatDashboard = route === '/dashboard' && location.hash.includes('boatId=');
@@ -222,7 +234,7 @@ function applyMarina(marina, yacht = null) {
   store.activeRole = marina?.role || '';
   // Existing screens using userProfile.role also see the selected role.
   store.userProfile = baseProfile ? { ...baseProfile, role: store.activeRole } : null;
-  if (!marina || isDockMaster()) return;
+  if (!marina || isDockMaster() || isStaffWorkUser()) return;
   if (marina.clientType === 'yacht_operator') {
     if (yacht) {
       store.boats = [yacht];
@@ -303,7 +315,7 @@ async function bootstrapUser(firebaseUser) {
   try {
     const profile = await loadUserProfile(firebaseUser);
     if (!profile) throw new Error('User profile unavailable');
-    const marinas = (await getMyMarinas(firebaseUser.uid, profile.userId))
+    const marinas = (await sessionTimeout(getMyMarinas(firebaseUser.uid, profile.userId)))
       .filter(m => Number(m.isActive) === 1);
     if (generation !== sessionGeneration) return;
     let remembered = 0;
@@ -315,7 +327,7 @@ async function bootstrapUser(firebaseUser) {
     let yacht = null;
     if (marina.clientType === 'yacht_operator') {
       try {
-        yacht = await resolveAssignedYacht(firebaseUser.uid, profile.userId, Number(marina.id));
+        yacht = await sessionTimeout(resolveAssignedYacht(firebaseUser.uid, profile.userId, Number(marina.id)));
       } catch (error) {
         console.warn('Assigned yacht could not be loaded', error);
       }
@@ -330,6 +342,7 @@ async function bootstrapUser(firebaseUser) {
   } catch (error) {
     if (generation !== sessionGeneration) return;
     console.error('Marina session bootstrap failed', error);
+    reportSessionError(error);
     store.authUser = null;
     applyMarina(null);
   } finally {
@@ -337,13 +350,20 @@ async function bootstrapUser(firebaseUser) {
   }
 }
 
-watchAuth(async firebaseUser => {
-  await bootstrapUser(firebaseUser);
-  if (!authReady) return;
-  initDrawer();
-  if (!location.hash) location.hash = '#/login';
-  navigate();
-});
+let applicationSession=null;
+async function finishSignIn(firebaseUser,error=null){
+  const key=firebaseUser?.uid||'';
+  if(error)reportSessionError(error);
+  if(firebaseUser&&authReady&&store.authUser?.uid===key&&store.activeMarina){navigate();return;}
+  if(!applicationSession||applicationSession.key!==key){
+    const job={key,promise:null};
+    job.promise=bootstrapUser(firebaseUser).finally(()=>{if(applicationSession===job)applicationSession=null;});applicationSession=job;
+  }
+  await applicationSession.promise;
+  if(!authReady)return;initDrawer();if(!location.hash)location.hash='#/login';navigate();
+}
+watchAuth((firebaseUser,error)=>{finishSignIn(firebaseUser,error).catch(error=>{reportSessionError(error);console.error('Sign-in could not finish',error);});});
+window.addEventListener('marina:login-complete',()=>{finishSignIn(getCurrentAuthUser()).catch(reportSessionError);});
 
 window.addEventListener('hashchange', navigate);
 

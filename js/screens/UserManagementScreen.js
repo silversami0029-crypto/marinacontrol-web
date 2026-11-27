@@ -874,6 +874,11 @@ function showAddUserSheet() {
                autocomplete="new-password"
                required minlength="15" maxlength="128"
                title="${itUI("Use 15 to 128 characters; spaces are allowed.")}">
+        <button type="button" class="dash-filter" data-um-show-password>${tr("Show password")}</button>
+        <label class="add-label" for="um-password-confirm">${tr("Confirm password")}</label>
+        <input class="add-input" id="um-password-confirm" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+        <p>${tr("The new user must verify their email when they first sign in. Crew details do not change sign-in credentials.")}</p>
+
         <small>${itUI("Use 15 to 128 characters; spaces are allowed.")}</small>
 
         <div class="add-section-title"
@@ -923,6 +928,10 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
   const form = sheet.querySelector('#umAddForm');
   const saveButton = sheet.querySelector('#um-save');
 
+  sheet.querySelector('[data-um-show-password]').onclick=()=>{
+    const password=sheet.querySelector('#um-password'),confirm=sheet.querySelector('#um-password-confirm'),show=password.type==='password';
+    password.type=confirm.type=show?'text':'password';sheet.querySelector('[data-um-show-password]').textContent=tr(show?'Hide password':'Show password');
+  };
   form.addEventListener('submit', async event => {
     event.preventDefault();
 
@@ -954,6 +963,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
       return;
     }
 
+    if(password!==sheet.querySelector('#um-password-confirm').value){sheet.querySelector('#um-password-confirm').focus();toast(tr('Passwords do not match.'),{kind:'error'});return;}
     if (password.length < 15 || password.length > 128) {
       sheet.querySelector('#um-password').focus();
       toast(itUI('Password must contain 15 to 128 characters.'), { kind: 'error' });
@@ -980,7 +990,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
       close();
 
       toast(
-        `User created: ${name}`,
+        `User created: ${name}. They must verify their email after signing in.`,
         { kind: 'success' }
       );
 
