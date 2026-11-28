@@ -1,3 +1,4 @@
+import {ensureWorkInputStyles} from '../util/WorkFormFeedback.js';
 import {clearFieldError as clearError,revealFieldErrors as revealErrors} from '../util/WorkFormFeedback.js';
 import {showInspectionHelp} from './InspectionHelp.js';
 import {store} from '../store.js';
@@ -10,6 +11,7 @@ const L=value=>esc(t(value));
 const style='box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border:1px solid #737D89;border-radius:10px;background:#151A20;color:#F5F7F9;font:inherit';
 const button=(action,label)=>`<button type="button" class="dash-filter" data-work-action="${action}" style="min-height:44px;margin:4px">${L(label)}</button>`;
 function ensureStyles(){
+  ensureWorkInputStyles();
   if(document.getElementById('inspectionWorkUiStyles'))return;
   const css=document.createElement('style');css.id='inspectionWorkUiStyles';css.textContent=`
     .inspection-sheet .iw-title{font-size:22px;line-height:1.3;margin:0 0 8px;font-weight:700;}

@@ -1,3 +1,5 @@
+import {showEquipmentWork} from './EquipmentWorkSheet.js';
+import {canManageWork} from '../util/StaffWorkApi.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
@@ -19,10 +21,11 @@ export function showEquipmentDetail(item) {
       ${item.location ? `<div class="md-line"><span class="md-label">${tr("Location:")}</span> <span class="md-value">${escapeHtml(item.location)}</span></div>` : ''}
       ${item.serialNumber ? `<div class="md-line"><span class="md-label">${tr("Serial Number:")}</span> <span class="md-value">${escapeHtml(item.serialNumber)}</span></div>` : ''}
       <div class="md-line"><span class="md-label">${tr("Status:")}</span> <span class="md-value">${escapeHtml(itUI(item.status || 'OPERATIONAL'))}</span></div>
-      ${item.assignedTo ? `<div class="md-line"><span class="md-label">${tr("Assigned To:")}</span> <span class="md-value">${escapeHtml(item.assignedTo)}</span></div>` : ''}
+      ${item.assignedTo ? `<div class="md-line"><span class="md-label">${tr("Responsible person:")}</span> <span class="md-value">${escapeHtml(item.assignedTo)}</span></div>` : ''}
       ${item.notes ? `<div class="md-spacer"></div><div class="md-line"><span class="md-label">${tr("Notes:")}</span> <span class="md-value">${escapeHtml(item.notes)}</span></div>` : ''}
     </div>
 
+    ${canManageWork()?`<button type="button" class="md-close-btn" id="eqAssignWork">${tr('Assign work / view tasks')}</button>`:''}
     <button type="button" class="md-close-btn" id="eqDetailClose">${tr("Close")}</button>
   `;
 
@@ -38,6 +41,7 @@ export function showEquipmentDetail(item) {
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
   };
 
+  sheet.querySelector('#eqAssignWork')?.addEventListener('click',()=>{close();showEquipmentWork(item);});
   backdrop.addEventListener('click', close);
   sheet.querySelector('[data-sheet-close]').addEventListener('click', close);
   sheet.querySelector('#eqDetailClose').addEventListener('click', close);

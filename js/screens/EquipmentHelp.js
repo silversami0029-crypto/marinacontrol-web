@@ -13,7 +13,18 @@ export function showEquipmentHelp() {
     <div class="help-scroll">
       <div class="help-pill">${tr("⚙️ Equipment")}</div>
 
-      <p class="help-desc">${tr("Keep track of all equipment installed on your boat. From engines to electronics, maintain a complete inventory.")}</p>
+      <p class="help-desc">${tr("Keep equipment details together and assign specific jobs to your crew.")}</p>
+      <div class="help-section-title">${tr("Responsible person or Assign work?")}</div>
+      <p class="help-desc"><b>${tr("Set responsible person")}</b> — ${tr("Records who looks after the equipment. This alone does not create a Staff Work job or send an alert.")}</p>
+      <p class="help-desc"><b>${tr("Assign work")}</b> — ${tr("Creates a specific job with instructions, a crew member and an optional due date. The linked Staff account receives the job and an in-app alert.")}</p>
+      <div class="help-section-title">${tr("How to create and complete an equipment job")}</div>
+      ${step('1', tr('Open the equipment menu'), tr('Select the three dots on the equipment record, then choose Assign work. You can also open View → Assign work / view tasks.'))}
+      ${step('2', tr('Describe what needs doing'), tr('Use a clear title, such as Check galley unit power supply. In Instructions, explain what to check and what result to report.'))}
+      ${step('3', tr('Choose the crew member'), tr('Select a crew member with a linked Staff sign-in. If none is available, open Staff Work → Crew account links first. Set a due date and priority if needed, then select Assign work.'))}
+      ${step('4', tr('Staff carry out the job'), tr('The job appears in My Work for the assigned Staff member and in Staff Work for managers. Open it to read the instructions, start work, record an update or photo, and submit for review with a completion note.'))}
+      ${step('5', tr('Manager reviews'), tr('Open Staff Work → Awaiting review. Read the updates and evidence, then approve or return the job for further work. Approval completes the task; equipment condition must be updated separately if it changes.'))}
+      <p class="help-desc">${tr("The Assign work window inside Staff Work assigns existing tasks. Start a new equipment job from the equipment record. Check Existing equipment work before creating the same job again.")}</p>
+      <div class="help-divider"></div>
 
       <div class="help-section-title">${tr("What can you track?")}</div>
 

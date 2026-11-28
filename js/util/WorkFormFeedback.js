@@ -25,3 +25,26 @@ export function revealFieldErrors(sheet,errors){
   const message=sheet.querySelector('[data-work-status],[data-ir-status],p[data-result]');if(message){message.textContent=t('Please complete the highlighted fields.');message.dataset.kind='error';}
   const first=errors.find(([field])=>field)?.[0];if(first){first.focus({preventScroll:true});first.scrollIntoView?.({block:'center',behavior:'auto'});}return true;
 }
+
+/** Consistent editable controls on the work/inspection forms; read-only content is not styled as input. */
+export function ensureWorkInputStyles(){
+  if(document.getElementById('workInputStyles'))return;
+  const style=document.createElement('style');style.id='workInputStyles';style.textContent=`
+    .sheet.staff-work-sheet textarea,.sheet.staff-work-sheet select,.sheet.staff-work-sheet input:not([type="checkbox"]):not([type="radio"]),
+    .sheet.work-input-sheet textarea,.sheet.work-input-sheet select,.sheet.work-input-sheet input:not([type="checkbox"]):not([type="radio"]){
+      background:#2D3E46!important;color:#F5F7F9!important;border:1px solid #8198A6!important;box-sizing:border-box;border-radius:10px;font:inherit;
+    }
+    .sheet.staff-work-sheet textarea::placeholder,.sheet.staff-work-sheet input::placeholder,.sheet.work-input-sheet textarea::placeholder,.sheet.work-input-sheet input::placeholder{color:#C0CFD8;opacity:1;}
+    .sheet.staff-work-sheet :is(textarea,select,input):focus,.sheet.work-input-sheet :is(textarea,select,input):focus{background:#324852!important;border-color:#2196F3!important;outline:2px solid #2196F3;outline-offset:1px;}
+    .sheet.staff-work-sheet :is(textarea,select,input).work-form-invalid[aria-invalid="true"],.sheet.work-input-sheet :is(textarea,select,input).work-form-invalid[aria-invalid="true"]{border:2px solid #FF7676!important;outline:1px solid #FF7676;}
+    .sheet.staff-work-sheet :is(textarea,select,input):disabled,.sheet.work-input-sheet :is(textarea,select,input):disabled{background:#25333B!important;color:#AEBCC5!important;}
+    .sheet.dw-sheet :is(textarea,select,input):not([type="checkbox"]):not([type="radio"]){background:#2D3E46!important;color:#F5F7F9!important;border-color:#8198A6;}
+    .sheet.dw-sheet :is(textarea,select,input):focus{outline:2px solid #2196F3;border-color:#2196F3;}
+    .sheet.work-input-sheet{display:flex;flex-direction:column;overflow:hidden;max-height:88vh;max-height:88dvh;box-sizing:border-box;padding:0;}
+    .work-input-header{display:flex;align-items:center;gap:16px;padding:16px;flex:0 0 auto;}.work-input-header h3{margin:0;flex:1;font-size:20px;}
+    .work-input-body{padding:16px;overflow:auto;min-height:0;flex:1 1 auto;}.work-input-body label{display:block;font-weight:600;margin:12px 0;}
+    .work-input-body input,.work-input-body textarea,.work-input-body select{width:100%;padding:12px;margin-top:7px;min-height:46px;}
+    .work-input-hint{font-size:14px;line-height:1.5;color:#BECBD4;font-weight:400;}.work-input-actions{display:flex;gap:8px;flex-wrap:wrap;padding:16px;flex:0 0 auto;}
+    .work-primary{background:#2196F3!important;color:#071924!important;border-color:#2196F3!important;font-weight:700;}
+  `;document.head.append(style);
+}

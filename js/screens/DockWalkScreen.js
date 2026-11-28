@@ -1,3 +1,4 @@
+import {ensureWorkInputStyles} from '../util/WorkFormFeedback.js';
 const canReviewDockWalk=()=>['admin','manager'].includes(store.activeRole);
 import { isDockMaster } from '../roles.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
@@ -62,6 +63,7 @@ function berthAttachment(key, operation, value) {
 export function unmountDockWalkScreen() { cleanup(); cleanup = () => {}; }
 
 export function mountDockWalkScreen() {
+  ensureWorkInputStyles();
   unmountDockWalkScreen();
   const clientId = store.activeClientId;
   const uid = store.authUser?.uid;

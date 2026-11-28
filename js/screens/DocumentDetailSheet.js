@@ -1,3 +1,5 @@
+import {showDocumentWork} from './DocumentWorkSheet.js';
+import {canManageWork} from '../util/StaffWorkApi.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/DocumentDetailSheet.js
@@ -29,7 +31,7 @@ export function showDocumentDetail(item) {
 
    <div class="sheet-title">${escapeHtml(item.name || itUI('Document'))}</div>
 
-  <button type="button" id="iv-close" aria-label="${itUI("Close invoice sheet")}"
+  <button type="button" id="iv-close" aria-label="${itUI("Close document details")}"
     style="position:absolute;right:0;top:2px;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:#F5F7F9;cursor:pointer;">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
       stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -44,10 +46,11 @@ export function showDocumentDetail(item) {
       <div class="md-line"><span class="md-label">${tr("Type:")}</span> <span class="md-value">${escapeHtml(tr(item.type || '—'))}</span></div>
       <div class="md-line"><span class="md-label">${tr("Status:")}</span> <span class="md-value" style="color:${statusColor};">${escapeHtml(tr(statusText))}</span></div>
       ${item.expiryDate ? `<div class="md-line"><span class="md-label">${tr("Expiry:")}</span> <span class="md-value">${escapeHtml(formatDate(item.expiryDate))}</span></div>` : ''}
-      ${item.assignedTo ? `<div class="md-line"><span class="md-label">${tr("Assigned To:")}</span> <span class="md-value">${escapeHtml(item.assignedTo)}</span></div>` : ''}
+      ${item.assignedTo ? `<div class="md-line"><span class="md-label">${tr("Responsible person:")}</span> <span class="md-value">${escapeHtml(item.assignedTo)}</span></div>` : ''}
       ${item.notes ? `<div class="md-spacer"></div><div class="md-line"><span class="md-label">${tr("Notes:")}</span> <span class="md-value">${escapeHtml(item.notes)}</span></div>` : ''}
     </div>
 
+    ${canManageWork()?`<button type="button" class="md-close-btn" id="docAssignWork">${tr('Assign work / view tasks')}</button>`:''}
     <button type="button" class="md-close-btn" id="docDetailClose">${tr("Close")}</button>
   `;
 
@@ -63,6 +66,7 @@ export function showDocumentDetail(item) {
     setTimeout(() => { backdrop.remove(); sheet.remove(); }, 220);
   };
 
+  sheet.querySelector('#docAssignWork')?.addEventListener('click',()=>{close();setTimeout(()=>showDocumentWork(item),250);});
   backdrop.addEventListener('click', close);
   sheet.querySelector('#docDetailClose').addEventListener('click', close);
   sheet.querySelector('#iv-close').addEventListener('click', close);

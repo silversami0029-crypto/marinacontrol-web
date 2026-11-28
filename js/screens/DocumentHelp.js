@@ -11,8 +11,20 @@ export function showDocumentHelp() {
 
   dialog.innerHTML = `
     <div class="help-scroll">
-      <div class="help-pill">${tr("📄 Import Documents")}</div>
+      <div class="help-pill">${tr("📄 Documents")}</div>
 
+      <p class="help-desc">${tr("Keep document records up to date and assign specific document jobs to your crew.")}</p>
+      <div class="help-section-title">${tr("Responsibility, jobs and renewal")}</div>
+      <p class="help-desc"><b>${tr("Set responsible person")}</b> — ${tr("Records who looks after this document. It does not create a job or send a Staff Work alert.")}</p>
+      <p class="help-desc"><b>${tr("Assign work")}</b> — ${tr("Creates a job such as renewing insurance, obtaining a certificate or checking registration details. The linked Staff member receives the job and an in-app alert.")}</p>
+      ${step('1', tr('Start from the document'), tr('Open its three-dot menu → Assign work, or open document details → Assign work / view tasks. The Assign work button inside Staff Work assigns existing tasks.'))}
+      ${step('2', tr('Explain what needs doing'), tr('Enter a clear job title and instructions. For example: Renew insurance certificate; obtain the replacement and ask the manager to update the document record and expiry date.'))}
+      ${step('3', tr('Choose linked crew'), tr('Choose a crew member with an active linked Staff sign-in. Set the optional due date and priority, then Assign work. If no linked account is available, use Staff Work → Crew account links first.'))}
+      ${step('4', tr('Complete and submit'), tr('Staff open My Work, start the job, record updates or photo evidence, and submit for review with a completion note. Managers see the same job in Staff Work.'))}
+      ${step('5', tr('Review and update the document'), tr('Managers review Staff Work → Awaiting review and approve or return the task. Use the document Edit action to update its details and Renew to update its expiry date. Approving a task does not renew a certificate, replace its file or change its expiry date automatically.'))}
+      <p class="help-desc">${tr("Check Existing document work before creating the same job again. Staff Work provides the job instructions; it does not grant access to the document file.")}</p>
+      <div class="help-divider"></div>
+      <div class="help-section-title">${tr("Bulk import")}</div>
       <p class="help-desc">${tr("Import your boat documents in bulk using a CSV file.")}</p>
 
       <div class="help-section-title">${tr("How to import")}</div>

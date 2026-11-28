@@ -1,4 +1,4 @@
-import {revealFieldErrors} from '../util/WorkFormFeedback.js';
+import {revealFieldErrors,ensureWorkInputStyles} from '../util/WorkFormFeedback.js';
 import {store} from '../store.js';
 import {t} from '../i18n.js';
 import {dockWalkReview} from '../util/DockWalkReviewApi.js';
@@ -12,7 +12,7 @@ const L=v=>esc(t(v));
 const state=s=>({PENDING:'Needs review',DEFERRED:'Deferred',MAINTENANCE_LINKED:'Maintenance linked'}[s]||s);
 export function unmountDockWalkReviewScreen(){cleanup();cleanup=()=>{};}
 export function mountDockWalkReviewScreen(){
- unmountDockWalkReviewScreen();const root=document.getElementById('screen'),clientId=store.activeClientId,uid=store.authUser?.uid;
+ unmountDockWalkReviewScreen();ensureWorkInputStyles();const root=document.getElementById('screen'),clientId=store.activeClientId,uid=store.authUser?.uid;
  let alive=true,rows=[],cursor=null,mode='PENDING',loading=false;const sheets=new Set();
  const current=()=>alive&&store.activeClientId===clientId&&store.authUser?.uid===uid;
  if(!['admin','manager'].includes(store.activeRole)){root.textContent=t('Manager or administrator access required.');return;}
@@ -24,7 +24,7 @@ export function mountDockWalkReviewScreen(){
  root.querySelectorAll('[data-inspection]').forEach(b=>b.onclick=()=>detail(b.dataset.inspection));root.querySelector('[data-more]').hidden=!cursor;}
  async function load(more=false){if(!current()||loading)return;loading=true;status(t('Loading…'));try{const result=await dockWalkReview('LIST',more&&cursor?{cursor}:{});if(!current())return;rows=more?[...rows,...result.items]:result.items;cursor=result.nextCursor;render();status('');}catch(e){status(e.message);}finally{loading=false;}}
  async function detail(inspectionId){status(t('Loading…'));try{const result=await dockWalkReview('DETAIL',{inspectionId});if(!current())return;status('');const r=result.item;
- const backdrop=document.createElement('div');backdrop.className='sheet-backdrop is-open';const sheet=document.createElement('div');sheet.className='sheet is-open';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');
+ const backdrop=document.createElement('div');backdrop.className='sheet-backdrop is-open';const sheet=document.createElement('div');sheet.className='sheet work-input-sheet is-open';sheet.style.display='block';sheet.setAttribute('role','dialog');sheet.setAttribute('aria-modal','true');
  sheet.innerHTML=`${sheetCloseButton()}<h3 style="padding:16px 44px">${L('Berth')} ${esc(r.berthNumber)}</h3><div style="padding:16px;overflow:auto;max-height:75vh"><p>${L(state(r.state))}</p><p>${esc(r.inspectorName)}${Number(r.inspectionDate)>0?' · '+esc(new Date(Number(r.inspectionDate)).toLocaleString()):''}</p><p>${esc(r.faults.join(', '))}</p><p style="white-space:pre-wrap">${esc([r.damageDescription,r.notes].filter(Boolean).join('\n'))}</p>${r.reason?`<p>${L('Review note')}: ${esc(r.reason)}</p>`:''}${r.photoStoragePath?`<button class="dash-filter" data-photo>${L('Inspection photo')}</button><div data-image></div>`:''}
  ${result.maintenance?`<p>${esc(result.maintenance.title)} · ${esc(result.maintenance.status)}</p><button class="dash-filter" data-assign>${L('Assign work')}</button>`:`<label>${L('Review note — required to defer')}<textarea class="add-input" data-reason maxlength="4000"></textarea></label><label>${L('Review date — required to defer')}<input class="add-input" data-date type="date" min="${new Date().toISOString().slice(0,10)}"></label><div style="display:flex;flex-wrap:wrap;gap:8px"><button class="dash-filter" data-create>${L('Create maintenance')}</button><button class="dash-filter" data-defer>${L('Defer')}</button></div>`}<p data-result role="status"></p></div>`;
  let busy=false;const close=()=>{sheet.remove();backdrop.remove();sheets.delete(close);};sheets.add(close);document.getElementById('modalRoot').append(backdrop,sheet);backdrop.onclick=()=>{if(!busy)close();};sheet.querySelector('[data-sheet-close]').onclick=()=>{if(!busy)close();};

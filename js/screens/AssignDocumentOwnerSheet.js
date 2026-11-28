@@ -23,9 +23,9 @@ export async function showAssignDocumentOwnerSheet(item) {
 
   sheet.innerHTML = `
     ${sheetCloseButton()}
-    <div class="sheet-title" style="text-align:center;">${tr("Assign Owner")}</div>
+    <div class="sheet-title" style="text-align:center;">${tr("Set responsible person")}</div>
 
-    <div class="ao-scroll">
+    <p class="work-input-hint">${tr("This records responsibility only. To create a Staff Work job and alert, use Assign work on the document menu.")}</p><div class="ao-scroll">
       ${crewNames.length === 0
         ? `<div class="assign-empty">${tr("No crew members found.")}<br>${tr("Add crew first.")}</div>`
         : crewNames.map(name => `

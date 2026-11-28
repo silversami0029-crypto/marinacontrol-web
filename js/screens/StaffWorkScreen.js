@@ -1,3 +1,4 @@
+import {ensureWorkInputStyles} from '../util/WorkFormFeedback.js';
 import {clearFieldError,revealFieldErrors} from '../util/WorkFormFeedback.js';
 import {showStaffWorkHelp} from './StaffWorkHelp.js';
 import {store} from '../store.js';
@@ -9,6 +10,7 @@ const L=value=>esc(t(value));
 const style='box-sizing:border-box;width:100%;padding:12px;margin:8px 0;border:1px solid #737D89;border-radius:10px;background:#151A20;color:#F5F7F9;font:inherit';
 const button=(action,label)=>`<button type="button" class="dash-filter" data-work-action="${action}" style="min-height:44px;margin:4px">${L(label)}</button>`;
 function ensureStyles(){
+  ensureWorkInputStyles();
   if(document.getElementById('staffWorkUiStyles'))return;
   const css=document.createElement('style');css.id='staffWorkUiStyles';css.textContent=`
     .staff-work-filters{display:flex;flex-wrap:wrap;gap:4px;}

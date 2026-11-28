@@ -9,7 +9,7 @@ export async function staffWork(action, input = {}) {
   if (!uid || !clientId || store.marinaSwitching) throw Error('Sign in to a marina first.');
   const data = {...input, action, clientId};
   let operationKey;
-  if (['ASSIGN','UPDATE','UPLOAD_PHOTO'].includes(action)) {
+  if (['ASSIGN','CREATE_EQUIPMENT_WORK','CREATE_DOCUMENT_WORK','UPDATE','UPLOAD_PHOTO'].includes(action)) {
     const bytes = new TextEncoder().encode(JSON.stringify([uid,clientId,action,input]));
     const key = [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(n=>n.toString(16).padStart(2,'0')).join('');
     operationKey = key;

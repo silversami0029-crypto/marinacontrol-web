@@ -259,7 +259,7 @@ function renderList() {
           <div class="doc-type">${escapeHtml(tr(d.type || ''))}</div>
           ${d.expiryDate ? `<div class="doc-expiry" style="color:${state.dateColor};">${tr("Expires:" )} ${escapeHtml(formatDate(d.expiryDate))}</div>` : `<div class="doc-expiry doc-expiry-dim">${tr("No expiry")}</div>`}
           ${d.notes ? `<div class="doc-notes">${escapeHtml(d.notes)}</div>` : ''}
-          ${d.assignedTo ? `<div class="doc-assigned">${tr("Assigned:" )} ${escapeHtml(d.assignedTo)}</div>` : ''}
+          ${d.assignedTo ? `<div class="doc-assigned">${tr("Responsible person:" )} ${escapeHtml(d.assignedTo)}</div>` : ''}
         </div>
 
         <button class="doc-kebab" data-doc-menu="${d.id}" aria-label="${tr("Menu")}">

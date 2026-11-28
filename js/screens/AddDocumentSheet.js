@@ -1,3 +1,4 @@
+import {ensureWorkInputStyles,revealFieldErrors} from '../util/WorkFormFeedback.js';
 import { t as tr, getLocale as uiLocale } from '../i18n.js';
 // js/screens/AddDocumentSheet.js
 import { store } from '../store.js';
@@ -29,6 +30,7 @@ const DOCUMENT_TYPES = [
 ];
 
 export function showAddDocumentSheet(opts = {}) {
+  ensureWorkInputStyles();
   const { boatId, boatName, item } = opts;
   const isEdit = !!item;
 
@@ -36,7 +38,8 @@ export function showAddDocumentSheet(opts = {}) {
   backdrop.className = 'sheet-backdrop';
 
   const sheet = document.createElement('div');
-  sheet.className = 'sheet';
+  sheet.className = 'sheet work-input-sheet';
+  sheet.style.display='block';
 
   sheet.innerHTML = `
   <div class="document-sheet-header"
@@ -125,8 +128,7 @@ sheet.querySelector('#iv-close').addEventListener('click', close);
     const expiry = sheet.querySelector('#doc-expiry').value;
     const notes  = sheet.querySelector('#doc-notes').value.trim();
 
-    if (!name) { sheet.querySelector('#doc-name').focus(); return; }
-    if (!type) { toast(tr('Select a type'), { kind: 'error' }); return; }
+    const errors=[];if(!name)errors.push([sheet.querySelector('#doc-name'),'Enter a document name.']);if(!type)errors.push([sheet.querySelector('#doc-type'),'Select a document type.']);if(revealFieldErrors(sheet,errors))return;
 
     const expiryMs = expiry ? new Date(expiry + 'T00:00:00').getTime() : null;
 

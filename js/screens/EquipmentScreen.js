@@ -261,7 +261,7 @@ function renderList() {
           ${e.serialNumber ? `<div class="eq-serial">${tr("Serial:" )} ${escapeHtml(midEllipsize(e.serialNumber, 20))}</div>` : ''}
           ${e.location ? `<div class="eq-location"><span class="eq-loc-pin">📍</span>${escapeHtml(e.location)}</div>` : ''}
           ${e.notes ? `<div class="eq-notes">${escapeHtml(e.notes)}</div>` : ''}
-          ${e.assignedTo ? `<div class="eq-assigned">👤 ${tr("Assigned:")} ${escapeHtml(e.assignedTo)}</div>` : ''}
+          ${e.assignedTo ? `<div class="eq-assigned">👤 ${tr("Responsible person:")} ${escapeHtml(e.assignedTo)}</div>` : ''}
         </div>
 
         <button class="eq-kebab" data-equip-menu="${e.id}" aria-label="${tr("Menu")}">

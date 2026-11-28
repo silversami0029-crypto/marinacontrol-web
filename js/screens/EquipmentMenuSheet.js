@@ -1,3 +1,6 @@
+import {showEquipmentHelp} from './EquipmentHelp.js';
+import {showEquipmentWork} from './EquipmentWorkSheet.js';
+import {canManageWork} from '../util/StaffWorkApi.js';
 import { sheetCloseButton } from '../ui/sheetClose.js';
 import { italianUI as itUI } from '../i18n.js';
 import { t } from '../i18n.js';
@@ -44,6 +47,10 @@ export function showEquipmentMenu(item) {
     </div>
     <div class="sheet-gap-8"></div>
 
+    ${canManageWork()?`<button type="button" class="sheet-item" id="emWork" style="width:100%;box-sizing:border-box;text-align:start;font:inherit;color:inherit;border:0">
+      <span class="sheet-item-icon"><svg class="sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M9 10l2 2 4-4M9 16h6"/></svg></span>
+      <span class="sheet-item-text"><span class="sheet-item-title" style="display:block">${t('Assign work')}</span><span class="sheet-item-subtitle" style="display:block">${t('Describe a job and send it to Staff Work')}</span></span>
+    </button><div class="sheet-gap-8"></div>`:''}
     <div class="sheet-item" id="emAssign">
       <div class="sheet-item-icon">
         <svg class="sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -53,7 +60,7 @@ export function showEquipmentMenu(item) {
           <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
       </div>
-      <div class="sheet-item-text"><div class="sheet-item-title">${t("Assign Owner")}</div></div>
+      <div class="sheet-item-text"><div class="sheet-item-title">${t("Set responsible person")}</div></div>
     </div>
     <div class="sheet-gap-8"></div>
 
@@ -80,6 +87,11 @@ export function showEquipmentMenu(item) {
       <div class="sheet-item-text"><div class="sheet-item-title">${t("History")}</div></div>
     </div>
     <div class="sheet-gap-8"></div>
+
+    <button type="button" class="sheet-item" id="emHelp" style="width:100%;box-sizing:border-box;text-align:start;font:inherit;color:inherit;border:0">
+      <span class="sheet-item-icon"><svg class="sheet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01"/></svg></span>
+      <span class="sheet-item-text"><span class="sheet-item-title" style="display:block">${t('Help')}</span><span class="sheet-item-subtitle" style="display:block">${t('Responsibility, jobs and manager review')}</span></span>
+    </button><div class="sheet-gap-8"></div>
 
     <div class="sheet-item sheet-item--danger" id="emDelete">
       <div class="sheet-item-icon">
@@ -118,6 +130,8 @@ export function showEquipmentMenu(item) {
     setTimeout(() => showAddEquipmentSheet({ item }), 250);
   });
 
+  sheet.querySelector('#emHelp').addEventListener('click',()=>{close();setTimeout(()=>showEquipmentHelp(),250);});
+  sheet.querySelector('#emWork')?.addEventListener('click',()=>{close();setTimeout(()=>showEquipmentWork(item),250);});
   sheet.querySelector('#emAssign').addEventListener('click', () => {
     close();
     setTimeout(() => showAssignOwner(item), 250);
@@ -171,9 +185,9 @@ async function showAssignOwner(item) {
 
   sheet.innerHTML = `
     ${sheetCloseButton()}
-    <div class="sheet-title" style="text-align:center;">${t("Assign Owner")}</div>
+    <div class="sheet-title" style="text-align:center;">${t("Set responsible person")}</div>
 
-    <div class="ao-scroll">
+    <p class="work-input-hint">${t("This records equipment responsibility. It does not create a task or send a Staff Work alert. Use Assign work to give someone a job.")}</p><div class="ao-scroll">
       ${crewNames.length === 0
         ? `<div class="assign-empty">${t("No crew members found.")}<br>${t("Add crew first.")}</div>`
         : crewNames.map(name => `
